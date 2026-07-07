@@ -1,0 +1,149 @@
+[
+    {
+        "id": 1,
+        "code": "admin",
+        "libelle_ar": "مدير النظام",
+        "libelle_fr": "Administrateur Système",
+        "permissions": "{\"offres\":\"1\",\"inscriptions\":\"1\",\"discipline\":\"1\",\"grades\":\"1\",\"documents\":\"1\",\"repas\":\"1\"}"
+    },
+    {
+        "id": 2,
+        "code": "dfep",
+        "libelle_ar": "مديرية التكوين المهني - ولائي",
+        "libelle_fr": "Directeur de la Formation et de l'Enseignement Professionnels",
+        "permissions": "{\"offres\":\"1\",\"inscriptions\":\"1\",\"discipline\":\"1\",\"grades\":\"1\",\"documents\":\"1\",\"repas\":\"1\"}"
+    },
+    {
+        "id": 3,
+        "code": "directeur",
+        "libelle_ar": "مدير المؤسسة التكوينية",
+        "libelle_fr": "Directeur d'Établissement",
+        "permissions": "{\"offres\":\"1\",\"inscriptions\":\"1\",\"discipline\":\"1\",\"grades\":\"1\",\"documents\":\"1\",\"repas\":\"1\"}"
+    },
+    {
+        "id": 4,
+        "code": "formateur",
+        "libelle_ar": "مكوّن / أستاذ",
+        "libelle_fr": "Formateur",
+        "permissions": "{\"offres\":\"0\",\"inscriptions\":\"0\",\"discipline\":\"0\",\"grades\":\"1\",\"documents\":\"0\",\"repas\":\"0\"}"
+    },
+    {
+        "id": 5,
+        "code": "stagiaire",
+        "libelle_ar": "متربص / متكوّن",
+        "libelle_fr": "Stagiaire",
+        "permissions": "{\"offres\":\"0\",\"inscriptions\":\"0\",\"discipline\":\"0\",\"grades\":\"0\",\"documents\":\"1\",\"repas\":\"1\"}"
+    },
+    {
+        "id": 6,
+        "code": "central",
+        "libelle_ar": "إدارة مركزية",
+        "libelle_fr": "Administration Centrale",
+        "permissions": "{\"offres\":\"1\",\"inscriptions\":\"1\",\"discipline\":\"1\",\"grades\":\"1\",\"documents\":\"1\",\"repas\":\"0\"}"
+    },
+    {
+        "id": 7,
+        "code": "etablissement",
+        "libelle_ar": "مؤسسة تكوينية",
+        "libelle_fr": "Établissement de Formation",
+        "permissions": "{\"offres\":\"1\",\"inscriptions\":\"1\",\"discipline\":\"1\",\"grades\":\"1\",\"documents\":\"1\",\"repas\":\"1\"}"
+    },
+    {
+        "id": 8,
+        "code": "inspecteur_general",
+        "libelle_ar": "مفتش عام",
+        "libelle_fr": "Inspecteur Général",
+        "permissions": "{\"offres\":\"1\",\"inscriptions\":\"0\",\"discipline\":\"1\",\"grades\":\"1\",\"documents\":\"1\",\"repas\":\"0\"}"
+    },
+    {
+        "id": 9,
+        "code": "secretaire_general",
+        "libelle_ar": "أمين عام",
+        "libelle_fr": "Secrétaire Général",
+        "permissions": "{\"offres\":\"1\",\"inscriptions\":\"1\",\"discipline\":\"1\",\"grades\":\"1\",\"documents\":\"1\",\"repas\":\"0\"}"
+    },
+    {
+        "id": 10,
+        "code": "chef_cabinet",
+        "libelle_ar": "رئيس الديوان",
+        "libelle_fr": "Chef de Cabinet",
+        "permissions": "{\"offres\":\"1\",\"inscriptions\":\"0\",\"discipline\":\"0\",\"grades\":\"0\",\"documents\":\"1\",\"repas\":\"0\"}"
+    },
+    {
+        "id": 11,
+        "code": "ministre",
+        "libelle_ar": "الوزير",
+        "libelle_fr": "Ministre",
+        "permissions": "{\"offres\":\"1\",\"inscriptions\":\"1\",\"discipline\":\"1\",\"grades\":\"1\",\"documents\":\"1\",\"repas\":\"1\"}"
+    },
+    {
+        "id": 12,
+        "code": "dir_org",
+        "libelle_ar": "مديرية التنظيم والمنهاج",
+        "libelle_fr": "Direction de l'Organisation et des Programmes",
+        "permissions": "{\"offres\":\"1\",\"inscriptions\":\"1\",\"discipline\":\"0\",\"grades\":\"1\",\"documents\":\"1\",\"repas\":\"0\"}"
+    },
+    {
+        "id": 13,
+        "code": "dir_finance",
+        "libelle_ar": "مديرية المالية والميزانية",
+        "libelle_fr": "Direction des Finances et du Budget",
+        "permissions": "{\"offres\":\"0\",\"inscriptions\":\"0\",\"discipline\":\"0\",\"grades\":\"0\",\"documents\":\"1\",\"repas\":\"1\"}"
+    },
+    {
+        "id": 14,
+        "code": "dir_rh",
+        "libelle_ar": "مديرية الموارد البشرية",
+        "libelle_fr": "Direction des Ressources Humaines",
+        "permissions": "{\"offres\":\"0\",\"inscriptions\":\"0\",\"discipline\":\"1\",\"grades\":\"0\",\"documents\":\"1\",\"repas\":\"0\"}"
+    },
+    {
+        "id": 15,
+        "code": "dir_plan",
+        "libelle_ar": "مديرية التخطيط والتوقعات",
+        "libelle_fr": "Direction de la Planification et des Prévisions",
+        "permissions": "{\"offres\":\"1\",\"inscriptions\":\"1\",\"discipline\":\"0\",\"grades\":\"0\",\"documents\":\"1\",\"repas\":\"0\"}"
+    },
+    {
+        "id": 16,
+        "code": "dir_coop",
+        "libelle_ar": "مديرية التعاون والشراكة",
+        "libelle_fr": "Direction de la Coopération et du Partenariat",
+        "permissions": "{\"offres\":\"1\",\"inscriptions\":\"0\",\"discipline\":\"0\",\"grades\":\"0\",\"documents\":\"1\",\"repas\":\"0\"}"
+    },
+    {
+        "id": 17,
+        "code": "dir_it",
+        "libelle_ar": "مديرية تقنية المعلومات والرقمنة",
+        "libelle_fr": "Direction des Technologies de l'Information",
+        "permissions": "{\"offres\":\"0\",\"inscriptions\":\"0\",\"discipline\":\"0\",\"grades\":\"0\",\"documents\":\"0\",\"repas\":\"0\"}"
+    },
+    {
+        "id": 18,
+        "code": "dir_exam",
+        "libelle_ar": "مديرية الامتحانات والمسابقات",
+        "libelle_fr": "Direction des Examens et Concours",
+        "permissions": "{\"offres\":\"1\",\"inscriptions\":\"1\",\"discipline\":\"1\",\"grades\":\"1\",\"documents\":\"1\",\"repas\":\"0\"}"
+    },
+    {
+        "id": 19,
+        "code": "dir_trak",
+        "libelle_ar": "مديرية التكوين عن طريق التمهين",
+        "libelle_fr": "Direction de la Formation par Apprentissage",
+        "permissions": "{\"offres\":\"1\",\"inscriptions\":\"1\",\"discipline\":\"0\",\"grades\":\"0\",\"documents\":\"1\",\"repas\":\"0\"}"
+    },
+    {
+        "id": 20,
+        "code": "dir_edu",
+        "libelle_ar": "مديرية الهندسة البيداغوجية",
+        "libelle_fr": "Direction de l'Ingénierie Pédagogique",
+        "permissions": "{\"offres\":\"1\",\"inscriptions\":\"0\",\"discipline\":\"0\",\"grades\":\"1\",\"documents\":\"1\",\"repas\":\"0\"}"
+    },
+    {
+        "id": 21,
+        "code": "special",
+        "libelle_ar": "حساب خاص",
+        "libelle_fr": "Compte Spécial",
+        "permissions": "{}"
+    }
+]

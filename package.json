@@ -1,0 +1,12 @@
+{
+  "name": "sig-dashboard",
+  "version": "1.0.0",
+  "description": "GETRY Dashboard - Government Training Platform",
+  "scripts": {
+    "tw:build": "tailwindcss -i ./public/assets/css/tailwind.input.css -o ./public/assets/css/app.tailwind.css --minify",
+    "tw:watch": "tailwindcss -i ./public/assets/css/tailwind.input.css -o ./public/assets/css/app.tailwind.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.17"
+  }
+}

@@ -1,0 +1,677 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "منصة التكوين المهني SGFEP - واجهة برمجة التطبيقات (API)",
+        "description": "توثيق تفاعلي لمسارات الـ API الخاصة بالمنصة الرقمية للتكوين المهني لدعم التطبيقات الخارجية وتطبيق الهاتف.",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://10.228.2.19:8000",
+            "description": "خادم المنصة الرئيسي"
+        }
+    ],
+    "paths": {
+        "/api/v1/assets/requests": {
+            "post": {
+                "tags": [
+                    "Assets / Equipment"
+                ],
+                "summary": "إنشاء طلب جديد للتجهيزات والمعدات البيداغوجية للمؤسسة",
+                "description": "POST /api/v1/assets/requests\nCreate a request for new technical equipment or workshop resources.",
+                "operationId": "d859d06b797507da6912a08fa25cfa31",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "etablissement_id": {
+                                        "description": "معرف المؤسسة (للأدمن)",
+                                        "type": "integer",
+                                        "example": 2005
+                                    },
+                                    "item_name": {
+                                        "description": "اسم التجهيز أو المورد المطلوب",
+                                        "type": "string",
+                                        "example": "طابعات ثلاثية الأبعاد"
+                                    },
+                                    "quantity": {
+                                        "description": "الكمية المطلوبة",
+                                        "type": "integer",
+                                        "example": 3
+                                    },
+                                    "urgency": {
+                                        "type": "string",
+                                        "enum": [
+                                            "low",
+                                            "medium",
+                                            "high"
+                                        ],
+                                        "example": "high"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "تم إنشاء طلب التجهيزات بنجاح",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "code": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Equipment request submitted successfully."
+                                        },
+                                        "request_id": {
+                                            "type": "integer",
+                                            "example": 45
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "طلب غير صالح - مدخلات خاطئة أو المؤسسة غير محددة"
+                    },
+                    "401": {
+                        "description": "غير مصرح بالدخول"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/employees": {
+            "get": {
+                "tags": [
+                    "Employees"
+                ],
+                "summary": "جلب قائمة الموظفين والمؤطرين مع الفلترة والبحث",
+                "description": "GET /api/v1/employees\n\nReturns a paginated list of employees/staff (encadrement).\nSupports search and filtering by establishment, grade, and function.",
+                "operationId": "6287e7ed3f44cb8a80ee7707649ba2c6",
+                "parameters": [
+                    {
+                        "name": "etablissement_id",
+                        "in": "query",
+                        "description": "معرف المؤسسة",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "grade",
+                        "in": "query",
+                        "description": "رتبة الموظف",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "fonction",
+                        "in": "query",
+                        "description": "وظيفة الموظف",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "description": "بحث بالاسم أو اللقب أو البريد الإلكتروني أو رقم التعريف الوطني",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "تم جلب قائمة الموظفين بنجاح"
+                    },
+                    "401": {
+                        "description": "غير مصرح بالدخول"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/finance/reports/budget": {
+            "get": {
+                "tags": [
+                    "Finance"
+                ],
+                "summary": "جلب تقرير الميزانية المشفر بنظام AES-256-CBC",
+                "description": "GET /api/v1/finance/reports/budget\nReturns the encrypted budget report data using AES-256-CBC.",
+                "operationId": "fcbe5edc2a631c442e0ea285960892a9",
+                "responses": {
+                    "200": {
+                        "description": "تم توليد وتشفير تقرير الميزانية بنجاح",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "code": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Budget report generated and encrypted successfully (AES-256-CBC)."
+                                        },
+                                        "payload": {
+                                            "type": "string",
+                                            "example": "eyJpdiI6Ik9H..."
+                                        },
+                                        "algorithm": {
+                                            "type": "string",
+                                            "example": "AES-256-CBC"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "فشل في توليد تقرير الميزانية"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/hr/formateurs/vacant-hours": {
+            "get": {
+                "tags": [
+                    "HR / Formateurs"
+                ],
+                "summary": "جلب الساعات الشاغرة لجميع المكونين والأساتذة",
+                "description": "GET /api/v1/hr/formateurs/vacant-hours\nReturns a JSON list of all formateurs with their vacant slots.",
+                "operationId": "019466e75fd7d1935d262fdc7eafe47a",
+                "responses": {
+                    "200": {
+                        "description": "تم احتساب وجلب الساعات الشاغرة بنجاح",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "code": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "فشل في احتساب الساعات الشاغرة"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/auth/token": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "تبديل مفتاح API بـ توكن JWT الموثق",
+                "operationId": "42008289a27f9578a9a5f57240187af5",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "api_key": {
+                                        "type": "string",
+                                        "example": "sgfep_live_..."
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "تم إصدار التوكن بنجاح",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "token": {
+                                            "type": "string",
+                                            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                                        },
+                                        "expires_in": {
+                                            "type": "integer",
+                                            "example": 28800
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "طلب غير صالح - مفتاح API مفقود"
+                    },
+                    "401": {
+                        "description": "مفتاح API غير صحيح أو الحساب معطل"
+                    }
+                }
+            }
+        },
+        "/api/v1/verify": {
+            "get": {
+                "tags": [
+                    "System"
+                ],
+                "summary": "التحقق من صلاحية مفتاح API أو التوكن الحالي",
+                "operationId": "846f514e381703567c7c8093f3522241",
+                "responses": {
+                    "200": {
+                        "description": "المفتاح صالح ومصادق عليه",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "code": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "API Key verified successfully."
+                                        },
+                                        "authenticated_as": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "غير مصرح بالدخول - المفتاح أو التوكن غير صالح"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/offres": {
+            "get": {
+                "tags": [
+                    "Offers"
+                ],
+                "summary": "جلب عروض التكوين المتوفرة مع الفلترة",
+                "operationId": "e131c80ad981480d07d28808d9f2599c",
+                "parameters": [
+                    {
+                        "name": "etablissement_id",
+                        "in": "query",
+                        "description": "معرف المؤسسة",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "specialite_id",
+                        "in": "query",
+                        "description": "معرف التخصص",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "session_id",
+                        "in": "query",
+                        "description": "معرف الدورة التكوينية",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 50
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "تم جلب عروض التكوين بنجاح"
+                    },
+                    "401": {
+                        "description": "غير مصرح بالدخول"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/stagiaires": {
+            "get": {
+                "tags": [
+                    "Trainees"
+                ],
+                "summary": "جلب قائمة المتربصين مع الفلترة والبحث",
+                "description": "GET /api/v1/stagiaires\n\nReturns a paginated list of trainees.\nUses Apprenant::forListing() which has optimized eager loading to avoid N+1 queries.\nCapped at 50 items per page for safety.",
+                "operationId": "9b5c2dc21e5b5f4e463d2c412b956434",
+                "parameters": [
+                    {
+                        "name": "valide",
+                        "in": "query",
+                        "description": "فلترة حسب النشاط (1 لـ نشط، 0 لـ غير نشط)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "enum": [
+                                0,
+                                1
+                            ]
+                        }
+                    },
+                    {
+                        "name": "etablissement_id",
+                        "in": "query",
+                        "description": "معرف المؤسسة",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "specialite_id",
+                        "in": "query",
+                        "description": "معرف التخصص",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "sexe",
+                        "in": "query",
+                        "description": "الجنس (M أو F)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "M",
+                                "F"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "description": "بحث بالاسم أو اللقب أو رقم الملف",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "تم جلب قائمة المتربصين بنجاح"
+                    },
+                    "401": {
+                        "description": "غير مصرح بالدخول"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/auth/login": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "تسجيل الدخول للمستخدم والحصول على توكن الصلاحية",
+                "description": "Perform the login request",
+                "operationId": "f779238bce5c5b984c773808f46fd14c",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "username": {
+                                        "type": "string",
+                                        "example": "2005"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "dUv377"
+                                    },
+                                    "secret_code": {
+                                        "type": "string",
+                                        "example": "sludrA@Dplm"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "تم تسجيل الدخول بنجاح",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "token": {
+                                            "type": "string",
+                                            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                                        },
+                                        "user": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "بيانات الدخول غير صحيحة"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "name": "Authorization",
+                "in": "header",
+                "bearerFormat": "JWT",
+                "scheme": "bearer"
+            },
+            "ApiKeyAuth": {
+                "type": "apiKey",
+                "name": "X-API-Key",
+                "in": "header"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Assets / Equipment",
+            "description": "Assets / Equipment"
+        },
+        {
+            "name": "Employees",
+            "description": "Employees"
+        },
+        {
+            "name": "Finance",
+            "description": "Finance"
+        },
+        {
+            "name": "HR / Formateurs",
+            "description": "HR / Formateurs"
+        },
+        {
+            "name": "Authentication",
+            "description": "Authentication"
+        },
+        {
+            "name": "System",
+            "description": "System"
+        },
+        {
+            "name": "Offers",
+            "description": "Offers"
+        },
+        {
+            "name": "Trainees",
+            "description": "Trainees"
+        }
+    ]
+}

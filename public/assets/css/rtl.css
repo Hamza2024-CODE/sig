@@ -1,0 +1,19 @@
+/* RTL specific overrides if any are not handled by native dir="rtl" */
+
+[dir="rtl"] .sidebar a {
+    text-align: right;
+}
+
+[dir="ltr"] .sidebar a {
+    text-align: left;
+}
+
+[dir="rtl"] .btn-logout {
+    margin-right: auto;
+    margin-left: 1rem;
+}
+
+[dir="ltr"] .btn-logout {
+    margin-left: auto;
+    margin-right: 1rem;
+}

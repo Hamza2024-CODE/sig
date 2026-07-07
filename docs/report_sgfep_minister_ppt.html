@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>العرض التقديمي الشامل لمنصة SGFEP - وزارة التكوين المهني</title>
+    <!-- استيراد خطوط Google Fonts (بما فيها خط Cairo للمنصة) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;700;900&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* تعريف الألوان والمتغيرات الخاصة بتصميم المنصة الفعلي (أزرق سماوي وأبيض) */
+        :root {
+            --primary-color: #0284c7; /* أزرق سماوي داكن للمجموعات والعناوين */
+            --primary-light: #38bdf8; /* أزرق سماوي فاتح */
+            --primary-dark: #0c4a6e;
+            --emerald-gov: #046a38; /* الأخضر الحكومي للتأكيد والنجاح */
+            --bg-gradient: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            --text-dark: #0f172a;
+            --text-light: #ffffff;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --card-shadow: 0 4px 24px rgba(10, 37, 64, 0.06), 0 1px 4px rgba(10, 37, 64, 0.04);
+            --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Cairo', 'Tajawal', sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-dark);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* حاوية العرض التقديمي الرئيسي - قياس سلايد PPT قياسي 16:9 */
+        .presentation-container {
+            width: 90vw;
+            max-width: 1100px;
+            height: 56.25vw; /* نسبة 16:9 */
+            max-height: 620px;
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 25px 50px -12px rgba(10, 37, 64, 0.15);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(2, 132, 199, 0.1);
+        }
+
+        /* شريط علوي موحد لكل السلايدات */
+        .slide-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            background: #ffffff;
+            border-bottom: 1px solid #f0f9ff;
+            z-index: 5;
+        }
+
+        .header-title-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-img {
+            height: 45px;
+            width: auto;
+            object-fit: contain;
+        }
+
+        .ministry-badge {
+            font-family: 'Amiri', serif;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+            border-right: 2px solid var(--primary-light);
+            padding-right: 15px;
+        }
+
+        .slide-number {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            background: #f0f9ff;
+            padding: 5px 12px;
+            border-radius: 20px;
+        }
+
+        /* منطقة السلايدات التفاعلية */
+        .slides-wrapper {
+            flex-grow: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 40px 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transform: scale(0.98) translateY(10px);
+            transition: opacity 0.5s ease, transform 0.5s ease, visibility 0.5s;
+            z-index: 1;
+        }
+
+        .slide.active {
+            opacity: 1;
+            visibility: visible;
+            transform: scale(1) translateY(0);
+            z-index: 2;
+        }
+
+        /* تصميم سلايد الغلاف (سلايد 1) */
+        .slide-cover {
+            background: radial-gradient(circle at 10% 20%, rgba(2, 132, 199, 0.05) 0%, rgba(255, 255, 255, 1) 90%), #ffffff;
+            text-align: center;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cover-logo {
+            height: 110px;
+            margin-bottom: 25px;
+            animation: float 4s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .cover-subtitle {
+            font-family: 'Amiri', serif;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .cover-title {
+            font-size: 2.1rem;
+            font-weight: 900;
+            color: var(--text-dark);
+            line-height: 1.4;
+            max-width: 800px;
+            margin-bottom: 30px;
+        }
+
+        .cover-presenter {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+            border: 1px solid var(--primary-light);
+            padding: 8px 24px;
+            border-radius: 8px;
+            background-color: #f0f9ff;
+            display: inline-block;
+        }
+
+        /* نصوص السلايدات الداخلية */
+        .slide-title {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--primary-dark);
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .slide-title::before {
+            content: "";
+            display: inline-block;
+            width: 8px;
+            height: 28px;
+            background: var(--primary-color);
+            border-radius: 4px;
+        }
+
+        .slide-body {
+            font-size: 1rem;
+            color: #334155;
+            line-height: 1.7;
+        }
+
+        /* تخطيطات مخصصة للمحتوى */
+        .grid-2col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .bullet-list {
+            list-style: none;
+        }
+
+        .bullet-item {
+            position: relative;
+            padding-right: 28px;
+            margin-bottom: 15px;
+            font-size: 1rem;
+            color: #334155;
+        }
+
+        .bullet-item::before {
+            content: "";
+            position: absolute;
+            right: 0;
+            top: 10px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+        }
+
+        /* لوحة إحصائيات ترحيل البيانات */
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .stat-box {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 18px 12px;
+            text-align: center;
+            box-shadow: var(--card-shadow);
+            transition: var(--transition);
+            border-top: 4px solid var(--primary-color);
+        }
+
+        .stat-box:hover {
+            transform: translateY(-3px);
+            border-top-color: var(--primary-dark);
+            box-shadow: 0 10px 15px -3px rgba(10, 37, 64, 0.08);
+        }
+
+        .stat-box.emerald {
+            border-top-color: var(--emerald-gov);
+        }
+
+        .stat-num {
+            font-size: 1.65rem;
+            font-weight: 900;
+            color: var(--text-dark);
+            display: block;
+        }
+
+        .stat-lbl {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 700;
+            margin-top: 5px;
+            display: block;
+        }
+
+        /* الإطارات والنوافذ الخاصة بعرض صور المنصة */
+        .browser-mockup {
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(10, 37, 64, 0.08);
+            overflow: hidden;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .browser-header {
+            background: #f8fafc;
+            border-bottom: 1px solid var(--border-color);
+            padding: 8px 15px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .browser-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #cbd5e1;
+        }
+
+        .browser-dot.red { background-color: #ef4444; }
+        .browser-dot.yellow { background-color: #eab308; }
+        .browser-dot.green { background-color: #22c55e; }
+
+        .browser-address {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            padding: 2px 10px;
+            flex-grow: 1;
+            text-align: center;
+            max-width: 250px;
+            margin: 0 auto;
+            font-family: monospace;
+        }
+
+        .browser-content {
+            background: #f1f5f9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .browser-content img {
+            width: 100%;
+            height: auto;
+            max-height: 230px;
+            object-fit: cover;
+            display: block;
+        }
+
+        /* الصناديق الزرقاء المميزة */
+        .highlight-panel {
+            background-color: #f0f9ff;
+            border-right: 5px solid var(--primary-color);
+            padding: 15px 20px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            margin-top: 15px;
+            color: var(--text-dark);
+        }
+
+        .highlight-panel.emerald {
+            background-color: #f0fdf4;
+            border-right-color: var(--emerald-gov);
+        }
+
+        /* أزرار التحكم والتنقل الأسفلية */
+        .slide-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 40px;
+            background: #f8fafc;
+            border-top: 1px solid #cbd5e1;
+            z-index: 5;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .nav-btn {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            color: var(--primary-color);
+            padding: 8px 18px;
+            border-radius: 8px;
+            font-family: 'Cairo', sans-serif;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: var(--transition);
+        }
+
+        .nav-btn:hover:not(:disabled) {
+            background: var(--primary-color);
+            color: #ffffff;
+            border-color: var(--primary-color);
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* شريط تقدم السلايدات بأسفل الإطار */
+        .progress-bar-container {
+            width: 100%;
+            height: 5px;
+            background: #e2e8f0;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            z-index: 10;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--primary-color);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* زر ملء الشاشة الجمالي */
+        .fullscreen-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            font-family: 'Cairo', sans-serif;
+            font-size: 0.85rem;
+            font-weight: bold;
+            gap: 6px;
+            transition: var(--transition);
+        }
+
+        .fullscreen-btn:hover {
+            color: var(--primary-color);
+        }
+
+        /* أدوات التنقل بالكيبورد (إرشادات) */
+        .keyboard-hint {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .key-badge {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            padding: 1px 6px;
+            font-family: monospace;
+            font-weight: bold;
+        }
+
+        /* وضع ملء الشاشة الفعلي بالمتصفح */
+        :-webkit-full-screen .presentation-container {
+            width: 100vw;
+            height: 100vh;
+            max-width: none;
+            max-height: none;
+            border-radius: 0;
+        }
+
+        :fullscreen .presentation-container {
+            width: 100vw;
+            height: 100vh;
+            max-width: none;
+            max-height: none;
+            border-radius: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="presentation-container" id="presentation">
+        
+        <!-- الشريط العلوي الموحد للسلايدات (سوى سلايد الغلاف) -->
+        <div class="slide-header" id="slide-header" style="display: none;">
+            <div class="header-title-section">
+                <img src="../logo.svg" class="logo-img" alt="شعار SGFEP">
+                <span class="ministry-badge">وزارة التكوين والتعليم المهنيين</span>
+            </div>
+            <div class="slide-number" id="current-slide-num">2 / 7</div>
+        </div>
+
+        <!-- منطقة السلايدات -->
+        <div class="slides-wrapper">
+            
+            <!-- سلايد 1: الغلاف الرئيسي -->
+            <div class="slide slide-cover active" id="slide-1">
+                <img src="../logo.svg" class="cover-logo" alt="شعار SGFEP">
+                <div class="cover-subtitle">الجمهورية الجزائرية الديمقراطية الشعبية</div>
+                <h1 class="cover-title">عصرنة وتطوير نظام المعلومات الوطني لقطاع التكوين المهني (SGFEP)</h1>
+                <div class="cover-presenter">إعداد وتقديم الإطار: حمزة أبو بكر الصديق</div>
+            </div>
+
+            <!-- سلايد 2: الملخص التنفيذي -->
+            <div class="slide" id="slide-2">
+                <h2 class="slide-title">1. الملخص التنفيذي وأهداف المنصة</h2>
+                <div class="grid-2col">
+                    <div class="slide-body">
+                        <p>تعتبر منصة SGFEP الحل الاستراتيجي الشامل الموحد لربط وعصرنة كامل هياكل قطاع التكوين والتعليم المهنيين بالجزائر.</p>
+                        <p style="margin-top: 10px;">يقوم المشروع على إلغاء التسيير الورقي والبرمجيات المحلية المشتتة، واستبدالها ببيئة رقمية موحدة تجمع كافة البيانات في قاعدة بيانات وطنية واحدة.</p>
+                    </div>
+                    <div>
+                        <ul class="bullet-list">
+                            <li class="bullet-item">التسيير المركزي اللحظي: ربط مباشر للوزارة مع الولايات والمراكز.</li>
+                            <li class="bullet-item">دعم اتخاذ القرار: إتاحة مؤشرات حية ودقيقة لصناع القرار.</li>
+                            <li class="bullet-item">تحسين تجربة المستخدم: خدمات رقمية للمكون والمتربص.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- سلايد 3: إحصائيات البيانات المهجرة -->
+            <div class="slide" id="slide-3">
+                <h2 class="slide-title">2. هجرة وتحويل البيانات بنسبة 100%</h2>
+                <div class="slide-body">
+                    <p>تم بنجاح استخراج وترحيل البيانات التاريخية لقطاع التكوين المهني من النظام المشتت القديم HFSQL إلى نظام قواعد البيانات المطور MySQL/MariaDB بنسبة نجاح بلغت 100%.</p>
+                    
+                    <div class="stats-container" style="margin-top: 20px;">
+                        <div class="stat-box">
+                            <span class="stat-num">3,219,406</span>
+                            <span class="stat-lbl">مرشح (Candidats)</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-num">2,834,200</span>
+                            <span class="stat-lbl">متربص (Apprenants)</span>
+                        </div>
+                        <div class="stat-box emerald">
+                            <span class="stat-num">84,279</span>
+                            <span class="stat-lbl">مكون ومؤطر (Encadrement)</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-num">235,001</span>
+                            <span class="stat-lbl">عرض تكويني (Offres)</span>
+                        </div>
+                    </div>
+
+                    <div class="highlight-panel">
+                        تصحيح التشفير وترميم الأسماء: تم تشغيل محرك برمجى مخصص لتعديل تشفير النصوص العربية المتضررة في القواعد القديمة لضمان صحة الأسماء بنسبة 100%، وسد التواريخ التالفة.
+                    </div>
+                </div>
+            </div>
+
+            <!-- سلايد 4: البنية البرمجية والوسائل الحديثة + صورة المنصة الفسيحة -->
+            <div class="slide" id="slide-4">
+                <h2 class="slide-title">3. هندسة التطوير والوسائل التكنولوجية</h2>
+                <div class="grid-2col">
+                    <div class="slide-body">
+                        <ul class="bullet-list">
+                            <li class="bullet-item">تصميم برمجيات مرن (DDD): هيكلة الأكواد في مجالات معزولة تمنع تعطل المنصة وتسهل صيانتها وتحديثها بمرونة كاملة.</li>
+                            <li class="bullet-item">محرك تقارير ذو استهلاك ذاكرة صفري (O(1)): بث تدفقي مباشر للمتصفح يمنع انهيار خوادم المنصة تماماً.</li>
+                            <li class="bullet-item">تطبيقات الويب التقدمية (PWA): واجهات للهواتف الذكية تماثل تطبيقات الهاتف الأصلية.</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- إطار محاكاة المتصفح لعرض واجهة المنصة الفعلية (صورة hero_erp_generated.png) -->
+                    <div class="browser-mockup">
+                        <div class="browser-header">
+                            <div class="browser-dot red"></div>
+                            <div class="browser-dot yellow"></div>
+                            <div class="browser-dot green"></div>
+                            <div class="browser-address">http://sgfep.dfep.gov.dz</div>
+                        </div>
+                        <div class="browser-content">
+                            <img src="../public/assets/images/hero_erp_generated.png" alt="واجهة منصة SGFEP">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- سلايد 5: الأمن السيبراني وحماية البيانات الحساسة -->
+            <div class="slide" id="slide-5">
+                <h2 class="slide-title">4. الأمن السيبراني والتحكم بالوصول</h2>
+                <div class="grid-2col">
+                    <div class="slide-body">
+                        <ul class="bullet-list">
+                            <li class="bullet-item">تشفير الهوية الوطنية (NIN): تشفير الأرقام الوطنية للتعريف بالكامل في القاعدة باستخدام خوارزمية AES-256-CBC.</li>
+                            <li class="bullet-item">تأمين وتشفير الميزانية: تشفير كشوف الرواتب وتقارير منح المتربصين إلكترونياً لحمايتها من الاختراق.</li>
+                            <li class="bullet-item">سياسة أمان كلمات المرور: حظر الكلمات الضعيفة ومنع استخدام الـ NIN أو اسم المستخدم ككلمة مرور بشكل قطعي.</li>
+                        </ul>
+                    </div>
+                    <div class="slide-body">
+                        <div class="highlight-panel emerald">
+                            سجل التدقيق الرقابي الصارم (Audit Trail):<br>
+                            تسجيل كامل حركات الإضافة والتعديل وقراءة البيانات الحساسة مع هوية المنفذ وعنوان آيبى وجهازه، مع حجب كلمات المرور تلقائياً للحفاظ على خصوصيتها.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- سلايد 6: محاور المنصة الوظيفية -->
+            <div class="slide" id="slide-6">
+                <h2 class="slide-title">5. محاور ووظائف المنصة الوظيفية</h2>
+                <div class="slide-body">
+                    <p>يتكامل التسيير عبر أربعة محاور أساسية تغطي كافة متطلبات قطاع التكوين المهني:</p>
+                    
+                    <div class="stats-container" style="margin-top: 20px;">
+                        <div class="stat-box" style="background-color: #ffffff;">
+                            <span class="stat-num" style="font-size: 1.15rem; color: var(--primary-color);">البيداغوجيا</span>
+                            <span class="stat-lbl">إدارة التسجيلات، الأفواج، السداسيات، الامتحانات، رصد الغيابات والشهادات.</span>
+                        </div>
+                        <div class="stat-box" style="background-color: #ffffff;">
+                            <span class="stat-num" style="font-size: 1.15rem; color: var(--primary-color);">الموارد البشرية</span>
+                            <span class="stat-lbl">تسيير المكونين وحساب الساعات الشاغرة بجدول التوقيت آلياً لتفادي العجز.</span>
+                        </div>
+                        <div class="stat-box" style="background-color: #ffffff;">
+                            <span class="stat-num" style="font-size: 1.15rem; color: var(--primary-color);">المالية والمنح</span>
+                            <span class="stat-lbl">التسيير المالي لمنح الطلبة واحتسابها بناءً على الحضور والانضباط البيداغوجي.</span>
+                        </div>
+                        <div class="stat-box" style="background-color: #ffffff;">
+                            <span class="stat-num" style="font-size: 1.15rem; color: var(--primary-color);">اللوجيستيك</span>
+                            <span class="stat-lbl">جرد العتاد وتسيير تجهيزات الورشات التقنية وطلبها عبر الموبايل مباشرة.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- سلايد 7: التوصيات وخطة العمل -->
+            <div class="slide" id="slide-7">
+                <h2 class="slide-title">6. التوصيات وخطة العمل المستقبلية</h2>
+                <div class="slide-body">
+                    <p>لتحقيق أقصى استفادة وتأمين كفاءة تشغيل النظام على المستوى الوطني:</p>
+                    <ul class="bullet-list" style="margin-top: 15px;">
+                        <li class="bullet-item">الإيقاف النهائي للبرمجيات المحلية: تعميم المنصة وحظر الأنظمة المعزولة لتوحيد البيانات.</li>
+                        <li class="bullet-item">الربط الشبكي القطاعي: ربط المنصة بقاعدة بيانات وزارة العمل والتشغيل لمتابعة مسار إدماج المتخرجين في سوق الشغل.</li>
+                        <li class="bullet-item">السيادة والاستضافة الذاتية: استضافة المنصة وقواعد البيانات المليونية في خوادم مركزية وطنية مؤمنة تابعة مباشرة للمركز الوطني للإعلام الآلي للقطاع.</li>
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- شريط التحكم والتنقل السفلي (يختفي في الطباعة) -->
+        <div class="slide-footer">
+            <!-- إرشادات الكيبورد -->
+            <div class="keyboard-hint">
+                <span>استخدم:</span>
+                <span class="key-badge">←</span>
+                <span class="key-badge">→</span>
+                <span>أو</span>
+                <span class="key-badge">Space</span>
+                <span>للتنقل بين السلايدات</span>
+            </div>
+
+            <!-- أزرار التحكم -->
+            <div class="nav-buttons">
+                <button class="nav-btn" id="prev-btn" disabled>
+                    السابق
+                </button>
+                <button class="nav-btn" id="next-btn">
+                    التالي
+                </button>
+            </div>
+
+            <!-- ملء الشاشة -->
+            <button class="fullscreen-btn" onclick="toggleFullscreen()">
+                <svg width="15" height="15" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M1.5 1a.5.5 0 0 0-.5.5v4a.5.5 0 0 1-1 0v-4A1.5 1.5 0 0 1 1.5 0h4a.5.5 0 0 1 0 1h-4zM10.5 1a.5.5 0 0 1 0-1h4A1.5 1.5 0 0 1 16 1.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 0-.5-.5h-4zM5.5 15a.5.5 0 0 1 0 1h-4A1.5 1.5 0 0 1 0 14.5v-4a.5.5 0 0 1 1 0v4a.5.5 0 0 0 .5.5h-4zM14.5 15a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 1 1 0v4a1.5 1.5 0 0 1-1.5 1.5h-4a.5.5 0 0 1 0-1h4z"/>
+                </svg>
+                ملء الشاشة
+            </button>
+        </div>
+
+        <!-- شريط التقدم الفعلي -->
+        <div class="progress-bar-container">
+            <div class="progress-bar-fill" id="progress-bar-fill"></div>
+        </div>
+
+    </div>
+
+    <!-- كود JavaScript للتحكم اللحظي وتفاعل السلايدات -->
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const currentSlideNum = document.getElementById('current-slide-num');
+        const slideHeader = document.getElementById('slide-header');
+        const progressBarFill = document.getElementById('progress-bar-fill');
+        
+        let currentSlideIndex = 0;
+
+        function updateSlides() {
+            slides.forEach((slide, idx) => {
+                if (idx === currentSlideIndex) {
+                    slide.classList.add('active');
+                } else {
+                    slide.classList.remove('active');
+                }
+            });
+
+            // إخفاء الهيدر الموحد في السلايد الأول (الغلاف)
+            if (currentSlideIndex === 0) {
+                slideHeader.style.display = 'none';
+            } else {
+                slideHeader.style.display = 'flex';
+                currentSlideNum.textContent = `${currentSlideIndex + 1} / ${slides.length}`;
+            }
+
+            // تعديل حالة الأزرار
+            prevBtn.disabled = currentSlideIndex === 0;
+            nextBtn.disabled = currentSlideIndex === slides.length - 1;
+
+            // تحديث شريط التقدم بأسفل الشاشة
+            const percentage = (currentSlideIndex / (slides.length - 1)) * 100;
+            progressBarFill.style.width = `${percentage}%`;
+        }
+
+        function nextSlide() {
+            if (currentSlideIndex < slides.length - 1) {
+                currentSlideIndex++;
+                updateSlides();
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlideIndex > 0) {
+                currentSlideIndex--;
+                updateSlides();
+            }
+        }
+
+        // المستمعين للأزرار
+        nextBtn.addEventListener('click', nextSlide);
+        prevBtn.addEventListener('click', prevSlide);
+
+        // المستمعين للوحة المفاتيح لتسهيل العرض والتقديم
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') {
+                // في الواجهة العربية (RTL): السهم الأيسر هو السلايد التالي
+                nextSlide();
+            } else if (e.key === 'ArrowRight') {
+                // السهم الأيمن هو السلايد السابق
+                prevSlide();
+            } else if (e.key === ' ' || e.key === 'Spacebar') {
+                e.preventDefault();
+                nextSlide();
+            }
+        });
+
+        // تشغيل ملء الشاشة
+        function toggleFullscreen() {
+            const container = document.getElementById('presentation');
+            if (!document.fullscreenElement) {
+                container.requestFullscreen().catch(err => {
+                    alert(`خطأ أثناء تفعيل ملء الشاشة: ${err.message}`);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // تشغيل المزامنة المبدئية عند التحميل
+        updateSlides();
+    </script>
+</body>
+</html>

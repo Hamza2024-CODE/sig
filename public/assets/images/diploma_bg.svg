@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 297 210" width="297mm" height="210mm">
+    <!-- Honeycomb hex security background texture -->
+    <defs>
+        <pattern id="honeycomb" width="24" height="42" patternUnits="userSpaceOnUse" patternTransform="scale(0.35)">
+            <path d="M12 0 L24 7 L24 21 L12 28 L0 21 L0 7 Z" fill="none" stroke="rgba(30, 58, 138, 0.015)" stroke-width="0.4"/>
+            <path d="M12 42 L24 49 L24 63 L12 70 L0 63 L0 49 Z" fill="none" stroke="rgba(30, 58, 138, 0.015)" stroke-width="0.4"/>
+        </pattern>
+    </defs>
+    
+    <!-- White background base -->
+    <rect width="297" height="210" fill="#ffffff" />
+    
+    <!-- Honeycomb texture fill -->
+    <rect width="297" height="210" fill="url(#honeycomb)" />
+    
+    <!-- Concentric security waves / Guilloche arcs (concentric circles) -->
+    <!-- Group 1: Bottom center radiating -->
+    <circle cx="148.5" cy="180" r="100" fill="none" stroke="rgba(30, 58, 138, 0.025)" stroke-width="0.25"/>
+    <circle cx="148.5" cy="180" r="110" fill="none" stroke="rgba(30, 58, 138, 0.025)" stroke-width="0.25"/>
+    <circle cx="148.5" cy="180" r="120" fill="none" stroke="rgba(30, 58, 138, 0.025)" stroke-width="0.25"/>
+    <circle cx="148.5" cy="180" r="130" fill="none" stroke="rgba(30, 58, 138, 0.025)" stroke-width="0.25"/>
+    <circle cx="148.5" cy="180" r="140" fill="none" stroke="rgba(30, 58, 138, 0.025)" stroke-width="0.25"/>
+    <circle cx="148.5" cy="180" r="150" fill="none" stroke="rgba(30, 58, 138, 0.025)" stroke-width="0.25"/>
+    <circle cx="148.5" cy="180" r="160" fill="none" stroke="rgba(30, 58, 138, 0.025)" stroke-width="0.25"/>
+    <circle cx="148.5" cy="180" r="170" fill="none" stroke="rgba(30, 58, 138, 0.025)" stroke-width="0.25"/>
+    <circle cx="148.5" cy="180" r="180" fill="none" stroke="rgba(30, 58, 138, 0.025)" stroke-width="0.25"/>
+    <circle cx="148.5" cy="180" r="190" fill="none" stroke="rgba(30, 58, 138, 0.025)" stroke-width="0.25"/>
+    <circle cx="148.5" cy="180" r="200" fill="none" stroke="rgba(30, 58, 138, 0.025)" stroke-width="0.25"/>
+    <circle cx="148.5" cy="180" r="210" fill="none" stroke="rgba(30, 58, 138, 0.025)" stroke-width="0.25"/>
+    <circle cx="148.5" cy="180" r="220" fill="none" stroke="rgba(30, 58, 138, 0.025)" stroke-width="0.25"/>
+    <circle cx="148.5" cy="180" r="230" fill="none" stroke="rgba(30, 58, 138, 0.025)" stroke-width="0.25"/>
+    <circle cx="148.5" cy="180" r="240" fill="none" stroke="rgba(30, 58, 138, 0.025)" stroke-width="0.25"/>
+    
+    <!-- Group 2: Top-Left radiating -->
+    <circle cx="0" cy="0" r="120" fill="none" stroke="rgba(30, 58, 138, 0.015)" stroke-width="0.25"/>
+    <circle cx="0" cy="0" r="140" fill="none" stroke="rgba(30, 58, 138, 0.015)" stroke-width="0.25"/>
+    <circle cx="0" cy="0" r="160" fill="none" stroke="rgba(30, 58, 138, 0.015)" stroke-width="0.25"/>
+    <circle cx="0" cy="0" r="180" fill="none" stroke="rgba(30, 58, 138, 0.015)" stroke-width="0.25"/>
+    <circle cx="0" cy="0" r="200" fill="none" stroke="rgba(30, 58, 138, 0.015)" stroke-width="0.25"/>
+    <circle cx="0" cy="0" r="220" fill="none" stroke="rgba(30, 58, 138, 0.015)" stroke-width="0.25"/>
+    <circle cx="0" cy="0" r="240" fill="none" stroke="rgba(30, 58, 138, 0.015)" stroke-width="0.25"/>
+    <circle cx="0" cy="0" r="260" fill="none" stroke="rgba(30, 58, 138, 0.015)" stroke-width="0.25"/>
+    <circle cx="0" cy="0" r="280" fill="none" stroke="rgba(30, 58, 138, 0.015)" stroke-width="0.25"/>
+    <circle cx="0" cy="0" r="300" fill="none" stroke="rgba(30, 58, 138, 0.015)" stroke-width="0.25"/>
+    
+    <!-- Group 3: Top-Right radiating -->
+    <circle cx="297" cy="0" r="120" fill="none" stroke="rgba(30, 58, 138, 0.015)" stroke-width="0.25"/>
+    <circle cx="297" cy="0" r="140" fill="none" stroke="rgba(30, 58, 138, 0.015)" stroke-width="0.25"/>
+    <circle cx="297" cy="0" r="160" fill="none" stroke="rgba(30, 58, 138, 0.015)" stroke-width="0.25"/>
+    <circle cx="297" cy="0" r="180" fill="none" stroke="rgba(30, 58, 138, 0.015)" stroke-width="0.25"/>
+    <circle cx="297" cy="0" r="200" fill="none" stroke="rgba(30, 58, 138, 0.015)" stroke-width="0.25"/>
+    <circle cx="297" cy="0" r="220" fill="none" stroke="rgba(30, 58, 138, 0.015)" stroke-width="0.25"/>
+    <circle cx="297" cy="0" r="240" fill="none" stroke="rgba(30, 58, 138, 0.015)" stroke-width="0.25"/>
+    <circle cx="297" cy="0" r="260" fill="none" stroke="rgba(30, 58, 138, 0.015)" stroke-width="0.25"/>
+    <circle cx="297" cy="0" r="280" fill="none" stroke="rgba(30, 58, 138, 0.015)" stroke-width="0.25"/>
+    <circle cx="297" cy="0" r="300" fill="none" stroke="rgba(30, 58, 138, 0.015)" stroke-width="0.25"/>
+    
+
+
+    <!-- Authentic Double Blue Border -->
+    <!-- Outer border solid 0.8mm -->
+    <rect x="6" y="6" width="285" height="198" fill="none" stroke="#0f2d59" stroke-width="0.8"/>
+    
+    <!-- Inner border solid 1.5mm -->
+    <rect x="7.5" y="7.5" width="282" height="195" fill="none" stroke="#0f2d59" stroke-width="1.6"/>
+    
+    <!-- Decorative Corner Squares -->
+    <rect x="6" y="6" width="6" height="6" fill="#0f2d59"/>
+    <rect x="285" y="6" width="6" height="6" fill="#0f2d59"/>
+    <rect x="6" y="198" width="6" height="6" fill="#0f2d59"/>
+    <rect x="285" y="198" width="6" height="6" fill="#0f2d59"/>
+</svg>

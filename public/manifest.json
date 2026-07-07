@@ -1,0 +1,48 @@
+{
+  "name": "منصة تسيير التكوين المهني",
+  "short_name": "منصة تسيير",
+  "description": "نظام متكامل لتسيير التكوين والتعليم المهني — الجمهورية الجزائرية",
+  "theme_color": "#003870",
+  "background_color": "#0f172a",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "lang": "ar",
+  "dir": "rtl",
+  "categories": ["education", "government", "productivity"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "لوحة التحكم",
+      "short_name": "Dashboard",
+      "description": "الذهاب إلى لوحة التحكم",
+      "url": "/dashboard",
+      "icons": [{"src": "/assets/icons/icon-96x96.png", "sizes": "96x96"}]
+    },
+    {
+      "name": "رسائلي",
+      "short_name": "Messagerie",
+      "description": "البريد الداخلي",
+      "url": "/dashboard/messages",
+      "icons": [{"src": "/assets/icons/icon-96x96.png", "sizes": "96x96"}]
+    },
+    {
+      "name": "طلباتي",
+      "short_name": "Workflow",
+      "description": "طلبات الإجازات والترقيات",
+      "url": "/dashboard/workflow",
+      "icons": [{"src": "/assets/icons/icon-96x96.png", "sizes": "96x96"}]
+    }
+  ],
+  "icons": [
+    {"src": "/assets/icons/icon-72x72.png",   "sizes": "72x72",   "type": "image/png"},
+    {"src": "/assets/icons/icon-96x96.png",   "sizes": "96x96",   "type": "image/png"},
+    {"src": "/assets/icons/icon-128x128.png", "sizes": "128x128", "type": "image/png"},
+    {"src": "/assets/icons/icon-144x144.png", "sizes": "144x144", "type": "image/png"},
+    {"src": "/assets/icons/icon-152x152.png", "sizes": "152x152", "type": "image/png"},
+    {"src": "/assets/icons/icon-192x192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+    {"src": "/assets/icons/icon-384x384.png", "sizes": "384x384", "type": "image/png"},
+    {"src": "/assets/icons/icon-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
+  ]
+}

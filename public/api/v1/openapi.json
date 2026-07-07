@@ -1,0 +1,445 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "SGFEP RESTful API",
+    "description": "البوابة الموحدة لتكامل الأنظمة والربط الرقمي لمنصة SGFEP (وزارة التكوين والتعليم المهنيين). تدعم المصادقة المزدوجة عبر مفاتيح API وعلامات Bearer JWT.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "إدارة المعلوماتية - وزارة التكوين والتعليم المهنيين",
+      "email": "support@mfep.gov.dz"
+    }
+  },
+  "servers": [
+    {
+      "url": "/sig",
+      "description": "خادم XAMPP المحلي أو المسار الفرعي"
+    },
+    {
+      "url": "/",
+      "description": "خادم التطوير المباشر أو خادم الإنتاج الرئيسي"
+    }
+  ],
+  "paths": {
+    "/api/v1/auth/token": {
+      "post": {
+        "summary": "طلب رمز JWT جديد",
+        "description": "تبادل مفتاح API Key (سواء كان sgfep_live_... للحسابات أو sgfep_ext_... للمنصات الخارجية) للحصول على رمز Bearer JWT نشط وصالح للوصول الآمن.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "api_key": {
+                    "type": "string",
+                    "description": "مفتاح API الخاص بك للربط",
+                    "example": "sgfep_ext_8c6976e5b5410415bde908bd4dee15df"
+                  }
+                },
+                "required": [
+                  "api_key"
+                ]
+              }
+            },
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "api_key": {
+                    "type": "string",
+                    "description": "مفتاح API الخاص بك للربط",
+                    "example": "sgfep_ext_8c6976e5b5410415bde908bd4dee15df"
+                  }
+                },
+                "required": [
+                  "api_key"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "تم إصدار رمز JWT بنجاح",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": "success",
+                  "code": 200,
+                  "message": "JWT Token issued successfully.",
+                  "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0L3NpZyIsImlhdCI6MTc4MTQyOTgwOCwiZXhwIjoxNzgxNDU4NjA4LCJzdWIiOiJjbGllbnRfMSIsInVzZXJuYW1lIjoiYXBpX21paG5hdGkiLCJyb2xlIjoiYXBpX2clientIn0.xxx",
+                  "token_type": "Bearer",
+                  "expires_in": 28800,
+                  "user": {
+                    "username": "api_mihnati",
+                    "name": "Mihnati Integration"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "طلب غير صحيح (معلمة مفقودة)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": "error",
+                  "code": 400,
+                  "message": "Bad Request. Missing api_key parameter."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "مفتاح API غير صحيح أو موقوف",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": "error",
+                  "code": 401,
+                  "message": "Invalid API key or inactive user."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/verify": {
+      "get": {
+        "summary": "التحقق من صلاحية التوثيق",
+        "description": "التحقق من صحة وصلاحية رمز JWT أو الـ API Key وإرجاع بيانات الجهة المستدعية للـ API.",
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "تم التحقق بنجاح",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": "success",
+                  "code": 200,
+                  "message": "API Key verified successfully.",
+                  "authenticated_as": {
+                    "name": "Mihnati Integration",
+                    "username": "api_mihnati",
+                    "role": "api_client",
+                    "role_label": "منصة خارجية (API)"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "غير مصرح بالوصول",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": "error",
+                  "code": 401,
+                  "message": "Invalid JWT Token signature or structure."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/stagiaires": {
+      "get": {
+        "summary": "قائمة المتربصين",
+        "description": "عرض قائمة تفصيلية ومقسّمة بصفحات للمتربصين المسجلين في المؤسسات التكوينية مع خيارات التصفية المختلفة.",
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "رقم الصفحة المطلوبة",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "valide",
+            "in": "query",
+            "description": "الحالة التكوينية (1 للنشطين، 0 لغير النشطين)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "0",
+                "1"
+              ]
+            }
+          },
+          {
+            "name": "etablissement_id",
+            "in": "query",
+            "description": "معرف المؤسسة التكوينية في النظام",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "specialite_id",
+            "in": "query",
+            "description": "معرف التخصص التكويني في النظام",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "sexe",
+            "in": "query",
+            "description": "الجنس (M للذكور، F للإناث)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "M",
+                "F"
+              ]
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "description": "نص البحث للبحث في (الاسم، اللقب بالعربية أو الفرنسية)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "تم جلب البيانات بنجاح",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": "success",
+                  "code": 200,
+                  "pagination": {
+                    "total": 1250,
+                    "page": 1,
+                    "limit": 50,
+                    "total_pages": 25,
+                    "has_next": true,
+                    "has_prev": false
+                  },
+                  "count": 50,
+                  "data": [
+                    {
+                      "id": 1584,
+                      "num_acte": "2026/00452",
+                      "valide": 1,
+                      "groupe": "G1",
+                      "nom_ar": "محمد",
+                      "nom_fr": "MOHAMED",
+                      "prenom_ar": "بن علي",
+                      "prenom_fr": "BEN ALI",
+                      "date_naissance": "2004-05-12",
+                      "sexe": "M",
+                      "specialite_ar": "معلوماتية مطور ويب",
+                      "specialite_fr": "Informatique option Developpeur Web",
+                      "etablissement_ar": "المعهد الوطني المتخصص INSFP الجزائر",
+                      "etablissement_fr": "INSFP Alger",
+                      "section_nom": "INF-2026-DEVWEB",
+                      "offre_id": 85
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "توثيق مفقود أو خاطئ",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": "error",
+                  "code": 401,
+                  "message": "Invalid JWT Token signature or structure."
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "تم تجاوز عدد الطلبات المسموح بها في الدقيقة (Rate Limit Exceeded)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": "error",
+                  "code": 429,
+                  "message": "Too Many Requests."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/offres": {
+      "get": {
+        "summary": "قائمة عروض التكوين",
+        "description": "عرض قائمة عروض التكوين المتاحة مع فلاتر لتحديد العروض النشطة أو المعتمدة ولائياً ومركزياً.",
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "رقم الصفحة",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "etablissement_id",
+            "in": "query",
+            "description": "معرف المؤسسة التكوينية",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "specialite_id",
+            "in": "query",
+            "description": "معرف التخصص التكويني",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "session_id",
+            "in": "query",
+            "description": "معرف دورة التكوين",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "valide_centrale",
+            "in": "query",
+            "description": "العروض المقبولة مركزياً فقط (1)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "1"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "تم جلب عروض التكوين بنجاح",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": "success",
+                  "code": 200,
+                  "pagination": {
+                    "total": 340,
+                    "page": 1,
+                    "limit": 50,
+                    "total_pages": 7,
+                    "has_next": true,
+                    "has_prev": false
+                  },
+                  "count": 50,
+                  "data": [
+                    {
+                      "id": 85,
+                      "session_id": 12,
+                      "session_ar": "دورة فبراير 2026",
+                      "session_fr": "Session Fevrier 2026",
+                      "session_date_debut": "2026-02-25",
+                      "session_date_fin": "2026-06-30",
+                      "specialite_id": 412,
+                      "specialite_ar": "تطوير تطبيقات الويب والهاتف",
+                      "specialite_fr": "Developpement Web et Mobile",
+                      "specialite_code": "INF0704",
+                      "etablissement_id": 14,
+                      "etablissement_ar": "المعهد الوطني المتخصص INSFP رويبة",
+                      "etablissement_fr": "INSFP Rouiba",
+                      "mode_formation_ar": "حضوري (إقامي)",
+                      "mode_formation_fr": "Residentiel",
+                      "mode_formation_abr": "RES",
+                      "date_debut": "2026-02-25",
+                      "date_fin": "2028-08-31",
+                      "inscrits": 28,
+                      "places_prevues": 30,
+                      "nbr_groupes": 1,
+                      "valide_etablissement": true,
+                      "valide_dfep": true,
+                      "valide_centrale": true,
+                      "statut": "مقبول مركزيا"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "توثيق خاطئ أو مفقود",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": "error",
+                  "code": 401,
+                  "message": "Invalid or expired API authorization."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "أرسل الرمز المستخرج من /api/v1/auth/token في رأس الطلب بصيغة: Authorization: Bearer <jwt_token>"
+      },
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key",
+        "description": "أرسل مفتاح الـ API المباشر في رأس الطلب بصيغة: X-API-Key: sgfep_ext_..."
+      }
+    }
+  }
+}

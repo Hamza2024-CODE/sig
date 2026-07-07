@@ -1,0 +1,1 @@
+{"status":"error","error":"فشل الاتصال: Unable to establish communication with the <197.112.101.166:4900> server.\r\nUnable to establish communication with the <197.112.101.166:4900> server.\r\n\r\nSystem error code: 10054\r\nSystem error message:\r\nAn existing connection was forcibly closed by the remote host.\r\n\r\n\r\nDebugging information:\r\nGetHeader\r\n"}

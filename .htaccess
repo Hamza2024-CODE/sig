@@ -1,0 +1,12 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+# ── Memory safety net ───────────────────────────────────────────
+# The primary fix is LIMIT clauses in OffresRepository::getValidationOffers()
+# and getPrintOffres(). This directive is a secondary guard for XAMPP/Apache.
+<IfModule mod_php.c>
+    php_value memory_limit 256M
+    php_value max_execution_time 120
+</IfModule>
