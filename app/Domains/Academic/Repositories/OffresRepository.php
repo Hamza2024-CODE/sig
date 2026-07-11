@@ -43,10 +43,10 @@ class OffresRepository
             ? "LEFT JOIN etablissement e ON o.IDEts_Form = e.IDetablissement"
             : "";
         
-        $cacheKey = 'offres_stats_' . md5($scopeWhere . '_' . serialize($scopeParams));
+        $cacheKey = 'offres_stats_v2_' . md5($scopeWhere . '_' . serialize($scopeParams));
         
         return \App\Services\CacheService::remember($cacheKey, 600, function() use ($scopeWhere, $scopeParams, $joinEtab) {
-            // Combine total offers and total places into one query
+            // Total offers and places (scoped to current filter)
             $s = $this->db->prepare("
                 SELECT COUNT(*) as total_offres, COALESCE(SUM(o.nbrPrevision), 0) as total_places 
                 FROM offre o 
@@ -58,87 +58,81 @@ class OffresRepository
             $total_offres = (int)($res1['total_offres'] ?? 0);
             $total_places = (int)($res1['total_places'] ?? 0);
 
+            // ---- Get last 5 session IDs for recent stats ----
+            $sessRows = $this->db->query("
+                SELECT IDSession FROM session ORDER BY DateD DESC LIMIT 5
+            ")->fetchAll(PDO::FETCH_COLUMN);
+            $recentSessionIds = !empty($sessRows) ? $sessRows : [0];
+            $inPlaceholders = implode(',', array_fill(0, count($recentSessionIds), '?'));
+
+            // ---- Build scope for recent sessions ----
+            // If a specific filter is already applied (wilaya/etab/session), respect it
+            // Otherwise restrict to last 5 sessions for "recent" stats
             if ($scopeWhere === '1=1') {
-                // High-performance direct queries for national scope (admin/central)
-                // الناشطين (active) = المستمرون (apprenant) + المسجلون (candidat)
-                // ① Registered students (مسجلين) = all candidat rows
-                $s = $this->db->query("
-                    SELECT COUNT(*) as total_inscrits, 
-                           SUM(CASE WHEN Civ = 2 OR Civ = 'F' THEN 1 ELSE 0 END) as total_femmes 
-                    FROM candidat
-                ");
-                $res2 = $s->fetch(PDO::FETCH_ASSOC);
-                $total_inscrits = (int)($res2['total_inscrits'] ?? 0);
-                $total_femmes   = (int)($res2['total_femmes'] ?? 0);
-
-                // ② Active/Continuing students (الناشطين = المستمرون المسجلون في أقسام)
-                // = apprenant rows (those placed in a section with statut='actif')
-                // Use cached value if available since count(*) on 1.3M rows takes ~5s
-                $activeKey = 'offres_active_count_national';
-                $activeData = \App\Services\CacheService::remember($activeKey, 3600, function() {
-                    $sa = $this->db->query("
-                        SELECT COUNT(*) as actifs,
-                               SUM(CASE WHEN c.Civ = 2 OR c.Civ = 'F' THEN 1 ELSE 0 END) as actifs_femmes
-                        FROM apprenant a
-                        JOIN candidat c ON a.IDCandidat = c.IDCandidat
-                    ");
-                    return $sa->fetch(PDO::FETCH_ASSOC);
-                });
-                $total_active  = (int)($activeData['actifs'] ?? $total_inscrits);
-                $active_femmes = (int)($activeData['actifs_femmes'] ?? $total_femmes);
+                // National admin: show only recent sessions (last 5)
+                $sessionScopeWhere = "o.IDSession IN ($inPlaceholders)";
+                $sessionScopeParams = $recentSessionIds;
             } else {
-                // Scoped role (dfep/etablissement): count candidates linked to scoped offers
-                // Use subquery to let MySQL use IDOffre index on candidat table
-                $s = $this->db->prepare("
-                    SELECT COUNT(*) as total_inscrits,
-                           SUM(CASE WHEN c.Civ = 2 OR c.Civ = 'F' THEN 1 ELSE 0 END) as total_femmes
-                    FROM candidat c
-                    WHERE c.IDOffre IN (
-                        SELECT o.IDOffre FROM offre o
-                        $joinEtab
-                        WHERE $scopeWhere
-                    )
-                ");
-                $s->execute($scopeParams);
-                $res2 = $s->fetch(PDO::FETCH_ASSOC);
-                $total_inscrits = (int)($res2['total_inscrits'] ?? 0);
-                $total_femmes   = (int)($res2['total_femmes'] ?? 0);
-
-                // Active/Continuing (المستمرون المسجلون في أقسام) for scoped roles
-                $sa = $this->db->prepare("
-                    SELECT COUNT(DISTINCT a.IDapprenant) as actifs,
-                           SUM(CASE WHEN c.Civ = 2 OR c.Civ = 'F' THEN 1 ELSE 0 END) as actifs_femmes
-                    FROM apprenant a
-                    JOIN candidat c ON a.IDCandidat = c.IDCandidat
-                    WHERE c.IDOffre IN (
-                        SELECT o.IDOffre FROM offre o
-                        $joinEtab
-                        WHERE $scopeWhere
-                    )
-                ");
-                $sa->execute($scopeParams);
-                $resA = $sa->fetch(PDO::FETCH_ASSOC);
-                $total_active  = (int)($resA['actifs'] ?? $total_inscrits);
-                $active_femmes = (int)($resA['actifs_femmes'] ?? $total_femmes);
+                // Scoped role: keep existing filter, add recent session restriction
+                $sessionScopeWhere = "($scopeWhere) AND o.IDSession IN ($inPlaceholders)";
+                $sessionScopeParams = array_merge($scopeParams, $recentSessionIds);
             }
 
+            // ① Registered students (مسجلين) = candidats in recent sessions
+            $s2 = $this->db->prepare("
+                SELECT COUNT(*) as total_inscrits, 
+                       SUM(CASE WHEN c.Civ = 2 THEN 1 ELSE 0 END) as total_femmes 
+                FROM candidat c
+                WHERE c.IDOffre IN (
+                    SELECT o.IDOffre FROM offre o
+                    $joinEtab
+                    WHERE $sessionScopeWhere
+                )
+            ");
+            $s2->execute($sessionScopeParams);
+            $res2 = $s2->fetch(PDO::FETCH_ASSOC);
+            $total_inscrits = (int)($res2['total_inscrits'] ?? 0);
+            $total_femmes   = (int)($res2['total_femmes'] ?? 0);
+
+            // ② Active students = apprenant NOT in apprenant_fin (still studying) in recent sessions
+            $activeKey = 'offres_active_count_recent_' . md5($sessionScopeWhere . serialize($sessionScopeParams));
+            $activeData = \App\Services\CacheService::remember($activeKey, 3600, function() use ($sessionScopeWhere, $sessionScopeParams, $joinEtab) {
+                $sa = $this->db->prepare("
+                    SELECT COUNT(DISTINCT a.IDapprenant) as actifs,
+                           SUM(CASE WHEN c.Civ = 2 THEN 1 ELSE 0 END) as actifs_femmes
+                    FROM apprenant a
+                    JOIN candidat c ON a.IDCandidat = c.IDCandidat
+                    JOIN section sec ON a.IDSection = sec.IDSection
+                    JOIN offre o ON sec.IDOffre = o.IDOffre
+                    $joinEtab
+                    LEFT JOIN apprenant_fin af ON af.IDapprenant = a.IDapprenant
+                    WHERE $sessionScopeWhere
+                    AND af.IDapprenant IS NULL
+                ");
+                $sa->execute($sessionScopeParams);
+                return $sa->fetch(PDO::FETCH_ASSOC) ?: [];
+            });
+            $total_active  = (int)($activeData['actifs'] ?? $total_inscrits);
+            $active_femmes = (int)($activeData['actifs_femmes'] ?? $total_femmes);
+
             return [
-                'total_offres'       => $total_offres,
-                'total_places'       => $total_places,
-                'total_inscrits'     => $total_inscrits,   // مسجلين (registered candidats)
-                'inscrits_femmes'    => $total_femmes,
-                'total_actifs'       => $total_active,      // ناشطين = مستمرين (apprenants in sections)
-                'actifs_femmes'      => $active_femmes,
-                // Keep legacy keys for backward compatibility with templates
-                'total_diplomes'     => $total_active,
-                'diplomes_femmes'    => $active_femmes,
-                'taux_inscrits_prevu'=> $total_places > 0 ? round(($total_inscrits / $total_places) * 100) : 0,
-                'taux_actifs_prevu'  => $total_places > 0 ? round(($total_active / $total_places) * 100) : 0,
-                // Legacy key alias
-                'taux_diplomes_prevu'=> $total_places > 0 ? round(($total_active / $total_places) * 100) : 0,
+                'total_offres'        => $total_offres,
+                'total_places'        => $total_places,
+                'total_inscrits'      => $total_inscrits,    // مسجلين في آخر 5 دورات
+                'inscrits_femmes'     => $total_femmes,
+                'total_actifs'        => $total_active,       // ناشطين (لم يتخرجوا بعد)
+                'actifs_femmes'       => $active_femmes,
+                // Legacy keys
+                'total_diplomes'      => $total_active,
+                'diplomes_femmes'     => $active_femmes,
+                'taux_inscrits_prevu' => $total_places > 0 ? round(($total_inscrits / $total_places) * 100) : 0,
+                'taux_actifs_prevu'   => $total_places > 0 ? round(($total_active / $total_places) * 100) : 0,
+                'taux_diplomes_prevu' => $total_places > 0 ? round(($total_active / $total_places) * 100) : 0,
             ];
         });
     }
+
+
 
 
     /**
