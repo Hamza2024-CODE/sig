@@ -31,10 +31,19 @@ const API_ROUTES = [
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(STATIC_CACHE)
-      .then(cache => cache.addAll(STATIC_ASSETS.filter(url => {
-        // Skip missing assets (prevents install failure)
-        return fetch(url, {method: 'HEAD'}).then(r => r.ok).catch(() => false);
-      })))
+      .then(async cache => {
+        const promises = STATIC_ASSETS.map(async url => {
+          try {
+            const r = await fetch(url, {method: 'HEAD'});
+            return r.ok ? url : null;
+          } catch (e) {
+            return null;
+          }
+        });
+        const results = await Promise.all(promises);
+        const validUrls = results.filter(url => url !== null);
+        return cache.addAll(validUrls);
+      })
       .then(() => self.skipWaiting())
   );
 });

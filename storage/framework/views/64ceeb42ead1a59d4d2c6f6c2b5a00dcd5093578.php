@@ -1859,7 +1859,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // Register Service Worker for PWA
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-        navigator.serviceWorker.register(APP_URL + '/sw.js')
+        navigator.serviceWorker.register("<?php echo e(url('')); ?>/sw.js")
             .then(function(registration) {
                 console.log('ServiceWorker registration successful with scope: ', registration.scope);
             }, function(err) {

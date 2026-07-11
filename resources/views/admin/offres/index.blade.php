@@ -57,7 +57,7 @@ $is_etab     = in_array($role_code, ['etablissement', 'directeur', 'formateur'])
         <!-- Main Highlight -->
         <div class="col-12 col-xl-4">
             <div class="card border-0 shadow-sm rounded-4 h-100" style="background: linear-gradient(135deg, #482b8f 0%, #2e1c5b 100%); color: white; position: relative; overflow: hidden;">
-                <i class="fa-solid fa-chart-pie position-absolute" style="font-size: 150px; opacity: 0.05; top: -20px; left: -20px;"></i>
+                <i class="fa-solid fa-chart-pie position-absolute" style="font-size: 30px; display: inline-block; transform: scale(5); transform-origin: top left; opacity: 0.05; top: -20px; left: -20px;"></i>
                 <div class="card-body p-4 d-flex flex-column justify-content-center position-relative z-1">
                     <h6 class="text-white-50 fw-bold mb-1">إجمالي العروض المبرمجة</h6>
                     <h1 class="display-3 fw-bold mb-3 text-warning"><?= $stats['total_offres'] ?></h1>
@@ -231,8 +231,17 @@ $is_etab     = in_array($role_code, ['etablissement', 'directeur', 'formateur'])
     <!-- Detailed Offers Table -->
     <div class="card border-0 shadow-sm rounded-4 mb-4">
         <div class="card-header bg-white border-0 pt-4 pb-0 px-4 d-flex justify-content-between align-items-center">
-            <h5 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-list-check text-primary me-2"></i> تفاصيل الفروع والتخصصات المبرمجة</h5>
-            
+            <div class="d-flex align-items-center gap-2">
+                <h5 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-list-check text-primary me-2"></i> تفاصيل الفروع والتخصصات المبرمجة</h5>
+                <?php
+                $hasFilter = !empty($_GET['filter_etab']) || !empty($_GET['filter_session']) || !empty($_GET['filter_mode']) || !empty($_GET['filter_status']) || !empty($_GET['filter_wilaya']);
+                if ($hasFilter): ?>
+                    <a href="<?= route('offres.index') ?>" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold">
+                        <i class="fa-solid fa-xmark me-1"></i> إلغاء الفلاتر
+                    </a>
+                <?php endif; ?>
+            </div>
+
             <div class="d-flex gap-2 align-items-center no-print">
                 <button onclick="exportTableToExcel('offresTable', 'offres_formation.xls')" class="btn btn-sm btn-success rounded-pill px-3 fw-bold shadow-sm">
                     <i class="fa-solid fa-file-excel me-1"></i> Excel
@@ -243,80 +252,156 @@ $is_etab     = in_array($role_code, ['etablissement', 'directeur', 'formateur'])
                 <button onclick="window.print()" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold shadow-sm">
                     <i class="fa-solid fa-print me-1"></i> طباعة
                 </button>
-                <input type="text" id="search_offre" onkeyup="applyFilters()" class="form-control rounded-pill bg-light border-0 px-4" placeholder="بحث عن تخصص..." style="width: 250px;">
-                <button class="btn btn-light rounded-circle" data-bs-toggle="collapse" data-bs-target="#filterCollapse" title="تصفية متقدمة"><i class="fa-solid fa-filter"></i></button>
+                <input type="text" id="search_offre" onkeyup="applyFilters()" class="form-control rounded-pill bg-light border-0 px-4" placeholder="بحث عن تخصص..." style="width: 220px;">
+                <button class="btn btn-light rounded-circle <?= $hasFilter ? 'text-primary bg-primary-subtle border-primary' : '' ?>"
+                        id="filterToggleBtn" title="تصفية متقدمة" type="button" onclick="offresToggleFilter()">
+                    <i class="fa-solid fa-filter" id="filterToggleIcon"></i>
+                </button>
             </div>
         </div>
 
-        <!-- Collapsible Filters Bar -->
-        <div class="collapse show no-print border-bottom border-light px-4 pt-3 pb-3 bg-light-subtle" id="filterCollapse">
-            <div class="row g-3">
-                <!-- Session Filter -->
-                <div class="col-12 col-md-3">
-                    <label class="form-label small fw-bold text-muted mb-1">الدورة التكوينية (Session)</label>
-                    <select id="filter_session" class="form-select rounded-pill border-light bg-light" onchange="applyFilters()">
-                        <option value="">كل الدورات</option>
-                        <?php foreach($sessions as $s): ?>
-                            <option value="<?= $s['id'] ?>" <?= (isset($_GET['filter_session']) && $_GET['filter_session'] == $s['id']) ? 'selected' : '' ?>><?= htmlspecialchars($s['intitule_ar']) ?></option>
-                        <?php endforeach; ?>
-                    </select>
+        <!-- ════ Filter Bar (Server-Side GET Form) ════ -->
+        <div id="filterCollapse" class="no-print border-bottom border-light px-4 pt-3 pb-3 bg-light-subtle"
+             style="display:<?= $hasFilter ? 'block' : 'none' ?>;">
+            <form method="GET" action="" id="offresFilterForm">
+                <div class="row g-3 align-items-end">
+
+                    <?php if ($is_central): ?>
+                    <!-- ① الولاية (للمستوى المركزي فقط) -->
+                    <div class="col-12 col-md-2">
+                        <label class="form-label small fw-bold text-muted mb-1">
+                            <i class="fa-solid fa-map-marker-alt me-1 text-primary"></i>الولاية
+                        </label>
+                        <select name="filter_wilaya" id="filter_wilaya"
+                                class="form-select rounded-pill border-light bg-light"
+                                onchange="const etab = document.getElementById('filter_etab'); if(etab) etab.value = ''; const mode = document.getElementById('filter_mode'); if(mode) mode.value = ''; const sess = document.getElementById('filter_session'); if(sess) sess.value = ''; this.form.submit();">
+                            <option value="">كل الولايات</option>
+                            <?php
+                            // Load wilayas (DFEPs) list
+                            $dfepList = \App\Core\Database::getInstance()->getConnection()
+                                ->query("SELECT IDDFEP as id, Nom as nom FROM dfep ORDER BY Nom ASC")
+                                ->fetchAll(\PDO::FETCH_ASSOC);
+                            foreach ($dfepList as $dfep):
+                            ?>
+                            <option value="<?= $dfep['id'] ?>"
+                                <?= (isset($_GET['filter_wilaya']) && $_GET['filter_wilaya'] == $dfep['id']) ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($dfep['nom']) ?>
+                            </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <?php endif; ?>
+
+                    <?php if ($is_wilaya || $is_central): ?>
+                    <!-- ② المؤسسة -->
+                    <div class="col-12 col-md-3" id="filter_etab_wrapper">
+                        <label class="form-label small fw-bold text-muted mb-1">
+                            <i class="fa-solid fa-building-flag me-1 text-success"></i>المؤسسة التكوينية
+                        </label>
+                        <select name="filter_etab" id="filter_etab"
+                                class="form-select rounded-pill border-light bg-light"
+                                onchange="const mode = document.getElementById('filter_mode'); if(mode) mode.value = ''; const sess = document.getElementById('filter_session'); if(sess) sess.value = ''; this.form.submit();">
+                            <option value="">كل المؤسسات</option>
+                            <?php foreach ($etablissements as $e): ?>
+                            <option value="<?= htmlspecialchars($e['id']) ?>"
+                                <?= (isset($_GET['filter_etab']) && $_GET['filter_etab'] == $e['id']) ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($e['nom_ar']) ?>
+                            </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <?php endif; ?>
+
+                    <!-- ③ نمط التكوين -->
+                    <div class="col-12 col-md-2">
+                        <label class="form-label small fw-bold text-muted mb-1">
+                            <i class="fa-solid fa-chalkboard-user me-1 text-warning"></i>نمط التكوين
+                        </label>
+                        <select name="filter_mode" id="filter_mode"
+                                class="form-select rounded-pill border-light bg-light"
+                                onchange="const sess = document.getElementById('filter_session'); if(sess) sess.value = ''; this.form.submit();"
+                                <?= ((int)(session('user.IDMode_formation') ?? 0) === 10) ? 'disabled' : '' ?>>
+                            <?php if ((int)(session('user.IDMode_formation') ?? 0) === 10): ?>
+                                <option value="10" selected>تكوين عن طريق التمهين / Apprentissage</option>
+                            <?php else: ?>
+                                <option value="">كل الأنماط</option>
+                                <?php foreach ($modes_formation ?? [] as $m): ?>
+                                    <option value="<?= htmlspecialchars($m['id']) ?>" <?= (isset($_GET['filter_mode']) && $_GET['filter_mode'] == $m['id']) ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($m['nom_ar']) ?> / <?= htmlspecialchars($m['nom_fr']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </select>
+                    </div>
+
+                    <!-- ④ الدورة التكوينية -->
+                    <div class="col-12 col-md-3">
+                        <label class="form-label small fw-bold text-muted mb-1">
+                            <i class="fa-solid fa-calendar-days me-1 text-info"></i>الدورة التكوينية
+                        </label>
+                        <select name="filter_session" id="filter_session"
+                                class="form-select rounded-pill border-light bg-light"
+                                onchange="this.form.submit();">
+                            <option value="">كل الدورات</option>
+                            <?php foreach ($sessions as $s): ?>
+                            <option value="<?= $s['id'] ?>"
+                                <?= (isset($_GET['filter_session']) && $_GET['filter_session'] == $s['id']) ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($s['intitule_ar']) ?>
+                            </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <!-- ⑤ حالة العرض -->
+                    <div class="col-12 col-md-2">
+                        <label class="form-label small fw-bold text-muted mb-1">
+                            <i class="fa-solid fa-circle-check me-1 text-success"></i>الحالة
+                        </label>
+                        <select name="filter_status" id="filter_status"
+                                class="form-select rounded-pill border-light bg-light"
+                                onchange="this.form.submit();">
+                            <option value="">كل الحالات</option>
+                            <option value="brouillon"      <?= (($_GET['filter_status'] ?? '') === 'brouillon')      ? 'selected' : '' ?>>مسودة</option>
+                            <option value="soumis"         <?= (($_GET['filter_status'] ?? '') === 'soumis')         ? 'selected' : '' ?>>مرفوع للولاية</option>
+                            <option value="valide_wilaya"  <?= (($_GET['filter_status'] ?? '') === 'valide_wilaya')  ? 'selected' : '' ?>>مصادق عليه ولائياً</option>
+                            <option value="valide_central" <?= (($_GET['filter_status'] ?? '') === 'valide_central') ? 'selected' : '' ?>>مقبول مركزياً</option>
+                            <option value="rejete_wilaya"  <?= (($_GET['filter_status'] ?? '') === 'rejete_wilaya')  ? 'selected' : '' ?>>مرفوض ولائياً</option>
+                            <option value="rejete_central" <?= (($_GET['filter_status'] ?? '') === 'rejete_central') ? 'selected' : '' ?>>مرفوض مركزياً</option>
+                        </select>
+                    </div>
+
                 </div>
-                <!-- Etablissement Filter -->
-                <?php if ($is_wilaya || $is_central): ?>
-                <div class="col-12 col-md-3">
-                    <label class="form-label small fw-bold text-muted mb-1">المؤسسة التكوينية (Etablissement)</label>
-                    <select id="filter_etab" class="form-select rounded-pill border-light bg-light" onchange="applyFilters()">
-                        <option value="">كل المؤسسات</option>
-                        <?php foreach($etablissements as $e): ?>
-                            <option value="<?= htmlspecialchars($e['id']) ?>" <?= (isset($_GET['filter_etab']) && $_GET['filter_etab'] == $e['id']) ? 'selected' : '' ?>><?= htmlspecialchars($e['nom_ar']) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                <?php endif; ?>
-                <!-- Mode Filter -->
-                <div class="col-12 col-md-3">
-                    <label class="form-label small fw-bold text-muted mb-1">نمط التكوين (Mode)</label>
-                    <select id="filter_mode" class="form-select rounded-pill border-light bg-light" onchange="applyFilters()" <?= ((int)(session('user.IDMode_formation') ?? 0) === 10) ? 'disabled' : '' ?>>
-                        <?php if ((int)(session('user.IDMode_formation') ?? 0) === 10): ?>
-                            <option value="apprentissage" selected>تمهين / Apprentissage</option>
-                        <?php else: ?>
-                            <option value="">كل الأنماط</option>
-                            <option value="apprentissage" <?= (isset($_GET['filter_mode']) && $_GET['filter_mode'] === 'apprentissage') ? 'selected' : '' ?>>تمهين / Apprentissage</option>
-                            <option value="presentiel" <?= (isset($_GET['filter_mode']) && $_GET['filter_mode'] === 'presentiel') ? 'selected' : '' ?>>حضوري / Présentiel</option>
-                            <option value="residentiell" <?= (isset($_GET['filter_mode']) && $_GET['filter_mode'] === 'residentiell') ? 'selected' : '' ?>>إقامي / Résidentiel</option>
-                            <option value="continu" <?= (isset($_GET['filter_mode']) && $_GET['filter_mode'] === 'continu') ? 'selected' : '' ?>>تكوين متواصل / Continu</option>
-                        <?php endif; ?>
-                    </select>
-                </div>
-                <!-- Status Filter -->
-                <div class="col-12 col-md-3">
-                    <label class="form-label small fw-bold text-muted mb-1">حالة العرض (Statut)</label>
-                    <select id="filter_status" class="form-select rounded-pill border-light bg-light" onchange="applyFilters()">
-                        <option value="">كل الحالات</option>
-                        <option value="brouillon" <?= (isset($_GET['filter_status']) && $_GET['filter_status'] === 'brouillon') ? 'selected' : '' ?>>مسودة</option>
-                        <option value="soumis" <?= (isset($_GET['filter_status']) && $_GET['filter_status'] === 'soumis') ? 'selected' : '' ?>>مرفوع للولاية</option>
-                        <option value="valide_wilaya" <?= (isset($_GET['filter_status']) && $_GET['filter_status'] === 'valide_wilaya') ? 'selected' : '' ?>>مصادق عليه ولائيا</option>
-                        <option value="valide_central" <?= (isset($_GET['filter_status']) && $_GET['filter_status'] === 'valide_central') ? 'selected' : '' ?>>مقبول مركزيا</option>
-                        <option value="rejete_wilaya" <?= (isset($_GET['filter_status']) && $_GET['filter_status'] === 'rejete_wilaya') ? 'selected' : '' ?>>مرفوض ولائيا</option>
-                        <option value="rejete_central" <?= (isset($_GET['filter_status']) && $_GET['filter_status'] === 'rejete_central') ? 'selected' : '' ?>>مرفوض مركزيا</option>
-                    </select>
-                </div>
-            </div>
+            </form>
         </div>
 
         <div class="card-body p-0 mt-2">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0" id="offresTable" style="min-width: 1100px;">
+            <div class="table-responsive" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                <table class="table table-hover align-middle mb-0" id="offresTable" style="min-width: 2700px; table-layout: auto;">
                     <thead class="bg-light text-muted small fw-bold">
                         <tr>
-                            <th class="ps-4">رمز العرض</th>
-                            <th>الدورة التكوينية</th>
-                            <th>الفرع / التخصص المهني</th>
-                            <th>المؤسسة التكوينية</th>
+                            <th class="ps-4" style="min-width:110px;">رمز العرض</th>
+                            <th style="min-width:90px;">رمز التخصص</th>
+                            <th class="text-center" style="min-width:120px;">النمط</th>
+                            <th style="min-width:130px;">الدورة التكوينية</th>
+                            <th style="min-width:130px;">تاريخ التكوين</th>
+                            <th style="min-width:260px;">الفرع / التخصص المهني</th>
+                            <th style="min-width:200px;">المؤسسة التكوينية</th>
+                            <th class="text-center">عدد الأفواج</th>
+                            <th class="text-center">المستوى</th>
                             <th class="text-center">المستوى المطلوب</th>
+                            <th class="text-center">الدوام</th>
+                            <th class="text-center">صفة الفرع</th>
+                            <th class="text-center">التأطير</th>
+                            <th class="text-center">البرنامج</th>
+                            <th class="text-center">التجهيزات</th>
                             <th class="text-center">المدة</th>
                             <th class="text-center">المقاعد</th>
                             <th class="text-center">المسجلين</th>
+                            <th class="text-center">منهم إناث</th>
+                            <th class="text-center">الناجحين</th>
+                            <th class="text-center">منهم إناث</th>
+                            <th class="text-center">مصادقة المؤسسة</th>
+                            <th class="text-center">مصادقة المديرية</th>
                             <th class="text-center">الحالة</th>
                             <th class="pe-4 text-end no-print no-export">الإجراءات</th>
                         </tr>
@@ -324,20 +409,64 @@ $is_etab     = in_array($role_code, ['etablissement', 'directeur', 'formateur'])
                     <tbody>
                         <?php if(empty($offres_detail)): ?>
                             <tr>
-                                <td colspan="10" class="text-center py-4 text-muted">لا توجد عروض مبرمجة حالياً.</td>
+                                <td colspan="25" class="text-center py-4 text-muted">لا توجد عروض مبرمجة حالياً.</td>
                             </tr>
                         <?php else: ?>
                             <?php foreach($offres_detail as $od): ?>
-                            <tr style="transition: background 0.2s;">
+                            <tr style="transition: background 0.2s;" data-session-id="<?= htmlspecialchars($od['session_id'] ?? '') ?>" data-etab-id="<?= htmlspecialchars($od['etablissement_id'] ?? '') ?>">
                                 <td class="ps-4">
                                     <span class="badge bg-light text-primary border border-primary fw-bold" style="font-family:'Outfit'; font-size:0.8rem;"><?= $od['code'] ?></span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-dark border border-secondary fw-bold" style="font-family:'Outfit'; font-size:0.8rem;"><?= htmlspecialchars($od['spec_code'] ?: '—') ?></span>
+                                </td>
+                                <td class="text-center">
+                                    <?php
+                                    $modeId = (int)($od['mode_id'] ?? 1);
+                                    $modeName = $od['mode_formation'] ?? '';
+                                    // Pick badge color by mode
+                                    $modeBadgeClass = match($modeId) {
+                                        10 => 'bg-warning text-dark',   // تمهين
+                                        2  => 'bg-info text-white',     // متواصل
+                                        3  => 'bg-secondary text-white',// مسائي
+                                        default => 'bg-primary text-white'
+                                    };
+                                    $modeIcon = match($modeId) {
+                                        10 => 'fa-hammer',
+                                        2  => 'fa-rotate',
+                                        3  => 'fa-moon',
+                                        default => 'fa-chalkboard-user'
+                                    };
+                                    ?>
+                                    <span class="badge <?= $modeBadgeClass ?> rounded-pill px-2" style="font-size:0.72rem; white-space:nowrap;">
+                                        <i class="fa-solid <?= $modeIcon ?> me-1"></i><?= htmlspecialchars($modeName ?: '—') ?>
+                                    </span>
                                 </td>
                                 <td>
                                     <div class="fw-bold text-dark" style="font-size:0.85rem;"><?= htmlspecialchars($od['session_name'] ?: 'غير محددة') ?></div>
                                 </td>
                                 <td>
-                                    <div class="fw-bold text-dark mb-1" style="font-size:0.95rem;"><?= htmlspecialchars($od['spec_ar']) ?></div>
-                                    <div class="text-muted small" style="font-size:0.8rem;"><?= htmlspecialchars($od['spec_fr']) ?></div>
+                                    <div class="small fw-semibold text-muted" style="font-size:0.75rem; white-space: nowrap;">
+                                        <div>من: <?= $od['date_debut'] ? date('Y/m/d', strtotime($od['date_debut'])) : '—' ?></div>
+                                        <div>إلى: <?= $od['date_fin'] ? date('Y/m/d', strtotime($od['date_fin'])) : '—' ?></div>
+                                    </div>
+                                </td>
+                                <td style="max-width:260px; word-wrap:break-word; overflow-wrap:break-word; white-space:normal;">
+                                    <?php
+                                    // If mode is on-demand and custom names are set, use them
+                                    $hasCustomName = !empty($od['nom_spec_custom_ar']) || !empty($od['nom_spec_custom_fr']);
+                                    $dispAr = $hasCustomName && !empty($od['nom_spec_custom_ar'])
+                                        ? $od['nom_spec_custom_ar'] : $od['spec_ar'];
+                                    $dispFr = $hasCustomName && !empty($od['nom_spec_custom_fr'])
+                                        ? $od['nom_spec_custom_fr'] : $od['spec_fr'];
+                                    ?>
+                                    <div class="fw-bold text-dark mb-1" style="font-size:0.88rem; line-height:1.4; word-break:break-word;">
+                                        <?= htmlspecialchars($dispAr) ?>
+                                        <?php if ($hasCustomName): ?>
+                                            <span class="badge bg-purple-subtle text-purple border rounded-pill ms-1" style="font-size:0.65rem; background:#ede9fe; color:#7c3aed;"><i class="fa-solid fa-star fa-xs"></i> مخصص</span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="text-muted" style="font-size:0.78rem; line-height:1.35; word-break:break-word; white-space:normal; overflow-wrap:break-word;"><?= htmlspecialchars($dispFr) ?></div>
                                 </td>
                                 <td>
                                     <div class="text-muted fw-bold" style="font-size:0.8rem;"><i class="fa-solid fa-building-flag me-1"></i> <?= htmlspecialchars($od['centre']) ?></div>
@@ -345,17 +474,47 @@ $is_etab     = in_array($role_code, ['etablissement', 'directeur', 'formateur'])
                                         <div class="small text-warning fw-bold mt-1"><i class="fa-solid fa-handshake me-1"></i> منتدبة: <?= htmlspecialchars($od['centre_delegue']) ?></div>
                                     <?php endif; ?>
                                 </td>
+                                <td class="text-center">
+                                    <span class="fw-bold text-dark fs-6"><?= $od['nbr_groupe'] ?></span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-info text-white rounded-pill px-3"><?= htmlspecialchars($od['level_name'] ?: '—') ?></span>
+                                </td>
                                 <td>
                                     <div class="text-center">
                                         <span class="badge bg-secondary text-white rounded-pill px-3"><?= htmlspecialchars($od['niveau_txt']) ?></span>
                                     </div>
                                 </td>
-                                <td class="text-center fw-bold text-dark"><?= $od['duree'] ?></td>
+                                <td class="text-center">
+                                    <span class="badge bg-light text-dark border border-light-subtle rounded-pill px-2"><?= htmlspecialchars($od['regime_cours'] ?: '—') ?></span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-light text-primary border border-primary-subtle rounded-pill px-2"><?= htmlspecialchars($od['type_branche'] ?: '—') ?></span>
+                                </td>
+                                <td class="text-center">
+                                    <?= $od['toggle_encadrement'] ? '<span class="badge bg-success-subtle text-success border border-success rounded-pill px-2"><i class="fa-solid fa-check"></i></span>' : '<span class="badge bg-danger-subtle text-danger border border-danger rounded-pill px-2"><i class="fa-solid fa-xmark"></i></span>' ?>
+                                </td>
+                                <td class="text-center">
+                                    <?= $od['toggle_programme'] ? '<span class="badge bg-success-subtle text-success border border-success rounded-pill px-2"><i class="fa-solid fa-check"></i></span>' : '<span class="badge bg-danger-subtle text-danger border border-danger rounded-pill px-2"><i class="fa-solid fa-xmark"></i></span>' ?>
+                                </td>
+                                <td class="text-center">
+                                    <?= $od['toggle_equipement'] ? '<span class="badge bg-success-subtle text-success border border-success rounded-pill px-2"><i class="fa-solid fa-check"></i></span>' : '<span class="badge bg-danger-subtle text-danger border border-danger rounded-pill px-2"><i class="fa-solid fa-xmark"></i></span>' ?>
+                                </td>
+                                <td class="text-center fw-bold text-dark" style="white-space: nowrap;"><?= $od['duree'] ?></td>
                                 <td class="text-center fw-bold text-muted fs-6"><?= $od['places'] ?></td>
                                 <td class="text-center">
                                     <span class="badge <?= $od['inscrits'] >= $od['places'] ? 'bg-success' : ($od['inscrits'] > 0 ? 'bg-warning text-dark' : 'bg-danger') ?> rounded-pill" style="font-size:0.85rem;">
                                         <?= $od['inscrits'] ?> / <?= $od['places'] ?>
                                     </span>
+                                </td>
+                                <td class="text-center fw-bold text-dark"><?= $od['inscrits_females'] ?></td>
+                                <td class="text-center fw-bold text-success fs-6"><?= $od['laureats'] ?></td>
+                                <td class="text-center fw-bold text-pink fs-6" style="color: #ec4899;"><?= $od['laureats_females'] ?></td>
+                                <td class="text-center">
+                                    <?= $od['valide'] ? '<span class="badge bg-success-subtle text-success border border-success rounded-pill px-2"><i class="fa-solid fa-circle-check"></i> نعم</span>' : '<span class="badge bg-warning-subtle text-warning border border-warning rounded-pill px-2"><i class="fa-solid fa-circle-question"></i> لا</span>' ?>
+                                </td>
+                                <td class="text-center">
+                                    <?= $od['valid_dfp'] ? '<span class="badge bg-success-subtle text-success border border-success rounded-pill px-2"><i class="fa-solid fa-circle-check"></i> نعم</span>' : '<span class="badge bg-warning-subtle text-warning border border-warning rounded-pill px-2"><i class="fa-solid fa-circle-question"></i> لا</span>' ?>
                                 </td>
                                 <td class="text-center">
                                     <?php
@@ -365,19 +524,19 @@ $is_etab     = in_array($role_code, ['etablissement', 'directeur', 'formateur'])
                                             echo '<span class="badge bg-warning-subtle text-warning border border-warning rounded-pill px-3"><i class="fa-solid fa-pen-ruler me-1"></i> مسودة</span>';
                                             break;
                                         case 'مرفوع للولاية':
-                                            echo '<span class="badge bg-info-subtle text-info border border-info rounded-pill px-3"><i class="fa-solid fa-paper-plane me-1"></i> مرفوع للولاية</span>';
+                                            echo '<span class="badge bg-info-subtle text-info border border-info rounded-pill px-3"><i class="fa-solid fa-paper-plane me-1"></i> مرفوع</span>';
                                             break;
                                         case 'مصادق عليه ولائيا':
-                                            echo '<span class="badge bg-primary-subtle text-primary border border-primary rounded-pill px-3"><i class="fa-solid fa-circle-check me-1"></i> مصادق عليه ولائيا</span>';
+                                            echo '<span class="badge bg-primary-subtle text-primary border border-primary rounded-pill px-3"><i class="fa-solid fa-circle-check me-1"></i> مصادق ولائيا</span>';
                                             break;
                                         case 'مقبول مركزيا':
                                             echo '<span class="badge bg-success-subtle text-success border border-success rounded-pill px-3"><i class="fa-solid fa-award me-1"></i> مقبول مركزيا</span>';
                                             break;
                                         case 'مرفوض ولائيا':
-                                            echo '<span class="badge bg-danger-subtle text-danger border border-danger rounded-pill px-3 cursor-pointer" data-bs-toggle="tooltip" data-bs-html="true" title="سبب الرفض: ' . htmlspecialchars($od['motif_rejet'] ?? '') . '"><i class="fa-solid fa-circle-xmark me-1"></i> مرفوض ولائيا <i class="fa-solid fa-circle-info ms-1 text-danger"></i></span>';
+                                            echo '<span class="badge bg-danger-subtle text-danger border border-danger rounded-pill px-3 cursor-pointer" data-bs-toggle="tooltip" data-bs-html="true" title="سبب الرفض: ' . htmlspecialchars($od['motif_rejet'] ?? '') . '"><i class="fa-solid fa-circle-xmark me-1"></i> مرفوض ولائيا</span>';
                                             break;
                                         case 'مرفوض مركزيا':
-                                            echo '<span class="badge bg-danger-subtle text-danger border border-danger rounded-pill px-3 cursor-pointer" data-bs-toggle="tooltip" data-bs-html="true" title="سبب الرفض: ' . htmlspecialchars($od['motif_rejet'] ?? '') . '"><i class="fa-solid fa-circle-xmark me-1"></i> مرفوض مركزيا <i class="fa-solid fa-circle-info ms-1 text-danger"></i></span>';
+                                            echo '<span class="badge bg-danger-subtle text-danger border border-danger rounded-pill px-3 cursor-pointer" data-bs-toggle="tooltip" data-bs-html="true" title="سبب الرفض: ' . htmlspecialchars($od['motif_rejet'] ?? '') . '"><i class="fa-solid fa-circle-xmark me-1"></i> مرفوض مركزيا</span>';
                                             break;
                                         case 'مغلق':
                                             echo '<span class="badge bg-secondary-subtle text-secondary border border-secondary rounded-pill px-3"><i class="fa-solid fa-lock me-1"></i> مغلق</span>';
@@ -391,7 +550,7 @@ $is_etab     = in_array($role_code, ['etablissement', 'directeur', 'formateur'])
                                 <td class="pe-4 text-end no-print no-export">
                                     <!-- Hidden spans for client-side JS filtering -->
                                     <span class="d-none filter-session-id"><?= $od['session_id'] ?></span>
-                                    <span class="d-none filter-mode-val"><?= $od['mode_formation'] ?></span>
+                                    <span class="d-none filter-mode-val"><?= (int)$od['mode_id'] ?></span>
                                     <span class="d-none filter-status-val"><?php
                                         switch($status) {
                                             case 'مسودة': echo 'brouillon'; break;
@@ -826,7 +985,47 @@ $is_etab     = in_array($role_code, ['etablissement', 'directeur', 'formateur'])
                                             <?php endif; ?>
                                         </div>
                                     </div>
-                                    
+
+                                    <!-- Custom Specialty Name Panel — shown only when mode requires it -->
+                                    <div class="col-12" id="add_custom_spec_panel" style="display:none;">
+                                        <div class="p-3 rounded-3 border border-2" style="border-color:#7c3aed!important; background:linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);">
+                                            <div class="d-flex align-items-center gap-2 mb-3">
+                                                <span class="badge rounded-pill px-3 py-2 fw-bold" style="background:#7c3aed; font-size:0.82rem;">
+                                                    <i class="fa-solid fa-wand-magic-sparkles me-1"></i> تسمية التخصص حسب الطلب
+                                                </span>
+                                                <small class="text-muted">— عندما يكون النمط "حسب الطلب"، يمكنك كتابة تسمية مخصصة للتخصص</small>
+                                            </div>
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <label class="premium-label" style="color:#7c3aed;">
+                                                        <i class="fa-solid fa-language me-1"></i> تسمية التخصص بالعربية
+                                                    </label>
+                                                    <div class="input-group premium-input-group">
+                                                        <span class="input-group-text" style="background:#ede9fe; border-color:#c4b5fd;"><i class="fa-solid fa-pen-nib" style="color:#7c3aed;"></i></span>
+                                                        <input type="text" name="nom_spec_custom_ar" id="add_nom_spec_custom_ar"
+                                                            class="premium-input form-control"
+                                                            placeholder="مثال: تقني في الطبخ التقليدي الجزائري..."
+                                                            dir="rtl">
+                                                    </div>
+                                                    <small class="text-muted d-block mt-1"><i class="fa-solid fa-circle-info me-1"></i> التسمية بالعربية كما ستظهر في الوثائق الرسمية</small>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="premium-label" style="color:#7c3aed;">
+                                                        <i class="fa-solid fa-language me-1"></i> Intitulé de la spécialité (Français)
+                                                    </label>
+                                                    <div class="input-group premium-input-group">
+                                                        <span class="input-group-text" style="background:#ede9fe; border-color:#c4b5fd;"><i class="fa-solid fa-pen-nib" style="color:#7c3aed;"></i></span>
+                                                        <input type="text" name="nom_spec_custom_fr" id="add_nom_spec_custom_fr"
+                                                            class="premium-input form-control"
+                                                            placeholder="Ex: Technicien en cuisine traditionnelle..."
+                                                            dir="ltr">
+                                                    </div>
+                                                    <small class="text-muted d-block mt-1"><i class="fa-solid fa-circle-info me-1"></i> L'intitulé en français tel qu'il apparaîtra sur les documents officiels</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     <div class="col-md-3">
                                         <label class="premium-label">الطاقة الاستيعابية *</label>
                                         <div class="input-group premium-input-group">
@@ -1154,7 +1353,46 @@ $is_etab     = in_array($role_code, ['etablissement', 'directeur', 'formateur'])
                                             <?php endif; ?>
                                         </div>
                                     </div>
-                                    
+
+                                    <!-- Custom Specialty Name Panel — shown only when mode requires it -->
+                                    <div class="col-12" id="edit_custom_spec_panel" style="display:none;">
+                                        <div class="p-3 rounded-3 border border-2" style="border-color:#7c3aed!important; background:linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);">
+                                            <div class="d-flex align-items-center gap-2 mb-3">
+                                                <span class="badge rounded-pill px-3 py-2 fw-bold" style="background:#7c3aed; font-size:0.82rem;">
+                                                    <i class="fa-solid fa-wand-magic-sparkles me-1"></i> تسمية التخصص حسب الطلب
+                                                </span>
+                                                <small class="text-muted">— عندما يكون النمط "حسب الطلب"، يمكنك كتابة تسمية مخصصة للتخصص</small>
+                                            </div>
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <label class="premium-label" style="color:#7c3aed;">
+                                                        <i class="fa-solid fa-language me-1"></i> تسمية التخصص بالعربية
+                                                    </label>
+                                                    <div class="input-group premium-input-group">
+                                                        <span class="input-group-text" style="background:#ede9fe; border-color:#c4b5fd;"><i class="fa-solid fa-pen-nib" style="color:#7c3aed;"></i></span>
+                                                        <input type="text" name="nom_spec_custom_ar" id="edit_nom_spec_custom_ar"
+                                                            class="premium-input form-control"
+                                                            placeholder="مثال: تقني في الطبخ التقليدي الجزائري..."
+                                                            dir="rtl">
+                                                    </div>
+                                                    <small class="text-muted d-block mt-1"><i class="fa-solid fa-circle-info me-1"></i> التسمية بالعربية كما ستظهر في الوثائق الرسمية</small>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="premium-label" style="color:#7c3aed;">
+                                                        <i class="fa-solid fa-language me-1"></i> Intitulé de la spécialité (Français)
+                                                    </label>
+                                                    <div class="input-group premium-input-group">
+                                                        <span class="input-group-text" style="background:#ede9fe; border-color:#c4b5fd;"><i class="fa-solid fa-pen-nib" style="color:#7c3aed;"></i></span>
+                                                        <input type="text" name="nom_spec_custom_fr" id="edit_nom_spec_custom_fr"
+                                                            class="premium-input form-control"
+                                                            placeholder="Ex: Technicien en cuisine traditionnelle..."
+                                                            dir="ltr">
+                                                    </div>
+                                                    <small class="text-muted d-block mt-1"><i class="fa-solid fa-circle-info me-1"></i> L'intitulé en français tel qu'il apparaîtra sur les documents officiels</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                     <div class="col-md-3">
                                         <label class="premium-label">الطاقة الاستيعابية *</label>
                                         <div class="input-group premium-input-group">
@@ -1386,6 +1624,75 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 });
 
+/**
+ * Determines if a given mode_id allows custom specialty naming.
+ * The on-demand / à la demande modes allow free-form specialty names.
+ * We use the select option text to detect "حسب الطلب" substring,
+ * but also fall back to a known ID list if needed.
+ */
+function isOnDemandMode(modeId) {
+    const select = document.getElementById('add_offre_mode') || document.getElementById('edit_offre_mode');
+    if (select) {
+        for (let i = 0; i < select.options.length; i++) {
+            if (parseInt(select.options[i].value) === parseInt(modeId)) {
+                const label = select.options[i].textContent || '';
+                if (label.includes('حسب الطلب') || label.toLowerCase().includes('demande') || label.toLowerCase().includes('demand')) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+/**
+ * Show or hide the custom specialty name panel based on the selected mode.
+ * @param {string} prefix - 'add' or 'edit'
+ * @param {number} modeId - numeric mode ID
+ */
+function toggleCustomSpecPanel(prefix, modeId) {
+    const panel = document.getElementById(prefix + '_custom_spec_panel');
+    if (!panel) return;
+    const shouldShow = isOnDemandMode(modeId);
+    panel.style.display = shouldShow ? 'block' : 'none';
+    // Clear fields when hiding
+    if (!shouldShow) {
+        const arField = document.getElementById(prefix + '_nom_spec_custom_ar');
+        const frField = document.getElementById(prefix + '_nom_spec_custom_fr');
+        if (arField) arField.value = '';
+        if (frField) frField.value = '';
+    }
+    // Animate in
+    if (shouldShow) {
+        panel.style.opacity = '0';
+        panel.style.transform = 'translateY(-8px)';
+        setTimeout(() => {
+            panel.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+            panel.style.opacity = '1';
+            panel.style.transform = 'translateY(0)';
+        }, 10);
+    }
+}
+
+// Attach mode change listeners to both add and edit modal mode selects
+document.addEventListener('DOMContentLoaded', function() {
+    const addModeSelect = document.getElementById('add_offre_mode');
+    if (addModeSelect) {
+        addModeSelect.addEventListener('change', function() {
+            toggleCustomSpecPanel('add', parseInt(this.value));
+        });
+        // Initialize on page load
+        toggleCustomSpecPanel('add', parseInt(addModeSelect.value) || 1);
+    }
+
+    const editModeSelect = document.getElementById('edit_offre_mode');
+    if (editModeSelect) {
+        editModeSelect.addEventListener('change', function() {
+            toggleCustomSpecPanel('edit', parseInt(this.value));
+        });
+    }
+});
+
 function editOffre(o) {
     document.getElementById('edit_offre_id').value = o.id;
     document.getElementById('edit_offre_code').value = o.code;
@@ -1441,6 +1748,13 @@ function editOffre(o) {
         }
     }
     
+    // Populate custom specialty name fields
+    document.getElementById('edit_nom_spec_custom_ar').value = o.nom_spec_custom_ar || '';
+    document.getElementById('edit_nom_spec_custom_fr').value = o.nom_spec_custom_fr || '';
+    
+    // Show/hide custom spec panel based on mode loaded
+    toggleCustomSpecPanel('edit', parseInt(o.mode_id) || 1);
+    
     // Trigger Live Preview Update
     if (typeof window.updateLivePreview === 'function') {
         window.updateLivePreview('edit');
@@ -1462,65 +1776,75 @@ function showRejectionModal(id, type) {
     modal.show();
 }
 
-function applyFilters() {
-    var searchQuery = document.getElementById('search_offre').value.toLowerCase();
-    var sessionVal = document.getElementById('filter_session').value;
-    var etabValSelect = document.getElementById('filter_etab');
-    var etabVal = etabValSelect ? etabValSelect.value : '';
-    var modeVal = document.getElementById('filter_mode').value;
-    var statusVal = document.getElementById('filter_status').value;
+// ── Filter Panel Toggle ───────────────────────────────────────────────────
+function toggleFilterPanel(btn) {
+    var panel = document.getElementById('filterCollapse');
+    var icon  = document.getElementById('filterToggleIcon');
+    if (!panel) return;
 
-    var url = new URL(window.location.href);
-    var urlChanged = false;
-
-    if (url.searchParams.get('filter_session') !== (sessionVal || null)) {
-        if (sessionVal) url.searchParams.set('filter_session', sessionVal); else url.searchParams.delete('filter_session');
-        urlChanged = true;
+    var isHidden = (panel.style.display === 'none' || panel.style.display === '');
+    if (isHidden) {
+        panel.style.display = 'block';
+        if (icon) { icon.classList.add('text-primary'); }
+        if (btn)  { btn.classList.add('bg-primary-subtle'); }
+    } else {
+        panel.style.display = 'none';
+        if (icon) { icon.classList.remove('text-primary'); }
+        if (btn)  { btn.classList.remove('bg-primary-subtle'); }
     }
-    if (url.searchParams.get('filter_etab') !== (etabVal || null)) {
-        if (etabVal) url.searchParams.set('filter_etab', etabVal); else url.searchParams.delete('filter_etab');
-        urlChanged = true;
-    }
-    if (url.searchParams.get('filter_mode') !== (modeVal || null)) {
-        if (modeVal) url.searchParams.set('filter_mode', modeVal); else url.searchParams.delete('filter_mode');
-        urlChanged = true;
-    }
-    if (url.searchParams.get('filter_status') !== (statusVal || null)) {
-        if (statusVal) url.searchParams.set('filter_status', statusVal); else url.searchParams.delete('filter_status');
-        urlChanged = true;
-    }
-
-    if (urlChanged) {
-        // Preserve search in URL when reloading if there's any
-        if (searchQuery) url.searchParams.set('search', searchQuery); else url.searchParams.delete('search');
-        window.location.href = url.toString();
-        return;
-    }
-
-    // Client-side text search filtering on already loaded server-filtered rows
-    var rows = document.querySelectorAll('#offresTable tbody tr');
-    rows.forEach(function(row) {
-        if (row.querySelector('td[colspan]')) return;
-        var textContent = row.textContent.toLowerCase();
-        var matchesSearch = textContent.indexOf(searchQuery) > -1;
-        if (matchesSearch) {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
-        }
-    });
 }
 
-// Proactive restoration of search from URL on page load
+// applyFilters: بحث نصي فقط في الجدول (باقي الفلاتر server-side)
+function applyFilters() {
+    var searchQuery = (document.getElementById('search_offre')?.value ?? '').toLowerCase().trim();
+    var rows = document.querySelectorAll('#offresTable tbody tr');
+    var visibleCount = 0;
+
+    rows.forEach(function(row) {
+        if (row.querySelector('td[colspan]')) { row.style.display = ''; return; }
+        var matches = !searchQuery || row.textContent.toLowerCase().indexOf(searchQuery) > -1;
+        row.style.display = matches ? '' : 'none';
+        if (matches) visibleCount++;
+    });
+
+    var emptyMsg = document.getElementById('offresEmptyMsg');
+    if (emptyMsg) emptyMsg.style.display = visibleCount === 0 ? '' : 'none';
+}
+
+
+// ── Filter Panel Toggle (No Bootstrap) ─────────────────────────────
+function offresToggleFilter() {
+    var p = document.getElementById('filterCollapse');
+    if (!p) return;
+    // getComputedStyle to handle both inline style and CSS class display values
+    var isVisible = window.getComputedStyle(p).display !== 'none';
+    p.style.display = isVisible ? 'none' : 'block';
+    var icon = document.getElementById('filterToggleIcon');
+    if (icon) icon.style.color = isVisible ? '' : '#0d6efd';
+}
+
+
 document.addEventListener("DOMContentLoaded", function() {
     var urlParams = new URLSearchParams(window.location.search);
+
+    // Restore search text
     var searchVal = urlParams.get('search');
     if (searchVal) {
         var input = document.getElementById('search_offre');
-        if (input) {
-            input.value = searchVal;
-            applyFilters();
-        }
+        if (input) { input.value = searchVal; applyFilters(); }
+    }
+
+    // Auto-open filter panel if any filter was active
+    var hasActiveFilter = urlParams.get('filter_session') || urlParams.get('filter_etab') ||
+                          urlParams.get('filter_mode')    || urlParams.get('filter_status') ||
+                          urlParams.get('filter_open');
+    if (hasActiveFilter) {
+        var panel = document.getElementById('filterCollapse');
+        var icon  = document.getElementById('filterToggleIcon');
+        var btn   = document.getElementById('filterToggleBtn');
+        if (panel) panel.style.display = 'block';
+        if (icon)  icon.classList.add('text-primary');
+        if (btn)   btn.classList.add('bg-primary-subtle');
     }
 });
 </script>

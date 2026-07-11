@@ -16,6 +16,15 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // ✅ ضبط APP_URL ديناميكياً لتفادي مشاكل الأنفاق ورابط localhost.run المتغير
+        if (isset($_SERVER['HTTP_X_FORWARDED_HOST'])) {
+            $proto = $_SERVER['HTTP_X_FORWARDED_PROTO'] ?? 'https';
+            config(['app.url' => $proto . '://' . $_SERVER['HTTP_X_FORWARDED_HOST']]);
+        } elseif (isset($_SERVER['HTTP_HOST'])) {
+            $proto = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+            config(['app.url' => $proto . '://' . $_SERVER['HTTP_HOST']]);
+        }
+
         // ✅ منع lazy loading في بيئة التطوير → يكشف N+1 فوراً
         if ($this->app->environment('local', 'testing')) {
             Model::preventLazyLoading(true);

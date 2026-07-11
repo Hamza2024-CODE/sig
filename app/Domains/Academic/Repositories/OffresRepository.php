@@ -237,29 +237,36 @@ class OffresRepository
     {
         $stmtDet = $this->db->prepare("
             SELECT o.IDOffre as id, o.IDSpecialite as specialite_id,
-                   sp.Nom as spec_ar, sp.NomFr as spec_fr,
+                   sp.Nom as spec_ar, sp.NomFr as spec_fr, sp.CodeSpec as spec_code,
+                   nf.Nom as level_name,
                    e.Nom as centre, e.IDetablissement as etablissement_id,
                    e.IDDFEP as etab_dfep_id,
                    o.IDEts_FormM as etablissement_delegue_id,
                    ed.Nom as centre_delegue,
                    sess.Nom as session_name, sess.IDSession as session_id,
-                   o.NbrInscr as inscrits, o.nbrPrevision as places,
+                   o.NbrInscr as inscrits, o.NbrInscrf as inscrits_females,
+                   o.nbrPrevision as places,
+                   o.Nbrinco as laureats, o.Nbrincof as laureats_females,
                    o.DateD as date_debut, o.DateF as date_fin,
                    o.DateSelection as date_debut_selection, o.DateVisiteMedical as date_examen_medical,
                    o.DateVisiteAtelier as date_visite_ateliers,
                    o.Valide, o.ValidDfp, o.ValideCentral,
                    o.Obs_Dfep, o.Obs_Central, o.Obs,
                    mf.Nom as mode_formation, o.IDMode_formation,
-                   o.nbrGroupe, o.encadrement, o.Programme as programme, o.Equipement as equipement
+                   o.nbrGroupe, o.encadrement, o.Programme as programme, o.Equipement as equipement,
+                   o.Nom_specialite_carte as nom_spec_custom_ar,
+                   o.Nom_specialite_cartefr as nom_spec_custom_fr,
+                   o.IDqualification_dplm
             FROM offre o
             LEFT JOIN specialite    sp   ON o.IDSpecialite    = sp.IDSpecialite
+            LEFT JOIN niveau_fp     nf   ON sp.IDNiveau_Fp    = nf.IDNiveau_Fp
             LEFT JOIN etablissement e    ON o.IDEts_Form      = e.IDetablissement
             LEFT JOIN etablissement ed   ON o.IDEts_FormM     = ed.IDetablissement
             LEFT JOIN session       sess ON o.IDSession       = sess.IDSession
             LEFT JOIN mode_formation mf  ON o.IDMode_formation = mf.IDMode_formation
             WHERE $scopeWhere
-            ORDER BY o.IDOffre DESC
-            LIMIT 500
+            ORDER BY e.IDDFEP ASC, e.IDetablissement ASC, o.IDOffre DESC
+            LIMIT 2000
         ");
         $stmtDet->execute($scopeParams);
         return $stmtDet->fetchAll(PDO::FETCH_ASSOC);
@@ -406,12 +413,15 @@ class OffresRepository
     {
         $baseQuery = "
             SELECT o.IDOffre as id, o.IDSpecialite as specialite_id,
-                   sp.Nom as spec_ar, sp.NomFr as spec_fr,
+                   sp.Nom as spec_ar, sp.NomFr as spec_fr, sp.CodeSpec as spec_code,
+                   nf.Nom as level_name,
                    e.Nom as centre, e.IDetablissement as etablissement_id,
                    o.IDEts_FormM as etablissement_delegue_id,
                    ed.Nom as centre_delegue,
                    sess.Nom as session_name, sess.IDSession as session_id,
-                   o.NbrInscr as inscrits, o.nbrPrevision as places,
+                   o.NbrInscr as inscrits, o.NbrInscrf as inscrits_females,
+                   o.nbrPrevision as places,
+                   o.Nbrinco as laureats, o.Nbrincof as laureats_females,
                    o.DateD as date_debut, o.DateF as date_fin,
                    o.DateSelection as date_debut_selection, o.DateVisiteMedical as date_examen_medical,
                    o.DateVisiteAtelier as date_visite_ateliers,
@@ -421,6 +431,7 @@ class OffresRepository
                    o.nbrGroupe, o.encadrement, o.Programme as programme, o.Equipement as equipement
             FROM offre o
             LEFT JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
+            LEFT JOIN niveau_fp nf ON sp.IDNiveau_Fp = nf.IDNiveau_Fp
             LEFT JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
             LEFT JOIN etablissement ed ON o.IDEts_FormM = ed.IDetablissement
             LEFT JOIN session sess ON o.IDSession = sess.IDSession
@@ -694,13 +705,14 @@ class OffresRepository
             0,                                   // Nbrinco
             0,                                   // Nbrincof
             0,                                   // ValidationDfp
-            null,                                // Nom_specialite_carte
+            $data['nom_spec_custom_ar'] ?? null, // Nom_specialite_carte
             $data['qualification_dplm_id'] ?? 0, // IDqualification_dplm
             null,                                // Obs_Dfep
             null,                                // Obs_Central
-            null                                 // Nom_specialite_cartefr
+            $data['nom_spec_custom_fr'] ?? null  // Nom_specialite_cartefr
         ]);
     }
+
 
 
     /**
@@ -713,7 +725,8 @@ class OffresRepository
             SET IDSession = ?, IDSpecialite = ?, IDMode_formation = ?, DateD = ?, DateF = ?, nbrPrevision = ?,
                 DateSelection = ?, DateVisiteMedical = ?, DateVisiteAtelier = ?, nbrGroupe = ?,
                 encadrement = ?, Programme = ?, Equipement = ?, IDEts_FormM = ?, Obs = ?,
-                IDqualification_dplm = ?
+                IDqualification_dplm = ?,
+                Nom_specialite_carte = ?, Nom_specialite_cartefr = ?
             WHERE IDOffre = ?
         ");
         return $stmt->execute([
@@ -722,6 +735,8 @@ class OffresRepository
             $data['date_debut_selection'], $data['date_examen_medical'], $data['date_visite_ateliers'], $data['nbr_groupe'],
             $data['encadrement'], $data['programme'], $data['equipement'], $data['etablissement_delegue_id'], $data['obs'],
             $data['qualification_dplm_id'] ?? 0,
+            $data['nom_spec_custom_ar'] ?? null,
+            $data['nom_spec_custom_fr'] ?? null,
             $data['id']
         ]);
     }

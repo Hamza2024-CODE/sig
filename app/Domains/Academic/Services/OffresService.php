@@ -40,6 +40,23 @@ class OffresService
         // 1. Resolve header wilaya name
         $wilayaName = $this->repository->getWilayaName($roleCode, $etabId, $dfepId);
 
+        // Enforce role-based restrictions on GET filters (Security/Scope Guard)
+        if (in_array($roleCode, ['etablissement', 'directeur', 'formateur'])) {
+            $getParams['filter_etab'] = $etabId;
+            $getParams['filter_wilaya'] = null;
+        } elseif ($roleCode === 'dfep') {
+            $getParams['filter_wilaya'] = $dfepId;
+            if (!empty($getParams['filter_etab'])) {
+                $checkEtabId = (int)$getParams['filter_etab'];
+                $db = \App\Core\Database::getInstance()->getConnection();
+                $stmtC = $db->prepare("SELECT COUNT(*) FROM etablissement WHERE IDetablissement = ? AND IDDFEP = ?");
+                $stmtC->execute([$checkEtabId, $dfepId]);
+                if ((int)$stmtC->fetchColumn() === 0) {
+                    $getParams['filter_etab'] = null;
+                }
+            }
+        }
+
         // 2. Set up scoping conditions
         $whereConditions = [];
         $scopeParams = [];
@@ -75,12 +92,17 @@ class OffresService
         if (!empty($getParams['filter_mode'])) {
             $modeStr = trim($getParams['filter_mode']);
             if ($modeStr === 'apprentissage') {
-                $whereConditions[] = "o.IDMode_formation IN ('2', '10')";
+                $whereConditions[] = "o.IDMode_formation IN (2, 10)";
             } elseif ($modeStr === 'presentiel') {
-                $whereConditions[] = "o.IDMode_formation = '1'";
+                $whereConditions[] = "o.IDMode_formation IN (1, 4, 5, 6, 7, 8, 9)";
+            } elseif ($modeStr === 'residentiell') {
+                $whereConditions[] = "o.IDMode_formation = 3";
+            } elseif ($modeStr === 'continu') {
+                $whereConditions[] = "o.IDMode_formation = 2";
             } else {
+                // Direct numeric ID (if ever passed as integer string)
                 $whereConditions[] = "o.IDMode_formation = ?";
-                $scopeParams[] = $modeStr;
+                $scopeParams[] = (int)$modeStr;
             }
         }
         if (!empty($getParams['filter_status'])) {
@@ -115,15 +137,83 @@ class OffresService
             $offresDetail[] = $this->formatOffreRow($rd);
         }
 
-        // 5. Fetch dropdown lists
+        // 5. Fetch dropdown lists (Cascading Filters)
         $specialites = $this->repository->getModalSpecialites();
-        $etablissements = $this->repository->getModalEtablissements($roleCode, $etabId, $dfepId);
-        $sessions = $this->repository->getModalSessions();
-        // Study conditions dropdowns — sourced from DB
+        $db = \App\Core\Database::getInstance()->getConnection();
+
+        // 5.1 Etablissements filtered by Wilaya
+        if (!empty($getParams['filter_wilaya'])) {
+            $filterDfepId = (int)$getParams['filter_wilaya'];
+            $stmtE = $db->prepare("SELECT IDetablissement as id, Nom as nom_ar FROM etablissement WHERE IDDFEP = ? ORDER BY Nom ASC");
+            $stmtE->execute([$filterDfepId]);
+            $etablissements = $stmtE->fetchAll(\PDO::FETCH_ASSOC);
+        } else {
+            $etablissements = $this->repository->getModalEtablissements($roleCode, $etabId, $dfepId);
+        }
+
+        // 5.2 Modes filtered by active Wilaya and Etablissement filters
+        $modeConds = ["1=1"];
+        $modeParams = [];
+        if (!empty($getParams['filter_wilaya'])) {
+            $modeConds[] = "o.IDEts_Form IN (SELECT IDetablissement FROM etablissement WHERE IDDFEP = ?)";
+            $modeParams[] = (int)$getParams['filter_wilaya'];
+        }
+        if (!empty($getParams['filter_etab'])) {
+            $modeConds[] = "o.IDEts_Form = ?";
+            $modeParams[] = (int)$getParams['filter_etab'];
+        }
+        $modeCondStr = implode(" AND ", $modeConds);
+        $stmtM = $db->prepare("
+            SELECT DISTINCT mf.IDMode_formation as id, mf.Nom as nom_ar, mf.NomFr as nom_fr 
+            FROM offre o 
+            JOIN mode_formation mf ON o.IDMode_formation = mf.IDMode_formation 
+            WHERE $modeCondStr 
+            ORDER BY mf.NomOrd ASC, mf.IDMode_formation ASC
+        ");
+        $stmtM->execute($modeParams);
+        $modes_formation = $stmtM->fetchAll(\PDO::FETCH_ASSOC);
+
+        // 5.3 Sessions filtered by active Wilaya, Etablissement, and Mode filters
+        $sessConds = ["1=1"];
+        $sessParams = [];
+        if (!empty($getParams['filter_wilaya'])) {
+            $sessConds[] = "o.IDEts_Form IN (SELECT IDetablissement FROM etablissement WHERE IDDFEP = ?)";
+            $sessParams[] = (int)$getParams['filter_wilaya'];
+        }
+        if (!empty($getParams['filter_etab'])) {
+            $sessConds[] = "o.IDEts_Form = ?";
+            $sessParams[] = (int)$getParams['filter_etab'];
+        }
+        if (!empty($getParams['filter_mode'])) {
+            $modeStr = trim($getParams['filter_mode']);
+            if ($modeStr === 'apprentissage') {
+                $sessConds[] = "o.IDMode_formation IN (2, 10)";
+            } elseif ($modeStr === 'presentiel') {
+                $sessConds[] = "o.IDMode_formation IN (1, 4, 5, 6, 7, 8, 9)";
+            } elseif ($modeStr === 'residentiell') {
+                $sessConds[] = "o.IDMode_formation = 3";
+            } elseif ($modeStr === 'continu') {
+                $sessConds[] = "o.IDMode_formation = 2";
+            } else {
+                $sessConds[] = "o.IDMode_formation = ?";
+                $sessParams[] = (int)$modeStr;
+            }
+        }
+        $sessCondStr = implode(" AND ", $sessConds);
+        $stmtS = $db->prepare("
+            SELECT DISTINCT s.IDSession as id, s.Nom as intitule_ar, s.NomFr as intitule_fr 
+            FROM offre o 
+            JOIN session s ON o.IDSession = s.IDSession 
+            WHERE $sessCondStr 
+            ORDER BY s.DateD DESC
+        ");
+        $stmtS->execute($sessParams);
+        $sessions = $stmtS->fetchAll(\PDO::FETCH_ASSOC);
+
+
         $qualifications_diplomes = $this->repository->getModalQualificationsDiplomes();
         $regimes_hebergement     = $this->repository->getModalRegimesHebergement();
         $regimes_cours           = $this->repository->getModalRegimesCours();
-        $modes_formation         = $this->repository->getModalModesFormation();
 
         return [
             'stats' => $stats,
@@ -266,6 +356,8 @@ class OffresService
             'etablissement_delegue_id' => $etabDelegueId,
             'obs' => $obs,
             'qualification_dplm_id' => $qualifDplmId,
+            'nom_spec_custom_ar' => trim($postData['nom_spec_custom_ar'] ?? '') ?: null,
+            'nom_spec_custom_fr' => trim($postData['nom_spec_custom_fr'] ?? '') ?: null,
         ];
 
         $sessionIdInput = $postData['session_id'] ?? '';
@@ -415,6 +507,8 @@ class OffresService
             'etablissement_delegue_id' => $etabDelegueId,
             'obs' => $obs,
             'qualification_dplm_id' => $qualifDplmId,
+            'nom_spec_custom_ar' => trim($postData['nom_spec_custom_ar'] ?? '') ?: null,
+            'nom_spec_custom_fr' => trim($postData['nom_spec_custom_fr'] ?? '') ?: null,
         ];
 
         $sessionIdInput = $postData['session_id'] ?? '';
@@ -678,6 +772,8 @@ class OffresService
             'specialite_id'=> $rd['specialite_id'],
             'spec_ar'      => $rd['spec_ar'],
             'spec_fr'      => $rd['spec_fr'],
+            'spec_code'    => $rd['spec_code'] ?? '',
+            'level_name'   => $rd['level_name'] ?? $niveau_txt,
             'centre'       => $rd['centre'],
             'centre_delegue'=> $rd['centre_delegue'] ?? '',
             'session_id'   => $rd['session_id'],
@@ -693,6 +789,12 @@ class OffresService
             'statut_offre' => $statut,
             'places'       => (int)($rd['places'] ?? 0),
             'inscrits'     => (int)($rd['inscrits'] ?? 0),
+            'inscrits_females' => (int)($rd['inscrits_females'] ?? 0),
+            'laureats'     => (int)($rd['laureats'] ?? 0),
+            'laureats_females' => (int)($rd['laureats_females'] ?? 0),
+            'nbr_groupe'   => (int)($rd['nbrGroupe'] ?? 1),
+            'valide'       => (int)($rd['Valide'] ?? 0),
+            'valid_dfp'    => (int)($rd['ValidDfp'] ?? 0),
             'diplome_vise' => $diplome,
             'niveau'       => $niveau,
             'niveau_txt'   => $niveau_txt,
@@ -707,7 +809,9 @@ class OffresService
             'date_validation_direction' => null,
             'valide_par_central' => $rd['ValideCentral'],
             'date_approbation_centrale' => null,
-            'motif_rejet' => $rd['Obs_Central'] ?: ($rd['Obs_Dfep'] ?: null)
+            'motif_rejet' => $rd['Obs_Central'] ?: ($rd['Obs_Dfep'] ?: null),
+            'nom_spec_custom_ar' => $rd['nom_spec_custom_ar'] ?? null,
+            'nom_spec_custom_fr' => $rd['nom_spec_custom_fr'] ?? null,
         ];
     }
 }
