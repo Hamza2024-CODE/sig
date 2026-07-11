@@ -54,20 +54,28 @@ $is_etab     = in_array($role_code, ['etablissement', 'directeur', 'formateur'])
 
     <!-- Bento Grid High-Level Statistics -->
     <div class="row g-4 mb-4">
-        <!-- Main Highlight -->
+        <!-- Main Highlight: Total Offers -->
         <div class="col-12 col-xl-4">
             <div class="card border-0 shadow-sm rounded-4 h-100" style="background: linear-gradient(135deg, #482b8f 0%, #2e1c5b 100%); color: white; position: relative; overflow: hidden;">
                 <i class="fa-solid fa-chart-pie position-absolute" style="font-size: 30px; display: inline-block; transform: scale(5); transform-origin: top left; opacity: 0.05; top: -20px; left: -20px;"></i>
                 <div class="card-body p-4 d-flex flex-column justify-content-center position-relative z-1">
-                    <h6 class="text-white-50 fw-bold mb-1">إجمالي العروض المبرمجة</h6>
-                    <h1 class="display-3 fw-bold mb-3 text-warning"><?= $stats['total_offres'] ?></h1>
-                    
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="text-white-50 small">المقاعد المتاحة</span>
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <h6 class="text-white-50 fw-bold mb-0">إجمالي العروض المبرمجة</h6>
+                        <span class="badge rounded-pill" style="background:rgba(255,255,255,0.15); font-size:.65rem;">كل الدورات</span>
+                    </div>
+                    <h1 class="display-3 fw-bold mb-1 text-warning"><?= number_format($stats['total_offres']) ?></h1>
+                    <p class="text-white-50 small mb-3">عرض تكوين مبرمج في قاعدة البيانات</p>
+
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="text-white-50 small"><i class="fa-solid fa-chair me-1"></i>المقاعد المتاحة (nbrPrevision)</span>
                         <span class="fw-bold fs-5" dir="ltr"><?= number_format($stats['total_places'], 0, ',', ' ') ?></span>
                     </div>
-                    <div class="progress" style="height: 6px; background-color: rgba(255,255,255,0.1);">
+                    <div class="progress mb-2" style="height: 6px; background-color: rgba(255,255,255,0.1);">
                         <div class="progress-bar bg-warning" role="progressbar" style="width: 100%;"></div>
+                    </div>
+                    <div class="text-white-50" style="font-size:.7rem;">
+                        <i class="fa-solid fa-circle-info me-1"></i>
+                        إجمالي المقاعد المخصصة في جميع عروض التكوين المدخلة
                     </div>
                 </div>
             </div>
@@ -76,61 +84,105 @@ $is_etab     = in_array($role_code, ['etablissement', 'directeur', 'formateur'])
         <!-- Secondary Stats -->
         <div class="col-12 col-xl-8">
             <div class="row g-4">
+
+                <!-- Inscrits -->
                 <div class="col-md-6 col-lg-3">
-                    <div class="card border-0 shadow-sm rounded-4 h-100" style="background: rgba(255,255,255,0.9); backdrop-filter: blur(10px);">
-                        <div class="card-body p-4 text-center">
-                            <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 50px; height: 50px; background-color: rgba(59, 130, 246, 0.1); color: #3b82f6;">
-                                <i class="fa-solid fa-users fs-4"></i>
+                    <div class="card border-0 shadow-sm rounded-4 h-100" style="background: rgba(255,255,255,0.95);">
+                        <div class="card-body p-3 d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div class="rounded-circle d-inline-flex align-items-center justify-content-center" style="width:40px; height:40px; background:rgba(59,130,246,0.1); color:#3b82f6; flex-shrink:0;">
+                                    <i class="fa-solid fa-users"></i>
+                                </div>
+                                <span class="badge rounded-pill" style="background:#e8f0fe; color:#1a73e8; font-size:.6rem;">آخر 5 دورات</span>
                             </div>
-                            <h6 class="text-muted fw-bold mb-1">إجمالي المسجلين</h6>
+                            <h6 class="text-muted fw-bold mb-1" style="font-size:.8rem;">إجمالي المسجلين</h6>
                             <h3 class="fw-bold mb-0 text-dark" dir="ltr"><?= number_format($stats['total_inscrits'], 0, ',', ' ') ?></h3>
-                            <small class="text-primary fw-bold">منهم <span dir="ltr"><?= number_format($stats['inscrits_femmes'], 0, ',', ' ') ?></span> إناث</small>
+                            <small class="text-primary fw-bold mb-2">منهم <span dir="ltr"><?= number_format($stats['inscrits_femmes'], 0, ',', ' ') ?></span> إناث
+                                <?php if ($stats['total_inscrits'] > 0): ?>
+                                <span class="text-muted fw-normal">(<?= round(($stats['inscrits_femmes'] / $stats['total_inscrits']) * 100) ?>%)</span>
+                                <?php endif; ?>
+                            </small>
+                            <div class="mt-auto pt-2 border-top" style="font-size:.65rem; color:#6c757d; line-height:1.4;">
+                                <i class="fa-solid fa-circle-info me-1 text-primary opacity-75"></i>
+                                المرشحون المسجلون في العروض خلال الدورات 2024-2026
+                            </div>
                         </div>
                     </div>
                 </div>
-                
+
+                <!-- Actifs -->
                 <div class="col-md-6 col-lg-3">
-                    <div class="card border-0 shadow-sm rounded-4 h-100" style="background: rgba(255,255,255,0.9); backdrop-filter: blur(10px);">
-                        <div class="card-body p-4 text-center">
-                            <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 50px; height: 50px; background-color: rgba(16, 185, 129, 0.1); color: #10b981;">
-                                <i class="fa-solid fa-user-graduate fs-4"></i>
+                    <div class="card border-0 shadow-sm rounded-4 h-100" style="background: rgba(255,255,255,0.95);">
+                        <div class="card-body p-3 d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div class="rounded-circle d-inline-flex align-items-center justify-content-center" style="width:40px; height:40px; background:rgba(16,185,129,0.1); color:#10b981; flex-shrink:0;">
+                                    <i class="fa-solid fa-user-check"></i>
+                                </div>
+                                <span class="badge rounded-pill" style="background:#e6f4ea; color:#137333; font-size:.6rem;">لم يتخرجوا بعد</span>
                             </div>
-                            <h6 class="text-muted fw-bold mb-1" title="الناشطون = المستمرون في الأقسام (apprenant) + المسجلون المنتظرون — Active = Continuing + Registered">الطلاب النشطين</h6>
+                            <h6 class="text-muted fw-bold mb-1" style="font-size:.8rem;">الطلاب النشطون</h6>
                             <h3 class="fw-bold mb-0 text-dark" dir="ltr"><?= number_format($stats['total_actifs'] ?? $stats['total_diplomes'] ?? 0, 0, ',', ' ') ?></h3>
-                            <small class="text-success fw-bold">منهم <span dir="ltr"><?= number_format($stats['actifs_femmes'] ?? $stats['diplomes_femmes'] ?? 0, 0, ',', ' ') ?></span> إناث</small>
+                            <small class="text-success fw-bold mb-2">منهم <span dir="ltr"><?= number_format($stats['actifs_femmes'] ?? $stats['diplomes_femmes'] ?? 0, 0, ',', ' ') ?></span> إناث</small>
+                            <div class="mt-auto pt-2 border-top" style="font-size:.65rem; color:#6c757d; line-height:1.4;">
+                                <i class="fa-solid fa-circle-info me-1 text-success opacity-75"></i>
+                                مسجلون في أقسام نشطة ولم يُسجَّل تخرجهم بعد (apprenant - apprenant_fin)
+                            </div>
                         </div>
                     </div>
                 </div>
 
-
+                <!-- Taux Couverture -->
                 <div class="col-md-6 col-lg-3">
-                    <div class="card border-0 shadow-sm rounded-4 h-100" style="background: rgba(255,255,255,0.9); backdrop-filter: blur(10px);">
-                        <div class="card-body p-4 text-center">
-                            <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 50px; height: 50px; background-color: rgba(245, 158, 11, 0.1); color: #f59e0b;">
-                                <i class="fa-solid fa-bullseye fs-4"></i>
+                    <div class="card border-0 shadow-sm rounded-4 h-100" style="background: rgba(255,255,255,0.95);">
+                        <div class="card-body p-3 d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div class="rounded-circle d-inline-flex align-items-center justify-content-center" style="width:40px; height:40px; background:rgba(245,158,11,0.1); color:#f59e0b; flex-shrink:0;">
+                                    <i class="fa-solid fa-bullseye"></i>
+                                </div>
+                                <span class="badge rounded-pill" style="background:#fff8e1; color:#f59e0b; font-size:.6rem;">نسبة الاستيعاب</span>
                             </div>
-                            <h6 class="text-muted fw-bold mb-1">نسبة التغطية</h6>
+                            <h6 class="text-muted fw-bold mb-1" style="font-size:.8rem;">نسبة التغطية</h6>
                             <h3 class="fw-bold mb-0 text-dark"><?= $stats['taux_inscrits_prevu'] ?>%</h3>
-                            <small class="text-warning fw-bold">من الطاقة الاستيعابية</small>
+                            <small class="text-warning fw-bold mb-2">من الطاقة الاستيعابية الإجمالية</small>
+                            <div class="progress mb-1" style="height:4px;">
+                                <div class="progress-bar bg-warning" style="width:<?= min(100, $stats['taux_inscrits_prevu']) ?>%;"></div>
+                            </div>
+                            <div class="mt-auto pt-2 border-top" style="font-size:.65rem; color:#6c757d; line-height:1.4;">
+                                <i class="fa-solid fa-circle-info me-1 text-warning opacity-75"></i>
+                                (المسجلون ÷ المقاعد المتاحة) × 100 — آخر 5 دورات
+                            </div>
                         </div>
                     </div>
                 </div>
 
+                <!-- Taux Activité -->
                 <div class="col-md-6 col-lg-3">
-                    <div class="card border-0 shadow-sm rounded-4 h-100" style="background: rgba(255,255,255,0.9); backdrop-filter: blur(10px);">
-                        <div class="card-body p-4 text-center">
-                            <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 50px; height: 50px; background-color: rgba(139, 92, 246, 0.1); color: #8b5cf6;">
-                                <i class="fa-solid fa-chart-line fs-4"></i>
+                    <div class="card border-0 shadow-sm rounded-4 h-100" style="background: rgba(255,255,255,0.95);">
+                        <div class="card-body p-3 d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div class="rounded-circle d-inline-flex align-items-center justify-content-center" style="width:40px; height:40px; background:rgba(139,92,246,0.1); color:#8b5cf6; flex-shrink:0;">
+                                    <i class="fa-solid fa-chart-line"></i>
+                                </div>
+                                <span class="badge rounded-pill" style="background:#f3e8ff; color:#7c3aed; font-size:.6rem;">معدل النشاط</span>
                             </div>
-                            <h6 class="text-muted fw-bold mb-1">نسبة النشاط</h6>
-                            <h3 class="fw-bold mb-0 text-dark"><?= $stats['taux_diplomes_prevu'] ?>%</h3>
-                            <small class="text-purple fw-bold" style="color:#8b5cf6;">معدل الطلاب للمقاعد</small>
+                            <h6 class="text-muted fw-bold mb-1" style="font-size:.8rem;">نسبة النشاط</h6>
+                            <h3 class="fw-bold mb-0 text-dark"><?= $stats['taux_actifs_prevu'] ?? $stats['taux_diplomes_prevu'] ?>%</h3>
+                            <small class="fw-bold mb-2" style="color:#8b5cf6;">معدل الطلاب النشطين / المقاعد</small>
+                            <div class="progress mb-1" style="height:4px;">
+                                <div class="progress-bar" style="width:<?= min(100, $stats['taux_actifs_prevu'] ?? $stats['taux_diplomes_prevu'] ?? 0) ?>%; background:#8b5cf6;"></div>
+                            </div>
+                            <div class="mt-auto pt-2 border-top" style="font-size:.65rem; color:#6c757d; line-height:1.4;">
+                                <i class="fa-solid fa-circle-info me-1 opacity-75" style="color:#8b5cf6;"></i>
+                                (النشطون ÷ المقاعد المتاحة) × 100 — آخر 5 دورات
+                            </div>
                         </div>
                     </div>
                 </div>
+
             </div>
         </div>
     </div>
+
 
     <div class="row g-4 mb-4">
         <!-- Distribution by Dispositif -->
