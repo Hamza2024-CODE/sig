@@ -201,7 +201,8 @@ class OffresService
         }
         $sessCondStr = implode(" AND ", $sessConds);
         $stmtS = $db->prepare("
-            SELECT DISTINCT s.IDSession as id, s.Nom as intitule_ar, s.NomFr as intitule_fr 
+            SELECT DISTINCT s.IDSession as id, s.Nom as intitule_ar, s.NomFr as intitule_fr,
+                            s.DateD as date_debut, NULL as date_fin, s.DateFInscr as date_fin_insc
             FROM offre o 
             JOIN session s ON o.IDSession = s.IDSession 
             WHERE $sessCondStr 
