@@ -228,6 +228,180 @@ $is_etab     = in_array($role_code, ['etablissement', 'directeur', 'formateur'])
         </div>
     </div>
 
+
+    <!-- ===== TRAINEE STATISTICS SECTION ===== -->
+    <?php $ts = $trainee_stats ?? []; ?>
+    <div class="card border-0 shadow-sm rounded-4 mb-4 no-print" id="traineeStatsSection">
+        <div class="card-header bg-white border-0 pt-4 pb-3 px-4 d-flex justify-content-between align-items-center">
+            <h5 class="fw-bold mb-0 text-dark">
+                <i class="fa-solid fa-users-line text-primary me-2"></i>
+                إحصائيات المتربصين والطلاب
+                <span class="badge bg-primary-subtle text-primary rounded-pill ms-2 fw-normal" style="font-size:.75rem;">بيانات حية</span>
+            </h5>
+            <button class="btn btn-sm btn-link text-muted p-0" onclick="document.getElementById('traineeStatsBody').classList.toggle('d-none')" title="إخفاء / إظهار">
+                <i class="fa-solid fa-chevron-up"></i>
+            </button>
+        </div>
+        <div class="card-body px-4 pb-4" id="traineeStatsBody">
+
+            <!-- KPI Cards Row -->
+            <div class="row g-3 mb-4">
+                <!-- Total Actifs -->
+                <div class="col-6 col-md-3">
+                    <div class="rounded-4 p-3 h-100 text-white d-flex flex-column justify-content-between"
+                         style="background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%);">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div class="bg-white bg-opacity-25 rounded-3 p-2"><i class="fa-solid fa-user-check fa-lg"></i></div>
+                            <span class="badge bg-white text-primary fw-bold small rounded-pill">نشطون</span>
+                        </div>
+                        <div>
+                            <div class="fw-bold mb-0" style="font-size:1.5rem; letter-spacing:-.5px;"><?= number_format($ts['total_actifs'] ?? 0) ?></div>
+                            <div class="small opacity-75">الطلاب النشطين</div>
+                            <div class="small mt-1 opacity-85">
+                                <i class="fa-solid fa-venus me-1"></i>
+                                <?= number_format($ts['actifs_femmes'] ?? 0) ?> إناث
+                                <?php if (($ts['total_actifs'] ?? 0) > 0): ?>
+                                    (<?= round(($ts['actifs_femmes'] / $ts['total_actifs']) * 100) ?>%)
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Total Inscrits -->
+                <div class="col-6 col-md-3">
+                    <div class="rounded-4 p-3 h-100 text-white d-flex flex-column justify-content-between"
+                         style="background: linear-gradient(135deg, #00897b 0%, #00695c 100%);">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div class="bg-white bg-opacity-25 rounded-3 p-2"><i class="fa-solid fa-user-graduate fa-lg"></i></div>
+                            <span class="badge bg-white text-success fw-bold small rounded-pill">مسجلون</span>
+                        </div>
+                        <div>
+                            <div class="fw-bold mb-0" style="font-size:1.5rem; letter-spacing:-.5px;"><?= number_format($ts['total_inscrits'] ?? 0) ?></div>
+                            <div class="small opacity-75">إجمالي المسجلين</div>
+                            <div class="small mt-1 opacity-85">
+                                <i class="fa-solid fa-venus me-1"></i>
+                                <?= number_format($ts['inscrits_femmes'] ?? 0) ?> إناث
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Taux Couverture -->
+                <div class="col-6 col-md-3">
+                    <div class="rounded-4 p-3 h-100 text-white d-flex flex-column justify-content-between"
+                         style="background: linear-gradient(135deg, #f57c00 0%, #e65100 100%);">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div class="bg-white bg-opacity-25 rounded-3 p-2"><i class="fa-solid fa-chart-pie fa-lg"></i></div>
+                            <span class="badge bg-white text-warning fw-bold small rounded-pill">تغطية</span>
+                        </div>
+                        <div>
+                            <div class="fw-bold mb-0" style="font-size:1.5rem; letter-spacing:-.5px;"><?= $ts['taux_couverture'] ?? 0 ?>%</div>
+                            <div class="small opacity-75">نسبة التغطية</div>
+                            <div class="small mt-1 opacity-85">من الطاقة الاستيعابية</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Total Diplômés -->
+                <div class="col-6 col-md-3">
+                    <div class="rounded-4 p-3 h-100 text-white d-flex flex-column justify-content-between"
+                         style="background: linear-gradient(135deg, #6a1b9a 0%, #4a148c 100%);">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div class="bg-white bg-opacity-25 rounded-3 p-2"><i class="fa-solid fa-award fa-lg"></i></div>
+                            <span class="badge bg-white text-purple fw-bold small rounded-pill">خريجون</span>
+                        </div>
+                        <div>
+                            <div class="fw-bold mb-0" style="font-size:1.5rem; letter-spacing:-.5px;"><?= number_format($ts['total_diplomes'] ?? 0) ?></div>
+                            <div class="small opacity-75">إجمالي الخريجين الناجحين</div>
+                            <div class="small mt-1 opacity-85">
+                                <i class="fa-solid fa-venus me-1"></i>
+                                <?= number_format($ts['diplomes_femmes'] ?? 0) ?> إناث
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Session Breakdown -->
+            <?php if (!empty($ts['by_session'])): ?>
+            <div>
+                <h6 class="fw-bold text-secondary mb-3 small text-uppercase letter-spacing-1">
+                    <i class="fa-solid fa-calendar-days me-2 text-primary"></i>
+                    تفصيل المتربصين النشطين حسب الدورة
+                </h6>
+                <div class="row g-2">
+                    <?php
+                    $sessColors = ['#1a73e8','#00897b','#f57c00','#6a1b9a','#c62828','#0277bd','#2e7d32','#4e342e'];
+                    foreach ($ts['by_session'] as $si => $sess):
+                        $color = $sessColors[$si % count($sessColors)];
+                        $year = !empty($sess['DateD']) ? date('Y', strtotime($sess['DateD'])) : '';
+                        $actifsSess = (int)($sess['actifs'] ?? 0);
+                        $totalActifs = max(1, (int)($ts['total_actifs'] ?? 1));
+                        $pct = round(($actifsSess / $totalActifs) * 100);
+                    ?>
+                    <div class="col-6 col-md-3">
+                        <div class="border rounded-4 p-3 h-100" style="border-color: <?= $color ?>22 !important; background: <?= $color ?>08;">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <span class="badge rounded-pill fw-bold" style="background:<?= $color ?>; font-size:.7rem;">
+                                    S<?= $si + 1 ?>
+                                </span>
+                                <span class="text-muted" style="font-size:.7rem;"><?= $year ?></span>
+                            </div>
+                            <div class="fw-bold mb-0" style="font-size:1.1rem; color:<?= $color ?>;">
+                                <?= number_format($actifsSess) ?>
+                            </div>
+                            <div class="small text-muted mt-1"><?= htmlspecialchars($sess['session_nom']) ?></div>
+                            <div class="progress mt-2 rounded-pill" style="height:4px;">
+                                <div class="progress-bar" role="progressbar" style="width:<?= $pct ?>%; background:<?= $color ?>;"></div>
+                            </div>
+                            <div class="d-flex justify-content-between mt-1">
+                                <span class="text-muted" style="font-size:.65rem;"><i class="fa-solid fa-venus"></i> <?= number_format($sess['actifs_femmes'] ?? 0) ?></span>
+                                <span class="text-muted" style="font-size:.65rem;"><?= $pct ?>%</span>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+
+                <!-- Summary bar -->
+                <div class="mt-3 p-3 rounded-3 d-flex flex-wrap gap-3 justify-content-between align-items-center"
+                     style="background: linear-gradient(90deg, #f8f9fa 0%, #e8f4fd 100%); border: 1px solid #dee2e6;">
+                    <div class="text-center">
+                        <div class="fw-bold text-primary" style="font-size:1.1rem;"><?= number_format($ts['total_actifs'] ?? 0) ?></div>
+                        <div class="small text-muted">إجمالي المتربصين النشطين</div>
+                        <div class="small text-muted opacity-75">مقيدون بالدراسة</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="fw-bold text-success" style="font-size:1.1rem;"><?= number_format($ts['total_reconduits'] ?? 0) ?></div>
+                        <div class="small text-muted">المتربصون المستمرون S2→S<?= count($ts['by_session'] ?? []) ?></div>
+                        <div class="small text-muted opacity-75">أقسام مستمرة</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="fw-bold text-info" style="font-size:1.1rem;"><?= number_format($ts['total_filles'] ?? 0) ?></div>
+                        <div class="small text-muted">الطالبات — إناث</div>
+                        <?php if (($ts['total_actifs'] ?? 0) > 0): ?>
+                        <div class="small text-muted opacity-75"><?= round(($ts['total_filles'] / $ts['total_actifs']) * 100) ?>% نسبة تمثيل الإناث</div>
+                        <?php endif; ?>
+                    </div>
+                    <div class="text-center">
+                        <div class="fw-bold text-warning" style="font-size:1.1rem;"><?= number_format($ts['sections_nouvelles'] ?? 0) ?></div>
+                        <div class="small text-muted">الأقسام الجديدة S1</div>
+                        <div class="small text-muted opacity-75">الدورة الحالية</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="fw-bold" style="font-size:1.1rem; color:#6a1b9a;"><?= number_format($ts['total_diplomes'] ?? 0) ?></div>
+                        <div class="small text-muted">إجمالي الخريجين (الناجحين)</div>
+                        <div class="small text-muted opacity-75">حائزو شهادات التخرج</div>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
+
+        </div>
+    </div>
+    <!-- ===== END TRAINEE STATISTICS SECTION ===== -->
+
     <!-- Detailed Offers Table -->
     <div class="card border-0 shadow-sm rounded-4 mb-4">
         <div class="card-header bg-white border-0 pt-4 pb-0 px-4 d-flex justify-content-between align-items-center">

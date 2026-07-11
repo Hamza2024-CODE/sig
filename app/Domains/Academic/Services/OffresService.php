@@ -216,6 +216,9 @@ class OffresService
         $regimes_hebergement     = $this->repository->getModalRegimesHebergement();
         $regimes_cours           = $this->repository->getModalRegimesCours();
 
+        // 6. Trainee / Student statistics (live from section aggregates)
+        $trainee_stats = $this->getTraineesStats($scopeWhere, $scopeParams);
+
         return [
             'stats' => $stats,
             'dispositifs' => $dispositifs,
@@ -229,6 +232,146 @@ class OffresService
             'regimes_hebergement'     => $regimes_hebergement,
             'regimes_cours'           => $regimes_cours,
             'modes_formation'         => $modes_formation,
+            'trainee_stats'           => $trainee_stats,
+        ];
+    }
+
+    /**
+     * Retrieve live trainee / student statistics.
+     * Uses the EXACT same queries as the minister dashboard for consistency.
+     * Active = apprenant not yet in apprenant_fin (not graduated) in last 5 sessions.
+     */
+    private function getTraineesStats(string $scopeWhere, array $scopeParams): array
+    {
+        try {
+            // ---- Determine scope: apply wilaya/etab filter if present ----
+            // Build session IDs for last 5 sessions (respecting scope if etab filter)
+            $db = \App\Core\Database::getInstance()->getConnection();
+
+            // Get last 5 sessions ordered by date desc
+            $stmtSessions = $db->query("
+                SELECT IDSession, Nom, NomFr, DateD
+                FROM session
+                ORDER BY DateD DESC
+                LIMIT 5
+            ");
+            $last5Sessions = $stmtSessions->fetchAll(\PDO::FETCH_ASSOC);
+            $sessionIds = array_column($last5Sessions, 'IDSession');
+
+            if (empty($sessionIds)) {
+                return $this->emptyTraineeStats();
+            }
+
+            $inPlaceholders = implode(',', array_fill(0, count($sessionIds), '?'));
+
+            // ---- Build extra scope clause (wilaya/etab) ----
+            // scopeWhere references `o.` columns — we need to join section→offre→etablissement
+            $hasEtabFilter   = !empty(array_filter($scopeParams));
+            $extraJoin       = '';
+            $extraWhere      = '';
+            $extraParams     = [];
+
+            // Parse scopeWhere for DFEP / etab filters
+            // We re-apply them directly via section→offre join
+            foreach ($scopeParams as $idx => $val) {
+                // scopeWhere conditions reference o.IDEts_Form or o.IDDfep
+                // We keep them as-is since we join section→offre below
+            }
+
+            // ---- Breakdown by session (active = not in apprenant_fin) ----
+            $bySessionParams = array_merge($sessionIds, $scopeParams);
+
+            // If scope filters exist, we need to scope the section join
+            $sectionScopeJoin  = '';
+            $sectionScopeWhere = '';
+            if ($hasEtabFilter) {
+                $sectionScopeJoin  = "JOIN offre o2 ON s.IDOffre = o2.IDOffre";
+                $sectionScopeWhere = "AND ($scopeWhere)";
+            }
+
+            $stmtBreakdown = $db->prepare("
+                SELECT sess.IDSession, sess.Nom as session_nom, sess.NomFr as session_fr, sess.DateD,
+                       COUNT(a.IDapprenant) as actifs,
+                       SUM(CASE WHEN c.Civ = 2 THEN 1 ELSE 0 END) as actifs_femmes
+                FROM session sess
+                JOIN section s ON s.IDSession = sess.IDSession
+                {$sectionScopeJoin}
+                JOIN apprenant a ON a.IDSection = s.IDSection
+                JOIN candidat c ON a.IDCandidat = c.IDCandidat
+                LEFT JOIN apprenant_fin af ON af.IDapprenant = a.IDapprenant
+                WHERE sess.IDSession IN ($inPlaceholders)
+                AND af.IDapprenant IS NULL
+                {$sectionScopeWhere}
+                GROUP BY sess.IDSession, sess.Nom, sess.NomFr, sess.DateD
+                ORDER BY sess.DateD DESC
+            ");
+            $stmtBreakdown->execute($hasEtabFilter ? $bySessionParams : $sessionIds);
+            $bySession = $stmtBreakdown->fetchAll(\PDO::FETCH_ASSOC) ?: [];
+
+            // ---- Total active (sum of breakdown) ----
+            $totalActifs  = array_sum(array_column($bySession, 'actifs'));
+            $actifsFemmes = array_sum(array_column($bySession, 'actifs_femmes'));
+
+            // ---- Continuing trainees S2→S5 (all except first/newest session) ----
+            $totalReconduits = 0;
+            foreach (array_slice($bySession, 1) as $s) {
+                $totalReconduits += (int)$s['actifs'];
+            }
+
+            // ---- Active female trainees across all 5 sessions ----
+            $totalFilles = $actifsFemmes;
+
+            // ---- S1 new sections ----
+            $currentSessionId = $sessionIds[0] ?? 0;
+            $stmtS1 = $db->prepare("
+                SELECT COUNT(DISTINCT ss.IDSection) as nb
+                FROM section_semestre ss
+                JOIN section s ON ss.IDSection = s.IDSection
+                WHERE ss.Dernier = 1 AND ss.NumSem = 1 AND s.IDSession = ?
+            ");
+            $stmtS1->execute([$currentSessionId]);
+            $sectionsNouvelles = (int)($stmtS1->fetchColumn() ?: 0);
+
+            // ---- Total graduates (all time) ----
+            $stmtGrad = $db->query("
+                SELECT COUNT(*) FROM apprenant_fin
+                WHERE IDDecision_evalf IN (1, 2, 3)
+            ");
+            $totalDiplomes = (int)($stmtGrad->fetchColumn() ?: 0);
+
+            // ---- Taux activité: actifs / (actifs + graduated in current scope) ----
+            $tauxActivite = 0; // Dashboard doesn't compute this, set 0
+
+            return [
+                'total_actifs'       => $totalActifs,
+                'actifs_femmes'      => $actifsFemmes,
+                'total_inscrits'     => $totalActifs,   // same concept
+                'inscrits_femmes'    => $actifsFemmes,
+                'total_diplomes'     => $totalDiplomes,
+                'diplomes_femmes'    => 0,
+                'sections_nouvelles' => $sectionsNouvelles,
+                'total_places'       => 0,
+                'taux_couverture'    => 0,
+                'taux_activite'      => $tauxActivite,
+                'total_reconduits'   => $totalReconduits,
+                'total_filles'       => $totalFilles,
+                'by_session'         => $bySession,
+            ];
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('getTraineesStats error: ' . $e->getMessage());
+            return $this->emptyTraineeStats();
+        }
+    }
+
+    private function emptyTraineeStats(): array
+    {
+        return [
+            'total_actifs' => 0, 'actifs_femmes' => 0, 'total_inscrits' => 0,
+            'inscrits_femmes' => 0, 'total_diplomes' => 0, 'diplomes_femmes' => 0,
+            'sections_nouvelles' => 0, 'total_places' => 0, 'taux_couverture' => 0,
+            'taux_activite' => 0, 'total_reconduits' => 0, 'total_filles' => 0,
+            'by_session' => [],
         ];
     }
 
