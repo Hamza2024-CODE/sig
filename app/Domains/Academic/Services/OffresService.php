@@ -244,17 +244,39 @@ class OffresService
     private function getTraineesStats(string $scopeWhere, array $scopeParams): array
     {
         try {
-            // ---- Determine scope: apply wilaya/etab filter if present ----
-            // Build session IDs for last 5 sessions (respecting scope if etab filter)
             $db = \App\Core\Database::getInstance()->getConnection();
 
-            // Get last 5 sessions ordered by date desc
-            $stmtSessions = $db->query("
-                SELECT IDSession, Nom, NomFr, DateD
-                FROM session
-                ORDER BY DateD DESC
-                LIMIT 5
-            ");
+            // Detect if there is an institution/wilaya scope
+            $hasEtabFilter = count($scopeParams) > 0 && $scopeWhere !== '1=1';
+
+            // Build section scope join/where for queries that go through section→offre→etablissement
+            $sectionScopeJoin  = '';
+            $sectionScopeWhere = '';
+            if ($hasEtabFilter) {
+                $sectionScopeJoin  = "JOIN offre o2 ON s.IDOffre = o2.IDOffre";
+                $sectionScopeWhere = "AND ($scopeWhere)";
+            }
+
+            // Get last 5 sessions (scoped if etab filter exists)
+            if ($hasEtabFilter) {
+                $stmtSessions = $db->prepare("
+                    SELECT DISTINCT sess.IDSession, sess.Nom, sess.NomFr, sess.DateD
+                    FROM session sess
+                    JOIN section s ON s.IDSession = sess.IDSession
+                    {$sectionScopeJoin}
+                    WHERE {$scopeWhere}
+                    ORDER BY sess.DateD DESC
+                    LIMIT 5
+                ");
+                $stmtSessions->execute($scopeParams);
+            } else {
+                $stmtSessions = $db->query("
+                    SELECT IDSession, Nom, NomFr, DateD
+                    FROM session
+                    ORDER BY DateD DESC
+                    LIMIT 5
+                ");
+            }
             $last5Sessions = $stmtSessions->fetchAll(\PDO::FETCH_ASSOC);
             $sessionIds = array_column($last5Sessions, 'IDSession');
 
@@ -264,30 +286,8 @@ class OffresService
 
             $inPlaceholders = implode(',', array_fill(0, count($sessionIds), '?'));
 
-            // ---- Build extra scope clause (wilaya/etab) ----
-            // scopeWhere references `o.` columns — we need to join section→offre→etablissement
-            $hasEtabFilter   = !empty(array_filter($scopeParams));
-            $extraJoin       = '';
-            $extraWhere      = '';
-            $extraParams     = [];
-
-            // Parse scopeWhere for DFEP / etab filters
-            // We re-apply them directly via section→offre join
-            foreach ($scopeParams as $idx => $val) {
-                // scopeWhere conditions reference o.IDEts_Form or o.IDDfep
-                // We keep them as-is since we join section→offre below
-            }
-
             // ---- Breakdown by session (active = not in apprenant_fin) ----
-            $bySessionParams = array_merge($sessionIds, $scopeParams);
-
-            // If scope filters exist, we need to scope the section join
-            $sectionScopeJoin  = '';
-            $sectionScopeWhere = '';
-            if ($hasEtabFilter) {
-                $sectionScopeJoin  = "JOIN offre o2 ON s.IDOffre = o2.IDOffre";
-                $sectionScopeWhere = "AND ($scopeWhere)";
-            }
+            $bySessionParams = $hasEtabFilter ? array_merge($sessionIds, $scopeParams) : $sessionIds;
 
             $stmtBreakdown = $db->prepare("
                 SELECT sess.IDSession, sess.Nom as session_nom, sess.NomFr as session_fr, sess.DateD,
@@ -305,20 +305,19 @@ class OffresService
                 GROUP BY sess.IDSession, sess.Nom, sess.NomFr, sess.DateD
                 ORDER BY sess.DateD DESC
             ");
-            $stmtBreakdown->execute($hasEtabFilter ? $bySessionParams : $sessionIds);
+            $stmtBreakdown->execute($bySessionParams);
             $bySession = $stmtBreakdown->fetchAll(\PDO::FETCH_ASSOC) ?: [];
 
             // ---- Total active (sum of breakdown) ----
             $totalActifs  = array_sum(array_column($bySession, 'actifs'));
             $actifsFemmes = array_sum(array_column($bySession, 'actifs_femmes'));
 
-            // ---- Continuing trainees S2→S5 (all except first/newest session) ----
+            // ---- Continuing trainees S2→S5 ----
             $totalReconduits = 0;
             foreach (array_slice($bySession, 1) as $s) {
                 $totalReconduits += (int)$s['actifs'];
             }
 
-            // ---- Active female trainees across all 5 sessions ----
             $totalFilles = $actifsFemmes;
 
             // ---- S1 new sections ----
@@ -327,25 +326,40 @@ class OffresService
                 SELECT COUNT(DISTINCT ss.IDSection) as nb
                 FROM section_semestre ss
                 JOIN section s ON ss.IDSection = s.IDSection
+                {$sectionScopeJoin}
                 WHERE ss.Dernier = 1 AND ss.NumSem = 1 AND s.IDSession = ?
+                " . ($hasEtabFilter ? "AND ({$scopeWhere})" : "") . "
             ");
-            $stmtS1->execute([$currentSessionId]);
+            $s1Params = $hasEtabFilter ? array_merge([$currentSessionId], $scopeParams) : [$currentSessionId];
+            $stmtS1->execute($s1Params);
             $sectionsNouvelles = (int)($stmtS1->fetchColumn() ?: 0);
 
-            // ---- Total graduates (all time) ----
-            $stmtGrad = $db->query("
-                SELECT COUNT(*) FROM apprenant_fin
-                WHERE IDDecision_evalf IN (1, 2, 3)
-            ");
+            // ---- Total graduates (scoped by institution if applicable) ----
+            if ($hasEtabFilter) {
+                $stmtGrad = $db->prepare("
+                    SELECT COUNT(af.IDapprenant)
+                    FROM apprenant_fin af
+                    JOIN apprenant a ON a.IDapprenant = af.IDapprenant
+                    JOIN section s ON a.IDSection = s.IDSection
+                    {$sectionScopeJoin}
+                    WHERE af.IDDecision_evalf IN (1, 2, 3)
+                    AND ({$scopeWhere})
+                ");
+                $stmtGrad->execute($scopeParams);
+            } else {
+                $stmtGrad = $db->query("
+                    SELECT COUNT(*) FROM apprenant_fin
+                    WHERE IDDecision_evalf IN (1, 2, 3)
+                ");
+            }
             $totalDiplomes = (int)($stmtGrad->fetchColumn() ?: 0);
 
-            // ---- Taux activité: actifs / (actifs + graduated in current scope) ----
-            $tauxActivite = 0; // Dashboard doesn't compute this, set 0
+            $tauxActivite = 0;
 
             return [
                 'total_actifs'       => $totalActifs,
                 'actifs_femmes'      => $actifsFemmes,
-                'total_inscrits'     => $totalActifs,   // same concept
+                'total_inscrits'     => $totalActifs,
                 'inscrits_femmes'    => $actifsFemmes,
                 'total_diplomes'     => $totalDiplomes,
                 'diplomes_femmes'    => 0,
