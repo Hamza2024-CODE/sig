@@ -29,50 +29,43 @@ try {
 
     echo "\n==================================================\n";
     echo "\n==================================================\n";
-    echo "=== إحصائيات مركز عين طاية (معرف 45) ومركز برج الكيفان (معرف 48) ===\n";
+    echo "=== فحص جدول ets_form للمعرف 2033 ===\n";
     echo "==================================================\n";
 
-    // Count trainees for Ain Taya (45)
-    $total_45 = DB::selectOne("
-        SELECT COUNT(a.IDapprenant) as total
-        FROM apprenant a
-        JOIN section s ON a.IDSection = s.IDSection
-        JOIN offre o ON s.IDOffre = o.IDOffre
-        LEFT JOIN apprenant_fin af ON af.IDapprenant = a.IDapprenant
-        WHERE o.IDEts_Form = 45 AND af.IDapprenant IS NULL
-    ");
-    echo "إجمالي المتربصين النشطين في مركز عين طاية (45): " . ($total_45->total ?? 0) . "\n";
+    $ets_by_id = DB::selectOne("SELECT * FROM ets_form WHERE IDEts_Form = 2033");
+    if ($ets_by_id) {
+        echo "البحث بـ IDEts_Form = 2033:\n";
+        foreach ((array)$ets_by_id as $k => $v) {
+            echo "  $k: " . ($v ?? 'NULL') . "\n";
+        }
+    } else {
+        echo "لا يوجد صف في ets_form بالمعرف IDEts_Form = 2033\n";
+    }
 
-    // Count trainees for Bordj El Kiffan (48)
-    $total_48 = DB::selectOne("
-        SELECT COUNT(a.IDapprenant) as total
-        FROM apprenant a
-        JOIN section s ON a.IDSection = s.IDSection
-        JOIN offre o ON s.IDOffre = o.IDOffre
-        LEFT JOIN apprenant_fin af ON af.IDapprenant = a.IDapprenant
-        WHERE o.IDEts_Form = 48 AND af.IDapprenant IS NULL
-    ");
-    echo "إجمالي المتربصين النشطين في مركز برج الكيفان (48): " . ($total_48->total ?? 0) . "\n";
+    $ets_by_etab = DB::selectOne("SELECT * FROM ets_form WHERE IDetablissement = 2033");
+    if ($ets_by_etab) {
+        echo "\nالبحث بـ IDetablissement = 2033:\n";
+        foreach ((array)$ets_by_etab as $k => $v) {
+            echo "  $k: " . ($v ?? 'NULL') . "\n";
+        }
+    } else {
+        echo "لا يوجد صف في ets_form بالمعرف IDetablissement = 2033\n";
+    }
 
     echo "\n==================================================\n";
-    echo "=== عروض تخصص 'أمين مخزن' المسجلة لمركز عين طاية (45) ===\n";
+    echo "=== فحص جدول ets_form للمراكز 45 و 48 ===\n";
     echo "==================================================\n";
 
-    $offres_45 = DB::select("
-        SELECT o.IDOffre, o.IDSpecialite, sp.Nom as SpecialiteNom, o.IDEts_Form, s.IDSession
-        FROM offre o
-        JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
-        LEFT JOIN section s ON s.IDOffre = o.IDOffre
-        WHERE o.IDEts_Form = 45 AND sp.Nom LIKE '%مخزن%'
-    ");
-
-    if (empty($offres_45)) {
-        echo "لا توجد عروض تخصص 'أمين مخزن' تحت مركز عين طاية (45).\n";
-    } else {
-        foreach ($offres_45 as $of) {
-            echo "عرض: " . $of->IDOffre . " | التخصص: " . $of->SpecialiteNom . " (معرف القسم: " . ($of->IDSession ?: 'لا يوجد') . ")\n";
-        }
+    $ets_45 = DB::select("SELECT * FROM ets_form WHERE IDEts_Form = 45 OR IDetablissement = 45");
+    foreach ($ets_45 as $e) {
+        echo "IDEts_Form: " . $e->IDEts_Form . " | IDetablissement: " . $e->IDetablissement . " | Nom: " . $e->Nom . "\n";
     }
+
+    $ets_48 = DB::select("SELECT * FROM ets_form WHERE IDEts_Form = 48 OR IDetablissement = 48");
+    foreach ($ets_48 as $e) {
+        echo "IDEts_Form: " . $e->IDEts_Form . " | IDetablissement: " . $e->IDetablissement . " | Nom: " . $e->Nom . "\n";
+    }
+
 
 
 
