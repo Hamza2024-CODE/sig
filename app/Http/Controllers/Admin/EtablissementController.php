@@ -57,7 +57,13 @@ class EtablissementController extends Controller
                 ->where('IDDFEP', $dfepId)
                 ->first();
         } else {
-            $etabId = $user['etablissement_id'] ?? $user['id'] ?? 0;
+            // For establishment-level accounts (directeur/etablissement), user ID is the actual IDetablissement
+            if (in_array($roleCode, ['etablissement', 'directeur'])) {
+                $etabId = $user['id'] ?? $user['etablissement_id'] ?? 0;
+            } else {
+                // For teachers/formateurs/employees, etablissement_id is the linked school
+                $etabId = $user['etablissement_id'] ?? $user['id'] ?? 0;
+            }
             $etab = DB::table('etablissement')
                 ->where('IDetablissement', $etabId)
                 ->first();
@@ -137,11 +143,17 @@ class EtablissementController extends Controller
                     ->where('IDDFEP', $dfepId)
                     ->first();
             } else {
-                $etabId = $user['etablissement_id'] ?? $user['id'] ?? 0;
+                // For establishment-level accounts (directeur/etablissement), user ID is the actual IDetablissement
+                if (in_array($roleCode, ['etablissement', 'directeur'])) {
+                    $etabId = $user['id'] ?? $user['etablissement_id'] ?? 0;
+                } else {
+                    // For teachers/formateurs/employees, etablissement_id is the linked school
+                    $etabId = $user['etablissement_id'] ?? $user['id'] ?? 0;
+                }
                 DB::table('etablissement')
                     ->where('IDetablissement', $etabId)
                     ->update($updateData);
-
+ 
                 $etab = DB::table('etablissement')
                     ->where('IDetablissement', $etabId)
                     ->first();
