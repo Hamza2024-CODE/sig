@@ -12,48 +12,41 @@ $kernel->bootstrap();
 use Illuminate\Support\Facades\DB;
 
 try {
-    // Trainee IDs to inspect
-    $ids = [5231796, 5231797, 5231798, 5231799, 5231800, 5231801, 5231802, 5231803, 5231804, 5231806, 5231808, 5231809, 5231812, 5231813];
-
     echo "\n==================================================\n";
-    echo "=== تفاصيل المتربصين الـ 14 وتحديد مركزهم الفعلي ===\n";
+    echo "=== البحث عن جميع المؤسسات التي تحتوي على 'سلطان' ===\n";
     echo "==================================================\n";
 
-    $results = DB::select("
-        SELECT 
-            a.IDapprenant, 
-            c.Nom, 
-            c.Prenom, 
-            c.LieuNais,
-            o.IDOffre, 
-            o.IDEts_Form, 
-            e.Nom as EtabNom, 
-            e.NomFr as EtabNomFr,
-            w.Nom as WilayaNom,
-            sp.Nom as SpecialiteNom
-        FROM apprenant a
-        JOIN section s ON a.IDSection = s.IDSection
-        JOIN offre o ON s.IDOffre = o.IDOffre
-        JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
+    $etabs = DB::select("
+        SELECT e.IDetablissement, e.Nom, e.NomFr, e.IDEts_Form, w.Nom as WilayaNom
+        FROM etablissement e
         LEFT JOIN wilaya w ON e.IDDFEP = w.IDWilayaa
-        LEFT JOIN candidat c ON a.IDCandidat = c.IDCandidat
-        LEFT JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
-        WHERE a.IDapprenant IN (" . implode(',', $ids) . ")
+        WHERE e.Nom LIKE '%سلطان%'
     ");
 
-    if (empty($results)) {
-        echo "لم يتم العثور على هؤلاء المتربصين في قاعدة البيانات.\n";
+    foreach ($etabs as $et) {
+        echo "معرف: " . $et->IDetablissement . " | الاسم: " . $et->Nom . " | تابع لـ: " . ($et->IDEts_Form ?: 'لا يوجد') . " | الولاية: " . $et->WilayaNom . "\n";
+    }
+
+    echo "\n==================================================\n";
+    echo "=== تفاصيل عروض التكوين لتخصص 'أمين مخزن' في مركز 2033 ===\n";
+    echo "==================================================\n";
+
+    $offres = DB::select("
+        SELECT o.IDOffre, o.IDSpecialite, sp.Nom as SpecialiteNom, o.IDEts_Form, o.SessionNum, s.Nom as SessionNom
+        FROM offre o
+        JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
+        LEFT JOIN session s ON o.SessionNum = s.IDSession
+        WHERE o.IDEts_Form = 2033 AND sp.Nom LIKE '%مخزن%'
+    ");
+
+    if (empty($offres)) {
+        echo "لا توجد عروض تخصص 'أمين مخزن' مسجلة تحت مركز 2033.\n";
     } else {
-        foreach ($results as $r) {
-            echo "متربص: #" . $r->IDapprenant . " | " . $r->Nom . " " . $r->Prenom . "\n";
-            echo "  - مكان الميلاد: " . $r->LieuNais . "\n";
-            echo "  - التخصص: " . $r->SpecialiteNom . "\n";
-            echo "  - معرف المركز: " . $r->IDEts_Form . "\n";
-            echo "  - اسم المركز: " . $r->EtabNom . " (" . $r->EtabNomFr . ")\n";
-            echo "  - الولاية: " . $r->WilayaNom . "\n";
-            echo "--------------------------------------------------\n";
+        foreach ($offres as $of) {
+            echo "عرض: " . $of->IDOffre . " | التخصص: " . $of->SpecialiteNom . " | الدورة: " . $of->SessionNom . " (معرف الدورة: " . $of->SessionNum . ")\n";
         }
     }
+
 
 } catch (\Exception $e) {
     echo "Error: " . $e->getMessage() . "\n";
