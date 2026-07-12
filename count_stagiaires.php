@@ -28,30 +28,38 @@ try {
     }
 
     echo "\n==================================================\n";
-    echo "=== فحص بيانات العرض #245807 بالكامل ===\n";
+    echo "\n==================================================\n";
+    echo "=== البحث عن مؤسسات في ولاية الجزائر (16) ذات صلة ===\n";
     echo "==================================================\n";
 
-    $offre = DB::selectOne("SELECT * FROM offre WHERE IDOffre = 245807");
-    if ($offre) {
-        foreach ((array)$offre as $key => $value) {
-            echo "$key: " . ($value ?? 'NULL') . "\n";
-        }
-    } else {
-        echo "العرض غير موجود.\n";
+    $etabs = DB::select("
+        SELECT IDetablissement, Nom, NomFr, IDDFEP
+        FROM etablissement
+        WHERE IDDFEP IN (
+            SELECT IDDFEP FROM dfep WHERE IDWilayaa = 16
+        ) AND (Nom LIKE '%رويبة%' OR Nom LIKE '%طاية%' OR Nom LIKE '%كيفان%' OR Nom LIKE '%برج%')
+    ");
+
+    foreach ($etabs as $et) {
+        echo "معرف: " . $et->IDetablissement . " | الاسم: " . $et->Nom . " (Wilaya 16)\n";
     }
 
     echo "\n==================================================\n";
-    echo "=== فحص بيانات القسم #191517 بالكامل ===\n";
+    echo "=== هل هناك أي متربصين آخرين في نفس القسم 191517؟ ===\n";
     echo "==================================================\n";
 
-    $section = DB::selectOne("SELECT * FROM section WHERE IDSection = 191517");
-    if ($section) {
-        foreach ((array)$section as $key => $value) {
-            echo "$key: " . ($value ?? 'NULL') . "\n";
-        }
-    } else {
-        echo "القسم غير موجود.\n";
+    $all_in_sec = DB::select("
+        SELECT a.IDapprenant, c.Nom, c.Prenom, c.LieuNais, c.IDWilayaa
+        FROM apprenant a
+        LEFT JOIN candidat c ON a.IDCandidat = c.IDCandidat
+        WHERE a.IDSection = 191517
+    ");
+
+    echo "إجمالي المسجلين في القسم 191517: " . count($all_in_sec) . "\n";
+    foreach ($all_in_sec as $idx => $st) {
+        echo ($idx + 1) . ". #" . $st->IDapprenant . " | " . $st->Nom . " " . $st->Prenom . " (مكان الميلاد: " . $st->LieuNais . " | ولاية الإقامة: " . $st->IDWilayaa . ")\n";
     }
+
 
 
 
