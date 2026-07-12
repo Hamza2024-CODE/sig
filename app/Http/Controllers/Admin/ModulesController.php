@@ -1125,11 +1125,23 @@ class ModulesController extends Controller {
             $this->syncMissingCandidates($etabId);
         }
 
-        // Build scope-based WHERE + always filter by etabId
+        // Build scope-based WHERE
         [$ofWhere, $params] = $this->offreWhere($scope, 'o');
-        // Add etab filter using positional param
-        $ofWhere .= " AND o.IDEts_Form = ?";
-        $params[] = $etabId;
+
+        // Find all branches/sub-establishments of this establishment to include their trainees
+        $etabIds = [$etabId];
+        try {
+            $branches = \Illuminate\Support\Facades\DB::table('etablissement')
+                ->where('IDEts_Form', $etabId)
+                ->pluck('IDetablissement')
+                ->toArray();
+            $etabIds = array_merge($etabIds, $branches);
+        } catch (\Exception $ex) {}
+        $etabIds = array_unique(array_filter($etabIds));
+
+        $placeholders = implode(',', array_fill(0, count($etabIds), '?'));
+        $ofWhere .= " AND o.IDEts_Form IN ($placeholders)";
+        $params = array_merge($params, $etabIds);
 
         $list = [];
         try {
