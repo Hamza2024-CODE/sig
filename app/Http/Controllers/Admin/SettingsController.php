@@ -533,7 +533,7 @@ class SettingsController extends Controller
             $stats['total_tables'] = count($tables);
             $stats['total_rows']   = array_sum(array_column($stats['top_tables'], 'rows'));
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             // graceful
         }
 
@@ -565,7 +565,7 @@ class SettingsController extends Controller
                 'ref_warmed'    => \Illuminate\Support\Facades\Cache::has('sgfep:ref:wilayas'),
                 'kpi_warmed'    => \Illuminate\Support\Facades\Cache::has('sgfep:kpi:admin'),
             ];
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return ['driver' => 'unknown', 'file_count' => 0, 'size_kb' => 0, 'ref_warmed' => false, 'kpi_warmed' => false];
         }
     }
