@@ -223,7 +223,8 @@
     display: none;
     align-items: center;
     justify-content: center;
-    padding: 1rem;
+    padding: 2rem 1rem;
+    overflow-y: auto;
 }
 .pat-modal-overlay.open { display: flex; }
 .pat-modal {
@@ -237,6 +238,7 @@
     display: flex;
     flex-direction: column;
     overflow: hidden !important;
+    margin: auto;
 }
 .pat-modal form {
     display: flex;
