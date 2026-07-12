@@ -48,8 +48,11 @@ class SettingsController extends Controller
         $cacheStats   = $this->getCacheStats();
         $takwinSettings = TakwinHelper::getSettings();
 
-        \App\Helpers\PortalCMSHelper::ensureTableExists();
-        $portalPages = \App\Helpers\PortalCMSHelper::getPages();
+        $portalPages = [];
+        try {
+            \App\Helpers\PortalCMSHelper::ensureTableExists();
+            $portalPages = \App\Helpers\PortalCMSHelper::getPages();
+        } catch (\Throwable $e) {}
 
         // إحصائيات الوثائق والملفات مع الفلاتر
         $docService = new \App\Services\DocumentSyncService();
@@ -61,45 +64,51 @@ class SettingsController extends Controller
         $previewDocs = $docService->getPreviewDocuments($selectedTable, 10, $selectedWilaya, $selectedEtab);
 
         // قائمة الولايات والمؤسسات
-        $wilayas = DB::table('wilaya')->select('IDWilayaa', 'Nom')->orderBy('Nom')->get()->map(function($w) {
-            $newItem = new \stdClass();
-            foreach ($w as $k => $v) {
-                $lk = strtolower($k);
-                if ($lk === 'idwilayaa') {
-                    $newItem->IDWilayaa = $v;
-                } elseif ($lk === 'nom') {
-                    $newItem->Nom = $v;
-                } else {
-                    $newItem->$k = $v;
+        $wilayas = [];
+        try {
+            $wilayas = DB::table('wilaya')->select('IDWilayaa', 'Nom')->orderBy('Nom')->get()->map(function($w) {
+                $newItem = new \stdClass();
+                foreach ($w as $k => $v) {
+                    $lk = strtolower($k);
+                    if ($lk === 'idwilayaa') {
+                        $newItem->IDWilayaa = $v;
+                    } elseif ($lk === 'nom') {
+                        $newItem->Nom = $v;
+                    } else {
+                        $newItem->$k = $v;
+                    }
                 }
-            }
-            if (!property_exists($newItem, 'IDWilayaa')) $newItem->IDWilayaa = null;
-            if (!property_exists($newItem, 'Nom')) $newItem->Nom = null;
-            return $newItem;
-        });
+                if (!property_exists($newItem, 'IDWilayaa')) $newItem->IDWilayaa = null;
+                if (!property_exists($newItem, 'Nom')) $newItem->Nom = null;
+                return $newItem;
+            });
+        } catch (\Throwable $e) {}
 
-        $etablissements = DB::table('etablissement')->select('IDetablissement', 'IDEts_Form', 'IDDFEP', 'Nom')->orderBy('Nom')->get()->map(function($e) {
-            $newItem = new \stdClass();
-            foreach ($e as $k => $v) {
-                $lk = strtolower($k);
-                if ($lk === 'idetablissement') {
-                    $newItem->IDetablissement = $v;
-                } elseif ($lk === 'idets_form') {
-                    $newItem->IDEts_Form = $v;
-                } elseif ($lk === 'iddfep') {
-                    $newItem->IDDFEP = $v;
-                } elseif ($lk === 'nom') {
-                    $newItem->Nom = $v;
-                } else {
-                    $newItem->$k = $v;
+        $etablissements = [];
+        try {
+            $etablissements = DB::table('etablissement')->select('IDetablissement', 'IDEts_Form', 'IDDFEP', 'Nom')->orderBy('Nom')->get()->map(function($e) {
+                $newItem = new \stdClass();
+                foreach ($e as $k => $v) {
+                    $lk = strtolower($k);
+                    if ($lk === 'idetablissement') {
+                        $newItem->IDetablissement = $v;
+                    } elseif ($lk === 'idets_form') {
+                        $newItem->IDEts_Form = $v;
+                    } elseif ($lk === 'iddfep') {
+                        $newItem->IDDFEP = $v;
+                    } elseif ($lk === 'nom') {
+                        $newItem->Nom = $v;
+                    } else {
+                        $newItem->$k = $v;
+                    }
                 }
-            }
-            if (!property_exists($newItem, 'IDetablissement')) $newItem->IDetablissement = null;
-            if (!property_exists($newItem, 'IDEts_Form')) $newItem->IDEts_Form = null;
-            if (!property_exists($newItem, 'IDDFEP')) $newItem->IDDFEP = null;
-            if (!property_exists($newItem, 'Nom')) $newItem->Nom = null;
-            return $newItem;
-        });
+                if (!property_exists($newItem, 'IDetablissement')) $newItem->IDetablissement = null;
+                if (!property_exists($newItem, 'IDEts_Form')) $newItem->IDEts_Form = null;
+                if (!property_exists($newItem, 'IDDFEP')) $newItem->IDDFEP = null;
+                if (!property_exists($newItem, 'Nom')) $newItem->Nom = null;
+                return $newItem;
+            });
+        } catch (\Throwable $e) {}
 
         // إعدادات الترخيص السيادي والأمان المتقدم
         $isActivationRequired = \App\Helpers\SovereignLicensingHelper::isActivationRequired();
@@ -188,8 +197,11 @@ class SettingsController extends Controller
         } catch (\Throwable $e) {}
 
         // قائمة النسخ الاحتياطية
-        $backupService = new \App\Services\BackupService();
-        $backups = $backupService->getBackupsList();
+        $backups = [];
+        try {
+            $backupService = new \App\Services\BackupService();
+            $backups = $backupService->getBackupsList();
+        } catch (\Throwable $e) {}
 
         $ministry = null;
         $allSemesters = [];
