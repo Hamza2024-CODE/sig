@@ -15,6 +15,14 @@ $user      = session('user') ?? [];
 $roleCode  = strtolower($user['role_code'] ?? 'user');
 $isApprenticeshipDept = (int)($user['IDMode_formation'] ?? 0) === 10;
 $username = strtolower($user['username'] ?? '');
+$isDfmUser = ($roleCode === 'central' && $username === 'dfm');
+$isDrhUser = ($roleCode === 'central' && in_array($username, ['drh', 'drhinst', 'drhcentre', 'drhpb', 'drht']));
+$directionCode = strtoupper($user['direction_code'] ?? $user['username'] ?? '');
+$isDosfpUser = ($roleCode === 'central' && ($directionCode === 'DOSFP' || $username === 'dosfp'));
+$isDepUser = ($roleCode === 'central' && ($directionCode === 'DEP' || $username === 'dep'));
+$isDeohUser = ($roleCode === 'central' && ($directionCode === 'DEOH' || $username === 'deoh'));
+$isDecUser = ($roleCode === 'central' && ($directionCode === 'DEC' || $username === 'dec'));
+$isDfcriUser = ($roleCode === 'central' && ($directionCode === 'DFCRI' || $username === 'dfcri'));
 
 $dept = 'general';
 if ($isApprenticeshipDept || in_array($username, ['sdtpa', 'sdtpas'])) {
@@ -80,6 +88,13 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
     <!-- CSRF Shield & AJAX Configuration -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <script>
+        (function() {
+            let u = '{{ url("/") }}';
+            if (u.startsWith('http:') && window.location.protocol === 'https:') {
+                u = u.replace('http:', 'https:');
+            }
+            window.laravel_url = u;
+        })();
         (function() {
             const token = '{{ csrf_token() }}';
             
@@ -298,12 +313,31 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
     <!-- Sovereign Design System -->
     <link rel="stylesheet" href="{{ asset('assets/css/design-system.css?v=2.1') }}">
 
-    <!-- PWA -->
+    <!-- PWA + TWA Ready -->
     <link rel="manifest" href="{{ asset('manifest.json') }}">
+    <meta name="theme-color" content="#003870">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="منصة تسيير">
     <link rel="apple-touch-icon" href="{{ asset('assets/icons/icon-192x192.png') }}">
+    <link rel="apple-touch-icon" sizes="152x152" href="{{ asset('assets/icons/icon-192x192.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('assets/icons/icon-192x192.png') }}">
+    <link rel="apple-touch-startup-image" href="{{ asset('assets/icons/icon-512x512.png') }}">
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                    .then(function(reg) {
+                        console.log('[SGFEP] Service Worker registered. Scope:', reg.scope);
+                    })
+                    .catch(function(err) {
+                        console.warn('[SGFEP] Service Worker registration failed:', err);
+                    });
+            });
+        }
+    </script>
 
     <style>
         .dock-drawer {
@@ -908,7 +942,7 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
             @endif
 
             <!-- Employee Space Link -->
-            @if (in_array($roleCode, ['admin', 'dfep', 'central', 'etablissement', 'directeur', 'high_admin', 'secretaire_general', 'ministre']) && $dept !== 'diplomes')
+            @if (in_array($roleCode, ['admin', 'dfep', 'central', 'etablissement', 'directeur', 'high_admin', 'secretaire_general', 'ministre']) && $dept !== 'diplomes' && !$isDosfpUser && !$isDepUser && !$isDeohUser)
                 <a href="{{ url('dashboard/espace-employe') }}" class="sidebar-item {{ $isActive('/dashboard/espace-employe') }}" title="فضاء الموظف">
                     <i class="fa-solid fa-briefcase text-success"></i>
                     <span>فضاء الموظف</span>
@@ -916,7 +950,7 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
             @endif
 
             <!-- Etablissement Profile Link -->
-            @if (in_array($roleCode, ['admin', 'dfep', 'central', 'etablissement', 'directeur', 'high_admin', 'secretaire_general', 'ministre']) && $dept !== 'diplomes')
+            @if (in_array($roleCode, ['admin', 'dfep', 'central', 'etablissement', 'directeur', 'high_admin', 'secretaire_general', 'ministre']) && $dept !== 'diplomes' && !$isDfmUser && !$isDrhUser && !$isDosfpUser && !$isDeohUser)
                 <a href="{{ request()->is('sig/*') ? url('sig/dashboard/etablissement') : url('dashboard/etablissement') }}" class="sidebar-item {{ $isActive('/dashboard/etablissement') }}" title="ملف المؤسسة">
                     <i class="fa-solid fa-hotel text-warning"></i>
                     <span>ملف المؤسسة</span>
@@ -924,7 +958,7 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
             @endif
 
             <!-- DSS (Decision Support System) Link -->
-            @if (in_array($roleCode, ['admin', 'dfep', 'central', 'etablissement', 'directeur', 'high_admin', 'secretaire_general', 'ministre', 'dir_finance', 'dir_edu']) && $dept !== 'diplomes')
+            @if (in_array($roleCode, ['admin', 'central', 'high_admin', 'secretaire_general', 'ministre', 'dir_finance', 'dir_edu']) && $dept !== 'diplomes')
                 <a href="{{ request()->is('sig/*') ? url('sig/dashboard/dss') : url('dashboard/dss') }}" class="sidebar-item {{ $isActive('/dashboard/dss') }}" title="دعم القرار الاستراتيجي">
                     <i class="fa-solid fa-brain text-info"></i>
                     <span>دعم القرار الاستراتيجي</span>
@@ -933,11 +967,15 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
 
             <!-- Security Center Dashboard Link -->
             @if ($roleCode === 'admin')
-                <a href="{{ request()->is('sig/*') ? url('sig/admin/security') : url('admin/security') }}" class="sidebar-item {{ $isActive('/admin/security') }}" title="مركز الأمان والرقابة">
+                <a href="{{ request()->is('sig/*') ? url('sig/dashboard/admin-stats') : url('dashboard/admin-stats') }}" class="sidebar-item {{ $isActive('/dashboard/admin-stats') }}" title="لوحة الإحصائيات (الأدمن)">
+                    <i class="fa-solid fa-chart-simple text-primary"></i>
+                    <span>لوحة الإحصائيات (الأدمن)</span>
+                </a>
+                <a href="{{ request()->is('sig/*') ? url('sig/dashboard/security') : url('dashboard/security') }}" class="sidebar-item {{ $isActive('/dashboard/security') }}" title="مركز الأمان والرقابة">
                     <i class="fa-solid fa-shield-halved text-danger"></i>
                     <span>مركز الأمان والرقابة</span>
                 </a>
-                <a href="{{ request()->is('sig/*') ? url('sig/admin/security/mfa') : url('admin/security/mfa') }}" class="sidebar-item {{ $isActive('/admin/security/mfa') }}" title="إدارة سياسات الـ MFA">
+                <a href="{{ request()->is('sig/*') ? url('sig/dashboard/security/mfa') : url('dashboard/security/mfa') }}" class="sidebar-item {{ $isActive('/dashboard/security/mfa') }}" title="إدارة سياسات الـ MFA">
                     <i class="fa-solid fa-user-shield text-danger"></i>
                     <span>إدارة سياسات الـ MFA</span>
                 </a>
@@ -951,7 +989,7 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
 
 
             <!-- Category: Digital Cards (بطاقات التكوين المهني) -->
-            @if (in_array($roleCode, ['admin', 'dfep', 'central', 'etablissement', 'directeur']) && (int)(session('user.IDMode_formation') ?? 0) !== 10 && $dept !== 'diplomes')
+            @if (in_array($roleCode, ['admin', 'dfep', 'central', 'etablissement', 'directeur']) && (int)(session('user.IDMode_formation') ?? 0) !== 10 && $dept !== 'diplomes' && !$isDfmUser && !$isDrhUser && !$isDepUser && !$isDeohUser)
                 <div class="sidebar-dropdown">
                     <button type="button" class="sidebar-item {{ $isActive('/dashboard/digital-cards') ? 'active' : '' }}" onclick="toggleSidebarDropdown(this)" title="بطاقات التكوين المهني">
                         <i class="fa-solid fa-id-card-clip text-primary"></i>
@@ -970,7 +1008,7 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
             @endif
 
             <!-- ══ Category: إعدادات المستخدم ══ -->
-            @if (in_array($roleCode, ['admin', 'dfep', 'central', 'etablissement', 'directeur', 'high_admin']))
+            @if (in_array($roleCode, ['admin', 'dfep', 'central', 'etablissement', 'directeur', 'high_admin']) && !$isDfmUser && !$isDrhUser)
                 <a href="{{ request()->is('sig/*') ? url('sig/dashboard/preferences') : url('dashboard/preferences') }}" class="sidebar-item {{ $isActive('/dashboard/preferences') }}" title="إعدادات المظهر والتفضيلات">
                     <i class="fa-solid fa-palette text-info"></i>
                     <span>إعدادات المظهر والتفضيلات</span>
@@ -985,7 +1023,7 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
 
 
             <!-- ══ Section 2: الشؤون البيداغوجية والتعليم ══ -->
-            @if (in_array($dept, ['general', 'pedagogie', 'orientation', 'diplomes', 'apprentissage']))
+            @if (in_array($dept, ['general', 'pedagogie', 'orientation', 'diplomes', 'apprentissage']) && !$isDfmUser && !$isDrhUser)
             <div class="sidebar-section-line"></div>
             <div class="sidebar-section-label"><span>الشؤون البيداغوجية والتعليم</span></div>
 
@@ -998,31 +1036,45 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
                         <i class="fa-solid fa-chevron-down ms-auto dropdown-chevron" style="font-size: 0.7rem;"></i>
                     </button>
                     <div class="sidebar-submenu {{ ($isActive('/dashboard/offres') || $isActive('/dashboard/inscriptions') || $isActive('/dashboard/preinscrits') || $isActive('/dashboard/specialites') || $isActive('/dashboard/integration') || $isActive('/dashboard/sessions') || $isActive('/dashboard/schedule') || $isActive('/dashboard/effectifs') || $isActive('/dashboard/apprenants') || $isActive('/dashboard/sections')) ? 'open' : '' }}">
-                        @if (in_array($dept, ['general', 'pedagogie', 'apprentissage']))
-                        <a href="{{ url('dashboard/offres') }}" class="sidebar-subitem {{ $isActive('/dashboard/offres', true) }}" title="العروض"><i class="fa-solid fa-briefcase"></i> <span>العروض</span></a>
+                        @if(!$isDeohUser && !$isDecUser && !$isDfcriUser)
+                            @if (in_array($dept, ['general', 'pedagogie', 'apprentissage']))
+                            <a href="{{ url('dashboard/offres') }}" class="sidebar-subitem {{ $isActive('/dashboard/offres', true) }}" title="العروض"><i class="fa-solid fa-briefcase"></i> <span>العروض</span></a>
+                            @endif
+                            @if (in_array($roleCode, ['admin', 'dfep', 'central']) && $dept === 'general')
+                                <a href="{{ url('dashboard/offres/validation') }}" class="sidebar-subitem {{ $isActive('/dashboard/offres/validation') }}" title="المصادقة على العروض"><i class="fa-solid fa-stamp"></i> <span>المصادقة على العروض</span></a>
+                            @endif
                         @endif
-                        @if (in_array($roleCode, ['admin', 'dfep', 'central']) && $dept === 'general')
-                            <a href="{{ url('dashboard/offres/validation') }}" class="sidebar-subitem {{ $isActive('/dashboard/offres/validation') }}" title="المصادقة على العروض"><i class="fa-solid fa-stamp"></i> <span>المصادقة على العروض</span></a>
-                        @endif
-                        @if (in_array($dept, ['general', 'pedagogie', 'orientation']))
-                        <a href="{{ url('dashboard/preinscrits') }}" class="sidebar-subitem {{ $isActive('/dashboard/preinscrits') }}" title="التسجيلات الأولية عبر الإنترنت"><i class="fa-solid fa-laptop-file text-warning"></i> <span>التسجيلات الأولية عبر الإنترنت</span></a>
-                        <a href="{{ url('dashboard/inscriptions') }}" class="sidebar-subitem {{ $isActive('/dashboard/inscriptions') }}" title="التسجيل والتوجيه"><i class="fa-solid fa-user-plus"></i> <span>التسجيل والتوجيه</span></a>
-                        @endif
-                        @if (in_array($dept, ['general', 'pedagogie', 'apprentissage']))
-                        <a href="{{ url('dashboard/apprenants') }}" class="sidebar-subitem {{ $isActive('/dashboard/apprenants') }}" title="المتربصين والطلاب"><i class="fa-solid fa-user-graduate"></i> <span>المتربصين والطلاب</span></a>
-                        <a href="{{ url('dashboard/sections') }}" class="sidebar-subitem {{ $isActive('/dashboard/sections') }}" title="الأقسام التكوينية"><i class="fa-solid fa-users-rectangle"></i> <span>الأقسام التكوينية</span></a>
-                        @endif
-                        @if (in_array($dept, ['general', 'pedagogie', 'orientation']))
-                        <a href="{{ url('dashboard/specialites') }}" class="sidebar-subitem {{ $isActive('/dashboard/specialites') }}" title="تنظيم الفروع"><i class="fa-solid fa-sitemap"></i> <span>تنظيم الفروع</span></a>
-                        @endif
-                        @if (in_array($dept, ['general', 'pedagogie']) && (int)(session('user.IDMode_formation') ?? 0) !== 10)
-                        <a href="{{ url('dashboard/integration') }}" class="sidebar-subitem {{ $isActive('/dashboard/integration') }}" title="الادماج"><i class="fa-solid fa-handshake"></i> <span>الادماج</span></a>
-                        @endif
-                        @if (in_array($dept, ['general', 'pedagogie', 'orientation']))
-                        <a href="{{ url('dashboard/sessions') }}" class="sidebar-subitem {{ $isActive('/dashboard/sessions') }}" title="تخطيط الدورات"><i class="fa-solid fa-calendar-alt"></i> <span>تخطيط الدورات</span></a>
-                        @endif
-                        @if (in_array($dept, ['general', 'pedagogie']))
-                        <a href="{{ url('dashboard/effectifs') }}" class="sidebar-subitem {{ $isActive('/dashboard/effectifs') }}" title="تسيير التعداد"><i class="fa-solid fa-users"></i> <span>تسيير التعداد</span></a>
+                        @if(!$isDosfpUser)
+                            @if(!$isDecUser && !$isDfcriUser)
+                                @if (in_array($dept, ['general', 'pedagogie', 'orientation']))
+                                <a href="{{ url('dashboard/preinscrits') }}" class="sidebar-subitem {{ $isActive('/dashboard/preinscrits') }}" title="التسجيلات الأولية عبر الإنترنت"><i class="fa-solid fa-laptop-file text-warning"></i> <span>التسجيلات الأولية عبر الإنترنت</span></a>
+                                <a href="{{ url('dashboard/inscriptions') }}" class="sidebar-subitem {{ $isActive('/dashboard/inscriptions') }}" title="التسجيل والتوجيه"><i class="fa-solid fa-user-plus"></i> <span>التسجيل والتوجيه</span></a>
+                                @endif
+                                @if (in_array($dept, ['general', 'pedagogie', 'apprentissage']))
+                                <a href="{{ url('dashboard/apprenants') }}" class="sidebar-subitem {{ $isActive('/dashboard/apprenants') }}" title="المتربصين والطلاب"><i class="fa-solid fa-user-graduate"></i> <span>المتربصين والطلاب</span></a>
+                                    @if(!$isDeohUser)
+                                    <a href="{{ url('dashboard/sections') }}" class="sidebar-subitem {{ $isActive('/dashboard/sections') }}" title="الأقسام التكوينية"><i class="fa-solid fa-users-rectangle"></i> <span>الأقسام التكوينية</span></a>
+                                    @endif
+                                @endif
+                            @endif
+                            @if(!$isDeohUser)
+                                @if(!$isDecUser && !$isDfcriUser)
+                                    @if (in_array($dept, ['general', 'pedagogie', 'orientation']))
+                                    <a href="{{ url('dashboard/specialites') }}" class="sidebar-subitem {{ $isActive('/dashboard/specialites') }}" title="تنظيم الفروع"><i class="fa-solid fa-sitemap"></i> <span>تنظيم الفروع</span></a>
+                                    @endif
+                                @endif
+                                @if (in_array($dept, ['general', 'pedagogie']) && (int)(session('user.IDMode_formation') ?? 0) !== 10)
+                                <a href="{{ url('dashboard/integration') }}" class="sidebar-subitem {{ $isActive('/dashboard/integration') }}" title="الادماج"><i class="fa-solid fa-handshake"></i> <span>الادماج</span></a>
+                                @endif
+                                @if(!$isDecUser && !$isDfcriUser)
+                                    @if (in_array($dept, ['general', 'pedagogie', 'orientation']))
+                                    <a href="{{ url('dashboard/sessions') }}" class="sidebar-subitem {{ $isActive('/dashboard/sessions') }}" title="تخطيط الدورات"><i class="fa-solid fa-calendar-alt"></i> <span>تخطيط الدورات</span></a>
+                                    @endif
+                                    @if (in_array($dept, ['general', 'pedagogie']))
+                                    <a href="{{ url('dashboard/effectifs') }}" class="sidebar-subitem {{ $isActive('/dashboard/effectifs') }}" title="تسيير التعداد"><i class="fa-solid fa-users"></i> <span>تسيير التعداد</span></a>
+                                    @endif
+                                @endif
+                            @endif
                         @endif
                     </div>
                 </div>
@@ -1046,7 +1098,7 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
             @endif
 
             <!-- Category: Apprenticeship -->
-            @if (in_array($roleCode, ['admin','dfep','etablissement','directeur']) && in_array($dept, ['general', 'apprentissage']))
+            @if ((in_array($roleCode, ['admin','dfep','etablissement','directeur']) || $isDecUser || $isDfcriUser) && in_array($dept, ['general', 'apprentissage']))
                 <div class="sidebar-dropdown">
                     <button type="button" class="sidebar-item {{ ($isActive('/dashboard/partenaires') || $isActive('/dashboard/maitres-apprentissage')) ? 'active' : '' }}" onclick="toggleSidebarDropdown(this)" title="التمهين والمؤسسات">
                         <i class="fa-solid fa-industry"></i>
@@ -1061,7 +1113,7 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
             @endif
 
             <!-- Category: Evaluations & Exams -->
-            @if (($hasPerm('grades') || in_array($roleCode, ['admin','dfep','etablissement','directeur'])) && in_array($dept, ['general', 'pedagogie', 'diplomes', 'apprentissage']))
+            @if (($hasPerm('grades') || in_array($roleCode, ['admin','dfep','etablissement','directeur'])) && in_array($dept, ['general', 'pedagogie', 'diplomes', 'apprentissage']) && !$isDosfpUser && !$isDepUser)
                 <div class="sidebar-dropdown">
                     <button type="button" class="sidebar-item {{ ($isActive('/resultats') || $isActive('/dashboard/formateurs') || $isActive('/dashboard/formateurs/age-distribution') || $isActive('/dashboard/evaluation-stagiaires') || $isActive('/dashboard/reconduits') || $isActive('/dashboard/reconduits/transfers') || $isActive('/dashboard/schedule') || $isActive('/dashboard/examens') || $isActive('/dashboard/gestion-evaluations') || $isActive('/dashboard/evaluation-finale') || $isActive('/dashboard/diplomes') || $isActive('/dashboard/grades/reconduits') || $isActive('/dashboard/grades')) ? 'active' : '' }}" onclick="toggleSidebarDropdown(this)" title="التقييمات والشهادات">
                         <i class="fa-solid fa-list-check"></i>
@@ -1075,12 +1127,16 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
                                 <a href="{{ url('dashboard/grades/progress') }}" class="sidebar-subitem {{ $isActive('/dashboard/grades/progress') }}" title="متابعة تقدم الرصد"><i class="fa-solid fa-chart-line"></i> <span>متابعة تقدم الرصد</span></a>
                             @endif
                             <a href="{{ url('resultats') }}" class="sidebar-subitem" title="التقييم سداسي"><i class="fa-solid fa-star-half-stroke"></i> <span>التقييم سداسي</span></a>
+                            @if(!$isDeohUser)
                             <a href="{{ url('dashboard/formateurs') }}" class="sidebar-subitem {{ $isActive('/dashboard/formateurs') }}" title="التقييم - المكونين"><i class="fa-solid fa-user-tie"></i> <span>التقييم - المكونين</span></a>
                             <a href="{{ url('dashboard/formateurs/age-distribution') }}" class="sidebar-subitem {{ $isActive('/dashboard/formateurs/age-distribution') }}" title="إحصائيات الأساتذة والسن"><i class="fa-solid fa-chart-line"></i> <span>إحصائيات الأساتذة والسن</span></a>
+                            @endif
                             <a href="{{ url('dashboard/evaluation-stagiaires') }}" class="sidebar-subitem {{ $isActive('/dashboard/evaluation-stagiaires') }}" title="التقييم - المتكونين"><i class="fa-solid fa-user-graduate"></i> <span>التقييم - المتكونين</span></a>
                             <a href="{{ url('dashboard/reconduits') }}" class="sidebar-subitem {{ $isActive('/dashboard/reconduits') }}" title="المتربصين المستمرين"><i class="fa-solid fa-users-viewfinder"></i> <span>المتربصين المستمرين</span></a>
                             <a href="{{ url('dashboard/reconduits/transfers') }}" class="sidebar-subitem {{ $isActive('/dashboard/reconduits/transfers') }}" title="طلبات تحويل المتربصين"><i class="fa-solid fa-arrows-spin text-warning"></i> <span>طلبات تحويل المتربصين</span></a>
+                            @if(!$isDeohUser)
                             <a href="{{ url('dashboard/schedule') }}" class="sidebar-subitem {{ $isActive('/dashboard/schedule') }}" title="استعمال الزمن"><i class="fa-solid fa-calendar-days text-primary"></i> <span>استعمال الزمن</span></a>
+                            @endif
                             <a href="{{ url('dashboard/examens') }}" class="sidebar-subitem {{ $isActive('/dashboard/examens') }}" title="الامتحانات التقييمية"><i class="fa-solid fa-file-signature"></i> <span>الامتحانات التقييمية</span></a>
                             <a href="{{ url('dashboard/gestion-evaluations') }}" class="sidebar-subitem {{ $isActive('/dashboard/gestion-evaluations') }}" title="تسيير التقييمات"><i class="fa-solid fa-list-check"></i> <span>تسيير التقييمات</span></a>
                             <a href="{{ url('dashboard/evaluation-finale') }}" class="sidebar-subitem {{ $isActive('/dashboard/evaluation-finale') }}" title="التقييم نهائي"><i class="fa-solid fa-flag-checkered"></i> <span>التقييم نهائي</span></a>
@@ -1101,7 +1157,7 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
             <div class="sidebar-section-label"><span>التسيير المالي والإداري</span></div>
 
             <!-- ══ Category: التسيير المالي والإداري ══ -->
-            @if (in_array($roleCode, ['admin', 'dfep', 'central', 'etablissement', 'directeur', 'high_admin', 'secretaire_general', 'ministre']))
+            @if (in_array($roleCode, ['admin', 'dfep', 'central', 'etablissement', 'directeur', 'high_admin', 'secretaire_general', 'ministre']) && !$isDosfpUser && !$isDepUser && !$isDeohUser)
                 <div class="sidebar-dropdown">
                     <button type="button" class="sidebar-item {{ ($isActive('/dashboard/finances') || $isActive('/dashboard/patrimoine') || $isActive('/dashboard/rh-gestion') || $isActive('/dashboard/identities')) ? 'active' : '' }}" onclick="toggleSidebarDropdown(this)" title="التسيير المالي والإداري">
                         <i class="fa-solid fa-coins text-warning"></i>
@@ -1109,36 +1165,43 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
                         <i class="fa-solid fa-chevron-down ms-auto dropdown-chevron" style="font-size: 0.7rem;"></i>
                     </button>
                     <div class="sidebar-submenu {{ ($isActive('/dashboard/finances') || $isActive('/dashboard/patrimoine') || $isActive('/dashboard/rh-gestion') || $isActive('/dashboard/identities')) ? 'open' : '' }}">
-                        <a href="{{ url('dashboard/finances') }}" class="sidebar-subitem {{ $isActive('/dashboard/finances') }}" title="المناصب المالية والميزانية">
+                        <a href="{{ url('dashboard/finances') }}" class="sidebar-subitem {{ ($isActive('/dashboard/finances') && !request('tab')) ? 'active' : '' }}" title="المناصب المالية والميزانية">
                             <i class="fa-solid fa-money-bill-wave text-success"></i> <span>المناصب المالية والميزانية</span>
                         </a>
-                        <a href="{{ url('dashboard/finances?tab=grants_dashboard') }}" class="sidebar-subitem {{ ($isActive('/dashboard/finances') && request('tab')==='grants_dashboard') ? 'active' : '' }}" title="لوحة إحصائيات المنح">
-                            <i class="fa-solid fa-chart-pie text-warning"></i> <span>لوحة إحصائيات المنح</span>
-                        </a>
-                        <a href="{{ url('dashboard/finances?tab=employees_dashboard') }}" class="sidebar-subitem {{ ($isActive('/dashboard/finances') && request('tab')==='employees_dashboard') ? 'active' : '' }}" title="لوحة إحصائيات الموظفين">
-                            <i class="fa-solid fa-users-gear text-warning"></i> <span>لوحة إحصائيات الموظفين</span>
-                        </a>
-                        <a href="{{ url('dashboard/finances?tab=programmes') }}" class="sidebar-subitem {{ ($isActive('/dashboard/finances') && request('tab')==='programmes') ? 'active' : '' }}" title="البرامج والبرامج الفرعية">
-                            <i class="fa-solid fa-layer-group"></i> <span>البرامج والبرامج الفرعية</span>
-                        </a>
-                        <a href="{{ url('dashboard/finances?tab=fournisseurs') }}" class="sidebar-subitem {{ ($isActive('/dashboard/finances') && request('tab')==='fournisseurs') ? 'active' : '' }}" title="تسيير الموردين">
-                            <i class="fa-solid fa-truck"></i> <span>تسيير الموردين</span>
-                        </a>
-                        <a href="{{ url('dashboard/patrimoine') }}" class="sidebar-subitem {{ $isActive('/dashboard/patrimoine') }}" title="تسيير الوسائل والممتلكات">
-                            <i class="fa-solid fa-building text-info"></i> <span>تسيير الوسائل والممتلكات</span>
-                        </a>
-                        <a href="{{ url('dashboard/rh-gestion') }}" class="sidebar-subitem {{ $isActive('/dashboard/rh-gestion') }}" title="الموارد البشرية والإدارية">
-                            <i class="fa-solid fa-users-gear text-primary"></i> <span>الموارد البشرية والإدارية</span>
-                        </a>
-                        <a href="{{ url('dashboard/identities') }}" class="sidebar-subitem {{ $isActive('/dashboard/identities') }}" title="سجل التحقق من الهوية الوطنية">
-                            <i class="fa-solid fa-id-card text-danger"></i> <span>سجل التحقق من الهوية الوطنية</span>
-                        </a>
+                        @if($isDfmUser)
+                            <a href="{{ url('dashboard/documents') }}" class="sidebar-subitem {{ $isActive('/dashboard/documents') }}" title="الوثائق الرسمية">
+                                <i class="fa-solid fa-file-shield text-warning"></i> <span>الوثائق الرسمية</span>
+                            </a>
+                        @endif
+                        @if(!$isDrhUser)
+                            <a href="{{ url('dashboard/finances?tab=grants_dashboard') }}" class="sidebar-subitem {{ ($isActive('/dashboard/finances') && request('tab')==='grants_dashboard') ? 'active' : '' }}" title="لوحة إحصائيات المنح">
+                                <i class="fa-solid fa-chart-pie text-warning"></i> <span>لوحة إحصائيات المنح</span>
+                            </a>
+                            <a href="{{ url('dashboard/finances?tab=employees_dashboard') }}" class="sidebar-subitem {{ ($isActive('/dashboard/finances') && request('tab')==='employees_dashboard') ? 'active' : '' }}" title="لوحة إحصائيات الموظفين">
+                                <i class="fa-solid fa-users-gear text-warning"></i> <span>لوحة إحصائيات الموظفين</span>
+                            </a>
+                            <a href="{{ url('dashboard/finances?tab=programmes') }}" class="sidebar-subitem {{ ($isActive('/dashboard/finances') && request('tab')==='programmes') ? 'active' : '' }}" title="البرامج والبرامج الفرعية">
+                                <i class="fa-solid fa-layer-group"></i> <span>البرامج والبرامج الفرعية</span>
+                            </a>
+                            <a href="{{ url('dashboard/finances?tab=fournisseurs') }}" class="sidebar-subitem {{ ($isActive('/dashboard/finances') && request('tab')==='fournisseurs') ? 'active' : '' }}" title="تسيير الموردين">
+                                <i class="fa-solid fa-truck"></i> <span>تسيير الموردين</span>
+                            </a>
+                            <a href="{{ url('dashboard/patrimoine') }}" class="sidebar-subitem {{ $isActive('/dashboard/patrimoine') }}" title="تسيير الوسائل والممتلكات">
+                                <i class="fa-solid fa-building text-info"></i> <span>تسيير الوسائل والممتلكات</span>
+                            </a>
+                            <a href="{{ url('dashboard/rh-gestion') }}" class="sidebar-subitem {{ $isActive('/dashboard/rh-gestion') }}" title="الموارد البشرية والإدارية">
+                                <i class="fa-solid fa-users-gear text-primary"></i> <span>الموارد البشرية والإدارية</span>
+                            </a>
+                            <a href="{{ url('dashboard/identities') }}" class="sidebar-subitem {{ $isActive('/dashboard/identities') }}" title="سجل التحقق من الهوية الوطنية">
+                                <i class="fa-solid fa-id-card text-danger"></i> <span>سجل التحقق من الهوية الوطنية</span>
+                            </a>
+                        @endif
                     </div>
                 </div>
             @endif
 
             <!-- Category: Discipline & Physical Services -->
-            @if ($hasPerm('discipline') || $hasPerm('repas') || $hasPerm('documents') || $roleCode === 'dfep')
+            @if (($hasPerm('discipline') || $hasPerm('repas') || $hasPerm('documents') || $roleCode === 'dfep') && !$isDfmUser && !$isDrhUser && !$isDepUser && !$isDeohUser)
                 <div class="sidebar-dropdown">
                     <button type="button" class="sidebar-item {{ ($isActive('/dashboard/absences') || $isActive('/dashboard/discipline') || $isActive('/dashboard/repas') || $isActive('/dashboard/documents')) ? 'active' : '' }}" onclick="toggleSidebarDropdown(this)" title="تسيير التكوين والخدمات">
                         <i class="fa-solid fa-clipboard-user"></i>
@@ -1156,7 +1219,7 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
                         @if ($hasPerm('offres') || $roleCode === 'dfep')
                             <a href="{{ url('dashboard/formation') }}" class="sidebar-subitem {{ $isActive('/dashboard/formation') }}" title="تسيير التكوين"><i class="fa-solid fa-chalkboard-user"></i> <span>تسيير التكوين</span></a>
                         @endif
-                        @if ($hasPerm('repas') || $roleCode === 'dfep')
+                        @if (false && ($hasPerm('repas') || $roleCode === 'dfep'))
                             <a href="{{ url('dashboard/repas') }}" class="sidebar-subitem {{ $isActive('/dashboard/repas') }}" title="الخدمات المادية"><i class="fa-solid fa-utensils"></i> <span>الخدمات المادية</span></a>
                         @endif
                         @if ($hasPerm('documents') || $roleCode === 'dfep')
@@ -1167,7 +1230,7 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
             @endif
 
             <!-- Category: Instant Official Documents & Biometrics -->
-            @if ($hasPerm('documents') || $roleCode === 'dfep' || in_array($roleCode, ['admin', 'central', 'etablissement', 'directeur']))
+            @if (($hasPerm('documents') || $roleCode === 'dfep' || in_array($roleCode, ['admin', 'central', 'etablissement', 'directeur'])) && !$isDfmUser && !$isDrhUser && !$isDepUser && !$isDeohUser)
                 <div class="sidebar-dropdown">
                     <button type="button" class="sidebar-item {{ ($isActive('/dashboard/documents') && !str_contains(request()->fullUrl(), 'tab=')) ? 'active' : '' }}" onclick="toggleSidebarDropdown(this)" title="الوثائق الرسمية الفورية">
                         <i class="fa-solid fa-file-shield text-warning"></i>
@@ -1919,7 +1982,12 @@ if ('serviceWorker' in navigator) {
     });
 
     // 1. Focus & Page Visibility Monitors (Android/iOS safe)
-    window.addEventListener('blur', showShield);
+    window.addEventListener('blur', function() {
+        if (document.activeElement && document.activeElement.tagName === 'IFRAME') {
+            return;
+        }
+        showShield();
+    });
     window.addEventListener('focus', function() {
         setTimeout(hideShield, 1500);
     });
@@ -1984,10 +2052,139 @@ if ('serviceWorker' in navigator) {
             showShield();
             setTimeout(hideShield, 1500);
         }
+    // 6. Global Modal Relocator to prevent backdrop stacking bugs on dynamic pages
+    document.addEventListener('show.bs.modal', function(event) {
+        const modal = event.target;
+        if (modal && modal.parentNode !== document.body) {
+            document.body.appendChild(modal);
+        }
     });
 })();
 </script>
 @endif
+<!-- Intro.js Tour Engine -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intro.js/7.2.0/introjs.min.css">
+<style>
+    .floating-help-btn {
+        position: fixed;
+        bottom: 30px;
+        left: 30px;
+        background-color: var(--color-gov-purple-dark, #4a154b);
+        color: white !important;
+        border: none;
+        border-radius: 50%;
+        width: 52px;
+        height: 52px;
+        font-size: 20px;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(74, 21, 75, 0.35);
+        z-index: 9999;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+    .floating-help-btn:hover {
+        transform: scale(1.1) rotate(15deg);
+        background-color: #3b103c;
+    }
+    .introjs-tooltip {
+        background-color: #ffffff;
+        color: #1e3a5f;
+        font-family: 'Cairo', sans-serif;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        border: 1px solid rgba(0,0,0,0.05);
+        padding: 15px;
+    }
+    .introjs-tooltiptitle {
+        font-weight: bold;
+        color: #1e3a5f;
+        font-size: 1.1rem;
+    }
+    .introjs-button {
+        border-radius: 20px !important;
+        font-family: 'Cairo', sans-serif !important;
+        font-size: 0.85rem !important;
+        font-weight: bold !important;
+        padding: 6px 15px !important;
+        transition: all 0.2s ease !important;
+    }
+    .introjs-donebutton, .introjs-nextbutton {
+        background-color: var(--color-gov-purple-dark, #4a154b) !important;
+        color: #ffffff !important;
+        border: 1px solid var(--color-gov-purple-dark, #4a154b) !important;
+        text-shadow: none !important;
+    }
+    .introjs-donebutton:hover, .introjs-nextbutton:hover {
+        background-color: #3b103c !important;
+    }
+    .introjs-prevbutton {
+        background-color: #f1f5f9 !important;
+        color: #64748b !important;
+        border: 1px solid #e2e8f0 !important;
+        text-shadow: none !important;
+    }
+    .introjs-prevbutton:hover {
+        background-color: #e2e8f0 !important;
+    }
+    .introjs-bullets ul li a.active {
+        background: var(--color-gov-purple-dark, #4a154b) !important;
+    }
+</style>
+
+<!-- Universal Guide Floating Button -->
+<button id="global-tour-btn" class="floating-help-btn" title="دليل الصفحة">
+    <i class="fas fa-compass"></i>
+</button>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/intro.js/7.2.0/intro.min.js"></script>
+<script src="{{ asset('assets/js/universal-tours.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        let currentPath = window.location.pathname;
+        if (currentPath.startsWith('/sig')) {
+            currentPath = currentPath.substring(4);
+        }
+        currentPath = '/' + currentPath.replace(/^\/+|\/+$/g, '');
+
+        if (typeof UniversalTours !== 'undefined' && UniversalTours[currentPath]) {
+            const steps = UniversalTours[currentPath];
+            const tourKey = 'tour_seen_' + currentPath.replace(/\//g, '_');
+
+            const globalTourBtn = document.getElementById('global-tour-btn');
+            if (globalTourBtn) {
+                globalTourBtn.style.display = 'flex';
+                globalTourBtn.addEventListener('click', function() {
+                    runUniversalTour(steps);
+                });
+            }
+
+            if (!localStorage.getItem(tourKey)) {
+                setTimeout(function() {
+                    runUniversalTour(steps, tourKey);
+                }, 1800);
+            }
+        }
+    });
+
+    function runUniversalTour(steps, saveKey = null) {
+        introJs().setOptions({
+            steps: steps,
+            nextLabel: 'التالي <i class="fas fa-chevron-left ms-1"></i>',
+            prevLabel: '<i class="fas fa-chevron-right me-1"></i> السابق',
+            doneLabel: 'إتمام الجولة <i class="fas fa-check-circle ms-1"></i>',
+            exitOnOverlayClick: false,
+            showProgress: true,
+            language: 'ar'
+        }).oncomplete(function() {
+            if (saveKey) localStorage.setItem(saveKey, 'true');
+        }).onexit(function() {
+            if (saveKey) localStorage.setItem(saveKey, 'true');
+        }).start();
+    }
+</script>
+
 @yield('scripts')
 </body>
 </html>

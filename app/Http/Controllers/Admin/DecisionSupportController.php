@@ -24,6 +24,13 @@ class DecisionSupportController extends Controller
         if (!$user) return redirect('/login');
 
         $roleCode = strtolower($user['role_code'] ?? '');
+
+        // ── Restrict access: DSS is for admin/minister/central only ──
+        $allowedRoles = ['admin', 'ministre', 'central', 'high_admin', 'secretaire_general'];
+        if (!in_array($roleCode, $allowedRoles)) {
+            return redirect()->route('dashboard')->with('error', 'ليس لديك صلاحية الوصول إلى نظام دعم القرار.');
+        }
+
         $prefs = UserPreferences::forUser($user);
 
         // 1. Determine Scope based on user role
@@ -40,30 +47,26 @@ class DecisionSupportController extends Controller
                 // We'll calculate aggregated metrics dynamically for the selected Wilaya
                 // For simplicity, if they filter by Wilaya, we pass the first establishment or aggregate them.
             }
-        } elseif (in_array($roleCode, ['dfep'])) {
-            $dfepId = (int)($user['iddfep'] ?? $user['IDDFEP'] ?? 0);
-            $etabId = (int)$request->get('filter_etablissement', 0);
-            
-            // Validate that the requested establishment belongs to the DFEP's Wilaya
-            if ($etabId > 0) {
-                $check = DB::table('etablissement')
-                    ->where('IDetablissement', $etabId)
-                    ->where('IDDFEP', $dfepId)
-                    ->exists();
-                if (!$check) {
-                    $etabId = 0; // reset if invalid
-                }
-            }
         } else {
-            // Etablissement-level user, locked to their own etablissement
-            $etabId = (int)($user['etablissement_id'] ?? 0);
+            // central/high_admin — scoped to their direction only, no etab
+            $etabId = 0;
             $dfepId = 0;
         }
 
         // 2. Fetch scoped metrics, alerts, and recommendations
-        $scopedData = $this->engine->getMetricsForRole($roleCode, $etabId > 0 ? $etabId : null);
+        $directionCode = strtoupper($user['direction_code'] ?? $user['username'] ?? '');
+        $roleArg = $roleCode;
+        if ($roleCode === 'central' && $directionCode === 'DFM') {
+            $roleArg = 'dir_finance';
+        } elseif ($roleCode === 'central' && in_array($directionCode, ['DRH', 'DRHINST', 'DRHCENTRE', 'DRHPB', 'DRHT'])) {
+            $roleArg = 'dir_rh';
+        } elseif ($roleCode === 'central' && in_array($directionCode, ['DOSFP', 'DEP'])) {
+            $roleArg = 'dir_edu';
+        }
+
+        $scopedData = $this->engine->getMetricsForRole($roleArg, $etabId > 0 ? $etabId : null);
         $alerts = $this->engine->getAlerts($etabId > 0 ? $etabId : null);
-        $recommendations = $this->engine->getAiRecommendations($roleCode, $etabId > 0 ? $etabId : null);
+        $recommendations = $this->engine->getAiRecommendations($roleArg, $etabId > 0 ? $etabId : null);
 
         // 3. Lookups for filters
         $wilayas = DB::table('wilaya')->orderBy('Nom', 'asc')->get();
@@ -127,6 +130,15 @@ class DecisionSupportController extends Controller
      */
     public function drilldown(Request $request)
     {
+        $user = session('user');
+        if (!$user) return response()->json(['error' => 'غير مصرح'], 401);
+
+        $roleCode = strtolower($user['role_code'] ?? '');
+        $allowedRoles = ['admin', 'ministre', 'central', 'high_admin', 'secretaire_general'];
+        if (!in_array($roleCode, $allowedRoles)) {
+            return response()->json(['error' => 'ليس لديك صلاحية الوصول'], 403);
+        }
+
         $etabId = (int)$request->get('etab_id', 0);
         if ($etabId <= 0) {
             return response()->json(['error' => 'معرف المؤسسة غير صالح'], 400);
