@@ -212,6 +212,7 @@ class LoginController extends Controller
 
         try {
             $matchedUser = null;
+            $loginError = null;
             $roleCode = '';
             $roleAr = '';
             $roleFr = '';
@@ -274,13 +275,14 @@ class LoginController extends Controller
 
                     // ── Vérification mot de passe (Lazy Migration) ───────────────
                     // Accepte : bcrypt (password_verify) OU texte clair (comparaison directe)
+                    $isCaseMismatch = false;
                     if (password_verify($password, $employee['MotDePass']) || $password === $employee['MotDePass']) {
                         $isPasswordValid = true;
-
+ 
                         // Rehash automatique : si le mot de passe n'est pas encore haché
                         if (password_needs_rehash($employee['MotDePass'], PASSWORD_BCRYPT, ['cost' => 12])
                             || strpos($employee['MotDePass'], '$2y$') !== 0) {
-
+ 
                             $newHash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
                             // Mettre à jour le mot de passe ET le nin_hash en même temps
                             $stmtUpdateHash = $db->prepare(
@@ -294,8 +296,13 @@ class LoginController extends Controller
                                 $stmtUpdateHash->execute([$newHash, $employee['IDEncadrement']]);
                             }
                         }
+                    } else {
+                        if (password_verify(strtolower($password), $employee['MotDePass']) || strtolower($password) === strtolower($employee['MotDePass'])
+                            || password_verify(strtoupper($password), $employee['MotDePass']) || strtoupper($password) === strtoupper($employee['MotDePass'])) {
+                            $isCaseMismatch = true;
+                        }
                     }
-
+ 
                     if ($isPasswordValid) {
                         $matchedUser = [
                             'id'               => $employee['IDEncadrement'],
@@ -312,6 +319,15 @@ class LoginController extends Controller
                         ];
                     }
                 }
+                if (!$employee) {
+                    $loginError = 'رقم التعريف الوطني (NIN) غير مسجل في النظام. / NIN non enregistré.';
+                } elseif (!$isPasswordValid) {
+                    if ($isCaseMismatch) {
+                        $loginError = 'كلمة المرور صحيحة ولكن يرجى التحقق من حالة الحروف (كبيرة/صغيرة - Caps Lock). / Vérifiez la casse du mot de passe.';
+                    } else {
+                        $loginError = 'كلمة المرور غير صحيحة. / Mot de passe incorrect.';
+                    }
+                }
             } elseif ($loginType === 'etablissement') {
                 // ② Etablissement Login (Triple Credential check)
                 $stmt = $db->prepare("
@@ -325,7 +341,7 @@ class LoginController extends Controller
                     INNER JOIN NatureDirection ON NatureDirection.IDNature = Nature_etsF.IDNature
                     INNER JOIN Utilisateur     ON NatureDirection.IDNature = Utilisateur.IDNature
                     WHERE Etablissement.activee = 0
-                      AND Etablissement.nomUser = :nomUser
+                      AND LOWER(Etablissement.nomUser) = LOWER(:nomUser)
                     LIMIT 1
                 ");
                 $stmt->execute([':nomUser' => $username]);
@@ -358,6 +374,7 @@ class LoginController extends Controller
                     }
                     $etab = array_merge($etab, $normalizedEtab);
                     $isEtabPasswordValid = false;
+                    $isEtabCaseMismatch = false;
                     if (password_verify($password, $etab['MotDePass']) || $password === $etab['MotDePass']) {
                         $isEtabPasswordValid = true;
                         if (password_needs_rehash($etab['MotDePass'], PASSWORD_BCRYPT, ['cost' => 12]) || strpos($etab['MotDePass'], '$2y$') !== 0) {
@@ -365,19 +382,25 @@ class LoginController extends Controller
                             $stmtUpdateEtabHash = $db->prepare("UPDATE Etablissement SET MotDePass = ? WHERE IDetablissement = ?");
                             $stmtUpdateEtabHash->execute([$newHash, $etab['IDetablissement']]);
                         }
+                    } else {
+                        if (password_verify(strtolower($password), $etab['MotDePass']) || strtolower($password) === strtolower($etab['MotDePass'])
+                            || password_verify(strtoupper($password), $etab['MotDePass']) || strtoupper($password) === strtoupper($etab['MotDePass'])) {
+                            $isEtabCaseMismatch = true;
+                        }
                     }
-
+ 
                     $isSecretCodeValid = false;
+                    $isSecretCodeCaseMismatch = false;
                     $isApprenLogin = false;
                     $matchedUtilisateur = null;
                     $empHead = null;
-
+ 
                     if ($isEtabPasswordValid) {
                         // Fetch all Utilisateur records for this nature
                         $stmtUsers = $db->prepare("SELECT * FROM utilisateur WHERE IDNature = ?");
                         $stmtUsers->execute([$etab['nature_id']]);
                         $natureUsers = $stmtUsers->fetchAll(\PDO::FETCH_ASSOC);
-
+ 
                         foreach ($natureUsers as $nu) {
                             if (password_verify($secretCode, $nu['MotPass']) || $secretCode === $nu['MotPass']) {
                                 $isSecretCodeValid = true;
@@ -388,7 +411,17 @@ class LoginController extends Controller
                                 break;
                             }
                         }
-
+ 
+                        if (!$isSecretCodeValid) {
+                            foreach ($natureUsers as $nu) {
+                                if (password_verify(strtolower($secretCode), $nu['MotPass']) || strtolower($secretCode) === strtolower($nu['MotPass'])
+                                    || password_verify(strtoupper($secretCode), $nu['MotPass']) || strtoupper($secretCode) === strtoupper($nu['MotPass'])) {
+                                    $isSecretCodeCaseMismatch = true;
+                                    break;
+                                }
+                            }
+                        }
+ 
                         // If not matched, check if it's the Apprenticeship Head's personal code
                         if (!$isSecretCodeValid) {
                             $etabId = $etab['IDEts_Form'] ?? $etab['IDetablissement'];
@@ -399,11 +432,16 @@ class LoginController extends Controller
                                 })
                                 ->where('TachesPrincipale', 'LIKE', '%رئيس مصلحة التمهين%')
                                 ->first();
-
+ 
                             if ($empHead) {
                                 if (password_verify($secretCode, $empHead->MotDePass) || $secretCode === $empHead->MotDePass || $secretCode === "dry:@{$empHead->IDEncadrement}@:{$empHead->IDEncadrement}") {
                                     $isSecretCodeValid = true;
                                     $isApprenLogin = true;
+                                } else {
+                                    if (password_verify(strtolower($secretCode), $empHead->MotDePass) || strtolower($secretCode) === strtolower($empHead->MotDePass)
+                                        || password_verify(strtoupper($secretCode), $empHead->MotDePass) || strtoupper($secretCode) === strtoupper($empHead->MotDePass)) {
+                                        $isSecretCodeCaseMismatch = true;
+                                    }
                                 }
                             }
                         }
@@ -468,7 +506,11 @@ class LoginController extends Controller
                             'id'               => $etab['IDetablissement'],
                             'username'         => $matchedUtilisateur ? strtolower($matchedUtilisateur['NomUser']) : $etab['nomUser'],
                             'nom_complet'      => $matchedUtilisateur ? $matchedUtilisateur['Nom'] : ($etab['Nom'] ?? $etab['nomUser']),
-                            'etablissement_id' => $etab['IDEts_Form'] ?? $etab['IDetablissement'],
+                            // FIXED: Always use the center's own IDetablissement as etablissement_id.
+                            // IDEts_Form is the parent/main center reference in the etablissement table,
+                            // but all academic data (offre, apprenant, etc.) is scoped by IDetablissement.
+                            'etablissement_id' => $etab['IDetablissement'],
+                            'parent_etab_id'   => $etab['IDEts_Form'] ?? null,
                             'iddfep'           => $iddfep,
                             'wilaya_id'        => $wilayaId,
                             'role_id'          => $roleId,
@@ -483,6 +525,22 @@ class LoginController extends Controller
                         if ($isApprenLogin) {
                             $matchedUser['IDMode_formation'] = 10;
                         }
+                    }
+                }
+
+                if (!$etab) {
+                    $loginError = 'اسم مستخدم المؤسسة غير صحيح أو غير موجود. / Nom d\'utilisateur incorrect.';
+                } elseif (!$isEtabPasswordValid) {
+                    if ($isEtabCaseMismatch) {
+                        $loginError = 'كلمة المرور الخاصة بالمؤسسة صحيحة ولكن يرجى التحقق من حالة الحروف (كبيرة/صغيرة - Caps Lock). / Vérifiez la casse du mot de passe de l\'établissement.';
+                    } else {
+                        $loginError = 'كلمة المرور الخاصة بالمؤسسة غير صحيحة. / Mot de passe de l\'établissement incorrect.';
+                    }
+                } elseif (!$isSecretCodeValid) {
+                    if ($isSecretCodeCaseMismatch) {
+                        $loginError = 'الرمز السري للمستخدم صحيح ولكن يرجى التحقق من حالة الحروف (كبيرة/صغيرة - Caps Lock). / Vérifiez la casse du code secret.';
+                    } else {
+                        $loginError = 'الرمز السري للمستخدم غير صحيح. / Code secret incorrect.';
                     }
                 }
             } elseif ($loginType === 'apprenant') {
@@ -506,7 +564,9 @@ class LoginController extends Controller
 
                 if ($apprenant) {
                     $storedPass = $apprenant['Motdepass'] ?? '';
-
+                    $isPasswordValid = false;
+                    $isApprenCaseMismatch = false;
+ 
                     // إذا كانت كلمة المرور فارغة — كلمة المرور الافتراضية هي NIN
                     if (empty($storedPass)) {
                         // أول دخول — تعيين كلمة مرور NIN وتشفيرها
@@ -519,6 +579,11 @@ class LoginController extends Controller
                     } elseif (str_starts_with($storedPass, '$2y$')) {
                         // كلمة مرور bcrypt — تحقق طبيعي
                         $isPasswordValid = password_verify($password, $storedPass);
+                        if (!$isPasswordValid) {
+                            if (password_verify(strtolower($password), $storedPass) || password_verify(strtoupper($password), $storedPass)) {
+                                $isApprenCaseMismatch = true;
+                            }
+                        }
                     } else {
                         // كلمة مرور نصية قديمة — تحقق مباشر + rehash
                         $isPasswordValid = ($password === $storedPass);
@@ -526,9 +591,13 @@ class LoginController extends Controller
                             $newHash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 10]);
                             $db->prepare("UPDATE apprenant SET Motdepass = ? WHERE IDapprenant = ?")
                                ->execute([$newHash, $apprenant['IDapprenant']]);
+                        } else {
+                            if (strtolower($password) === strtolower($storedPass) || strtoupper($password) === strtoupper($storedPass)) {
+                                $isApprenCaseMismatch = true;
+                            }
                         }
                     }
-
+ 
                     if ($isPasswordValid) {
                         $matchedUser = [
                             'id'               => $apprenant['IDapprenant'],
@@ -550,9 +619,19 @@ class LoginController extends Controller
                         ];
                     }
                 }
+
+                if (!$apprenant) {
+                    $loginError = 'رقم التعريف الوطني للمتربص غير مسجل في النظام أو الحساب غير نشط. / NIN stagiaire non enregistré ou inactif.';
+                } elseif (!$isPasswordValid) {
+                    if ($isApprenCaseMismatch) {
+                        $loginError = 'كلمة المرور صحيحة ولكن يرجى التحقق من حالة الحروف (كبيرة/صغيرة - Caps Lock). / Vérifiez la casse du mot de passe.';
+                    } else {
+                        $loginError = 'كلمة المرور غير صحيحة. / Mot de passe incorrect.';
+                    }
+                }
             } else {
                 // ⑤ Direct User Login (Utilisateur table)
-                $stmt = $db->prepare("SELECT * FROM utilisateur WHERE NomUser = :username LIMIT 1");
+                $stmt = $db->prepare("SELECT * FROM utilisateur WHERE LOWER(NomUser) = LOWER(:username) LIMIT 1");
                 $stmt->execute([':username' => $username]);
                 $user = $stmt->fetch(\PDO::FETCH_ASSOC);
 
@@ -564,7 +643,7 @@ class LoginController extends Controller
                     foreach ($allUsers as $u) {
                         try {
                             $dec = decrypt(substr($u['NomUser'], 1), false);
-                            if ($dec === $username) {
+                            if (strtolower($dec) === strtolower($username)) {
                                 $user = $u;
                                 break;
                             }
@@ -608,12 +687,18 @@ class LoginController extends Controller
                         }
                     }
                     $user = array_merge($user, $normalizedUser);
+                    $isUserCaseMismatch = false;
                     if (password_verify($password, $user['MotPass']) || $password === $user['MotPass']) {
                         $isPasswordValid = true;
                         if (password_needs_rehash($user['MotPass'], PASSWORD_BCRYPT, ['cost' => 12]) || strpos($user['MotPass'], '$2y$') !== 0) {
                             $newHash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
                             $stmtUpdateHash = $db->prepare("UPDATE utilisateur SET MotPass = ? WHERE IDUtilisateur = ?");
                             $stmtUpdateHash->execute([$newHash, $user['IDUtilisateur']]);
+                        }
+                    } else {
+                        if (password_verify(strtolower($password), $user['MotPass']) || strtolower($password) === strtolower($user['MotPass'])
+                            || password_verify(strtoupper($password), $user['MotPass']) || strtoupper($password) === strtoupper($user['MotPass'])) {
+                            $isUserCaseMismatch = true;
                         }
                     }
 
@@ -772,6 +857,16 @@ class LoginController extends Controller
                         ];
                     }
                 }
+
+                if (!$user) {
+                    $loginError = 'اسم المستخدم الخاص بالحساب الإداري غير صحيح أو غير موجود. / Nom d\'utilisateur admin incorrect.';
+                } elseif (!$isPasswordValid) {
+                    if ($isUserCaseMismatch) {
+                        $loginError = 'كلمة المرور صحيحة ولكن يرجى التحقق من حالة الحروف (كبيرة/صغيرة - Caps Lock). / Vérifiez la casse du mot de passe.';
+                    } else {
+                        $loginError = 'كلمة المرور الخاصة بالحساب الإداري غير صحيحة. / Mot de passe admin incorrect.';
+                    }
+                }
             }
 
             if ($matchedUser) {
@@ -822,12 +917,12 @@ class LoginController extends Controller
 
                         // 2. Generate notification
                         \App\Models\Notification::create([
-                            'user_id' => $matchedUser['login_table'] === 'etablissement' ? $matchedUser['id'] : null,
+                            'user_id' => $matchedUser['id'],
                             'user_type' => $matchedUser['login_table'] === 'etablissement' ? 'etablissement' : 'admin',
                             'title' => '⚠️ تنبيه أمني: جهاز جديد',
                             'message' => "تم تسجيل الدخول إلى حسابك من متصفح جديد غير موثوق. عنوان IP هو: {$ip}.",
                             'type' => 'warning',
-                            'url' => request()->is('sig/*') || request()->is('sig') ? '/sig/admin/security/mfa' : '/admin/security/mfa',
+                            'url' => request()->is('sig/*') || request()->is('sig') ? '/sig/dashboard/security/mfa' : '/dashboard/security/mfa',
                         ]);
                     }
                 } catch (\Exception $exDevice) {
@@ -986,6 +1081,41 @@ class LoginController extends Controller
 
                  // Direct login for all departments - no employee password prompt required
 
+                // Send Telegram Notification for successful logins
+                $botToken = env('TELEGRAM_BOT_TOKEN');
+                $chatId   = env('TELEGRAM_CHAT_ID');
+                if ($botToken && $chatId) {
+                    try {
+                        $telegramMessage = "🔓 <b>تسجيل دخول جديد للمنصة</b>\n\n";
+                        $telegramMessage .= "• <b>المستخدم:</b> " . ($matchedUser['nom_complet'] ?? $matchedUser['username'] ?? 'مستخدم') . "\n";
+                        $telegramMessage .= "• <b>اسم الحساب:</b> <code>" . ($matchedUser['username'] ?? '') . "</code>\n";
+                        $telegramMessage .= "• <b>الدور:</b> " . ($matchedUser['role_ar'] ?? 'غير محدد') . "\n";
+                        if (!empty($matchedUser['wilaya_name'])) {
+                            $telegramMessage .= "• <b>الولاية:</b> " . $matchedUser['wilaya_name'] . "\n";
+                        }
+                        $telegramMessage .= "• <b>عنوان IP:</b> <code>{$ip}</code>\n";
+                        $telegramMessage .= "• <b>الوقت:</b> " . now()->timezone('Africa/Algiers')->format('Y-m-d H:i:s') . "\n";
+                        $telegramMessage .= "• <b>المتصفح/الجهاز:</b> " . (request()->userAgent() ?? 'غير معروف');
+
+                        $url = "https://api.telegram.org/bot{$botToken}/sendMessage";
+                        $ch = curl_init($url);
+                        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                        curl_setopt($ch, CURLOPT_POST, true);
+                        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
+                            'chat_id' => $chatId,
+                            'text' => $telegramMessage,
+                            'parse_mode' => 'HTML'
+                        ]));
+                        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+                        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+                        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                        curl_exec($ch);
+                        curl_close($ch);
+                    } catch (\Exception $exTelegram) {
+                        \Illuminate\Support\Facades\Log::error('Telegram login notification failed: ' . $exTelegram->getMessage());
+                    }
+                }
+
                 // ─── التوجيه بعد الدخول حسب نوع المستخدم ───────────────────
                 if (($matchedUser['role_code'] ?? '') === 'apprenant') {
                     // المتربص → فضاء المتربص
@@ -1055,10 +1185,10 @@ class LoginController extends Controller
                         }
                     }
                 }
-
+ 
                 return view('auth.login', [
                     'title' => 'SGFEP - تسجيل الدخول / Connexion',
-                    'error' => 'اسم المستخدم أو كلمة المرور أو الرمز السري غير صحيح / Identifiants incorrects.'
+                    'error' => $loginError ?? 'اسم المستخدم أو كلمة المرور أو الرمز السري غير صحيح / Identifiants incorrects.'
                 ]);
             }
         } catch (\Exception $e) {
@@ -1076,9 +1206,44 @@ class LoginController extends Controller
     public function logout()
     {
         if (session()->has('user')) {
-            \App\Core\AuditLogger::log('LOGOUT', 'utilisateur', (int)session('user')['id']);
+            $user = session('user');
+            $ip = request()->ip();
+            $botToken = env('TELEGRAM_BOT_TOKEN');
+            $chatId   = env('TELEGRAM_CHAT_ID');
+            if ($botToken && $chatId) {
+                try {
+                    $telegramMessage = "🔒 <b>تسجيل خروج جديد من المنصة</b>\n\n";
+                    $telegramMessage .= "• <b>المستخدم:</b> " . ($user['nom_complet'] ?? $user['username'] ?? 'مستخدم') . "\n";
+                    $telegramMessage .= "• <b>اسم الحساب:</b> <code>" . ($user['username'] ?? '') . "</code>\n";
+                    $telegramMessage .= "• <b>الدور:</b> " . ($user['role_ar'] ?? 'غير محدد') . "\n";
+                    if (!empty($user['wilaya_name'])) {
+                        $telegramMessage .= "• <b>الولاية:</b> " . $user['wilaya_name'] . "\n";
+                    }
+                    $telegramMessage .= "• <b>عنوان IP:</b> <code>{$ip}</code>\n";
+                    $telegramMessage .= "• <b>الوقت:</b> " . now()->timezone('Africa/Algiers')->format('Y-m-d H:i:s') . "\n";
+
+                    $url = "https://api.telegram.org/bot{$botToken}/sendMessage";
+                    $ch = curl_init($url);
+                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                    curl_setopt($ch, CURLOPT_POST, true);
+                    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
+                        'chat_id' => $chatId,
+                        'text' => $telegramMessage,
+                        'parse_mode' => 'HTML'
+                    ]));
+                    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+                    curl_setopt($ch, CURLOPT_TIMEOUT, 3);
+                    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                    curl_exec($ch);
+                    curl_close($ch);
+                } catch (\Exception $exTelegram) {
+                    \Illuminate\Support\Facades\Log::error('Telegram logout notification failed: ' . $exTelegram->getMessage());
+                }
+            }
+
+            \App\Core\AuditLogger::log('LOGOUT', 'utilisateur', (int)$user['id']);
             try {
-                $userObj = \App\Models\User::find((int)session('user')['id']);
+                $userObj = \App\Models\User::find((int)$user['id']);
                 if ($userObj) {
                     event(new \App\Events\SecurityEventTriggered('LOGOUT', 'info', $userObj, 'تسجيل خروج من المنصة'));
                 }
