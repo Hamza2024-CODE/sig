@@ -163,7 +163,7 @@ class PortalCMSHelper
     public static function getPages(): array
     {
         self::ensureTableExists();
-        return DB::table('portal_pages')->orderBy('sort_order', 'asc')->get()->toArray();
+        return DB::table('portal_pages')->orderBy('sort_order', 'asc')->get()->all();
     }
 
     /**
