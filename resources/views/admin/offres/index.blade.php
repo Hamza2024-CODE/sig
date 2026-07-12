@@ -83,22 +83,22 @@ $is_etab     = in_array($role_code, ['etablissement', 'directeur', 'formateur'])
 
                     <!-- Breakdown by Year (2024 - 2026) -->
                     <div class="mt-2 pt-3 border-top" style="border-top: 1px dashed #e2e8f0 !important;">
-                        <h6 class="text-muted fw-bold mb-2 small"><i class="fa-solid fa-calendar-days text-primary me-1"></i>توزيع العروض والمقاعد المتاحة حسب السنة:</h6>
+                        <h6 class="fw-bold mb-2 small" style="color: #64748b !important;"><i class="fa-solid fa-calendar-days me-1" style="color: #482b8f !important;"></i>توزيع العروض والمقاعد المتاحة حسب السنة:</h6>
                         <div class="d-flex flex-column gap-2">
                             <?php if (!empty($stats['by_year'])): ?>
                                 <?php foreach ($stats['by_year'] as $yr): ?>
                                     <?php if ($yr['year'] >= 2024 && $yr['year'] <= 2026): ?>
                                         <div class="d-flex justify-content-between align-items-center small">
-                                            <span class="fw-bold text-dark"><?= htmlspecialchars($yr['year']) ?></span>
+                                            <span class="fw-bold" style="color: #1e293b !important; font-weight: 700 !important;"><?= htmlspecialchars($yr['year']) ?></span>
                                             <span>
-                                                <span class="badge bg-primary-subtle text-primary bold px-2 py-1 me-2" style="background-color: rgba(72,43,143,0.1); color: #482b8f; font-size: 0.7rem; font-weight: 700; border-radius: 6px;"><?= number_format($yr['count_offres']) ?> عرض</span>
-                                                <span class="text-muted fw-bold" dir="ltr"><?= number_format($yr['count_places'], 0, ',', ' ') ?> مقعد</span>
+                                                <span class="badge bg-primary-subtle text-primary bold px-2 py-1 me-2" style="background-color: rgba(72,43,143,0.1); color: #482b8f !important; font-size: 0.7rem; font-weight: 700; border-radius: 6px; display: inline-block;"><?= number_format($yr['count_offres']) ?> عرض</span>
+                                                <span class="fw-bold" dir="ltr" style="color: #64748b !important; font-weight: 600 !important;"><?= number_format($yr['count_places'], 0, ',', ' ') ?> مقعد</span>
                                             </span>
                                         </div>
                                     <?php endif; ?>
                                 <?php endforeach; ?>
                             <?php else: ?>
-                                <div class="text-muted small text-center">لا توجد بيانات متوفرة</div>
+                                <div class="small text-center" style="color: #64748b !important;">لا توجد بيانات متوفرة</div>
                             <?php endif; ?>
                         </div>
                     </div>
