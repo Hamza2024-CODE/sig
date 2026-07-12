@@ -59,7 +59,7 @@ try {
     echo "==================================================\n";
 
     $offres_45 = DB::select("
-        SELECT o.IDOffre, o.IDSpecialite, sp.Nom as SpecialiteNom, o.IDEts_Form, o.SessionNum, s.IDSession
+        SELECT o.IDOffre, o.IDSpecialite, sp.Nom as SpecialiteNom, o.IDEts_Form, s.IDSession
         FROM offre o
         JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
         LEFT JOIN section s ON s.IDOffre = o.IDOffre
