@@ -1041,15 +1041,19 @@ class ModulesController extends Controller {
                 $stats = ['total' => 0, 'femmes' => 0, 'hommes' => 0, 'centres' => 0];
                 $list  = [];
 
-                // Count active reconduits using pre-aggregated sums in section table for speed
+                // Count active trainees from apprenant table (real active count, not manual Nbrrecond)
                 $stmtT = $this->db->prepare("
                     SELECT
-                        IFNULL(SUM(s.Nbrrecond), 0) AS total,
-                        IFNULL(SUM(s.Nbrrecondf), 0) AS femmes,
+                        COUNT(DISTINCT a.IDapprenant) AS total,
+                        COUNT(DISTINCT CASE WHEN c.Civ = 2 THEN a.IDapprenant END) AS femmes,
                         COUNT(DISTINCT o.IDEts_Form) AS centres
-                    FROM section s
-                    INNER JOIN offre o ON s.IDOffre = o.IDOffre
-                    WHERE $ofWhere
+                    FROM apprenant a
+                    INNER JOIN section s  ON a.IDSection = s.IDSection
+                    INNER JOIN offre o    ON s.IDOffre   = o.IDOffre
+                    LEFT  JOIN candidat c ON a.IDCandidat = c.IDCandidat
+                    LEFT  JOIN apprenant_fin af ON a.IDapprenant = af.IDapprenant
+                    WHERE af.IDapprenant IS NULL
+                      AND $ofWhere
                 ");
                 $stmtT->execute($params);
                 $row = $stmtT->fetch(PDO::FETCH_ASSOC);
@@ -1065,18 +1069,22 @@ class ModulesController extends Controller {
                            ef.IDDFEP          AS id_dfep,
                            w.Nom              AS wilaya_nom,
                            w.IDWilayaa        AS id_wilaya,
-                           IFNULL(agg.total, 0) AS total,
-                           IFNULL(agg.femmes, 0) AS femmes,
+                           IFNULL(agg.total, 0)              AS total,
+                           IFNULL(agg.femmes, 0)             AS femmes,
                            IFNULL(agg.total - agg.femmes, 0) AS hommes
                     FROM etablissement ef
                     LEFT JOIN wilaya w ON ef.IDDFEP = w.IDWilayaa
                     LEFT JOIN (
                         SELECT o.IDEts_Form,
-                               SUM(s.Nbrrecond) AS total,
-                               SUM(s.Nbrrecondf) AS femmes
-                        FROM section s
-                        JOIN offre o ON s.IDOffre = o.IDOffre
-                        WHERE $ofWhere
+                               COUNT(DISTINCT a.IDapprenant) AS total,
+                               COUNT(DISTINCT CASE WHEN c.Civ = 2 THEN a.IDapprenant END) AS femmes
+                        FROM apprenant a
+                        INNER JOIN section s  ON a.IDSection = s.IDSection
+                        INNER JOIN offre o    ON s.IDOffre   = o.IDOffre
+                        LEFT  JOIN candidat c ON a.IDCandidat = c.IDCandidat
+                        LEFT  JOIN apprenant_fin af ON a.IDapprenant = af.IDapprenant
+                        WHERE af.IDapprenant IS NULL
+                          AND $ofWhere
                         GROUP BY o.IDEts_Form
                     ) agg ON ef.IDetablissement = agg.IDEts_Form
                     WHERE $efWhere
@@ -1086,10 +1094,10 @@ class ModulesController extends Controller {
                 $list = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                 return compact('stats', 'list');
-            });
 
             $stats = $cachedData['stats'];
             $list  = $cachedData['list'];
+
 
         } catch (\Exception $e) {
             $error = $e->getMessage();
