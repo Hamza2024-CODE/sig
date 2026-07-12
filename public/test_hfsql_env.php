@@ -8,15 +8,47 @@ $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
 $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
 echo "=== HFSQL CONFIG DIAGNOSTIC ===\n";
-echo "DSN: " . config('security.hfsql.dsn') . "\n";
-echo "Username: " . config('security.hfsql.username') . "\n";
-echo "Password Configured (Length): " . strlen(config('security.hfsql.password', '')) . "\n";
-echo "Password via env() (Length): " . strlen(env('HFSQL_PASSWORD', '')) . "\n";
+$dsn = config('security.hfsql.dsn');
+$user = config('security.hfsql.username');
+$pass = config('security.hfsql.password');
 
-echo "\nTrying to connect to HFSQL database using Laravel connection class...\n";
+echo "DSN: " . $dsn . "\n";
+echo "Username: " . $user . "\n";
+echo "Password Configured (Length): " . strlen($pass) . "\n";
+
+echo "\n--- 1. Testing Raw odbc_connect() ---\n";
+if (function_exists('odbc_connect')) {
+    try {
+        // Strip odbc: prefix if it exists for raw odbc_connect
+        $rawDsn = preg_replace('/^odbc:/i', '', $dsn);
+        echo "Connecting via raw odbc_connect($rawDsn)...\n";
+        $conn = @odbc_connect($rawDsn, $user, $pass);
+        if ($conn) {
+            echo "✓ Raw odbc_connect Success!\n";
+            $result = @odbc_exec($conn, "SELECT COUNT(*) FROM wilaya");
+            if ($result) {
+                $row = @odbc_fetch_array($result);
+                echo "✓ Query Success! Wilaya count: " . json_encode($row) . "\n";
+            } else {
+                echo "✗ Query Failed: " . odbc_errormsg($conn) . "\n";
+            }
+            @odbc_close($conn);
+        } else {
+            echo "✗ Raw odbc_connect Failed: " . odbc_errormsg() . "\n";
+        }
+    } catch (\Exception $e) {
+        echo "✗ Exception during raw odbc_connect: " . $e->getMessage() . "\n";
+    }
+} else {
+    echo "✗ odbc_connect function is not available in PHP CLI.\n";
+}
+
+echo "\n--- 2. Testing Laravel HFSQLConnection (PDO) ---\n";
 try {
     $conn = \App\Core\HFSQLConnection::getInstance()->getConnection();
-    echo "✓ Connection Success!\n";
+    echo "✓ PDO Connection Success!\n";
+    $q = $conn->query("SELECT COUNT(*) AS n FROM wilaya")->fetch();
+    echo "✓ PDO Query Success! Wilaya count: " . json_encode($q) . "\n";
 } catch (\Exception $e) {
-    echo "✗ Connection Failed: " . $e->getMessage() . "\n";
+    echo "✗ PDO Connection Failed: " . $e->getMessage() . "\n";
 }
