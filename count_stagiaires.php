@@ -29,36 +29,51 @@ try {
 
     echo "\n==================================================\n";
     echo "\n==================================================\n";
-    echo "=== البحث عن مؤسسات في ولاية الجزائر (16) ذات صلة ===\n";
+    echo "=== إحصائيات مركز عين طاية (معرف 45) ومركز برج الكيفان (معرف 48) ===\n";
     echo "==================================================\n";
 
-    $etabs = DB::select("
-        SELECT IDetablissement, Nom, NomFr, IDDFEP
-        FROM etablissement
-        WHERE IDDFEP IN (
-            SELECT IDDFEP FROM dfep WHERE IDWilayaa = 16
-        ) AND (Nom LIKE '%رويبة%' OR Nom LIKE '%طاية%' OR Nom LIKE '%كيفان%' OR Nom LIKE '%برج%')
+    // Count trainees for Ain Taya (45)
+    $total_45 = DB::selectOne("
+        SELECT COUNT(a.IDapprenant) as total
+        FROM apprenant a
+        JOIN section s ON a.IDSection = s.IDSection
+        JOIN offre o ON s.IDOffre = o.IDOffre
+        LEFT JOIN apprenant_fin af ON af.IDapprenant = a.IDapprenant
+        WHERE o.IDEts_Form = 45 AND af.IDapprenant IS NULL
     ");
+    echo "إجمالي المتربصين النشطين في مركز عين طاية (45): " . ($total_45->total ?? 0) . "\n";
 
-    foreach ($etabs as $et) {
-        echo "معرف: " . $et->IDetablissement . " | الاسم: " . $et->Nom . " (Wilaya 16)\n";
-    }
+    // Count trainees for Bordj El Kiffan (48)
+    $total_48 = DB::selectOne("
+        SELECT COUNT(a.IDapprenant) as total
+        FROM apprenant a
+        JOIN section s ON a.IDSection = s.IDSection
+        JOIN offre o ON s.IDOffre = o.IDOffre
+        LEFT JOIN apprenant_fin af ON af.IDapprenant = a.IDapprenant
+        WHERE o.IDEts_Form = 48 AND af.IDapprenant IS NULL
+    ");
+    echo "إجمالي المتربصين النشطين في مركز برج الكيفان (48): " . ($total_48->total ?? 0) . "\n";
 
     echo "\n==================================================\n";
-    echo "=== هل هناك أي متربصين آخرين في نفس القسم 191517؟ ===\n";
+    echo "=== عروض تخصص 'أمين مخزن' المسجلة لمركز عين طاية (45) ===\n";
     echo "==================================================\n";
 
-    $all_in_sec = DB::select("
-        SELECT a.IDapprenant, c.Nom, c.Prenom, c.LieuNais, c.IDWilayaa
-        FROM apprenant a
-        LEFT JOIN candidat c ON a.IDCandidat = c.IDCandidat
-        WHERE a.IDSection = 191517
+    $offres_45 = DB::select("
+        SELECT o.IDOffre, o.IDSpecialite, sp.Nom as SpecialiteNom, o.IDEts_Form, o.SessionNum, s.IDSession
+        FROM offre o
+        JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
+        LEFT JOIN section s ON s.IDOffre = o.IDOffre
+        WHERE o.IDEts_Form = 45 AND sp.Nom LIKE '%مخزن%'
     ");
 
-    echo "إجمالي المسجلين في القسم 191517: " . count($all_in_sec) . "\n";
-    foreach ($all_in_sec as $idx => $st) {
-        echo ($idx + 1) . ". #" . $st->IDapprenant . " | " . $st->Nom . " " . $st->Prenom . " (مكان الميلاد: " . $st->LieuNais . " | ولاية الإقامة: " . $st->IDWilayaa . ")\n";
+    if (empty($offres_45)) {
+        echo "لا توجد عروض تخصص 'أمين مخزن' تحت مركز عين طاية (45).\n";
+    } else {
+        foreach ($offres_45 as $of) {
+            echo "عرض: " . $of->IDOffre . " | التخصص: " . $of->SpecialiteNom . " (معرف القسم: " . ($of->IDSession ?: 'لا يوجد') . ")\n";
+        }
     }
+
 
 
 
