@@ -191,11 +191,26 @@ class SettingsController extends Controller
         $backupService = new \App\Services\BackupService();
         $backups = $backupService->getBackupsList();
 
-        $ministry = DB::table('minister')->where('IDMinister', 1)->first();
-        $allSemesters = DB::table('periodeencour')->get();
-        $currentSemesterId = DB::table('takwin_settings')->value('active_semester_id') ?? 1;
+        $ministry = null;
+        $allSemesters = [];
+        $currentSemesterId = 1;
+        try {
+            $ministry = DB::table('minister')->where('IDMinister', 1)->first();
+        } catch (\Throwable $e) {}
 
-        $apiClients = \App\Models\ApiClient::orderBy('id', 'DESC')->get();
+        try {
+            $allSemesters = DB::table('periodeencour')->get();
+        } catch (\Throwable $e) {}
+
+        try {
+            $currentSemesterId = DB::table('takwin_settings')->value('active_semester_id') ?? 1;
+        } catch (\Throwable $e) {}
+
+        $apiClients = [];
+        try {
+            $apiClients = \App\Models\ApiClient::orderBy('id', 'DESC')->get();
+        } catch (\Throwable $e) {}
+
         $userApiKey = 'sgfep_live_' . substr(hash('sha256', session('user')['username']), 0, 32);
 
         return $this->render('admin/settings/index', [
@@ -263,6 +278,7 @@ class SettingsController extends Controller
                 'sovereign_toggle'   => $this->handleSovereignToggle(),
                 'shield_toggle'      => $this->handleShieldToggle(),
                 'captcha_toggle'     => $this->handleCaptchaToggle(),
+                'hide_other_logins_toggle' => $this->handleHideOtherLoginsToggle(),
                 'sso_toggle'         => $this->handleSsoToggle(),
                 'push_toggle'        => $this->handlePushToggle(),
                 'sse_toggle'         => $this->handleSseToggle(),
@@ -640,6 +656,14 @@ class SettingsController extends Controller
         \App\Helpers\SovereignLicensingHelper::setSetting('login_captcha_active', $enabled);
         \App\Core\AuditLogger::logWarning('[CAPTCHA] Admin changed login captcha requirement to: ' . ($enabled === '1' ? 'ENABLED' : 'DISABLED'));
         session(['flash_success' => 'تم تعديل حالة التحقق البشري (CAPTCHA) بنجاح! / Statut CAPTCHA modifié.']);
+    }
+
+    private function handleHideOtherLoginsToggle(): void
+    {
+        $enabled = isset(request()->all()['hide_other_login_portals']) ? '1' : '0';
+        \App\Helpers\SovereignLicensingHelper::setSetting('hide_other_login_portals', $enabled);
+        \App\Core\AuditLogger::logWarning('[LOGIN_SECURITY] Admin changed hide other login portals setting to: ' . ($enabled === '1' ? 'ENABLED' : 'DISABLED'));
+        session(['flash_success' => 'تم تعديل إعدادات بوابات الدخول بنجاح! / Paramètres de connexion modifiés.']);
     }
 
     private function handleSsoToggle(): void

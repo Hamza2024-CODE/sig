@@ -14,46 +14,60 @@ class TakwinHelper
      */
     public static function getSettings(): array
     {
-        $db = Database::getInstance()->getConnection();
-        $stmt = $db->query("SELECT * FROM takwin_settings ORDER BY id DESC LIMIT 1");
-        $settings = $stmt->fetch(PDO::FETCH_ASSOC);
+        $defaultDecreeTitle = 'إن وزير التكوين و التعليم المهنيين';
+        $defaultDecree1 = 'بمقتضى المرسوم التنفيذي رقم 16-282 المؤرخ في 2 صفر عام 1438 الموافق لـ 2 نوفمبر 2016 والذي يحدد نظام التكوين المهني الأولي والشهادات المتوجة له';
+        $defaultDecree2 = 'بمقتضى القرار المؤرخ في 23 ربيع الأول عام 1439 الموافق لـ 12 ديسمبر 2017 الذي يحدد شروط وكيفيات تسليم الشهادات المتوجة للتكوين المهني الأولي';
+        $defaults = [
+            'id' => null,
+            'api_url' => 'https://takwin.dz/api',
+            'api_token' => '',
+            'sync_enabled' => 0,
+            'last_sync_status' => null,
+            'last_sync_message' => null,
+            'last_sync_at' => null,
+            'diploma_bg_url' => '',
+            'diploma_border_color' => '#1e3a8a',
+            'diploma_watermark_url' => 'https://upload.wikimedia.org/wikipedia/commons/e/e0/Emblem_of_Algeria.svg',
+            'diploma_primary_color' => '#1e3a8a',
+            'diploma_decree_title' => $defaultDecreeTitle,
+            'diploma_decree_1' => $defaultDecree1,
+            'diploma_decree_2' => $defaultDecree2
+        ];
 
-        if (!$settings) {
-            // Return default settings
-            return [
-                'id' => null,
-                'api_url' => 'https://takwin.dz/api',
-                'api_token' => '',
-                'sync_enabled' => 0,
-                'last_sync_status' => null,
-                'last_sync_message' => null,
-                'last_sync_at' => null,
-                'diploma_bg_url' => '',
-                'diploma_border_color' => '#1e3a8a',
-                'diploma_watermark_url' => 'https://upload.wikimedia.org/wikipedia/commons/e/e0/Emblem_of_Algeria.svg',
-                'diploma_primary_color' => '#1e3a8a'
-            ];
+        try {
+            $db = Database::getInstance()->getConnection();
+            $stmt = $db->query("SELECT * FROM takwin_settings ORDER BY id DESC LIMIT 1");
+            $settings = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$settings) {
+                return $defaults;
+            }
+
+            // Decrypt the token if it exists
+            if (!empty($settings['api_token'])) {
+                $decrypted = EncryptionHelper::decrypt($settings['api_token']);
+                $settings['api_token'] = $decrypted ?? '';
+            }
+
+            // Set default values for new columns if they are null
+            $settings['diploma_bg_url'] = $settings['diploma_bg_url'] ?? '';
+            $settings['diploma_border_color'] = $settings['diploma_border_color'] ?? '#1e3a8a';
+            $settings['diploma_watermark_url'] = $settings['diploma_watermark_url'] ?? 'https://upload.wikimedia.org/wikipedia/commons/e/e0/Emblem_of_Algeria.svg';
+            $settings['diploma_primary_color'] = $settings['diploma_primary_color'] ?? '#1e3a8a';
+            $settings['diploma_decree_title'] = $settings['diploma_decree_title'] ?? $defaultDecreeTitle;
+            $settings['diploma_decree_1'] = $settings['diploma_decree_1'] ?? $defaultDecree1;
+            $settings['diploma_decree_2'] = $settings['diploma_decree_2'] ?? $defaultDecree2;
+
+            return $settings;
+        } catch (\Throwable $e) {
+            return $defaults;
         }
-
-        // Decrypt the token if it exists
-        if (!empty($settings['api_token'])) {
-            $decrypted = EncryptionHelper::decrypt($settings['api_token']);
-            $settings['api_token'] = $decrypted ?? '';
-        }
-
-        // Set default values for new columns if they are null
-        $settings['diploma_bg_url'] = $settings['diploma_bg_url'] ?? '';
-        $settings['diploma_border_color'] = $settings['diploma_border_color'] ?? '#1e3a8a';
-        $settings['diploma_watermark_url'] = $settings['diploma_watermark_url'] ?? 'https://upload.wikimedia.org/wikipedia/commons/e/e0/Emblem_of_Algeria.svg';
-        $settings['diploma_primary_color'] = $settings['diploma_primary_color'] ?? '#1e3a8a';
-
-        return $settings;
     }
 
     /**
      * Save Diploma Customization Settings
      */
-    public static function saveDiplomaSettings(string $bgUrl, string $borderColor, string $watermarkUrl, string $primaryColor): bool
+    public static function saveDiplomaSettings(string $bgUrl, string $borderColor, string $watermarkUrl, string $primaryColor, string $decreeTitle, string $decree1, string $decree2): bool
     {
         $db = Database::getInstance()->getConnection();
 
@@ -64,16 +78,17 @@ class TakwinHelper
         if ($exists) {
             $stmtUpdate = $db->prepare("
                 UPDATE takwin_settings 
-                SET diploma_bg_url = ?, diploma_border_color = ?, diploma_watermark_url = ?, diploma_primary_color = ?, updated_at = CURRENT_TIMESTAMP
+                SET diploma_bg_url = ?, diploma_border_color = ?, diploma_watermark_url = ?, diploma_primary_color = ?, 
+                    diploma_decree_title = ?, diploma_decree_1 = ?, diploma_decree_2 = ?, updated_at = CURRENT_TIMESTAMP
                 WHERE id = ?
             ");
-            return $stmtUpdate->execute([$bgUrl, $borderColor, $watermarkUrl, $primaryColor, $exists['id']]);
+            return $stmtUpdate->execute([$bgUrl, $borderColor, $watermarkUrl, $primaryColor, $decreeTitle, $decree1, $decree2, $exists['id']]);
         } else {
             $stmtInsert = $db->prepare("
-                INSERT INTO takwin_settings (api_url, api_token, sync_enabled, diploma_bg_url, diploma_border_color, diploma_watermark_url, diploma_primary_color) 
-                VALUES ('https://takwin.dz/api', '', 0, ?, ?, ?, ?)
+                INSERT INTO takwin_settings (api_url, api_token, sync_enabled, diploma_bg_url, diploma_border_color, diploma_watermark_url, diploma_primary_color, diploma_decree_title, diploma_decree_1, diploma_decree_2) 
+                VALUES ('https://takwin.dz/api', '', 0, ?, ?, ?, ?, ?, ?, ?)
             ");
-            return $stmtInsert->execute([$bgUrl, $borderColor, $watermarkUrl, $primaryColor]);
+            return $stmtInsert->execute([$bgUrl, $borderColor, $watermarkUrl, $primaryColor, $decreeTitle, $decree1, $decree2]);
         }
     }
 
