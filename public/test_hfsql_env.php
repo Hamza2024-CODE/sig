@@ -16,15 +16,31 @@ echo "DSN: " . $dsn . "\n";
 echo "Username: " . $user . "\n";
 echo "Password Configured (Length): " . strlen($pass) . "\n";
 
-echo "\n--- 1. Testing Raw odbc_connect() ---\n";
+echo "\n--- 1. Testing Raw odbc_connect() with separate credentials ---\n";
 if (function_exists('odbc_connect')) {
     try {
-        // Strip odbc: prefix if it exists for raw odbc_connect
         $rawDsn = preg_replace('/^odbc:/i', '', $dsn);
-        echo "Connecting via raw odbc_connect($rawDsn)...\n";
         $conn = @odbc_connect($rawDsn, $user, $pass);
         if ($conn) {
-            echo "✓ Raw odbc_connect Success!\n";
+            echo "✓ Success!\n";
+            @odbc_close($conn);
+        } else {
+            echo "✗ Failed: " . odbc_errormsg() . "\n";
+        }
+    } catch (\Exception $e) {
+        echo "✗ Exception: " . $e->getMessage() . "\n";
+    }
+}
+
+echo "\n--- 2. Testing Raw odbc_connect() with embedded credentials ---\n";
+if (function_exists('odbc_connect')) {
+    try {
+        $rawDsn = preg_replace('/^odbc:/i', '', $dsn);
+        $connString = $rawDsn . ';UID=' . $user . ';PWD=' . $pass;
+        echo "DSN String: $connString\n";
+        $conn = @odbc_connect($connString, '', '');
+        if ($conn) {
+            echo "✓ Success!\n";
             $result = @odbc_exec($conn, "SELECT COUNT(*) FROM wilaya");
             if ($result) {
                 $row = @odbc_fetch_array($result);
@@ -34,16 +50,14 @@ if (function_exists('odbc_connect')) {
             }
             @odbc_close($conn);
         } else {
-            echo "✗ Raw odbc_connect Failed: " . odbc_errormsg() . "\n";
+            echo "✗ Failed: " . odbc_errormsg() . "\n";
         }
     } catch (\Exception $e) {
-        echo "✗ Exception during raw odbc_connect: " . $e->getMessage() . "\n";
+        echo "✗ Exception: " . $e->getMessage() . "\n";
     }
-} else {
-    echo "✗ odbc_connect function is not available in PHP CLI.\n";
 }
 
-echo "\n--- 2. Testing Laravel HFSQLConnection (PDO) ---\n";
+echo "\n--- 3. Testing Laravel HFSQLConnection (PDO) ---\n";
 try {
     $conn = \App\Core\HFSQLConnection::getInstance()->getConnection();
     echo "✓ PDO Connection Success!\n";
