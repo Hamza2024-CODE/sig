@@ -12,60 +12,50 @@ $kernel->bootstrap();
 use Illuminate\Support\Facades\DB;
 
 try {
-    // Search for all matching establishments containing 'سلطان'
-    $etabs = DB::select("
-        SELECT IDetablissement as id, Nom as name 
-        FROM etablissement 
-        WHERE Nom LIKE '%سلطان%'
-    ");
-
-    if (empty($etabs)) {
-        echo "لم يتم العثور على أي مؤسسة تحتوي على اسم 'سلطان' في قاعدة البيانات\n";
-        exit;
-    }
+    // Trainee IDs to inspect
+    $ids = [5231796, 5231797, 5231798, 5231799, 5231800, 5231801, 5231802, 5231803, 5231804, 5231806, 5231808, 5231809, 5231812, 5231813];
 
     echo "\n==================================================\n";
-    echo "=== قائمة المؤسسات المطابقة وإحصائيات المتربصين ===\n";
+    echo "=== تفاصيل المتربصين الـ 14 وتحديد مركزهم الفعلي ===\n";
     echo "==================================================\n";
 
-    foreach ($etabs as $etab) {
-        // Count total active
-        $total = DB::selectOne("
-            SELECT COUNT(a.IDapprenant) as total
-            FROM apprenant a
-            JOIN section s ON a.IDSection = s.IDSection
-            JOIN offre o ON s.IDOffre = o.IDOffre
-            LEFT JOIN apprenant_fin af ON af.IDapprenant = a.IDapprenant
-            WHERE o.IDEts_Form = ? AND af.IDapprenant IS NULL
-        ", [$etab->id]);
+    $results = DB::select("
+        SELECT 
+            a.IDapprenant, 
+            c.Nom, 
+            c.Prenom, 
+            c.LieuNais,
+            o.IDOffre, 
+            o.IDEts_Form, 
+            e.Nom as EtabNom, 
+            e.NomFr as EtabNomFr,
+            w.Nom as WilayaNom,
+            sp.Nom as SpecialiteNom
+        FROM apprenant a
+        JOIN section s ON a.IDSection = s.IDSection
+        JOIN offre o ON s.IDOffre = o.IDOffre
+        JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
+        LEFT JOIN wilaya w ON e.IDDFEP = w.IDWilayaa
+        LEFT JOIN candidat c ON a.IDCandidat = c.IDCandidat
+        LEFT JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
+        WHERE a.IDapprenant IN (" . implode(',', $ids) . ")
+    ");
 
-        echo "\n[معرف: " . $etab->id . "] " . $etab->name . "\n";
-        echo "إجمالي المتربصين النشطين حالياً: " . ($total->total ?? 0) . " متربص\n";
-
-        // Breakdown by session
-        $breakdown = DB::select("
-            SELECT sess.Nom as session_nom, COUNT(a.IDapprenant) as count
-            FROM session sess
-            JOIN section s ON s.IDSession = sess.IDSession
-            JOIN offre o ON s.IDOffre = o.IDOffre
-            JOIN apprenant a ON a.IDSection = s.IDSection
-            LEFT JOIN apprenant_fin af ON af.IDapprenant = a.IDapprenant
-            WHERE o.IDEts_Form = ? AND af.IDapprenant IS NULL
-            GROUP BY sess.IDSession, sess.Nom, sess.DateD
-            ORDER BY sess.DateD DESC
-        ", [$etab->id]);
-
-        if (!empty($breakdown)) {
-            echo "التفاصيل حسب الدورة:\n";
-            foreach ($breakdown as $row) {
-                echo "  - " . $row->session_nom . ": " . $row->count . " متربص نشط\n";
-            }
-        } else {
-            echo "  (لا توجد دورات أو متربصون نشطون لهذه المؤسسة حالياً)\n";
+    if (empty($results)) {
+        echo "لم يتم العثور على هؤلاء المتربصين في قاعدة البيانات.\n";
+    } else {
+        foreach ($results as $r) {
+            echo "متربص: #" . $r->IDapprenant . " | " . $r->Nom . " " . $r->Prenom . "\n";
+            echo "  - مكان الميلاد: " . $r->LieuNais . "\n";
+            echo "  - التخصص: " . $r->SpecialiteNom . "\n";
+            echo "  - معرف المركز: " . $r->IDEts_Form . "\n";
+            echo "  - اسم المركز: " . $r->EtabNom . " (" . $r->EtabNomFr . ")\n";
+            echo "  - الولاية: " . $r->WilayaNom . "\n";
+            echo "--------------------------------------------------\n";
         }
-        echo "--------------------------------------------------\n";
     }
 
 } catch (\Exception $e) {
     echo "Error: " . $e->getMessage() . "\n";
 }
+
