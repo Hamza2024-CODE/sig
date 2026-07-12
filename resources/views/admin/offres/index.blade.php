@@ -73,9 +73,31 @@ $is_etab     = in_array($role_code, ['etablissement', 'directeur', 'formateur'])
                     <div class="progress mb-2" style="height: 6px; background-color: rgba(255,255,255,0.1);">
                         <div class="progress-bar bg-warning" role="progressbar" style="width: 100%;"></div>
                     </div>
-                    <div class="text-white-50" style="font-size:.7rem;">
+                    <div class="text-white-50 mb-3" style="font-size:.7rem;">
                         <i class="fa-solid fa-circle-info me-1"></i>
                         إجمالي المقاعد المخصصة في جميع عروض التكوين المدخلة
+                    </div>
+
+                    <!-- Breakdown by Year (2024 - 2026) -->
+                    <div class="mt-2 pt-3 border-top" style="border-top: 1px dashed rgba(255,255,255,0.2) !important;">
+                        <h6 class="text-white-50 fw-bold mb-2 small"><i class="fa-solid fa-calendar-days text-warning me-1"></i>توزيع العروض والمقاعد المتاحة حسب السنة:</h6>
+                        <div class="d-flex flex-column gap-2">
+                            <?php if (!empty($stats['by_year'])): ?>
+                                <?php foreach ($stats['by_year'] as $yr): ?>
+                                    <?php if ($yr['year'] >= 2024 && $yr['year'] <= 2026): ?>
+                                        <div class="d-flex justify-content-between align-items-center small">
+                                            <span class="fw-bold text-white"><?= htmlspecialchars($yr['year']) ?></span>
+                                            <span class="text-white-50">
+                                                <span class="badge bg-warning text-dark bold px-2 py-1 me-2" style="font-size: 0.7rem; font-weight: 700;"><?= number_format($yr['count_offres']) ?> عرض</span>
+                                                <span class="text-white fw-bold" dir="ltr"><?= number_format($yr['count_places'], 0, ',', ' ') ?> مقعد</span>
+                                            </span>
+                                        </div>
+                                    <?php endif; ?>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <div class="text-white-50 small text-center">لا توجد بيانات متوفرة</div>
+                            <?php endif; ?>
+                        </div>
                     </div>
                 </div>
             </div>

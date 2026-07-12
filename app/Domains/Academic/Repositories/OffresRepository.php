@@ -58,6 +58,22 @@ class OffresRepository
             $total_offres = (int)($res1['total_offres'] ?? 0);
             $total_places = (int)($res1['total_places'] ?? 0);
 
+            // Group by session year breakdown
+            $sYear = $this->db->prepare("
+                SELECT 
+                    YEAR(sess.DateD) as year,
+                    COUNT(o.IDOffre) as count_offres,
+                    COALESCE(SUM(o.nbrPrevision), 0) as count_places
+                FROM offre o
+                JOIN session sess ON o.IDSession = sess.IDSession
+                $joinEtab
+                WHERE $scopeWhere
+                GROUP BY YEAR(sess.DateD)
+                ORDER BY YEAR(sess.DateD) ASC
+            ");
+            $sYear->execute($scopeParams);
+            $byYear = $sYear->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
             // ---- Get last 5 session IDs for recent stats ----
             $sessRows = $this->db->query("
                 SELECT IDSession FROM session ORDER BY DateD DESC LIMIT 5
@@ -121,6 +137,7 @@ class OffresRepository
             return [
                 'total_offres'        => $total_offres,
                 'total_places'        => $total_places,
+                'by_year'             => $byYear,
                 'total_inscrits'      => $total_inscrits,    // مسجلين في آخر 5 دورات
                 'inscrits_femmes'     => $total_femmes,
                 'total_actifs'        => $total_active,       // ناشطين (لم يتخرجوا بعد)
