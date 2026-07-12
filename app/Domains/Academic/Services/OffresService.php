@@ -326,12 +326,15 @@ class OffresService
                        SUM(CASE WHEN c.Civ = 2 THEN 1 ELSE 0 END) as actifs_femmes
                 FROM session sess
                 JOIN section s ON s.IDSession = sess.IDSession
+                JOIN offre o ON s.IDOffre = o.IDOffre
+                JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
                 {$scopeJoin}
                 JOIN apprenant a ON a.IDSection = s.IDSection
                 JOIN candidat c ON a.IDCandidat = c.IDCandidat
                 LEFT JOIN apprenant_fin af ON af.IDapprenant = a.IDapprenant
                 WHERE sess.IDSession IN ({$inPlaceholders})
                 AND af.IDapprenant IS NULL
+                AND DATE_ADD(sess.DateD, INTERVAL COALESCE(NULLIF(sp.dureeM, 0), sp.NbrSem * 6, 24) MONTH) >= CURRENT_DATE()
                 {$scopeCond}
                 GROUP BY sess.IDSession, sess.Nom, sess.NomFr, sess.DateD
                 ORDER BY sess.DateD DESC

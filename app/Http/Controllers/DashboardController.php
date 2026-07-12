@@ -206,8 +206,11 @@ class DashboardController extends Controller
                         return DB::table('session as sess')
                             ->join('section as s', 's.IDSession', '=', 'sess.IDSession')
                             ->join('apprenant as a', 'a.IDSection', '=', 's.IDSection')
+                            ->join('offre as o', 's.IDOffre', '=', 'o.IDOffre')
+                            ->join('specialite as sp', 'o.IDSpecialite', '=', 'sp.IDSpecialite')
                             ->leftJoin('apprenant_fin as af', 'a.IDapprenant', '=', 'af.IDapprenant')
                             ->whereNull('af.IDapprenant')
+                            ->whereRaw("DATE_ADD(sess.DateD, INTERVAL COALESCE(NULLIF(sp.dureeM, 0), sp.NbrSem * 6, 24) MONTH) >= CURRENT_DATE()")
                             ->select('sess.IDSession', 'sess.Nom', DB::raw('count(a.IDapprenant) as count'))
                             ->groupBy('sess.IDSession', 'sess.Nom')
                             ->orderBy('sess.IDSession', 'desc')
@@ -233,11 +236,15 @@ class DashboardController extends Controller
                     $viewData['total_filles'] = \Illuminate\Support\Facades\Cache::remember('sgfep:kpi:minister:active_filles', 900, function() {
                         return DB::table('apprenant as a')
                             ->join('section as s', 'a.IDSection', '=', 's.IDSection')
+                            ->join('offre as o', 's.IDOffre', '=', 'o.IDOffre')
+                            ->join('session as sess', 'o.IDSession', '=', 'sess.IDSession')
+                            ->join('specialite as sp', 'o.IDSpecialite', '=', 'sp.IDSpecialite')
                             ->join('candidat as c', 'a.IDCandidat', '=', 'c.IDCandidat')
                             ->leftJoin('apprenant_fin as af', 'a.IDapprenant', '=', 'af.IDapprenant')
                             ->whereIn('s.IDSession', [31, 32, 33, 34, 35])
                             ->whereNull('af.IDapprenant')
                             ->where('c.Civ', 2)
+                            ->whereRaw("DATE_ADD(sess.DateD, INTERVAL COALESCE(NULLIF(sp.dureeM, 0), sp.NbrSem * 6, 24) MONTH) >= CURRENT_DATE()")
                             ->count();
                     });
                     
@@ -432,9 +439,12 @@ class DashboardController extends Controller
                         ->join('section as s', 's.IDSession', '=', 'sess.IDSession')
                         ->join('apprenant as a', 'a.IDSection', '=', 's.IDSection')
                         ->join('etablissement as e', 's.IDEts_Form', '=', 'e.IDetablissement')
+                        ->join('offre as o', 's.IDOffre', '=', 'o.IDOffre')
+                        ->join('specialite as sp', 'o.IDSpecialite', '=', 'sp.IDSpecialite')
                         ->leftJoin('apprenant_fin as af', 'a.IDapprenant', '=', 'af.IDapprenant')
                         ->where('e.IDDFEP', $dfepId)
                         ->whereNull('af.IDapprenant')
+                        ->whereRaw("DATE_ADD(sess.DateD, INTERVAL COALESCE(NULLIF(sp.dureeM, 0), sp.NbrSem * 6, 24) MONTH) >= CURRENT_DATE()")
                         ->select('sess.IDSession', 'sess.Nom', DB::raw('count(a.IDapprenant) as count'))
                         ->groupBy('sess.IDSession', 'sess.Nom')
                         ->orderBy('sess.IDSession', 'desc')
@@ -457,12 +467,16 @@ class DashboardController extends Controller
                     return DB::table('apprenant as a')
                         ->join('section as s', 'a.IDSection', '=', 's.IDSection')
                         ->join('etablissement as e', 's.IDEts_Form', '=', 'e.IDetablissement')
+                        ->join('offre as o', 's.IDOffre', '=', 'o.IDOffre')
+                        ->join('session as sess', 'o.IDSession', '=', 'sess.IDSession')
+                        ->join('specialite as sp', 'o.IDSpecialite', '=', 'sp.IDSpecialite')
                         ->join('candidat as c', 'a.IDCandidat', '=', 'c.IDCandidat')
                         ->leftJoin('apprenant_fin as af', 'a.IDapprenant', '=', 'af.IDapprenant')
                         ->whereIn('s.IDSession', [31, 32, 33, 34, 35])
                         ->where('e.IDDFEP', $dfepId)
                         ->whereNull('af.IDapprenant')
                         ->where('c.Civ', 2)
+                        ->whereRaw("DATE_ADD(sess.DateD, INTERVAL COALESCE(NULLIF(sp.dureeM, 0), sp.NbrSem * 6, 24) MONTH) >= CURRENT_DATE()")
                         ->count();
                 });
                 $data['total_graduates'] = \Illuminate\Support\Facades\Cache::remember("sgfep:kpi:dfep:{$dfepId}:total_graduates", 900, function() use ($dfepId) {
@@ -505,9 +519,12 @@ class DashboardController extends Controller
                     return DB::table('session as sess')
                         ->join('section as s', 's.IDSession', '=', 'sess.IDSession')
                         ->join('apprenant as a', 'a.IDSection', '=', 's.IDSection')
+                        ->join('offre as o', 's.IDOffre', '=', 'o.IDOffre')
+                        ->join('specialite as sp', 'o.IDSpecialite', '=', 'sp.IDSpecialite')
                         ->leftJoin('apprenant_fin as af', 'a.IDapprenant', '=', 'af.IDapprenant')
                         ->where('s.IDEts_Form', $etabId)
                         ->whereNull('af.IDapprenant')
+                        ->whereRaw("DATE_ADD(sess.DateD, INTERVAL COALESCE(NULLIF(sp.dureeM, 0), sp.NbrSem * 6, 24) MONTH) >= CURRENT_DATE()")
                         ->select('sess.IDSession', 'sess.Nom', DB::raw('count(a.IDapprenant) as count'))
                         ->groupBy('sess.IDSession', 'sess.Nom')
                         ->orderBy('sess.IDSession', 'desc')
@@ -528,12 +545,16 @@ class DashboardController extends Controller
                 $data['total_filles'] = \Illuminate\Support\Facades\Cache::remember("sgfep:kpi:etab:{$etabId}:active_filles", 900, function() use ($etabId) {
                     return DB::table('apprenant as a')
                         ->join('section as s', 'a.IDSection', '=', 's.IDSection')
+                        ->join('offre as o', 's.IDOffre', '=', 'o.IDOffre')
+                        ->join('session as sess', 'o.IDSession', '=', 'sess.IDSession')
+                        ->join('specialite as sp', 'o.IDSpecialite', '=', 'sp.IDSpecialite')
                         ->join('candidat as c', 'a.IDCandidat', '=', 'c.IDCandidat')
                         ->leftJoin('apprenant_fin as af', 'a.IDapprenant', '=', 'af.IDapprenant')
                         ->whereIn('s.IDSession', [31, 32, 33, 34, 35])
                         ->where('s.IDEts_Form', $etabId)
                         ->whereNull('af.IDapprenant')
                         ->where('c.Civ', 2)
+                        ->whereRaw("DATE_ADD(sess.DateD, INTERVAL COALESCE(NULLIF(sp.dureeM, 0), sp.NbrSem * 6, 24) MONTH) >= CURRENT_DATE()")
                         ->count();
                 });
                 $data['total_graduates'] = \Illuminate\Support\Facades\Cache::remember("sgfep:kpi:etab:{$etabId}:total_graduates", 900, function() use ($etabId) {
@@ -597,19 +618,20 @@ class DashboardController extends Controller
                     $query = DB::table('session as sess')
                         ->join('section as s', 's.IDSession', '=', 'sess.IDSession')
                         ->join('apprenant as a', 'a.IDSection', '=', 's.IDSection')
+                        ->join('offre as o', 's.IDOffre', '=', 'o.IDOffre')
+                        ->join('specialite as sp', 'o.IDSpecialite', '=', 'sp.IDSpecialite')
                         ->leftJoin('apprenant_fin as af', 'a.IDapprenant', '=', 'af.IDapprenant')
                         ->whereNull('af.IDapprenant')
+                        ->whereRaw("DATE_ADD(sess.DateD, INTERVAL COALESCE(NULLIF(sp.dureeM, 0), sp.NbrSem * 6, 24) MONTH) >= CURRENT_DATE()")
                         ->select('sess.IDSession', 'sess.Nom', DB::raw('count(a.IDapprenant) as count'))
                         ->groupBy('sess.IDSession', 'sess.Nom')
                         ->orderBy('sess.IDSession', 'desc')
                         ->limit(5);
 
                     if ($selEtab) {
-                        $query->join('offre as o', 's.IDOffre', '=', 'o.IDOffre')
-                              ->where('o.IDEts_Form', (int)$selEtab);
+                        $query->where('o.IDEts_Form', (int)$selEtab);
                     } elseif ($selWilaya) {
-                        $query->join('offre as o', 's.IDOffre', '=', 'o.IDOffre')
-                              ->join('etablissement as e', 'o.IDEts_Form', '=', 'e.IDetablissement')
+                        $query->join('etablissement as e', 'o.IDEts_Form', '=', 'e.IDetablissement')
                               ->where('e.IDDFEP', (int)$selWilaya);
                     }
 
@@ -647,17 +669,19 @@ class DashboardController extends Controller
                     $query = DB::table('apprenant as a')
                         ->join('section as s', 'a.IDSection', '=', 's.IDSection')
                         ->join('candidat as c', 'a.IDCandidat', '=', 'c.IDCandidat')
+                        ->join('offre as o', 's.IDOffre', '=', 'o.IDOffre')
+                        ->join('session as sess', 'o.IDSession', '=', 'sess.IDSession')
+                        ->join('specialite as sp', 'o.IDSpecialite', '=', 'sp.IDSpecialite')
                         ->leftJoin('apprenant_fin as af', 'a.IDapprenant', '=', 'af.IDapprenant')
                         ->whereIn('s.IDSession', $last5Sessions)
                         ->whereNull('af.IDapprenant')
-                        ->where('c.Civ', 2);
+                        ->where('c.Civ', 2)
+                        ->whereRaw("DATE_ADD(sess.DateD, INTERVAL COALESCE(NULLIF(sp.dureeM, 0), sp.NbrSem * 6, 24) MONTH) >= CURRENT_DATE()");
 
                     if ($selEtab) {
-                        $query->join('offre as o', 's.IDOffre', '=', 'o.IDOffre')
-                              ->where('o.IDEts_Form', (int)$selEtab);
+                        $query->where('o.IDEts_Form', (int)$selEtab);
                     } elseif ($selWilaya) {
-                        $query->join('offre as o', 's.IDOffre', '=', 'o.IDOffre')
-                              ->join('etablissement as e', 'o.IDEts_Form', '=', 'e.IDetablissement')
+                        $query->join('etablissement as e', 'o.IDEts_Form', '=', 'e.IDetablissement')
                               ->where('e.IDDFEP', (int)$selWilaya);
                     }
                     return $query->count();
@@ -1573,8 +1597,11 @@ class DashboardController extends Controller
             return DB::table('session as sess')
                 ->join('section as s', 's.IDSession', '=', 'sess.IDSession')
                 ->join('apprenant as a', 'a.IDSection', '=', 's.IDSection')
+                ->join('offre as o', 's.IDOffre', '=', 'o.IDOffre')
+                ->join('specialite as sp', 'o.IDSpecialite', '=', 'sp.IDSpecialite')
                 ->leftJoin('apprenant_fin as af', 'a.IDapprenant', '=', 'af.IDapprenant')
                 ->whereNull('af.IDapprenant')
+                ->whereRaw("DATE_ADD(sess.DateD, INTERVAL COALESCE(NULLIF(sp.dureeM, 0), sp.NbrSem * 6, 24) MONTH) >= CURRENT_DATE()")
                 ->select('sess.IDSession', 'sess.Nom', DB::raw('count(a.IDapprenant) as count'))
                 ->groupBy('sess.IDSession', 'sess.Nom')
                 ->orderBy('sess.IDSession', 'desc')
@@ -1600,11 +1627,15 @@ class DashboardController extends Controller
         $data['total_filles'] = \Illuminate\Support\Facades\Cache::remember('sgfep:kpi:minister:active_filles', 900, function() {
             return DB::table('apprenant as a')
                 ->join('section as s', 'a.IDSection', '=', 's.IDSection')
+                ->join('offre as o', 's.IDOffre', '=', 'o.IDOffre')
+                ->join('session as sess', 'o.IDSession', '=', 'sess.IDSession')
+                ->join('specialite as sp', 'o.IDSpecialite', '=', 'sp.IDSpecialite')
                 ->join('candidat as c', 'a.IDCandidat', '=', 'c.IDCandidat')
                 ->leftJoin('apprenant_fin as af', 'a.IDapprenant', '=', 'af.IDapprenant')
                 ->whereIn('s.IDSession', [31, 32, 33, 34, 35])
                 ->whereNull('af.IDapprenant')
                 ->where('c.Civ', 2)
+                ->whereRaw("DATE_ADD(sess.DateD, INTERVAL COALESCE(NULLIF(sp.dureeM, 0), sp.NbrSem * 6, 24) MONTH) >= CURRENT_DATE()")
                 ->count();
         });
 

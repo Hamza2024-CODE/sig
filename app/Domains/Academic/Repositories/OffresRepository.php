@@ -104,10 +104,13 @@ class OffresRepository
                     JOIN candidat c ON a.IDCandidat = c.IDCandidat
                     JOIN section sec ON a.IDSection = sec.IDSection
                     JOIN offre o ON sec.IDOffre = o.IDOffre
+                    JOIN session sess ON o.IDSession = sess.IDSession
+                    JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
                     $joinEtab
                     LEFT JOIN apprenant_fin af ON af.IDapprenant = a.IDapprenant
                     WHERE $sessionScopeWhere
                     AND af.IDapprenant IS NULL
+                    AND DATE_ADD(sess.DateD, INTERVAL COALESCE(NULLIF(sp.dureeM, 0), sp.NbrSem * 6, 24) MONTH) >= CURRENT_DATE()
                 ");
                 $sa->execute($sessionScopeParams);
                 return $sa->fetch(PDO::FETCH_ASSOC) ?: [];
