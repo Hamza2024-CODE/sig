@@ -28,27 +28,31 @@ try {
     }
 
     echo "\n==================================================\n";
-    echo "=== تفاصيل عروض التكوين لتخصص 'أمين مخزن' في مركز 2033 ===\n";
+    echo "=== فحص بيانات العرض #245807 بالكامل ===\n";
     echo "==================================================\n";
 
-    echo "\n==================================================\n";
-    echo "=== فحص بيانات المتربص #5231796 بالكامل في القاعدة ===\n";
-    echo "==================================================\n";
-
-    $apprenant = DB::selectOne("
-        SELECT a.*, c.*
-        FROM apprenant a
-        LEFT JOIN candidat c ON a.IDCandidat = c.IDCandidat
-        WHERE a.IDapprenant = 5231796
-    ");
-
-    if ($apprenant) {
-        foreach ((array)$apprenant as $key => $value) {
+    $offre = DB::selectOne("SELECT * FROM offre WHERE IDOffre = 245807");
+    if ($offre) {
+        foreach ((array)$offre as $key => $value) {
             echo "$key: " . ($value ?? 'NULL') . "\n";
         }
     } else {
-        echo "المتربص غير موجود.\n";
+        echo "العرض غير موجود.\n";
     }
+
+    echo "\n==================================================\n";
+    echo "=== فحص بيانات القسم #191517 بالكامل ===\n";
+    echo "==================================================\n";
+
+    $section = DB::selectOne("SELECT * FROM section WHERE IDSection = 191517");
+    if ($section) {
+        foreach ((array)$section as $key => $value) {
+            echo "$key: " . ($value ?? 'NULL') . "\n";
+        }
+    } else {
+        echo "القسم غير موجود.\n";
+    }
+
 
 
 
