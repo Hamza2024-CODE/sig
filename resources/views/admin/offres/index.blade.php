@@ -56,46 +56,49 @@ $is_etab     = in_array($role_code, ['etablissement', 'directeur', 'formateur'])
     <div class="row g-4 mb-4">
         <!-- Main Highlight: Total Offers -->
         <div class="col-12 col-xl-4">
-            <div class="card border-0 shadow-sm rounded-4 h-100" style="background: linear-gradient(135deg, #482b8f 0%, #2e1c5b 100%); color: white; position: relative; overflow: hidden;">
-                <i class="fa-solid fa-chart-pie position-absolute" style="font-size: 30px; display: inline-block; transform: scale(5); transform-origin: top left; opacity: 0.05; top: -20px; left: -20px;"></i>
-                <div class="card-body p-4 d-flex flex-column justify-content-center position-relative z-1">
-                    <div class="d-flex align-items-center gap-2 mb-1">
-                        <h6 class="text-white-50 fw-bold mb-0">إجمالي العروض المبرمجة</h6>
-                        <span class="badge rounded-pill" style="background:rgba(255,255,255,0.15); font-size:.65rem;">كل الدورات</span>
+            <div class="card border-0 shadow-sm rounded-4 h-100" style="background: rgba(255,255,255,0.95);">
+                <div class="card-body p-4 d-flex flex-column justify-content-center">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div class="rounded-circle d-inline-flex align-items-center justify-content-center" style="width:48px; height:48px; background:rgba(72,43,143,0.1); color:#482b8f; flex-shrink:0; font-size: 1.2rem;">
+                            <i class="fa-solid fa-chart-pie"></i>
+                        </div>
+                        <span class="badge rounded-pill" style="background:#f3e8ff; color:#7c3aed; font-size:.65rem; font-weight: 700;">كل الدورات</span>
                     </div>
-                    <h1 class="display-3 fw-bold mb-1 text-warning"><?= number_format($stats['total_offres']) ?></h1>
-                    <p class="text-white-50 small mb-3">عرض تكوين مبرمج في قاعدة البيانات</p>
+                    
+                    <h6 class="text-muted fw-bold mb-1" style="font-size:.85rem;">إجمالي عروض التكوين المبرمجة</h6>
+                    <h1 class="display-4 fw-bold mb-1 text-primary" style="color: #482b8f !important;"><?= number_format($stats['total_offres']) ?></h1>
+                    <p class="text-muted small mb-3">عرض تكوين مبرمج في قاعدة البيانات</p>
 
                     <div class="d-flex justify-content-between align-items-center mb-1">
-                        <span class="text-white-50 small"><i class="fa-solid fa-chair me-1"></i>المقاعد المتاحة (nbrPrevision)</span>
-                        <span class="fw-bold fs-5" dir="ltr"><?= number_format($stats['total_places'], 0, ',', ' ') ?></span>
+                        <span class="text-muted small"><i class="fa-solid fa-chair me-1"></i>المقاعد المتاحة (nbrPrevision)</span>
+                        <span class="fw-bold fs-5 text-dark" dir="ltr"><?= number_format($stats['total_places'], 0, ',', ' ') ?></span>
                     </div>
-                    <div class="progress mb-2" style="height: 6px; background-color: rgba(255,255,255,0.1);">
-                        <div class="progress-bar bg-warning" role="progressbar" style="width: 100%;"></div>
+                    <div class="progress mb-2" style="height: 6px; background-color: rgba(72,43,143,0.1);">
+                        <div class="progress-bar" role="progressbar" style="width: 100%; background-color: #482b8f;"></div>
                     </div>
-                    <div class="text-white-50 mb-3" style="font-size:.7rem;">
-                        <i class="fa-solid fa-circle-info me-1"></i>
+                    <div class="text-muted mb-3" style="font-size:.7rem;">
+                        <i class="fa-solid fa-circle-info me-1 text-primary opacity-75"></i>
                         إجمالي المقاعد المخصصة في جميع عروض التكوين المدخلة
                     </div>
 
                     <!-- Breakdown by Year (2024 - 2026) -->
-                    <div class="mt-2 pt-3 border-top" style="border-top: 1px dashed rgba(255,255,255,0.2) !important;">
-                        <h6 class="text-white-50 fw-bold mb-2 small"><i class="fa-solid fa-calendar-days text-warning me-1"></i>توزيع العروض والمقاعد المتاحة حسب السنة:</h6>
+                    <div class="mt-2 pt-3 border-top" style="border-top: 1px dashed #e2e8f0 !important;">
+                        <h6 class="text-muted fw-bold mb-2 small"><i class="fa-solid fa-calendar-days text-primary me-1"></i>توزيع العروض والمقاعد المتاحة حسب السنة:</h6>
                         <div class="d-flex flex-column gap-2">
                             <?php if (!empty($stats['by_year'])): ?>
                                 <?php foreach ($stats['by_year'] as $yr): ?>
                                     <?php if ($yr['year'] >= 2024 && $yr['year'] <= 2026): ?>
                                         <div class="d-flex justify-content-between align-items-center small">
-                                            <span class="fw-bold text-white"><?= htmlspecialchars($yr['year']) ?></span>
-                                            <span class="text-white-50">
-                                                <span class="badge bg-warning text-dark bold px-2 py-1 me-2" style="font-size: 0.7rem; font-weight: 700;"><?= number_format($yr['count_offres']) ?> عرض</span>
-                                                <span class="text-white fw-bold" dir="ltr"><?= number_format($yr['count_places'], 0, ',', ' ') ?> مقعد</span>
+                                            <span class="fw-bold text-dark"><?= htmlspecialchars($yr['year']) ?></span>
+                                            <span>
+                                                <span class="badge bg-primary-subtle text-primary bold px-2 py-1 me-2" style="background-color: rgba(72,43,143,0.1); color: #482b8f; font-size: 0.7rem; font-weight: 700; border-radius: 6px;"><?= number_format($yr['count_offres']) ?> عرض</span>
+                                                <span class="text-muted fw-bold" dir="ltr"><?= number_format($yr['count_places'], 0, ',', ' ') ?> مقعد</span>
                                             </span>
                                         </div>
                                     <?php endif; ?>
                                 <?php endforeach; ?>
                             <?php else: ?>
-                                <div class="text-white-50 small text-center">لا توجد بيانات متوفرة</div>
+                                <div class="text-muted small text-center">لا توجد بيانات متوفرة</div>
                             <?php endif; ?>
                         </div>
                     </div>
