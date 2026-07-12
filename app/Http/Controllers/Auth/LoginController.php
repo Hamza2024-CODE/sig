@@ -259,6 +259,8 @@ class LoginController extends Controller
                             $normalizedEmp['IDEncadrement'] = $v;
                         } elseif ($lk === 'idetablissement') {
                             $normalizedEmp['IDetablissement'] = $v;
+                        } elseif ($lk === 'idets_form') {
+                            $normalizedEmp['IDEts_Form'] = $v;
                         } elseif ($lk === 'motdepass') {
                             $normalizedEmp['MotDePass'] = $v;
                         } elseif ($lk === 'nom') {
@@ -308,7 +310,11 @@ class LoginController extends Controller
                             'id'               => $employee['IDEncadrement'],
                             'username'         => $employee['nin'],
                             'nom_complet'      => ($employee['Nom'] ?? '') . ' ' . ($employee['Prenom'] ?? ''),
-                            'etablissement_id' => $employee['IDetablissement'] ?? null,
+                            // etablissement_id stores the academic ID (IDEts_Form)
+                            'etablissement_id' => $employee['IDEts_Form'] ?? $employee['IDetablissement'] ?? null,
+                            // profile_etab_id/idetablissement stores the account ID (IDetablissement)
+                            'profile_etab_id'  => $employee['IDetablissement'] ?? null,
+                            'idetablissement'  => $employee['IDetablissement'] ?? null,
                             'role_id'          => 5,
                             'role_code'        => 'EMPLOYEE',
                             'role_ar'          => 'موظف / مُكوّن',
@@ -506,10 +512,11 @@ class LoginController extends Controller
                             'id'               => $etab['IDetablissement'],
                             'username'         => $matchedUtilisateur ? strtolower($matchedUtilisateur['NomUser']) : $etab['nomUser'],
                             'nom_complet'      => $matchedUtilisateur ? $matchedUtilisateur['Nom'] : ($etab['Nom'] ?? $etab['nomUser']),
-                            // FIXED: Always use the center's own IDetablissement as etablissement_id.
-                            // IDEts_Form is the parent/main center reference in the etablissement table,
-                            // but all academic data (offre, apprenant, etc.) is scoped by IDetablissement.
-                            'etablissement_id' => $etab['IDetablissement'],
+                            // etablissement_id stores the academic ID (IDEts_Form) to correctly query academic data (offre, apprenant, etc.)
+                            'etablissement_id' => $etab['IDEts_Form'] ?? $etab['IDetablissement'],
+                            // profile_etab_id/idetablissement stores the account ID (IDetablissement) to load the profile and modify profile details
+                            'profile_etab_id'  => $etab['IDetablissement'],
+                            'idetablissement'  => $etab['IDetablissement'],
                             'parent_etab_id'   => $etab['IDEts_Form'] ?? null,
                             'iddfep'           => $iddfep,
                             'wilaya_id'        => $wilayaId,

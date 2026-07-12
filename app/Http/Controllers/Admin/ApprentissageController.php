@@ -43,10 +43,11 @@ class ApprentissageController extends Controller
         if (empty($wilayaId) && !in_array($role, ['admin', 'central'])) {
             if (!empty($user['iddfep']) && $user['iddfep'] > 0) {
                 $wilayaId = (int)$user['iddfep'];
-            } elseif (!empty($user['etablissement_id'])) {
+            } elseif (!empty($user['profile_etab_id']) || !empty($user['idetablissement']) || !empty($user['etablissement_id'])) {
                 try {
+                    $etabId = $user['profile_etab_id'] ?? $user['idetablissement'] ?? $user['etablissement_id'];
                     $wilayaId = (int) DB::table('etablissement')
-                        ->where('IDetablissement', $user['etablissement_id'])
+                        ->where('IDetablissement', $etabId)
                         ->value('IDDFEP');
                 } catch (\Exception $e) {}
             }
@@ -145,10 +146,11 @@ class ApprentissageController extends Controller
         if (empty($userWilayaId) && !in_array($role, ['admin', 'central'])) {
             if (!empty($user['iddfep']) && $user['iddfep'] > 0) {
                 $userWilayaId = (int)$user['iddfep'];
-            } elseif (!empty($user['etablissement_id'])) {
+            } elseif (!empty($user['profile_etab_id']) || !empty($user['idetablissement']) || !empty($user['etablissement_id'])) {
                 try {
+                    $etabId = $user['profile_etab_id'] ?? $user['idetablissement'] ?? $user['etablissement_id'];
                     $userWilayaId = (int) DB::table('etablissement')
-                        ->where('IDetablissement', $user['etablissement_id'])
+                        ->where('IDetablissement', $etabId)
                         ->value('IDDFEP');
                 } catch (\Exception $e) {}
             }
@@ -214,10 +216,11 @@ class ApprentissageController extends Controller
         if (empty($userWilayaId) && !in_array($role, ['admin', 'central'])) {
             if (!empty($user['iddfep']) && $user['iddfep'] > 0) {
                 $userWilayaId = (int)$user['iddfep'];
-            } elseif (!empty($user['etablissement_id'])) {
+            } elseif (!empty($user['profile_etab_id']) || !empty($user['idetablissement']) || !empty($user['etablissement_id'])) {
                 try {
+                    $etabId = $user['profile_etab_id'] ?? $user['idetablissement'] ?? $user['etablissement_id'];
                     $userWilayaId = (int) DB::table('etablissement')
-                        ->where('IDetablissement', $user['etablissement_id'])
+                        ->where('IDetablissement', $etabId)
                         ->value('IDDFEP');
                 } catch (\Exception $e) {}
             }
@@ -280,10 +283,11 @@ class ApprentissageController extends Controller
         if (empty($userWilayaId) && !in_array($role, ['admin', 'central'])) {
             if (!empty($user['iddfep']) && $user['iddfep'] > 0) {
                 $userWilayaId = (int)$user['iddfep'];
-            } elseif (!empty($user['etablissement_id'])) {
+            } elseif (!empty($user['profile_etab_id']) || !empty($user['idetablissement']) || !empty($user['etablissement_id'])) {
                 try {
+                    $etabId = $user['profile_etab_id'] ?? $user['idetablissement'] ?? $user['etablissement_id'];
                     $userWilayaId = (int) DB::table('etablissement')
-                        ->where('IDetablissement', $user['etablissement_id'])
+                        ->where('IDetablissement', $etabId)
                         ->value('IDDFEP');
                 } catch (\Exception $e) {}
             }
