@@ -32,10 +32,11 @@ try {
     echo "==================================================\n";
 
     $offres = DB::select("
-        SELECT o.IDOffre, o.IDSpecialite, sp.Nom as SpecialiteNom, o.IDEts_Form, o.SessionNum, s.Nom as SessionNom
+        SELECT o.IDOffre, o.IDSpecialite, sp.Nom as SpecialiteNom, o.IDEts_Form, s.IDSession, sess.Nom as SessionNom
         FROM offre o
         JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
-        LEFT JOIN session s ON o.SessionNum = s.IDSession
+        LEFT JOIN section s ON s.IDOffre = o.IDOffre
+        LEFT JOIN session sess ON s.IDSession = sess.IDSession
         WHERE o.IDEts_Form = 2033 AND sp.Nom LIKE '%مخزن%'
     ");
 
@@ -43,7 +44,7 @@ try {
         echo "لا توجد عروض تخصص 'أمين مخزن' مسجلة تحت مركز 2033.\n";
     } else {
         foreach ($offres as $of) {
-            echo "عرض: " . $of->IDOffre . " | التخصص: " . $of->SpecialiteNom . " | الدورة: " . $of->SessionNom . " (معرف الدورة: " . $of->SessionNum . ")\n";
+            echo "عرض: " . $of->IDOffre . " | التخصص: " . $of->SpecialiteNom . " | الدورة: " . ($of->SessionNom ?: 'غير محددة') . " (معرف الدورة: " . ($of->IDSession ?: 'لا يوجد') . ")\n";
         }
     }
 
