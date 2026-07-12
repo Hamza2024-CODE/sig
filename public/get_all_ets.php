@@ -61,6 +61,7 @@ try {
                     <th>الرمز Code</th>
                     <th>اسم المؤسسة (Ar)</th>
                     <th>Nom Etablissement (Fr)</th>
+                    <th>حالة الخدمة (في الخدمة / خارج الخدمة)</th>
                     <th>حالة الحساب (nomUser)</th>
                     <th>حالة النشاط (متربصين نشطين)</th>
                 </tr>
@@ -68,7 +69,7 @@ try {
             <tbody>";
 
     if ($etablissements->isEmpty()) {
-        echo "<tr><td colspan='6' style='text-align:center;'>لا توجد مؤسسات في هذه الولاية</td></tr>";
+        echo "<tr><td colspan='7' style='text-align:center;'>لا توجد مؤسسات في هذه الولاية</td></tr>";
     } else {
         foreach ($etablissements as $row) {
             // Check Account
@@ -77,17 +78,24 @@ try {
                 ? "<span class='badge bg-success-light'>لديه حساب ({$row->nomUser})</span>" 
                 : "<span class='badge bg-danger-light'>ليس لديه حساب</span>";
 
-            // Check Active Status
+            // Check Active Status (Trainees)
             $isActive = in_array($row->IDetablissement, $activeEtsIds);
             $activeBadge = $isActive 
                 ? "<span class='badge bg-info-light'>نشط (يوجد متربصين)</span>" 
                 : "<span class='badge bg-warning-light'>غير نشط (لا يوجد متربصين)</span>";
+
+            // Check Service Status (activee = 0 -> in service, activee = 1 -> suspended/out of service)
+            $isSuspended = ((int)($row->activee ?? 0) === 1);
+            $serviceBadge = $isSuspended
+                ? "<span class='badge bg-danger-light'>❌ خارج الخدمة (موقف/مجمد)</span>"
+                : "<span class='badge bg-success-light'>✅ قيد الخدمة (مستمر)</span>";
 
             echo "<tr>
                     <td>{$row->IDetablissement}</td>
                     <td><span class='badge code-badge'>{$row->Code}</span></td>
                     <td><b>{$row->Nom}</b></td>
                     <td>{$row->NomFr}</td>
+                    <td>{$serviceBadge}</td>
                     <td>{$accountBadge}</td>
                     <td>{$activeBadge}</td>
                   </tr>";
