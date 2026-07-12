@@ -31,22 +31,25 @@ try {
     echo "=== تفاصيل عروض التكوين لتخصص 'أمين مخزن' في مركز 2033 ===\n";
     echo "==================================================\n";
 
-    $offres = DB::select("
-        SELECT o.IDOffre, o.IDSpecialite, sp.Nom as SpecialiteNom, o.IDEts_Form, s.IDSession, sess.Nom as SessionNom
-        FROM offre o
-        JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
-        LEFT JOIN section s ON s.IDOffre = o.IDOffre
-        LEFT JOIN session sess ON s.IDSession = sess.IDSession
-        WHERE o.IDEts_Form = 2033 AND sp.Nom LIKE '%مخزن%'
+    echo "\n==================================================\n";
+    echo "=== فحص بيانات المتربص #5231796 بالكامل في القاعدة ===\n";
+    echo "==================================================\n";
+
+    $apprenant = DB::selectOne("
+        SELECT a.*, c.*
+        FROM apprenant a
+        LEFT JOIN candidat c ON a.IDCandidat = c.IDCandidat
+        WHERE a.IDapprenant = 5231796
     ");
 
-    if (empty($offres)) {
-        echo "لا توجد عروض تخصص 'أمين مخزن' مسجلة تحت مركز 2033.\n";
-    } else {
-        foreach ($offres as $of) {
-            echo "عرض: " . $of->IDOffre . " | التخصص: " . $of->SpecialiteNom . " | الدورة: " . ($of->SessionNom ?: 'غير محددة') . " (معرف الدورة: " . ($of->IDSession ?: 'لا يوجد') . ")\n";
+    if ($apprenant) {
+        foreach ((array)$apprenant as $key => $value) {
+            echo "$key: " . ($value ?? 'NULL') . "\n";
         }
+    } else {
+        echo "المتربص غير موجود.\n";
     }
+
 
 
 } catch (\Exception $e) {
