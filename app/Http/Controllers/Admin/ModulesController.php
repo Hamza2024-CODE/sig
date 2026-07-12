@@ -1041,19 +1041,17 @@ class ModulesController extends Controller {
                 $stats = ['total' => 0, 'femmes' => 0, 'hommes' => 0, 'centres' => 0];
                 $list  = [];
 
-                // Count active trainees - join through ets_form to resolve IDEts_Form → IDetablissement
+                // Count active trainees (statut='actif' is the authoritative field for active status)
                 $stmtT = $this->db->prepare("
                     SELECT
                         COUNT(DISTINCT a.IDapprenant) AS total,
                         COUNT(DISTINCT CASE WHEN c.Civ = 2 THEN a.IDapprenant END) AS femmes,
-                        COUNT(DISTINCT ets.IDetablissement) AS centres
+                        COUNT(DISTINCT o.IDEts_Form) AS centres
                     FROM apprenant a
-                    INNER JOIN section s   ON a.IDSection  = s.IDSection
-                    INNER JOIN offre o     ON s.IDOffre    = o.IDOffre
-                    INNER JOIN ets_form ets ON o.IDEts_Form = ets.IDEts_Form
-                    LEFT  JOIN candidat c  ON a.IDCandidat = c.IDCandidat
-                    LEFT  JOIN apprenant_fin af ON a.IDapprenant = af.IDapprenant
-                    WHERE af.IDapprenant IS NULL
+                    INNER JOIN section s  ON a.IDSection = s.IDSection
+                    INNER JOIN offre o    ON s.IDOffre   = o.IDOffre
+                    LEFT  JOIN candidat c ON a.IDCandidat = c.IDCandidat
+                    WHERE a.statut = 'actif'
                       AND $ofWhere
                 ");
                 $stmtT->execute($params);
@@ -1063,7 +1061,7 @@ class ModulesController extends Controller {
                 $stats['hommes']  = max(0, $stats['total'] - $stats['femmes']);
                 $stats['centres'] = (int)($row['centres'] ?? 0);
 
-                // Per-center list — join through ets_form so grouping is by IDetablissement
+                // Per-center list: group by IDEts_Form and join to etablissement
                 $stmt = $this->db->prepare("
                     SELECT ef.IDetablissement AS id_etab,
                            ef.Nom             AS etab_nom,
@@ -1077,19 +1075,17 @@ class ModulesController extends Controller {
                     FROM etablissement ef
                     LEFT JOIN wilaya w ON ef.IDDFEP = w.IDWilayaa
                     LEFT JOIN (
-                        SELECT ets.IDetablissement,
+                        SELECT o.IDEts_Form,
                                COUNT(DISTINCT a.IDapprenant) AS total,
                                COUNT(DISTINCT CASE WHEN c.Civ = 2 THEN a.IDapprenant END) AS femmes
                         FROM apprenant a
-                        INNER JOIN section s    ON a.IDSection   = s.IDSection
-                        INNER JOIN offre o      ON s.IDOffre     = o.IDOffre
-                        INNER JOIN ets_form ets ON o.IDEts_Form  = ets.IDEts_Form
-                        LEFT  JOIN candidat c   ON a.IDCandidat  = c.IDCandidat
-                        LEFT  JOIN apprenant_fin af ON a.IDapprenant = af.IDapprenant
-                        WHERE af.IDapprenant IS NULL
+                        INNER JOIN section s  ON a.IDSection = s.IDSection
+                        INNER JOIN offre o    ON s.IDOffre   = o.IDOffre
+                        LEFT  JOIN candidat c ON a.IDCandidat = c.IDCandidat
+                        WHERE a.statut = 'actif'
                           AND $ofWhere
-                        GROUP BY ets.IDetablissement
-                    ) agg ON ef.IDetablissement = agg.IDetablissement
+                        GROUP BY o.IDEts_Form
+                    ) agg ON ef.IDetablissement = agg.IDEts_Form
                     WHERE $efWhere
                     ORDER BY total DESC
                 ");
