@@ -29,6 +29,14 @@ use App\Http\Controllers\Admin\SettingsController;
 |
 | */
 
+// ── TWA Digital Asset Links (Android Trusted Web Activity) ─────────────────
+Route::get('/.well-known/assetlinks.json', function () {
+    return response()->file(public_path('.well-known/assetlinks.json'), [
+        'Content-Type' => 'application/json',
+        'Cache-Control' => 'public, max-age=86400',
+    ]);
+})->name('assetlinks');
+
 // ═══════════════════════════════════════════════════════════════════════════
 // §1  ROUTES PUBLIQUES (sans authentification)
 // ═══════════════════════════════════════════════════════════════════════════
@@ -38,11 +46,34 @@ use App\Http\Controllers\Admin\SettingsController;
 
 Route::get('/',              [HomeController::class, 'index']);
 Route::get('/resultats',     [HomeController::class, 'searchResult']);
+Route::get('/verify-diploma', [HomeController::class, 'verifyDiploma'])->name('diplomes.public.verify');
 Route::get('/portal/{page}', [PortalController::class, 'renderPage']);
 Route::get('/verify/card/employee/{hash}', [\App\Http\Controllers\PortalController::class, 'publicVerifyEmployeeCard'])->name('card.verify.employee');
 Route::get('/verify/card/trainee/{hash}', [\App\Http\Controllers\PortalController::class, 'publicVerifyTraineeCard'])->name('card.verify.trainee');
 Route::match(['get','post'], '/verify', [\App\Http\Controllers\Admin\ModulesController::class, 'publicVerifyDocument'])->name('document.public_verify');
 Route::get('/verify/print/{id}', [\App\Http\Controllers\Admin\ModulesController::class, 'publicPrintDocument'])->name('document.public_print');
+
+// Local Offline QR Code API Endpoint (Solves CSP and Intra-net access blocks)
+Route::get('/api/qrcode', function (\Illuminate\Http\Request $request) {
+    $data = $request->query('data', '');
+    if (empty($data)) {
+        return response('', 400);
+    }
+    try {
+        $qrCode = (new \chillerlan\QRCode\QRCode)->render($data);
+        if (str_starts_with($qrCode, 'data:')) {
+            $parts = explode(',', $qrCode);
+            $meta = explode(';', $parts[0]);
+            $mime = str_replace('data:', '', $meta[0]);
+            $content = base64_decode($parts[1]);
+            return response($content)->header('Content-Type', $mime);
+        }
+    } catch (\Throwable $e) {
+        \Illuminate\Support\Facades\Log::error('Local API QR Code generation failed: ' . $e->getMessage());
+        return response('', 500);
+    }
+    return response('', 400);
+});
 
 // Auth (100% Laravel)
 Route::get('/login',                     [LoginController::class, 'showLoginFormView'])->name('login');
@@ -70,6 +101,27 @@ Route::prefix('sig')->group(function () {
     Route::post('/login',        [LoginController::class, 'login'])->middleware('throttle:login');
     Route::match(['get','post'], '/logout', [LoginController::class, 'logout']);
     Route::post('/login/get-employee-code', [LoginController::class, 'getEmployeeCode']);
+
+    // Local Offline QR Code API Endpoint for sig subfolder
+    Route::get('/api/qrcode', function (\Illuminate\Http\Request $request) {
+        $data = $request->query('data', '');
+        if (empty($data)) {
+            return response('', 400);
+        }
+        try {
+            $qrCode = (new \chillerlan\QRCode\QRCode)->render($data);
+            if (str_starts_with($qrCode, 'data:')) {
+                $parts = explode(',', $qrCode);
+                $meta = explode(';', $parts[0]);
+                $mime = str_replace('data:', '', $meta[0]);
+                $content = base64_decode($parts[1]);
+                return response($content)->header('Content-Type', $mime);
+            }
+        } catch (\Throwable $e) {
+            return response('', 500);
+        }
+        return response('', 400);
+    });
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -134,6 +186,7 @@ Route::middleware('check.session')->group(function () {
     Route::get('/dashboard/promotions', [DashboardController::class, 'viewPromotions']);
     Route::get('/dashboard/concours',   [DashboardController::class, 'viewConcours']);
     Route::get('/dashboard/salaires',   [DashboardController::class, 'viewSalaires']);
+    Route::get('/dashboard/admin-stats', [DashboardController::class, 'viewAdminStats'])->name('admin.stats');
 
     // ── 🔄 Workflow Engine (Congés / Promotions / Transferts) ────────────────
     Route::prefix('dashboard/workflow')->name('workflow.')->group(function () {
@@ -350,6 +403,9 @@ Route::middleware('check.session')->group(function () {
         Route::get('/get-employeurs',       [\App\Http\Controllers\Admin\GradesController::class, 'getEmployeurs'])->name('grades.get-employeurs');
         Route::get('/control',              [\App\Http\Controllers\Admin\GradesController::class, 'gradingControl'])->name('grades.control');
         Route::post('/control/save',        [\App\Http\Controllers\Admin\GradesController::class, 'saveGradingControl'])->name('grades.control.save');
+        Route::get('/windows',              [\App\Http\Controllers\Admin\GradesController::class, 'windows'])->name('grades.windows');
+        Route::post('/windows/store',        [\App\Http\Controllers\Admin\GradesController::class, 'storeWindow'])->name('grades.windows.store');
+        Route::post('/windows/delete/{id}',  [\App\Http\Controllers\Admin\GradesController::class, 'deleteWindow'])->name('grades.windows.delete');
     });
 
     // ── Specialites ───────────────────────────────────────────────────────
@@ -380,6 +436,9 @@ Route::middleware('check.session')->group(function () {
         Route::get('/statistiques',         [\App\Http\Controllers\Admin\DiplomeController::class, 'statistiques'])->name('diplomes.statistiques');
         Route::get('/generate/{id}',        [\App\Http\Controllers\Admin\DiplomeController::class, 'generate'])->name('diplomes.generate');
         Route::get('/print/{id}',           [\App\Http\Controllers\Admin\DiplomeController::class, 'printDiploma'])->name('diplomes.print');
+        Route::get('/print-batch',          [\App\Http\Controllers\Admin\DiplomeController::class, 'printBatch'])->name('diplomes.print.batch');
+        Route::get('/download-pdf/{id}',    [\App\Http\Controllers\Admin\DiplomeController::class, 'downloadPdf'])->name('diplomes.download.pdf');
+        Route::get('/download-pdf-batch',   [\App\Http\Controllers\Admin\DiplomeController::class, 'downloadPdfBatch'])->name('diplomes.download.pdf.batch');
         Route::get('/show/{id}',            [\App\Http\Controllers\Admin\DiplomeController::class, 'show'])->name('diplomes.show');
         Route::post('/update',              [\App\Http\Controllers\Admin\DiplomeController::class, 'update'])->name('diplomes.update');
         Route::post('/delete/{id}',         [\App\Http\Controllers\Admin\DiplomeController::class, 'destroy'])->name('diplomes.delete');
@@ -606,24 +665,24 @@ Route::middleware('check.session')->group(function () {
     Route::get('/dashboard/audit-logs/export',       [\App\Http\Controllers\Admin\AuditController::class, 'export'])->name('audit.export');
 
     // ── Security Center Dashboard (Admin Only) ─────────────────────────────
-    Route::get('/admin/security', [\App\Http\Controllers\Admin\SecurityCenterController::class, 'index'])->name('security.index');
-    Route::get('/admin/security/logs', [\App\Http\Controllers\Admin\SecurityCenterController::class, 'logs'])->name('security.logs');
-    Route::get('/admin/security/logs/export', [\App\Http\Controllers\Admin\SecurityCenterController::class, 'export'])->name('security.logs.export');
-    Route::get('/admin/security/mfa', [\App\Http\Controllers\Admin\SecurityCenterController::class, 'mfaManagement'])->name('security.mfa.management.nonprefixed');
-    Route::post('/admin/security/mfa/global', [\App\Http\Controllers\Admin\SecurityCenterController::class, 'updateGlobalMfa'])->name('security.mfa.global.update.nonprefixed');
-    Route::post('/admin/security/mfa/user/toggle', [\App\Http\Controllers\Admin\SecurityCenterController::class, 'toggleUserMfa'])->name('security.mfa.user.toggle.nonprefixed');
-    Route::post('/admin/security/mfa/user/reset', [\App\Http\Controllers\Admin\SecurityCenterController::class, 'resetUserMfa'])->name('security.mfa.user.reset.nonprefixed');
-    Route::post('/admin/security/ip-ban/toggle', [\App\Http\Controllers\Admin\SecurityCenterController::class, 'toggleIpBanning'])->name('security.ip-ban.toggle.nonprefixed');
+    Route::get('/dashboard/security', [\App\Http\Controllers\Admin\SecurityCenterController::class, 'index'])->name('security.index');
+    Route::get('/dashboard/security/logs', [\App\Http\Controllers\Admin\SecurityCenterController::class, 'logs'])->name('security.logs');
+    Route::get('/dashboard/security/logs/export', [\App\Http\Controllers\Admin\SecurityCenterController::class, 'export'])->name('security.logs.export');
+    Route::get('/dashboard/security/mfa', [\App\Http\Controllers\Admin\SecurityCenterController::class, 'mfaManagement'])->name('security.mfa.management');
+    Route::post('/dashboard/security/mfa/global', [\App\Http\Controllers\Admin\SecurityCenterController::class, 'updateGlobalMfa'])->name('security.mfa.global.update');
+    Route::post('/dashboard/security/mfa/user/toggle', [\App\Http\Controllers\Admin\SecurityCenterController::class, 'toggleUserMfa'])->name('security.mfa.user.toggle');
+    Route::post('/dashboard/security/mfa/user/reset', [\App\Http\Controllers\Admin\SecurityCenterController::class, 'resetUserMfa'])->name('security.mfa.user.reset');
+    Route::post('/dashboard/security/ip-ban/toggle', [\App\Http\Controllers\Admin\SecurityCenterController::class, 'toggleIpBanning'])->name('security.ip-ban.toggle');
 
     // ── MFA Setup & Verification Routes ────────────────────────────────────
-    Route::get('/security/mfa', [\App\Http\Controllers\Admin\TwoFactorAuthController::class, 'index'])->name('security.mfa.index.nonprefixed');
-    Route::get('/security/mfa/setup', [\App\Http\Controllers\Admin\TwoFactorAuthController::class, 'setup'])->name('security.mfa.setup.index');
+    Route::get('/security/mfa', [\App\Http\Controllers\Admin\TwoFactorAuthController::class, 'index'])->name('security.mfa.index');
+    Route::get('/security/mfa/setup', [\App\Http\Controllers\Admin\TwoFactorAuthController::class, 'setup'])->name('security.mfa.setup');
     Route::post('/security/mfa/setup/confirm', [\App\Http\Controllers\Admin\TwoFactorAuthController::class, 'confirmSetup'])->name('security.mfa.setup.confirm');
-    Route::get('/security/mfa/verify', [\App\Http\Controllers\Admin\TwoFactorAuthController::class, 'showVerifyForm'])->name('security.mfa.verify.index');
-    Route::post('/security/mfa/verify', [\App\Http\Controllers\Admin\TwoFactorAuthController::class, 'verify'])->name('security.mfa.verify.submit');
-    Route::post('/security/mfa/disable', [\App\Http\Controllers\Admin\TwoFactorAuthController::class, 'disable'])->name('security.mfa.disable.nonprefixed');
-    Route::post('/security/mfa/recovery-codes/regenerate', [\App\Http\Controllers\Admin\TwoFactorAuthController::class, 'regenerateRecoveryCodes'])->name('security.mfa.recovery-codes.regenerate.nonprefixed');
-    Route::post('/security/mfa/device/revoke/{id}', [\App\Http\Controllers\Admin\TwoFactorAuthController::class, 'revokeDevice'])->name('security.mfa.device.revoke.nonprefixed');
+    Route::get('/security/mfa/verify', [\App\Http\Controllers\Admin\TwoFactorAuthController::class, 'showVerifyForm'])->name('security.mfa.verify');
+    Route::post('/security/mfa/verify', [\App\Http\Controllers\Admin\TwoFactorAuthController::class, 'verify'])->name('security.mfa.verify.post');
+    Route::post('/security/mfa/disable', [\App\Http\Controllers\Admin\TwoFactorAuthController::class, 'disable'])->name('security.mfa.disable');
+    Route::post('/security/mfa/recovery-codes/regenerate', [\App\Http\Controllers\Admin\TwoFactorAuthController::class, 'regenerateRecoveryCodes'])->name('security.mfa.recovery-codes.regenerate');
+    Route::post('/security/mfa/device/revoke/{id}', [\App\Http\Controllers\Admin\TwoFactorAuthController::class, 'revokeDevice'])->name('security.mfa.device.revoke');
     Route::get('/security/mfa/recovery-codes', function() {
         return view('admin.security.mfa.recovery-codes');
     })->name('security.mfa.recovery-codes');
@@ -1042,30 +1101,6 @@ Route::prefix('sig')->middleware('check.session')->group(function () {
     Route::get('/dashboard/audit-logs',              [\App\Http\Controllers\Admin\AuditController::class, 'index']);
     Route::get('/dashboard/audit-logs/export',       [\App\Http\Controllers\Admin\AuditController::class, 'export']);
 
-    // ── Security Center Dashboard (Admin Only) ─────────────────────────────
-    Route::get('/admin/security', [\App\Http\Controllers\Admin\SecurityCenterController::class, 'index']);
-    Route::get('/admin/security/logs', [\App\Http\Controllers\Admin\SecurityCenterController::class, 'logs']);
-    Route::get('/admin/security/logs/export', [\App\Http\Controllers\Admin\SecurityCenterController::class, 'export']);
-    Route::get('/admin/security/mfa', [\App\Http\Controllers\Admin\SecurityCenterController::class, 'mfaManagement'])->name('security.mfa.management');
-    Route::post('/admin/security/mfa/global', [\App\Http\Controllers\Admin\SecurityCenterController::class, 'updateGlobalMfa'])->name('security.mfa.global.update');
-    Route::post('/admin/security/mfa/user/toggle', [\App\Http\Controllers\Admin\SecurityCenterController::class, 'toggleUserMfa'])->name('security.mfa.user.toggle');
-    Route::post('/admin/security/mfa/user/reset', [\App\Http\Controllers\Admin\SecurityCenterController::class, 'resetUserMfa'])->name('security.mfa.user.reset');
-    Route::post('/admin/security/ip-ban/toggle', [\App\Http\Controllers\Admin\SecurityCenterController::class, 'toggleIpBanning'])->name('security.ip-ban.toggle');
-
-    // ── MFA Setup & Verification Routes ────────────────────────────────────
-    Route::get('/security/mfa', [\App\Http\Controllers\Admin\TwoFactorAuthController::class, 'index'])->name('security.mfa.index');
-    Route::get('/security/mfa/setup', [\App\Http\Controllers\Admin\TwoFactorAuthController::class, 'setup'])->name('security.mfa.setup');
-    Route::post('/security/mfa/setup/confirm', [\App\Http\Controllers\Admin\TwoFactorAuthController::class, 'confirmSetup'])->name('security.mfa.setup.confirm');
-    Route::get('/security/mfa/verify', [\App\Http\Controllers\Admin\TwoFactorAuthController::class, 'showVerifyForm'])->name('security.mfa.verify');
-    Route::post('/security/mfa/verify', [\App\Http\Controllers\Admin\TwoFactorAuthController::class, 'verify'])->name('security.mfa.verify.post');
-    Route::post('/security/mfa/disable', [\App\Http\Controllers\Admin\TwoFactorAuthController::class, 'disable'])->name('security.mfa.disable');
-    Route::post('/security/mfa/recovery-codes/regenerate', [\App\Http\Controllers\Admin\TwoFactorAuthController::class, 'regenerateRecoveryCodes'])->name('security.mfa.recovery-codes.regenerate');
-    Route::post('/security/mfa/device/revoke/{id}', [\App\Http\Controllers\Admin\TwoFactorAuthController::class, 'revokeDevice'])->name('security.mfa.device.revoke');
-    Route::get('/security/mfa/recovery-codes', function() {
-        return view('admin.security.mfa.recovery-codes');
-    })->name('security.mfa.recovery-codes');
-
-
 
     // ── Digital API Credentials / API Center ─────────────────────────
     Route::get('/dashboard/api-credentials',         [\App\Http\Controllers\Admin\ApiCenterController::class, 'index']);
@@ -1092,6 +1127,8 @@ Route::prefix('sig')->middleware('check.session')->group(function () {
 
 foreach (['', 'sig/'] as $prefix) {
     Route::post($prefix . 'api/v1/auth/token', [\App\Http\Controllers\Api\JwtTokenController::class, 'issueToken']); // Exchange token
+    Route::post($prefix . 'api/v1/preinscriptions/sync', [\App\Http\Controllers\Api\PreinscritSyncController::class, 'sync']);
+    Route::post($prefix . 'api/v1/offers/sync', [\App\Http\Controllers\Api\OfferSyncController::class, 'sync']);
     
     // Public documentation routes
     Route::get($prefix . 'api/v1/docs', function () {
