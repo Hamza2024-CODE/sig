@@ -377,12 +377,16 @@ class ApprenantController extends Controller
 
         $candidate = DB::table('candidat')->where('IDCandidat', $student->IDCandidat)->first();
         $wilayaId = 0;
-        if ($candidate) {
-            $wilayaId = (int) DB::table('offre')
-                ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDetablissement')
-                ->join('dfep', 'etablissement.IDDFEP', '=', 'dfep.IDDFEP')
-                ->where('offre.IDOffre', $candidate->IDOffre)
-                ->value('dfep.IDWilayaa');
+        if ($candidate && !empty($candidate->IDOffre)) {
+            try {
+                $wilayaId = (int) DB::table('offre')
+                    ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDetablissement')
+                    ->join('dfep', 'etablissement.IDDFEP', '=', 'dfep.IDDFEP')
+                    ->where('offre.IDOffre', $candidate->IDOffre)
+                    ->value('dfep.IDWilayaa');
+            } catch (\Exception $e) {
+                $wilayaId = 0;
+            }
         }
 
         if (!\App\Helpers\SovereignLicensingHelper::checkEnrollmentPermission('edit', $wilayaId)) {
@@ -419,12 +423,16 @@ class ApprenantController extends Controller
         if ($student) {
             $candidate = DB::table('candidat')->where('IDCandidat', $student->IDCandidat)->first();
             $wilayaId = 0;
-            if ($candidate) {
-                $wilayaId = (int) DB::table('offre')
-                    ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDetablissement')
-                    ->join('dfep', 'etablissement.IDDFEP', '=', 'dfep.IDDFEP')
-                    ->where('offre.IDOffre', $candidate->IDOffre)
-                    ->value('dfep.IDWilayaa');
+            if ($candidate && !empty($candidate->IDOffre)) {
+                try {
+                    $wilayaId = (int) DB::table('offre')
+                        ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDetablissement')
+                        ->join('dfep', 'etablissement.IDDFEP', '=', 'dfep.IDDFEP')
+                        ->where('offre.IDOffre', $candidate->IDOffre)
+                        ->value('dfep.IDWilayaa');
+                } catch (\Exception $e) {
+                    $wilayaId = 0;
+                }
             }
 
             if (!\App\Helpers\SovereignLicensingHelper::checkEnrollmentPermission('delete', $wilayaId)) {

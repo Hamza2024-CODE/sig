@@ -287,11 +287,18 @@ class CandidatController extends Controller
             return redirect()->back();
         }
 
-        $wilayaId = (int) DB::table('offre')
-            ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDetablissement')
-            ->join('dfep', 'etablissement.IDDFEP', '=', 'dfep.IDDFEP')
-            ->where('offre.IDOffre', $candidate->IDOffre)
-            ->value('dfep.IDWilayaa');
+        $wilayaId = 0;
+        if (!empty($candidate->IDOffre)) {
+            try {
+                $wilayaId = (int) DB::table('offre')
+                    ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDetablissement')
+                    ->join('dfep', 'etablissement.IDDFEP', '=', 'dfep.IDDFEP')
+                    ->where('offre.IDOffre', $candidate->IDOffre)
+                    ->value('dfep.IDWilayaa');
+            } catch (\Exception $e) {
+                $wilayaId = 0;
+            }
+        }
 
         if (!\App\Helpers\SovereignLicensingHelper::checkEnrollmentPermission('edit', $wilayaId)) {
             session(['flash_error' => 'تعديل بيانات المترشحين معطل حالياً لهذه الولاية / La modification est désactivée pour cette wilaya.']);
@@ -332,11 +339,18 @@ class CandidatController extends Controller
 
         $candidate = DB::table('candidat')->where('IDCandidat', $id)->first();
         if ($candidate) {
-            $wilayaId = (int) DB::table('offre')
-                ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDetablissement')
-                ->join('dfep', 'etablissement.IDDFEP', '=', 'dfep.IDDFEP')
-                ->where('offre.IDOffre', $candidate->IDOffre)
-                ->value('dfep.IDWilayaa');
+            $wilayaId = 0;
+            if (!empty($candidate->IDOffre)) {
+                try {
+                    $wilayaId = (int) DB::table('offre')
+                        ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDetablissement')
+                        ->join('dfep', 'etablissement.IDDFEP', '=', 'dfep.IDDFEP')
+                        ->where('offre.IDOffre', $candidate->IDOffre)
+                        ->value('dfep.IDWilayaa');
+                } catch (\Exception $e) {
+                    $wilayaId = 0;
+                }
+            }
 
             if (!\App\Helpers\SovereignLicensingHelper::checkEnrollmentPermission('delete', $wilayaId)) {
                 session(['flash_error' => 'حذف المترشحين معطل حالياً لهذه الولاية / La suppression est désactivée pour cette wilaya.']);
