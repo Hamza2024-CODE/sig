@@ -1094,6 +1094,7 @@ class ModulesController extends Controller {
                 $list = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                 return compact('stats', 'list');
+            });
 
             $stats = $cachedData['stats'];
             $list  = $cachedData['list'];
