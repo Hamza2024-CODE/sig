@@ -95,14 +95,32 @@ class ModulesController extends Controller {
         
         // 1. Role Scoping
         if ($scope['role'] === 'dfep' && $scope['iddfep']) {
-            $clauses[] = "{$alias}.IDEts_Form IN (SELECT IDetablissement FROM etablissement WHERE IDDFEP = " . (int)$scope['iddfep'] . ")";
+            // Use ets_form to get the correct IDEts_Form for each center in this wilaya
+            $clauses[] = "{$alias}.IDEts_Form IN (
+                SELECT ets.IDEts_Form FROM ets_form ets
+                INNER JOIN etablissement e ON ets.IDetablissement = e.IDetablissement
+                WHERE e.IDDFEP = " . (int)$scope['iddfep'] . "
+                UNION
+                SELECT e2.IDetablissement FROM etablissement e2
+                LEFT JOIN ets_form ets2 ON ets2.IDetablissement = e2.IDetablissement
+                WHERE e2.IDDFEP = " . (int)$scope['iddfep'] . " AND ets2.IDEts_Form IS NULL
+            )";
         } elseif (in_array($scope['role'], ['etablissement', 'directeur', 'employee', 'formateur']) && $scope['etabId']) {
             $clauses[] = "{$alias}.IDEts_Form = " . (int)$scope['etabId'];
         }
 
         // 2. Global Filters
         if (!empty(request()->all()['filter_wilaya'])) {
-            $clauses[] = "{$alias}.IDEts_Form IN (SELECT IDetablissement FROM etablissement WHERE IDDFEP = " . (int)request()->all()['filter_wilaya'] . ")";
+            $wId = (int)request()->all()['filter_wilaya'];
+            $clauses[] = "{$alias}.IDEts_Form IN (
+                SELECT ets.IDEts_Form FROM ets_form ets
+                INNER JOIN etablissement e ON ets.IDetablissement = e.IDetablissement
+                WHERE e.IDDFEP = $wId
+                UNION
+                SELECT e2.IDetablissement FROM etablissement e2
+                LEFT JOIN ets_form ets2 ON ets2.IDetablissement = e2.IDetablissement
+                WHERE e2.IDDFEP = $wId AND ets2.IDEts_Form IS NULL
+            )";
         }
 
         $etabFilterId = (int)(request()->all()['filter_etablissement'] ?? request()->all()['etab_id'] ?? 0);
@@ -1041,16 +1059,17 @@ class ModulesController extends Controller {
                 $stats = ['total' => 0, 'femmes' => 0, 'hommes' => 0, 'centres' => 0];
                 $list  = [];
 
-                // Count active trainees (statut='actif' is the authoritative field for active status)
+                // Count active trainees — join ets_form to count unique real centers
                 $stmtT = $this->db->prepare("
                     SELECT
                         COUNT(DISTINCT a.IDapprenant) AS total,
                         COUNT(DISTINCT CASE WHEN c.Civ = 2 THEN a.IDapprenant END) AS femmes,
-                        COUNT(DISTINCT o.IDEts_Form) AS centres
+                        COUNT(DISTINCT COALESCE(ets.IDetablissement, o.IDEts_Form)) AS centres
                     FROM apprenant a
-                    INNER JOIN section s  ON a.IDSection = s.IDSection
-                    INNER JOIN offre o    ON s.IDOffre   = o.IDOffre
-                    LEFT  JOIN candidat c ON a.IDCandidat = c.IDCandidat
+                    INNER JOIN section s   ON a.IDSection  = s.IDSection
+                    INNER JOIN offre o     ON s.IDOffre    = o.IDOffre
+                    LEFT  JOIN ets_form ets ON o.IDEts_Form = ets.IDEts_Form
+                    LEFT  JOIN candidat c  ON a.IDCandidat = c.IDCandidat
                     WHERE a.statut = 'actif'
                       AND $ofWhere
                 ");
@@ -1061,7 +1080,8 @@ class ModulesController extends Controller {
                 $stats['hommes']  = max(0, $stats['total'] - $stats['femmes']);
                 $stats['centres'] = (int)($row['centres'] ?? 0);
 
-                // Per-center list: group by IDEts_Form and join to etablissement
+                // Per-center list — LEFT JOIN ets_form to correctly resolve IDEts_Form → IDetablissement
+                // COALESCE fallback: if no ets_form entry, use o.IDEts_Form directly (old behaviour)
                 $stmt = $this->db->prepare("
                     SELECT ef.IDetablissement AS id_etab,
                            ef.Nom             AS etab_nom,
@@ -1075,17 +1095,18 @@ class ModulesController extends Controller {
                     FROM etablissement ef
                     LEFT JOIN wilaya w ON ef.IDDFEP = w.IDWilayaa
                     LEFT JOIN (
-                        SELECT o.IDEts_Form,
+                        SELECT COALESCE(ets.IDetablissement, o.IDEts_Form) AS etab_id,
                                COUNT(DISTINCT a.IDapprenant) AS total,
                                COUNT(DISTINCT CASE WHEN c.Civ = 2 THEN a.IDapprenant END) AS femmes
                         FROM apprenant a
-                        INNER JOIN section s  ON a.IDSection = s.IDSection
-                        INNER JOIN offre o    ON s.IDOffre   = o.IDOffre
-                        LEFT  JOIN candidat c ON a.IDCandidat = c.IDCandidat
+                        INNER JOIN section s   ON a.IDSection  = s.IDSection
+                        INNER JOIN offre o     ON s.IDOffre    = o.IDOffre
+                        LEFT  JOIN ets_form ets ON o.IDEts_Form = ets.IDEts_Form
+                        LEFT  JOIN candidat c  ON a.IDCandidat = c.IDCandidat
                         WHERE a.statut = 'actif'
                           AND $ofWhere
-                        GROUP BY o.IDEts_Form
-                    ) agg ON ef.IDetablissement = agg.IDEts_Form
+                        GROUP BY COALESCE(ets.IDetablissement, o.IDEts_Form)
+                    ) agg ON ef.IDetablissement = agg.etab_id
                     WHERE $efWhere
                     ORDER BY total DESC
                 ");
@@ -1136,14 +1157,33 @@ class ModulesController extends Controller {
         // Build scope-based WHERE
         [$ofWhere, $params] = $this->offreWhere($scope, 'o');
 
-        // Find all branches/sub-establishments of this establishment to include their trainees
-        $etabIds = [$etabId];
+        // Resolve IDetablissement → correct IDEts_Form via ets_form (avoids ID collision bugs)
+        $etabIds = [];
+        try {
+            $etsStmt = $this->db->prepare("SELECT IDEts_Form FROM ets_form WHERE IDetablissement = ?");
+            $etsStmt->execute([$etabId]);
+            $etabIds = $etsStmt->fetchAll(\PDO::FETCH_COLUMN);
+        } catch (\Exception $ex) {}
+        if (empty($etabIds)) {
+            $etabIds = [$etabId]; // fallback: no ets_form entry, use IDetablissement directly
+        }
+
+        // Include branches (sub-establishments), also resolved through ets_form
         try {
             $branches = \Illuminate\Support\Facades\DB::table('etablissement')
                 ->where('IDEts_Form', $etabId)
                 ->pluck('IDetablissement')
                 ->toArray();
-            $etabIds = array_merge($etabIds, $branches);
+            foreach ($branches as $branchId) {
+                try {
+                    $brStmt = $this->db->prepare("SELECT IDEts_Form FROM ets_form WHERE IDetablissement = ?");
+                    $brStmt->execute([$branchId]);
+                    $brIds = $brStmt->fetchAll(\PDO::FETCH_COLUMN);
+                    $etabIds = array_merge($etabIds, !empty($brIds) ? $brIds : [$branchId]);
+                } catch (\Exception $ex) {
+                    $etabIds[] = $branchId;
+                }
+            }
         } catch (\Exception $ex) {}
         $etabIds = array_unique(array_filter($etabIds));
 
