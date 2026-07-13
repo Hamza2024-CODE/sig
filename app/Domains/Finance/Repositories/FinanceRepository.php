@@ -644,14 +644,20 @@ class FinanceRepository
                 SELECT 
                     et.Nom as wilaya_nom,
                     COUNT(a.IDapprenant) as total_apprenants,
-                    SUM(CASE WHEN b.IDapprenant IS NOT NULL THEN 1 ELSE 0 END) as paid_bourses,
-                    ROUND((SUM(CASE WHEN b.IDapprenant IS NOT NULL THEN 1 ELSE 0 END) * 100.0) / NULLIF(COUNT(a.IDapprenant), 0), 1) as percentage
+                    SUM(CASE WHEN b.has_bourse = 1 THEN 1 ELSE 0 END) as paid_bourses,
+                    ROUND((SUM(CASE WHEN b.has_bourse = 1 THEN 1 ELSE 0 END) * 100.0) / NULLIF(COUNT(a.IDapprenant), 0), 1) as percentage
                 FROM apprenant a
-                JOIN candidat c ON a.IDCandidat = c.IDCandidat
-                LEFT JOIN offre o ON c.IDOffre = o.IDOffre
+                JOIN section s ON a.IDSection = s.IDSection
+                JOIN offre o ON s.IDOffre = o.IDOffre
+                JOIN session sess ON o.IDSession = sess.IDSession
+                JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
                 LEFT JOIN etablissement et ON o.IDEts_Form = et.IDetablissement
-                LEFT JOIN (SELECT DISTINCT IDapprenant FROM bourse) b ON a.IDapprenant = b.IDapprenant
+                LEFT JOIN (SELECT IDapprenant, 1 as has_bourse FROM bourse GROUP BY IDapprenant) b ON a.IDapprenant = b.IDapprenant
+                LEFT JOIN apprenant_fin af ON a.IDapprenant = af.IDapprenant
                 WHERE et.IDetablissement = ?
+                  AND a.statut = 'actif'
+                  AND af.IDapprenant IS NULL
+                  AND DATE_ADD(sess.DateD, INTERVAL COALESCE(NULLIF(sp.dureeM, 0), sp.NbrSem * 6, 24) MONTH) >= CURRENT_DATE()
                 GROUP BY et.Nom, et.IDetablissement
             ";
             $stmt = $this->db->prepare($sql);
@@ -664,14 +670,20 @@ class FinanceRepository
                 SELECT 
                     et.Nom as wilaya_nom,
                     COUNT(a.IDapprenant) as total_apprenants,
-                    SUM(CASE WHEN b.IDapprenant IS NOT NULL THEN 1 ELSE 0 END) as paid_bourses,
-                    ROUND((SUM(CASE WHEN b.IDapprenant IS NOT NULL THEN 1 ELSE 0 END) * 100.0) / NULLIF(COUNT(a.IDapprenant), 0), 1) as percentage
+                    SUM(CASE WHEN b.has_bourse = 1 THEN 1 ELSE 0 END) as paid_bourses,
+                    ROUND((SUM(CASE WHEN b.has_bourse = 1 THEN 1 ELSE 0 END) * 100.0) / NULLIF(COUNT(a.IDapprenant), 0), 1) as percentage
                 FROM apprenant a
-                JOIN candidat c ON a.IDCandidat = c.IDCandidat
-                LEFT JOIN offre o ON c.IDOffre = o.IDOffre
+                JOIN section s ON a.IDSection = s.IDSection
+                JOIN offre o ON s.IDOffre = o.IDOffre
+                JOIN session sess ON o.IDSession = sess.IDSession
+                JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
                 LEFT JOIN etablissement et ON o.IDEts_Form = et.IDetablissement
-                LEFT JOIN (SELECT DISTINCT IDapprenant FROM bourse) b ON a.IDapprenant = b.IDapprenant
+                LEFT JOIN (SELECT IDapprenant, 1 as has_bourse FROM bourse GROUP BY IDapprenant) b ON a.IDapprenant = b.IDapprenant
+                LEFT JOIN apprenant_fin af ON a.IDapprenant = af.IDapprenant
                 WHERE et.IDDFEP = ?
+                  AND a.statut = 'actif'
+                  AND af.IDapprenant IS NULL
+                  AND DATE_ADD(sess.DateD, INTERVAL COALESCE(NULLIF(sp.dureeM, 0), sp.NbrSem * 6, 24) MONTH) >= CURRENT_DATE()
                 GROUP BY et.Nom, et.IDetablissement
                 ORDER BY et.Nom
             ";
@@ -684,14 +696,20 @@ class FinanceRepository
             SELECT 
                 COALESCE(d.Nom, 'غير محدد') as wilaya_nom,
                 COUNT(a.IDapprenant) as total_apprenants,
-                SUM(CASE WHEN b.IDapprenant IS NOT NULL THEN 1 ELSE 0 END) as paid_bourses,
-                ROUND((SUM(CASE WHEN b.IDapprenant IS NOT NULL THEN 1 ELSE 0 END) * 100.0) / NULLIF(COUNT(a.IDapprenant), 0), 1) as percentage
+                SUM(CASE WHEN b.has_bourse = 1 THEN 1 ELSE 0 END) as paid_bourses,
+                ROUND((SUM(CASE WHEN b.has_bourse = 1 THEN 1 ELSE 0 END) * 100.0) / NULLIF(COUNT(a.IDapprenant), 0), 1) as percentage
             FROM apprenant a
-            JOIN candidat c ON a.IDCandidat = c.IDCandidat
-            LEFT JOIN offre o ON c.IDOffre = o.IDOffre
+            JOIN section s ON a.IDSection = s.IDSection
+            JOIN offre o ON s.IDOffre = o.IDOffre
+            JOIN session sess ON o.IDSession = sess.IDSession
+            JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
             LEFT JOIN etablissement et ON o.IDEts_Form = et.IDetablissement
             LEFT JOIN dfep d ON et.IDDFEP = d.IDDFEP
-            LEFT JOIN (SELECT DISTINCT IDapprenant FROM bourse) b ON a.IDapprenant = b.IDapprenant
+            LEFT JOIN (SELECT IDapprenant, 1 as has_bourse FROM bourse GROUP BY IDapprenant) b ON a.IDapprenant = b.IDapprenant
+            LEFT JOIN apprenant_fin af ON a.IDapprenant = af.IDapprenant
+            WHERE a.statut = 'actif'
+              AND af.IDapprenant IS NULL
+              AND DATE_ADD(sess.DateD, INTERVAL COALESCE(NULLIF(sp.dureeM, 0), sp.NbrSem * 6, 24) MONTH) >= CURRENT_DATE()
             GROUP BY d.Nom, d.IDDFEP
             ORDER BY d.Nom
         ";
