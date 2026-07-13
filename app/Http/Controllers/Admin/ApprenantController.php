@@ -57,9 +57,14 @@ class ApprenantController extends Controller
             $params[] = $filterSection;
         }
 
-        // Status filter
-        $filterStatus = trim($request->query('filter_status', ''));
-        if ($filterStatus !== '' && $filterStatus !== 'all') {
+        // Status filter (Default to 'actif' if not explicitly provided)
+        $filterStatus = $request->has('filter_status') ? trim($request->query('filter_status', '')) : 'actif';
+        if ($filterStatus === 'actif') {
+            $where[] = 'a.statut = ?';
+            $params[] = 'actif';
+            $where[] = 'NOT EXISTS (SELECT 1 FROM apprenant_fin af WHERE af.IDapprenant = a.IDapprenant)';
+            $where[] = 'DATE_ADD(sess.DateD, INTERVAL COALESCE(NULLIF(sp.dureeM, 0), sp.NbrSem * 6, 24) MONTH) >= CURRENT_DATE()';
+        } elseif ($filterStatus !== '' && $filterStatus !== 'all') {
             $where[]  = 'a.statut = ?';
             $params[] = $filterStatus;
         }
@@ -81,14 +86,20 @@ class ApprenantController extends Controller
                 if (strpos($whereSQL, 'c.') !== false) {
                     $joins .= " INNER JOIN candidat c ON a.IDCandidat = c.IDCandidat";
                 }
-                if (strpos($whereSQL, 's.') !== false || strpos($whereSQL, 'o.') !== false || strpos($whereSQL, 'et.') !== false) {
+                if (strpos($whereSQL, 's.') !== false || strpos($whereSQL, 'o.') !== false || strpos($whereSQL, 'et.') !== false || strpos($whereSQL, 'sess.') !== false || strpos($whereSQL, 'sp.') !== false) {
                     $joins .= " LEFT JOIN section s ON a.IDSection = s.IDSection";
                 }
-                if (strpos($whereSQL, 'o.') !== false || strpos($whereSQL, 'et.') !== false) {
+                if (strpos($whereSQL, 'o.') !== false || strpos($whereSQL, 'et.') !== false || strpos($whereSQL, 'sess.') !== false || strpos($whereSQL, 'sp.') !== false) {
                     $joins .= " LEFT JOIN offre o ON s.IDOffre = o.IDOffre";
                 }
                 if (strpos($whereSQL, 'et.') !== false) {
                     $joins .= " LEFT JOIN etablissement et ON o.IDEts_Form = et.IDetablissement";
+                }
+                if (strpos($whereSQL, 'sess.') !== false) {
+                    $joins .= " LEFT JOIN session sess ON o.IDSession = sess.IDSession";
+                }
+                if (strpos($whereSQL, 'sp.') !== false) {
+                    $joins .= " LEFT JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite";
                 }
 
                 return (int) DB::selectOne(
