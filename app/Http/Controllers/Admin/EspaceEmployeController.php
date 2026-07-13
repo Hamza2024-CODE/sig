@@ -465,7 +465,7 @@ class EspaceEmployeController extends Controller
                                c.Nom as nom, c.Prenom as prenom, 
                                c.NomFr as nom_fr, c.PrenomFr as prenom_fr, c.nin, c.nss,
                                sp.Nom as spec_ar, e.Nom AS etab_nom
-                        FROM apprenant a
+                        FROM apprenant a FORCE INDEX (PRIMARY)
                         JOIN candidat c ON a.IDCandidat = c.IDCandidat
                         JOIN section s ON a.IDSection = s.IDSection
                         LEFT JOIN specialite sp ON s.IDSpecialite = sp.IDSpecialite
