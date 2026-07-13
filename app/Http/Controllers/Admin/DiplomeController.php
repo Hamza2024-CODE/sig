@@ -43,6 +43,12 @@ class DiplomeController extends Controller
             if (!session()->has("user")) {
                 return redirect('/login');
             }
+            $user = session('user') ?? [];
+            $role = strtolower($user['role_code'] ?? '');
+            $allowedRoles = ['admin', 'ministre', 'secretaire_general', 'central', 'high_admin', 'dfep'];
+            if (!in_array($role, $allowedRoles)) {
+                abort(403, 'Unauthorized action.');
+            }
             return $next($request);
         });
     }
@@ -101,7 +107,6 @@ class DiplomeController extends Controller
         $filterAnnee = (int)$request->query('filter_annee', 0);
         $filterSpec  = (int)$request->query('filter_spec', 0);
         $filterQualif = (int)$request->query('filter_qualif', 0);
-        $filterPromo = (int)$request->query('filter_promo', 0);
         $cursor      = (int)$request->query('cursor', 0);   // IDapprenant of last row seen (keyset)
         $page        = max(1, (int)$request->query('page', 1)); // for display only
 
@@ -147,6 +152,8 @@ class DiplomeController extends Controller
         if ($filterAnnee > 0) {
             $where[] = "o.IDAnnee_Formation = ?";
             $params[] = $filterAnnee;
+        } else {
+            $where[] = "o.IDAnnee_Formation >= 14";
         }
         if ($filterSpec > 0) {
             $where[] = "o.IDSpecialite = ?";
@@ -155,9 +162,6 @@ class DiplomeController extends Controller
         if ($filterQualif > 0) {
             $where[] = "o.IDqualification_dplm = ?";
             $params[] = $filterQualif;
-        }
-        if ($filterPromo === 1) {
-            $where[] = "o.IDAnnee_Formation IN (14, 15, 16, 17, 18, 19)";
         }
 
         // Search filter: resolve candidate IDs first
@@ -316,7 +320,6 @@ class DiplomeController extends Controller
             'filter_annee'   => $filterAnnee,
             'filter_spec'    => $filterSpec,
             'filter_qualif'  => $filterQualif,
-            'filter_promo'   => $filterPromo,
             'etablissements' => $etablissements,
             'modes'          => $modes,
             'annees'         => $annees,

@@ -1141,9 +1141,8 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
                             <a href="{{ url('dashboard/gestion-evaluations') }}" class="sidebar-subitem {{ $isActive('/dashboard/gestion-evaluations') }}" title="تسيير التقييمات"><i class="fa-solid fa-list-check"></i> <span>تسيير التقييمات</span></a>
                             <a href="{{ url('dashboard/evaluation-finale') }}" class="sidebar-subitem {{ $isActive('/dashboard/evaluation-finale') }}" title="التقييم نهائي"><i class="fa-solid fa-flag-checkered"></i> <span>التقييم نهائي</span></a>
                         @endif
-                        @if (in_array($dept, ['general', 'diplomes']))
-                            <a href="{{ url('dashboard/diplomes') }}" class="sidebar-subitem {{ ($isActive('/dashboard/diplomes') && !request('filter_promo')) ? 'active' : '' }}" title="الشهادات"><i class="fa-solid fa-award"></i> <span>الشهادات</span></a>
-                            <a href="{{ url('dashboard/diplomes?filter_promo=1') }}" class="sidebar-subitem {{ ($isActive('/dashboard/diplomes') && request('filter_promo') == '1') ? 'active' : '' }}" title="خريجي 2021 - 2026"><i class="fa-solid fa-user-graduate text-warning"></i> <span>الخريجين (2021 - 2026)</span></a>
+                        @if (in_array($dept, ['general', 'diplomes']) && in_array($roleCode, ['admin', 'dfep', 'central', 'high_admin', 'secretaire_general', 'ministre']))
+                            <a href="{{ url('dashboard/diplomes') }}" class="sidebar-subitem {{ $isActive('/dashboard/diplomes') }}" title="الشهادات والخريجين (منذ 2021)"><i class="fa-solid fa-award"></i> <span>الشهادات والخريجين</span></a>
                             <a href="{{ url('dashboard/diplomes/statistiques') }}" class="sidebar-subitem {{ $isActive('/dashboard/diplomes/statistiques') }}" title="إحصائيات الخريجين"><i class="fa-solid fa-chart-pie"></i> <span>إحصائيات الخريجين</span></a>
                         @endif
                     </div>
