@@ -7,6 +7,10 @@ $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
 
 try {
+    if (function_exists('opcache_reset')) {
+        opcache_reset();
+        echo "<h1>OPCache Reset Successfully!</h1>";
+    }
     \Illuminate\Support\Facades\Artisan::call('cache:clear');
     echo "<h1>Cache Cleared Successfully!</h1>";
     echo "<pre>" . \Illuminate\Support\Facades\Artisan::output() . "</pre>";
