@@ -95,15 +95,11 @@ class ModulesController extends Controller {
         
         // 1. Role Scoping
         if ($scope['role'] === 'dfep' && $scope['iddfep']) {
-            // Use ets_form to get the correct IDEts_Form for each center in this wilaya
+            $dfepId = (int)$scope['iddfep'];
             $clauses[] = "{$alias}.IDEts_Form IN (
-                SELECT ets.IDEts_Form FROM ets_form ets
-                INNER JOIN etablissement e ON ets.IDetablissement = e.IDetablissement
-                WHERE e.IDDFEP = " . (int)$scope['iddfep'] . "
+                SELECT IDetablissement FROM etablissement WHERE IDDFEP = $dfepId
                 UNION
-                SELECT e2.IDetablissement FROM etablissement e2
-                LEFT JOIN ets_form ets2 ON ets2.IDetablissement = e2.IDetablissement
-                WHERE e2.IDDFEP = " . (int)$scope['iddfep'] . " AND ets2.IDEts_Form IS NULL
+                SELECT IDEts_Form FROM ets_form WHERE IDDFEP = $dfepId
             )";
         } elseif (in_array($scope['role'], ['etablissement', 'directeur', 'employee', 'formateur']) && $scope['etabId']) {
             $clauses[] = "{$alias}.IDEts_Form = " . (int)$scope['etabId'];
@@ -113,13 +109,9 @@ class ModulesController extends Controller {
         if (!empty(request()->all()['filter_wilaya'])) {
             $wId = (int)request()->all()['filter_wilaya'];
             $clauses[] = "{$alias}.IDEts_Form IN (
-                SELECT ets.IDEts_Form FROM ets_form ets
-                INNER JOIN etablissement e ON ets.IDetablissement = e.IDetablissement
-                WHERE e.IDDFEP = $wId
+                SELECT IDetablissement FROM etablissement WHERE IDDFEP = $wId
                 UNION
-                SELECT e2.IDetablissement FROM etablissement e2
-                LEFT JOIN ets_form ets2 ON ets2.IDetablissement = e2.IDetablissement
-                WHERE e2.IDDFEP = $wId AND ets2.IDEts_Form IS NULL
+                SELECT IDEts_Form FROM ets_form WHERE IDDFEP = $wId
             )";
         }
 
@@ -1933,7 +1925,8 @@ class ModulesController extends Controller {
 
         if (request()->query('pdf')) {
             @set_time_limit(300);
-            @ini_set('memory_limit', '512M');
+            @ini_set('memory_limit', '1536M');
+            @ini_set('pcre.backtrack_limit', '10000000');
             
             $mpdf = new \Mpdf\Mpdf([
                 'mode' => 'utf-8',
