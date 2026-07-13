@@ -82,8 +82,6 @@ class DiplomeController extends Controller
         JOIN section s     ON a.IDSection = s.IDSection
         JOIN offre o       ON s.IDOffre = o.IDOffre
         JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
-        JOIN session sess  ON o.IDSession = sess.IDSession
-        JOIN semestre_formation sf ON sess.IDSemestre_formation = sf.IDSemestre_formation
     ";
 
     private const BASE_COUNT = "
@@ -93,8 +91,6 @@ class DiplomeController extends Controller
         JOIN apprenant_fin f ON f.IDapprenant = a.IDapprenant
         JOIN section s     ON a.IDSection = s.IDSection
         JOIN offre o       ON s.IDOffre = o.IDOffre
-        JOIN session sess  ON o.IDSession = sess.IDSession
-        JOIN semestre_formation sf ON sess.IDSemestre_formation = sf.IDSemestre_formation
     ";
 
     /**
@@ -156,7 +152,9 @@ class DiplomeController extends Controller
             $where[] = "o.IDMode_formation = ?";
             $params[] = $filterMode;
         }
+        $extraJoins = "";
         if ($filterAnnee > 0) {
+            $extraJoins .= " JOIN session sess ON o.IDSession = sess.IDSession JOIN semestre_formation sf ON sess.IDSemestre_formation = sf.IDSemestre_formation";
             $where[] = "sf.IDAnnee_Formation = ?";
             $params[] = $filterAnnee;
         }
@@ -251,7 +249,7 @@ class DiplomeController extends Controller
                     $countParams = array_filter($params, fn($p) => $p !== $cursor);
                 }
                 try {
-                    $totalCount = (int)(DB::selectOne($baseCount . ' ' . $countWhere, array_values($countParams))->c ?? 0);
+                    $totalCount = (int)(DB::selectOne($baseCount . $extraJoins . ' ' . $countWhere, array_values($countParams))->c ?? 0);
                     Cache::put($countCacheKey, $totalCount, 120);
                 } catch (\Throwable $e) {
                     $totalCount = 0;
@@ -277,7 +275,7 @@ class DiplomeController extends Controller
 
         try {
             $rows = DB::select(
-                $baseSelect . ' ' . $whereSQL .
+                $baseSelect . $extraJoins . ' ' . $whereSQL .
                 " ORDER BY a.IDapprenant DESC LIMIT " . (self::PER_PAGE + 1),
                 $params
             );
@@ -395,6 +393,7 @@ class DiplomeController extends Controller
             $where[] = "o.IDMode_formation = ?";
             $params[] = $filterMode;
         }
+        $extraJoins = " JOIN session sess ON o.IDSession = sess.IDSession JOIN semestre_formation sf ON sess.IDSemestre_formation = sf.IDSemestre_formation";
         if ($filterAnnee > 0) {
             $where[] = "sf.IDAnnee_Formation = ?";
             $params[] = $filterAnnee;
@@ -490,7 +489,7 @@ class DiplomeController extends Controller
                     $countParams = array_filter($params, fn($p) => $p !== $cursor);
                 }
                 try {
-                    $totalCount = (int)(DB::selectOne($baseCount . ' ' . $countWhere, array_values($countParams))->c ?? 0);
+                    $totalCount = (int)(DB::selectOne($baseCount . $extraJoins . ' ' . $countWhere, array_values($countParams))->c ?? 0);
                     Cache::put($countCacheKey, $totalCount, 120);
                 } catch (\Throwable $e) {
                     $totalCount = 0;
@@ -513,7 +512,7 @@ class DiplomeController extends Controller
 
         try {
             $rows = DB::select(
-                $baseSelect . ' ' . $whereSQL .
+                $baseSelect . $extraJoins . ' ' . $whereSQL .
                 " ORDER BY a.IDapprenant DESC LIMIT " . (self::PER_PAGE + 1),
                 $params
             );
