@@ -387,102 +387,174 @@ class EspaceEmployeController extends Controller
             } catch (Exception $e) {}
 
         } else {
-            $clauses = ['1=1'];
-            $params = [];
+            $clauses1 = ['1=1'];
+            $clauses2 = ['s.IDSection IS NULL'];
+            $params1 = [];
+            $params2 = [];
 
             // Apply 2024-2026 session constraint globally to prevent timeouts and match requirements
-            $clauses[] = "COALESCE(NULLIF(s.DateDF, '0000-00-00'), o_cand.DateD) >= '2024-02-01'";
+            $clauses1[] = "s.DateDF >= '2024-02-01'";
+            $clauses2[] = "o_cand.DateD >= '2024-02-01'";
 
             // Role scoping
             if ($scope['role'] === 'dfep' && $scope['iddfep']) {
-                $clauses[] = "w.IDWilayaa = ?";
-                $params[] = $scope['iddfep'];
+                $clauses1[] = "w.IDWilayaa = ?";
+                $params1[] = $scope['iddfep'];
+                
+                $clauses2[] = "w.IDWilayaa = ?";
+                $params2[] = $scope['iddfep'];
             } elseif (in_array($scope['role'], ['etablissement', 'directeur']) && $scope['etabId']) {
-                $clauses[] = "COALESCE(NULLIF(s.IDEts_Form, 0), NULLIF(o_cand.IDEts_Form, 0)) = ?";
-                $params[] = $scope['etabId'];
+                $clauses1[] = "s.IDEts_Form = ?";
+                $params1[] = $scope['etabId'];
+                
+                $clauses2[] = "o_cand.IDEts_Form = ?";
+                $params2[] = $scope['etabId'];
             }
 
             // Search text
             if (!empty($search)) {
                 $searchTerm = "%$search%";
-                $clauses[] = "(c.Nom LIKE ? OR c.Prenom LIKE ? OR c.NomFr LIKE ? OR c.PrenomFr LIKE ? OR a.IDapprenant = ? OR c.nin = ? OR a.Nccp = ? OR sp.Nom LIKE ? OR e.Nom LIKE ?)";
-                array_push($params, $searchTerm, $searchTerm, $searchTerm, $searchTerm, (int)$search, $search, $search, $searchTerm, $searchTerm);
+                $clauses1[] = "(c.Nom LIKE ? OR c.Prenom LIKE ? OR c.NomFr LIKE ? OR c.PrenomFr LIKE ? OR a.IDapprenant = ? OR c.nin = ? OR a.Nccp = ? OR sp.Nom LIKE ? OR e.Nom LIKE ?)";
+                array_push($params1, $searchTerm, $searchTerm, $searchTerm, $searchTerm, (int)$search, $search, $search, $searchTerm, $searchTerm);
+
+                $clauses2[] = "(c.Nom LIKE ? OR c.Prenom LIKE ? OR c.NomFr LIKE ? OR c.PrenomFr LIKE ? OR a.IDapprenant = ? OR c.nin = ? OR a.Nccp = ? OR sp.Nom LIKE ? OR e.Nom LIKE ?)";
+                array_push($params2, $searchTerm, $searchTerm, $searchTerm, $searchTerm, (int)$search, $search, $search, $searchTerm, $searchTerm);
             }
 
             // Wilaya filter
             if (!empty($wilaya)) {
-                $clauses[] = "w.IDWilayaa = ?";
-                $params[] = (int)$wilaya;
+                $clauses1[] = "w.IDWilayaa = ?";
+                $params1[] = (int)$wilaya;
+
+                $clauses2[] = "w.IDWilayaa = ?";
+                $params2[] = (int)$wilaya;
             }
 
             // Etab filter
             if (!empty($etab)) {
-                $clauses[] = "COALESCE(NULLIF(s.IDEts_Form, 0), NULLIF(o_cand.IDEts_Form, 0)) = ?";
-                $params[] = (int)$etab;
+                $clauses1[] = "s.IDEts_Form = ?";
+                $params1[] = (int)$etab;
+
+                $clauses2[] = "o_cand.IDEts_Form = ?";
+                $params2[] = (int)$etab;
             }
 
             // Mode filter
             if (!empty($mode)) {
-                $clauses[] = "COALESCE(NULLIF(s.IDMode_formation, 0), NULLIF(o_cand.IDMode_formation, 0)) = ?";
-                $params[] = $mode;
+                $clauses1[] = "s.IDMode_formation = ?";
+                $params1[] = $mode;
+
+                $clauses2[] = "o_cand.IDMode_formation = ?";
+                $params2[] = $mode;
             }
 
             // Branche filter
             if (!empty($branche)) {
-                $clauses[] = "sp.IDBranche = ?";
-                $params[] = (int)$branche;
+                $clauses1[] = "sp.IDBranche = ?";
+                $params1[] = (int)$branche;
+
+                $clauses2[] = "sp.IDBranche = ?";
+                $params2[] = (int)$branche;
             }
 
-            $whereClause = implode(' AND ', $clauses);
+            $whereClause1 = implode(' AND ', $clauses1);
+            $whereClause2 = implode(' AND ', $clauses2);
 
             // Fetch Total Count
             $totalCount = 0;
             try {
                 $countSql = "
-                    SELECT COUNT(*)
-                    FROM apprenant a
-                    JOIN candidat c ON a.IDCandidat = c.IDCandidat
-                    LEFT JOIN section s ON a.IDSection = s.IDSection
-                    LEFT JOIN offre o_cand ON c.IDOffre = o_cand.IDOffre
-                    LEFT JOIN specialite sp ON sp.IDSpecialite = COALESCE(NULLIF(s.IDSpecialite, 0), NULLIF(o_cand.IDSpecialite, 0))
-                    LEFT JOIN etablissement e ON e.IDetablissement = COALESCE(NULLIF(s.IDEts_Form, 0), NULLIF(o_cand.IDEts_Form, 0))
-                    LEFT JOIN wilaya w ON w.IDWilayaa = e.IDDFEP
-                    WHERE $whereClause
+                    SELECT SUM(cnt) FROM (
+                        SELECT COUNT(*) as cnt
+                        FROM apprenant a
+                        JOIN candidat c ON a.IDCandidat = c.IDCandidat
+                        JOIN section s ON a.IDSection = s.IDSection
+                        LEFT JOIN specialite sp ON s.IDSpecialite = sp.IDSpecialite
+                        LEFT JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
+                        LEFT JOIN wilaya w ON w.IDWilayaa = e.IDDFEP
+                        WHERE $whereClause1
+                        
+                        UNION ALL
+                        
+                        SELECT COUNT(*) as cnt
+                        FROM apprenant a
+                        JOIN candidat c ON a.IDCandidat = c.IDCandidat
+                        LEFT JOIN section s ON a.IDSection = s.IDSection
+                        JOIN offre o_cand ON c.IDOffre = o_cand.IDOffre
+                        LEFT JOIN specialite sp ON o_cand.IDSpecialite = sp.IDSpecialite
+                        LEFT JOIN etablissement e ON o_cand.IDEts_Form = e.IDetablissement
+                        LEFT JOIN wilaya w ON w.IDWilayaa = e.IDDFEP
+                        WHERE $whereClause2
+                    ) tmp
                 ";
-                $countCacheKey = 'trainees_count_' . md5($countSql . serialize($params));
-                $totalCount = cache()->remember($countCacheKey, 300, function() use ($db, $countSql, $params) {
+                $allParams = array_merge($params1, $params2);
+                $countCacheKey = 'trainees_count_' . md5($countSql . serialize($allParams));
+                $totalCount = cache()->remember($countCacheKey, 300, function() use ($db, $countSql, $allParams) {
                     $stmtCount = $db->prepare($countSql);
-                    $stmtCount->execute($params);
+                    $stmtCount->execute($allParams);
                     return (int)$stmtCount->fetchColumn();
                 });
             } catch (Exception $e) {}
 
-            // Fetch Trainees
+            // Fetch Trainees (highly-optimized pagination by pre-limiting subqueries to avoid sorting 1.3M+ rows)
             $records = [];
             try {
                 $selectSql = "
-                    SELECT a.IDapprenant as id, a.Nccp as numero_matricule,
-                           c.Nom as nom, c.Prenom as prenom, 
-                           c.NomFr as nom_fr, c.PrenomFr as prenom_fr, c.nin, c.nss,
-                           sp.Nom as spec_ar, e.Nom AS etab_nom
-                    FROM apprenant a
-                    JOIN candidat c ON a.IDCandidat = c.IDCandidat
-                    LEFT JOIN section s ON a.IDSection = s.IDSection
-                    LEFT JOIN offre o_cand ON c.IDOffre = o_cand.IDOffre
-                    LEFT JOIN specialite sp ON sp.IDSpecialite = COALESCE(NULLIF(s.IDSpecialite, 0), NULLIF(o_cand.IDSpecialite, 0))
-                    LEFT JOIN etablissement e ON e.IDetablissement = COALESCE(NULLIF(s.IDEts_Form, 0), NULLIF(o_cand.IDEts_Form, 0))
-                    LEFT JOIN wilaya w ON w.IDWilayaa = e.IDDFEP
-                    WHERE $whereClause
-                    ORDER BY a.IDapprenant DESC
+                    SELECT id, numero_matricule, nom, prenom, nom_fr, prenom_fr, nin, nss, spec_ar, etab_nom
+                    FROM (
+                        (
+                            SELECT a.IDapprenant as id, a.Nccp as numero_matricule,
+                                   c.Nom as nom, c.Prenom as prenom, 
+                                   c.NomFr as nom_fr, c.PrenomFr as prenom_fr, c.nin, c.nss,
+                                   sp.Nom as spec_ar, e.Nom AS etab_nom
+                            FROM apprenant a
+                            JOIN candidat c ON a.IDCandidat = c.IDCandidat
+                            JOIN section s ON a.IDSection = s.IDSection
+                            LEFT JOIN specialite sp ON s.IDSpecialite = sp.IDSpecialite
+                            LEFT JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
+                            LEFT JOIN wilaya w ON w.IDWilayaa = e.IDDFEP
+                            WHERE $whereClause1
+                            ORDER BY a.IDapprenant DESC
+                            LIMIT ? OFFSET ?
+                        )
+                        UNION ALL
+                        (
+                            SELECT a.IDapprenant as id, a.Nccp as numero_matricule,
+                                   c.Nom as nom, c.Prenom as prenom, 
+                                   c.NomFr as nom_fr, c.PrenomFr as prenom_fr, c.nin, c.nss,
+                                   sp.Nom as spec_ar, e.Nom AS etab_nom
+                            FROM apprenant a
+                            JOIN candidat c ON a.IDCandidat = c.IDCandidat
+                            LEFT JOIN section s ON a.IDSection = s.IDSection
+                            JOIN offre o_cand ON c.IDOffre = o_cand.IDOffre
+                            LEFT JOIN specialite sp ON o_cand.IDSpecialite = sp.IDSpecialite
+                            LEFT JOIN etablissement e ON o_cand.IDEts_Form = e.IDetablissement
+                            LEFT JOIN wilaya w ON w.IDWilayaa = e.IDDFEP
+                            WHERE $whereClause2
+                            ORDER BY a.IDapprenant DESC
+                            LIMIT ? OFFSET ?
+                        )
+                    ) tmp
+                    ORDER BY id DESC
                     LIMIT ? OFFSET ?
                 ";
                 $stmtSelect = $db->prepare($selectSql);
                 $i = 1;
-                foreach ($params as $paramVal) {
+                foreach ($params1 as $paramVal) {
                     $stmtSelect->bindValue($i++, $paramVal);
                 }
                 $stmtSelect->bindValue($i++, $limit, \PDO::PARAM_INT);
+                $stmtSelect->bindValue($i++, $offset, \PDO::PARAM_INT);
+
+                foreach ($params2 as $paramVal) {
+                    $stmtSelect->bindValue($i++, $paramVal);
+                }
+                $stmtSelect->bindValue($i++, $limit, \PDO::PARAM_INT);
+                $stmtSelect->bindValue($i++, $offset, \PDO::PARAM_INT);
+
+                $stmtSelect->bindValue($i++, $limit, \PDO::PARAM_INT);
                 $stmtSelect->bindValue($i, $offset, \PDO::PARAM_INT);
+                
                 $stmtSelect->execute();
                 $records = $stmtSelect->fetchAll(\PDO::FETCH_ASSOC);
             } catch (Exception $e) {}
