@@ -8,6 +8,7 @@ $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
 $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 echo "=== DIAGNOSING SECTION DATE FORMATS AND OFFRE RENTREE ===\n\n";
 
