@@ -394,7 +394,7 @@ class EspaceEmployeController extends Controller
 
             // Apply 2024-2026 session constraint globally to prevent timeouts and match requirements
             $clauses1[] = "s.DateDF >= '2024-02-01'";
-            $clauses2[] = "(o_cand.Session_rentree LIKE '2024%' OR o_cand.Session_rentree LIKE '2025%' OR o_cand.Session_rentree LIKE '2026%')";
+            $clauses2[] = "o_cand.DateD >= '2024-02-01'";
 
             // Role scoping
             if ($scope['role'] === 'dfep' && $scope['iddfep']) {
