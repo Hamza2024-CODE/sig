@@ -84,7 +84,7 @@ class GenerateGraduatesStatsCommand extends Command
             $params[] = $filterMode;
         }
         if ($filterAnnee > 0) {
-            $where[] = "o.IDAnnee_Formation = ?";
+            $where[] = "sf.IDAnnee_Formation = ?";
             $params[] = $filterAnnee;
         }
         if ($filterSpec > 0) {
@@ -96,15 +96,17 @@ class GenerateGraduatesStatsCommand extends Command
 
         // 1. KPIs
         $kpiQuery = "
-            SELECT 
+            SELECT STRAIGHT_JOIN
                 COUNT(*) as total_graduates,
                 COUNT(CASE WHEN f.Numdiplome IS NOT NULL AND f.Numdiplome != '' THEN 1 END) as issued_diplomas,
                 COUNT(CASE WHEN f.Numdiplome IS NULL OR f.Numdiplome = '' THEN 1 END) as pending_diplomas
-            FROM apprenant_fin f
-            JOIN apprenant a ON f.IDapprenant = a.IDapprenant
-            JOIN section s ON a.IDSection = s.IDSection
-            JOIN offre o ON s.IDOffre = o.IDOffre
-            JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
+            FROM etablissement e
+            JOIN offre o ON o.IDEts_Form = e.IDetablissement
+            JOIN section s ON s.IDOffre = o.IDOffre
+            JOIN apprenant a ON a.IDSection = s.IDSection
+            JOIN apprenant_fin f ON f.IDapprenant = a.IDapprenant
+            JOIN session sess ON o.IDSession = sess.IDSession
+            JOIN semestre_formation sf ON sess.IDSemestre_formation = sf.IDSemestre_formation
             {$whereSQL}
         ";
         try {
@@ -118,13 +120,15 @@ class GenerateGraduatesStatsCommand extends Command
         $wilayaStats = [];
         if ($isAdmin) {
             $wilayaQuery = "
-                SELECT w.Nom as wilaya_nom, w.IDWilayaa as id, COUNT(*) as count
-                FROM apprenant_fin f
-                JOIN apprenant a ON f.IDapprenant = a.IDapprenant
-                JOIN section s ON a.IDSection = s.IDSection
-                JOIN offre o ON s.IDOffre = o.IDOffre
-                JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
-                JOIN wilaya w ON e.IDDFEP = w.IDWilayaa
+                SELECT STRAIGHT_JOIN w.Nom as wilaya_nom, w.IDWilayaa as id, COUNT(*) as count
+                FROM wilaya w
+                JOIN etablissement e ON e.IDDFEP = w.IDWilayaa
+                JOIN offre o ON o.IDEts_Form = e.IDetablissement
+                JOIN section s ON s.IDOffre = o.IDOffre
+                JOIN apprenant a ON a.IDSection = s.IDSection
+                JOIN apprenant_fin f ON f.IDapprenant = a.IDapprenant
+                JOIN session sess ON o.IDSession = sess.IDSession
+                JOIN semestre_formation sf ON sess.IDSemestre_formation = sf.IDSemestre_formation
                 {$whereSQL}
                 GROUP BY w.IDWilayaa, w.Nom
                 ORDER BY count DESC
@@ -138,12 +142,14 @@ class GenerateGraduatesStatsCommand extends Command
 
         // 3. Graduates by Year
         $yearQuery = "
-            SELECT YEAR(f.DateDiplome) as year_name, COUNT(*) as count
-            FROM apprenant_fin f
-            JOIN apprenant a ON f.IDapprenant = a.IDapprenant
-            JOIN section s ON a.IDSection = s.IDSection
-            JOIN offre o ON s.IDOffre = o.IDOffre
-            JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
+            SELECT STRAIGHT_JOIN YEAR(f.DateDiplome) as year_name, COUNT(*) as count
+            FROM etablissement e
+            JOIN offre o ON o.IDEts_Form = e.IDetablissement
+            JOIN section s ON s.IDOffre = o.IDOffre
+            JOIN apprenant a ON a.IDSection = s.IDSection
+            JOIN apprenant_fin f ON f.IDapprenant = a.IDapprenant
+            JOIN session sess ON o.IDSession = sess.IDSession
+            JOIN semestre_formation sf ON sess.IDSemestre_formation = sf.IDSemestre_formation
             {$whereSQL} AND f.DateDiplome IS NOT NULL AND f.DateDiplome > '2010-01-01'
             GROUP BY YEAR(f.DateDiplome)
             ORDER BY year_name ASC
@@ -157,13 +163,15 @@ class GenerateGraduatesStatsCommand extends Command
 
         // 4. Graduates by Mode
         $modeQuery = "
-            SELECT m.Nom as mode_nom, COUNT(*) as count
-            FROM apprenant_fin f
-            JOIN apprenant a ON f.IDapprenant = a.IDapprenant
-            JOIN section s ON a.IDSection = s.IDSection
-            JOIN offre o ON s.IDOffre = o.IDOffre
-            JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
+            SELECT STRAIGHT_JOIN m.Nom as mode_nom, COUNT(*) as count
+            FROM etablissement e
+            JOIN offre o ON o.IDEts_Form = e.IDetablissement
             JOIN mode_formation m ON o.IDMode_formation = m.IDMode_formation
+            JOIN section s ON s.IDOffre = o.IDOffre
+            JOIN apprenant a ON a.IDSection = s.IDSection
+            JOIN apprenant_fin f ON f.IDapprenant = a.IDapprenant
+            JOIN session sess ON o.IDSession = sess.IDSession
+            JOIN semestre_formation sf ON sess.IDSemestre_formation = sf.IDSemestre_formation
             {$whereSQL}
             GROUP BY m.IDMode_formation, m.Nom
             ORDER BY count DESC
@@ -177,14 +185,16 @@ class GenerateGraduatesStatsCommand extends Command
 
         // 5. Graduates by Branch
         $branchQuery = "
-            SELECT b.Nom as branch_nom, COUNT(*) as count
-            FROM apprenant_fin f
-            JOIN apprenant a ON f.IDapprenant = a.IDapprenant
-            JOIN section s ON a.IDSection = s.IDSection
-            JOIN offre o ON s.IDOffre = o.IDOffre
-            JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
+            SELECT STRAIGHT_JOIN b.Nom as branch_nom, COUNT(*) as count
+            FROM etablissement e
+            JOIN offre o ON o.IDEts_Form = e.IDetablissement
             JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
             JOIN branche b ON sp.IDBranche = b.IDBranche
+            JOIN section s ON s.IDOffre = o.IDOffre
+            JOIN apprenant a ON a.IDSection = s.IDSection
+            JOIN apprenant_fin f ON f.IDapprenant = a.IDapprenant
+            JOIN session sess ON o.IDSession = sess.IDSession
+            JOIN semestre_formation sf ON sess.IDSemestre_formation = sf.IDSemestre_formation
             {$whereSQL}
             GROUP BY b.IDBranche, b.Nom
             ORDER BY count DESC
@@ -200,12 +210,14 @@ class GenerateGraduatesStatsCommand extends Command
         $etabStats = [];
         if ($isAdmin || $isDfep) {
             $etabQuery = "
-                SELECT e.Nom as etab_nom, COUNT(*) as count
-                FROM apprenant_fin f
-                JOIN apprenant a ON f.IDapprenant = a.IDapprenant
-                JOIN section s ON a.IDSection = s.IDSection
-                JOIN offre o ON s.IDOffre = o.IDOffre
-                JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
+                SELECT STRAIGHT_JOIN e.Nom as etab_nom, COUNT(*) as count
+                FROM etablissement e
+                JOIN offre o ON o.IDEts_Form = e.IDetablissement
+                JOIN section s ON s.IDOffre = o.IDOffre
+                JOIN apprenant a ON a.IDSection = s.IDSection
+                JOIN apprenant_fin f ON f.IDapprenant = a.IDapprenant
+                JOIN session sess ON o.IDSession = sess.IDSession
+                JOIN semestre_formation sf ON sess.IDSemestre_formation = sf.IDSemestre_formation
                 {$whereSQL}
                 GROUP BY e.IDetablissement, e.Nom
                 ORDER BY count DESC
@@ -221,13 +233,15 @@ class GenerateGraduatesStatsCommand extends Command
         // 7. Top 10 Specialties
         $specStats = [];
         $specQuery = "
-            SELECT sp.Nom as spec_nom, COUNT(*) as count
-            FROM apprenant_fin f
-            JOIN apprenant a ON f.IDapprenant = a.IDapprenant
-            JOIN section s ON a.IDSection = s.IDSection
-            JOIN offre o ON s.IDOffre = o.IDOffre
+            SELECT STRAIGHT_JOIN sp.Nom as spec_nom, COUNT(*) as count
+            FROM etablissement e
+            JOIN offre o ON o.IDEts_Form = e.IDetablissement
             JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
-            JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
+            JOIN section s ON s.IDOffre = o.IDOffre
+            JOIN apprenant a ON a.IDSection = s.IDSection
+            JOIN apprenant_fin f ON f.IDapprenant = a.IDapprenant
+            JOIN session sess ON o.IDSession = sess.IDSession
+            JOIN semestre_formation sf ON sess.IDSemestre_formation = sf.IDSemestre_formation
             {$whereSQL}
             GROUP BY sp.IDSpecialite, sp.Nom
             ORDER BY count DESC

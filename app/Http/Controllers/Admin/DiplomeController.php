@@ -79,6 +79,8 @@ class DiplomeController extends Controller
         JOIN section s     ON a.IDSection = s.IDSection
         JOIN offre o       ON s.IDOffre = o.IDOffre
         JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
+        JOIN session sess  ON o.IDSession = sess.IDSession
+        JOIN semestre_formation sf ON sess.IDSemestre_formation = sf.IDSemestre_formation
     ";
 
     private const BASE_COUNT = "
@@ -88,6 +90,8 @@ class DiplomeController extends Controller
         JOIN apprenant_fin f ON f.IDapprenant = a.IDapprenant
         JOIN section s     ON a.IDSection = s.IDSection
         JOIN offre o       ON s.IDOffre = o.IDOffre
+        JOIN session sess  ON o.IDSession = sess.IDSession
+        JOIN semestre_formation sf ON sess.IDSemestre_formation = sf.IDSemestre_formation
     ";
 
     /**
@@ -150,10 +154,10 @@ class DiplomeController extends Controller
             $params[] = $filterMode;
         }
         if ($filterAnnee > 0) {
-            $where[] = "o.IDAnnee_Formation = ?";
+            $where[] = "sf.IDAnnee_Formation = ?";
             $params[] = $filterAnnee;
         } else {
-            $where[] = "o.IDAnnee_Formation >= 14";
+            $where[] = "sf.IDAnnee_Formation >= 14";
         }
         if ($filterSpec > 0) {
             $where[] = "o.IDSpecialite = ?";
