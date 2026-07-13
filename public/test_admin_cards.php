@@ -1,11 +1,23 @@
 <?php
 header('Content-Type: text/plain; charset=utf-8');
 
-define('LARAVEL_START', microtime(true));
-require __DIR__.'/../vendor/autoload.php';
-$app = require_once __DIR__.'/../bootstrap/app.php';
-$kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
-$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+// Enable error reporting to catch direct compile or runtime errors
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+try {
+    define('LARAVEL_START', microtime(true));
+    require __DIR__.'/../vendor/autoload.php';
+    $app = require_once __DIR__.'/../bootstrap/app.php';
+    $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
+    $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+} catch (\Throwable $e) {
+    echo "❌ Laravel Bootstrap Error: " . $e->getMessage() . "\n";
+    echo "File: " . $e->getFile() . " on line " . $e->getLine() . "\n";
+    echo "Trace: \n" . $e->getTraceAsString() . "\n";
+    exit;
+}
 
 use Illuminate\Support\Facades\DB;
 
