@@ -34,7 +34,7 @@
                     <select name="filter_wilaya" class="form-select rounded-pill" onchange="this.form.submit()">
                         <option value="">-- كل الولايات --</option>
                         <?php foreach ($wilayas as $w): ?>
-                            <option value="<?= $w['id'] ?>" <?= (request('filter_wilaya') == $w['id']) ? 'selected' : '' ?>><?= htmlspecialchars($w['name']) ?></option>
+                            <option value="<?= $w['id'] ?>" <?= (request('filter_wilaya') == $w['id']) ? 'selected' : '' ?>><?= htmlspecialchars($w['nom_ar']) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
