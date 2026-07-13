@@ -1,25 +1,55 @@
 <?php
-// Auto-updater script
-$sourceUrl = 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/debug_apprenants.php';
-$destPath = __DIR__ . '/debug_apprenants.php';
+require __DIR__.'/../vendor/autoload.php';
+$app = require_once __DIR__.'/../bootstrap/app.php';
+$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
+$kernel->bootstrap();
 
-try {
-    $content = file_get_contents($sourceUrl);
-    if ($content === false) {
-        throw new \Exception("Failed to download from GitHub.");
+use Illuminate\Support\Facades\Artisan;
+
+echo "<h1>Auto-Updating All Modified Files...</h1>";
+
+$files = [
+    'app/Domains/Academic/Repositories/OffresRepository.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Domains/Academic/Repositories/OffresRepository.php',
+    'resources/views/admin/offres/index.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/offres/index.blade.php',
+    'app/Http/Controllers/Admin/PreinscritController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/PreinscritController.php',
+    'app/Http/Controllers/Admin/ModulesController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/ModulesController.php'
+];
+
+foreach ($files as $localPath => $remoteUrl) {
+    $fullPath = __DIR__ . '/../' . $localPath;
+    
+    // Create directory if it doesn't exist
+    $dir = dirname($fullPath);
+    if (!is_dir($dir)) {
+        mkdir($dir, 0755, true);
     }
     
-    file_put_contents($destPath, $content);
-    echo "<h1>✓ debug_apprenants.php updated successfully!</h1>";
+    $content = file_get_contents($remoteUrl);
+    if ($content !== false) {
+        file_put_contents($fullPath, $content);
+        echo "✓ Updated: $localPath (" . strlen($content) . " bytes)<br>";
+    } else {
+        echo "<span style='color:red;'>✗ Failed to download: $localPath</span><br>";
+    }
+}
+
+echo "<h2>Clearing Laravel Cache and Views...</h2>";
+try {
+    Artisan::call('view:clear');
+    echo "✓ View Cache Cleared: " . Artisan::output() . "<br>";
     
-    // Clear OPCache
+    Artisan::call('cache:clear');
+    echo "✓ Application Cache Cleared: " . Artisan::output() . "<br>";
+    
+    Artisan::call('route:clear');
+    echo "✓ Route Cache Cleared: " . Artisan::output() . "<br>";
+    
     if (function_exists('opcache_reset')) {
         opcache_reset();
-        echo "OPCache Cleared!<br>";
+        echo "✓ OPCache Cleared!<br>";
     }
-    
-    echo "<script>setTimeout(function() { window.location.href = 'debug_apprenants.php'; }, 1500);</script>";
-    echo "Redirecting to debug page in 1.5 seconds...";
-} catch (\Exception $e) {
-    echo "<h1>Error: " . $e->getMessage() . "</h1>";
+} catch (\Throwable $e) {
+    echo "<span style='color:red;'>Error clearing cache: " . $e->getMessage() . "</span><br>";
 }
+
+echo "<br><h3 style='color:green;'>All updates completed successfully!</h3>";
