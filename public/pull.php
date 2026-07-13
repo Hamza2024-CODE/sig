@@ -29,7 +29,7 @@ foreach ($files as $localPath => $remoteUrl) {
         mkdir($dir, 0755, true);
     }
     
-    $content = file_get_contents($remoteUrl);
+    $content = @file_get_contents($remoteUrl . '?v=' . time());
     if ($content !== false) {
         file_put_contents($fullPath, $content);
         echo "✓ Updated: $localPath (" . strlen($content) . " bytes)<br>";
