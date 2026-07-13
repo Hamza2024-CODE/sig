@@ -551,6 +551,44 @@ $is_etab     = in_array($role_code, ['etablissement', 'directeur', 'formateur'])
                     <i class="fa-solid fa-print me-1"></i> طباعة
                 </button>
                 <input type="text" id="search_offre" onkeyup="applyFilters()" class="form-control rounded-pill bg-light border-0 px-4" placeholder="بحث عن تخصص..." style="width: 220px;">
+                <!-- Column Selector Dropdown -->
+                <div class="dropdown d-inline-block no-print">
+                    <button class="btn btn-light rounded-pill px-3 dropdown-toggle shadow-sm" type="button" id="columnSelectorBtn" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" style="border: 1px solid #cbd5e1; font-weight:600; font-size:0.88rem;">
+                        <i class="fa-solid fa-table-columns me-1 text-primary"></i> الأعمدة / Colonnes
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 p-3 fs-7" aria-labelledby="columnSelectorBtn" style="max-height: 400px; overflow-y: auto; border-radius: 12px; min-width: 260px; text-align: right; z-index: 1050;">
+                        <h6 class="dropdown-header text-muted fw-bold p-0 mb-2 border-bottom pb-1">إظهار / إخفاء الأعمدة</h6>
+                        <?php
+                        $cols = [
+                            1 => 'رمز التخصص (Code Spec)',
+                            3 => 'الدورة التكوينية (Session)',
+                            4 => 'تاريخ التكوين (Dates)',
+                            7 => 'عدد الأفواج (Groupes)',
+                            8 => 'المستوى (Niveau)',
+                            9 => 'المستوى المطلوب (Niveau Requis)',
+                            10 => 'الدوام (Régime)',
+                            11 => 'صفة الفرع (Statut Branche)',
+                            12 => 'التأطير (Encadrement)',
+                            13 => 'البرنامج (Programme)',
+                            14 => 'التجهيزات (Equipements)',
+                            15 => 'المدة (Durée)',
+                            18 => 'المسجلون إناث (Femmes Inscr)',
+                            19 => 'الناجحون (Lauréats)',
+                            20 => 'الناجحون إناث (Femmes Laur)',
+                            21 => 'مصادقة المؤسسة (Valid Etab)',
+                            22 => 'مصادقة المديرية (Valid Dfep)'
+                        ];
+                        foreach ($cols as $idx => $label):
+                        ?>
+                        <li class="mb-1">
+                            <label class="dropdown-item d-flex align-items-center gap-2 rounded px-2 py-1 cursor-pointer">
+                                <input type="checkbox" class="col-toggle-checkbox form-check-input m-0" data-column-index="<?= $idx ?>" onchange="toggleTableColumn(<?= $idx ?>, this.checked)">
+                                <span><?= $label ?></span>
+                            </label>
+                        </li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
                 <button class="btn btn-light rounded-circle <?= $hasFilter ? 'text-primary bg-primary-subtle border-primary' : '' ?>"
                         id="filterToggleBtn" title="تصفية متقدمة" type="button" onclick="offresToggleFilter()">
                     <i class="fa-solid fa-filter" id="filterToggleIcon"></i>
@@ -1914,6 +1952,46 @@ $is_etab     = in_array($role_code, ['etablissement', 'directeur', 'formateur'])
 </div>
 
 <script>
+// Dynamic table column selector functions
+function toggleTableColumn(index, show) {
+    const table = document.getElementById('offresTable');
+    if (!table) return;
+    const rows = table.rows;
+    for (let i = 0; i < rows.length; i++) {
+        const cell = rows[i].cells[index];
+        if (cell) {
+            if (show) {
+                cell.style.setProperty('display', '', 'important');
+            } else {
+                cell.style.setProperty('display', 'none', 'important');
+            }
+        }
+    }
+    // Save to localStorage
+    let hiddenCols = JSON.parse(localStorage.getItem('hidden_offres_cols') || '[]');
+    if (show) {
+        hiddenCols = hiddenCols.filter(c => c !== index);
+    } else {
+        if (!hiddenCols.includes(index)) {
+            hiddenCols.push(index);
+        }
+    }
+    localStorage.setItem('hidden_offres_cols', JSON.stringify(hiddenCols));
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const defaultHidden = [1, 3, 4, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18, 19, 20, 21, 22];
+    const savedHidden = localStorage.getItem('hidden_offres_cols');
+    const hiddenCols = savedHidden ? JSON.parse(savedHidden) : defaultHidden;
+    
+    document.querySelectorAll('.col-toggle-checkbox').forEach(cb => {
+        const idx = parseInt(cb.getAttribute('data-column-index'));
+        const show = !hiddenCols.includes(idx);
+        cb.checked = show;
+        toggleTableColumn(idx, show);
+    });
+});
+
 // Initialize Tooltips
 document.addEventListener("DOMContentLoaded", function() {
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
