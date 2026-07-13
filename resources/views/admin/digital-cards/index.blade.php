@@ -314,13 +314,13 @@
 
                     {{-- Table List --}}
                     <div class="table-responsive">
-                        <table class="table table-hover align-middle">
+                        <table class="table table-hover align-middle" style="table-layout: fixed; width: 100%;">
                             <thead class="bg-light text-muted small fw-bold">
                                 <tr>
-                                    <th>الاسم واللقب</th>
-                                    <th>{{ $type === 'employee' ? 'المادة/الوظيفة' : 'التخصص التكويني' }}</th>
-                                    <th>المؤسسة</th>
-                                    <th class="text-center">الإجراءات</th>
+                                    <th style="width: 32%;">الاسم واللقب</th>
+                                    <th style="width: 30%;">{{ $type === 'employee' ? 'المادة/الوظيفة' : 'التخصص التكويني' }}</th>
+                                    <th style="width: 23%;">المؤسسة</th>
+                                    <th style="width: 15%;" class="text-center">الإجراءات</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -334,11 +334,21 @@
                                     @foreach($records as $r)
                                         <tr style="cursor: pointer;" onclick="loadIDCard({{ $r['id'] }}, '{{ $type }}')">
                                             <td>
-                                                <strong class="text-dark">{{ $r['nom'] }} {{ $r['prenom'] }}</strong>
-                                                <div class="text-muted" style="font-size: 0.68rem; font-family: 'Outfit';">NIN: {{ $r['nin'] ?? 'N/A' }}</div>
+                                                <div style="text-overflow: ellipsis; white-space: nowrap; overflow: hidden;" title="{{ $r['nom'] }} {{ $r['prenom'] }}">
+                                                    <strong class="text-dark">{{ $r['nom'] }} {{ $r['prenom'] }}</strong>
+                                                    <div class="text-muted" style="font-size: 0.68rem; font-family: 'Outfit';">NIN: {{ $r['nin'] ?? 'N/A' }}</div>
+                                                </div>
                                             </td>
-                                            <td class="small fw-semibold text-primary">{{ $r['spec_ar'] ?? 'غير محدد' }}</td>
-                                            <td class="small text-muted">{{ $r['etab_nom'] ?? 'المديرية الولائية' }}</td>
+                                            <td class="small fw-semibold text-primary">
+                                                <div style="text-overflow: ellipsis; white-space: nowrap; overflow: hidden;" title="{{ $r['spec_ar'] ?? 'غير محدد' }}">
+                                                    {{ $r['spec_ar'] ?? 'غير محدد' }}
+                                                </div>
+                                            </td>
+                                            <td class="small text-muted">
+                                                <div style="text-overflow: ellipsis; white-space: nowrap; overflow: hidden;" title="{{ $r['etab_nom'] ?? 'المديرية الولائية' }}">
+                                                    {{ $r['etab_nom'] ?? 'المديرية الولائية' }}
+                                                </div>
+                                            </td>
                                             <td class="text-center">
                                                 <button class="btn btn-xs btn-outline-primary rounded-pill px-2.5 fw-bold" onclick="if(typeof event !== 'undefined') event.stopPropagation(); loadIDCard({{ $r['id'] }}, '{{ $type }}')">
                                                     <i class="fa-solid fa-eye me-1"></i> عرض البطاقة
@@ -377,7 +387,7 @@
 
         {{-- Left Column: Card Preview --}}
         <div class="col-lg-5">
-            <div class="glass-panel p-4 h-100 d-flex flex-column align-items-center justify-content-center text-center">
+            <div class="glass-panel p-4 h-100 d-flex flex-column align-items-center justify-content-center text-center" style="min-height: 780px;">
                 <div id="noCardSelectedBlock" class="py-5 text-muted">
                     <i class="fa-solid fa-address-card fs-1 text-secondary opacity-50 mb-3 d-block"></i>
                     <h6 class="fw-bold mb-1">لم يتم اختيار أي مستخدم</h6>
@@ -402,7 +412,7 @@
 
                                 {{-- Photo Box --}}
                                 <div id="photoLayoutCol" style="position: absolute; display: flex; align-items: center; justify-content: center; background: transparent; border-radius: 8px;">
-                                     <img id="cardPhoto" src="https://api.dicebear.com/7.x/initials/svg?seed=User" alt="Photo" class="employee-photo-frame" onerror="if(this.src && !this.src.includes('api.dicebear.com') && !this.src.includes('/public/uploads/')){ this.src = this.src.replace('/uploads/', '/public/uploads/'); }">
+                                     <img id="cardPhoto" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2394a3b8'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 4c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm0 14c-2.03 0-4.43-.82-6.14-2.88C7.55 15.8 9.68 15 12 15s4.45.8 6.14 2.12C16.43 19.18 14.03 20 12 20z'/></svg>" alt="Photo" class="employee-photo-frame" onerror="if(this.src && !this.src.includes('api.dicebear.com') && !this.src.includes('/public/uploads/')){ this.src = this.src.replace('/uploads/', '/public/uploads/'); }">
                                 </div>
                                 
                                 {{-- Details --}}
@@ -666,18 +676,20 @@
                     
                     let avatar = emp.photo;
                     const baseUrl = "{{ url('/') }}";
-                    if (avatar) {
-                        if (avatar.startsWith('/') && !avatar.startsWith(baseUrl)) {
-                            avatar = baseUrl + avatar;
+                    if (avatar && avatar.trim() !== '' && avatar.toLowerCase() !== 'empty' && avatar.toLowerCase() !== 'default') {
+                        avatar = avatar.trim();
+                        if (!avatar.startsWith('http') && !avatar.startsWith('data:')) {
+                            let cleaned = avatar.startsWith('/') ? avatar : '/' + avatar;
+                            avatar = baseUrl + cleaned;
                         }
                     } else {
-                        avatar = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(emp.Nom || 'User')}`;
+                        avatar = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2394a3b8'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 4c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm0 14c-2.03 0-4.43-.82-6.14-2.88C7.55 15.8 9.68 15 12 15s4.45.8 6.14 2.12C16.43 19.18 14.03 20 12 20z'/></svg>";
                     }
                     document.getElementById('cardPhoto').src = avatar;
 
                     // Generate dynamic QR code image inside qrContainer
                     let verifyUrl = "{{ url('verify/card/employee') }}/" + (emp.secure_id || '');
-                    document.getElementById('qrContainer').innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(verifyUrl)}" alt="QR Code" style="width: 58px; height: 58px; border-radius: 4px;">`;
+                    document.getElementById('qrContainer').innerHTML = `<img src="/api/qrcode?data=${encodeURIComponent(verifyUrl)}" alt="QR Code" style="width: 58px; height: 58px; border-radius: 4px;">`;
                     
                     // Draw dynamic barcode
                     drawBarcode('cardBarcode', emp.IDEncadrement);
@@ -725,18 +737,20 @@
                     
                     let avatar = trainee.photo;
                     const baseUrl = "{{ url('/') }}";
-                    if (avatar) {
-                        if (avatar.startsWith('/') && !avatar.startsWith(baseUrl)) {
-                            avatar = baseUrl + avatar;
+                    if (avatar && avatar.trim() !== '' && avatar.toLowerCase() !== 'empty' && avatar.toLowerCase() !== 'default') {
+                        avatar = avatar.trim();
+                        if (!avatar.startsWith('http') && !avatar.startsWith('data:')) {
+                            let cleaned = avatar.startsWith('/') ? avatar : '/' + avatar;
+                            avatar = baseUrl + cleaned;
                         }
                     } else {
-                        avatar = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(trainee.nom_ar || 'Trainee')}`;
+                        avatar = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2394a3b8'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 4c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm0 14c-2.03 0-4.43-.82-6.14-2.88C7.55 15.8 9.68 15 12 15s4.45.8 6.14 2.12C16.43 19.18 14.03 20 12 20z'/></svg>";
                     }
                     document.getElementById('cardPhoto').src = avatar;
 
                     // Generate dynamic QR code image inside qrContainer
                     let verifyUrl = "{{ url('verify/card/trainee') }}/" + (trainee.secure_id || '');
-                    document.getElementById('qrContainer').innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(verifyUrl)}" alt="QR Code" style="width: 58px; height: 58px; border-radius: 4px;">`;
+                    document.getElementById('qrContainer').innerHTML = `<img src="/api/qrcode?data=${encodeURIComponent(verifyUrl)}" alt="QR Code" style="width: 58px; height: 58px; border-radius: 4px;">`;
 
                     // Draw dynamic barcode
                     drawBarcode('cardBarcode', trainee.id);
