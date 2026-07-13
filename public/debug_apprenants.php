@@ -1,7 +1,17 @@
 <?php
 require __DIR__.'/../vendor/autoload.php';
 $app = require_once __DIR__.'/../bootstrap/app.php';
-$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
+$kernel->bootstrap();
+
+// Start Laravel session manually for standalone script
+try {
+    $request = request();
+    $request->setLaravelSession($app['session']->driver());
+    $request->session()->start();
+} catch (\Throwable $e) {
+    echo "Warning starting session: " . $e->getMessage() . "<br>";
+}
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
