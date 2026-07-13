@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Cache;
 $role = session('user')['role_code'] ?? 'user';
 $dfepId = (int)(session('user')['iddfep'] ?? session('user')['IDDFEP'] ?? 0);
 $etabId = (int)(session('user')['etablissement_id'] ?? 0);
+$isDosfpUser = ($role === 'central' && (strtoupper(session('user')['direction_code'] ?? '') === 'DOSFP' || strtolower(session('user')['username'] ?? '') === 'dosfp'));
+$isDfcriUser = ($role === 'central' && (strtoupper(session('user')['direction_code'] ?? '') === 'DFCRI' || strtolower(session('user')['username'] ?? '') === 'dfcri'));
 
 $selWilaya = $_GET['filter_wilaya'] ?? null;
 $selEtab   = $_GET['filter_etablissement'] ?? null;
@@ -401,9 +403,11 @@ try {
                 </p>
             </div>
             <div class="d-flex gap-2 flex-wrap">
+                @if(!$isDosfpUser && !$isDfcriUser)
                 <a href="/sig/dashboard/encadrement" class="btn btn-sm fw-bold px-4 py-2.5 rounded-pill text-white border" style="background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.2);">
                     <i class="fa-solid fa-users-line me-1"></i> سجل الموظفين
                 </a>
+                @endif
                 <button onclick="window.print()" class="btn btn-sm fw-bold px-4 py-2.5 rounded-pill text-white border" style="background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15);">
                     <i class="fa-solid fa-print me-1"></i> طباعة التقرير
                 </button>

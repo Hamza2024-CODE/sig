@@ -19,7 +19,8 @@ $files = [
     'app/Http/Controllers/Admin/OffresController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/OffresController.php',
     'resources/views/admin/offres/validation.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/offres/validation.blade.php',
     'resources/views/layouts/main.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/layouts/main.blade.php',
-    'resources/views/dashboard/departments/trak.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/dashboard/departments/trak.blade.php'
+    'resources/views/dashboard/departments/trak.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/dashboard/departments/trak.blade.php',
+    'resources/views/admin/modules/distribution_detaillee.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/modules/distribution_detaillee.blade.php'
 ];
 
 foreach ($files as $localPath => $remoteUrl) {

@@ -1811,109 +1811,32 @@ class ModulesController extends Controller {
             $stats['specialites'] = (int)$this->db->query("SELECT COUNT(*) FROM specialite")->fetchColumn();
             $stats['sections']    = (int)$this->db->query("SELECT COUNT(*) FROM section")->fetchColumn();
 
-            $cacheKey = 'distribution_detaillee_data_' . md5($ofWhere . serialize($params));
+            $cacheKey = 'distribution_detaillee_data_v3_' . md5($ofWhere . serialize($params));
 
             $cachedData = \Illuminate\Support\Facades\Cache::remember($cacheKey, 900, function() use ($ofWhere, $params) {
-                // 1. Fetch all branches
-                $branches = $this->db->query("
-                    SELECT IDBranche as id, Code as code,
-                           Nom as filiere_nom, NomFr as filiere_fr
-                    FROM branche
-                    ORDER BY Code ASC
-                ")->fetchAll(PDO::FETCH_ASSOC);
-
-                // 2. Fetch specialites count per branch
-                if ($ofWhere === '1=1') {
-                    $specialitesCounts = $this->db->query("
-                        SELECT sp.IDBranche,
-                               COUNT(sp.IDSpecialite) as specialites_count
-                        FROM specialite sp
-                        GROUP BY sp.IDBranche
-                    ")->fetchAll(PDO::FETCH_ASSOC);
-                } else {
-                    $stmtSpecialites = $this->db->prepare("
-                        SELECT sp.IDBranche,
-                               COUNT(DISTINCT o.IDSpecialite) as specialites_count
-                        FROM offre o
-                        JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
-                        WHERE $ofWhere
-                        GROUP BY sp.IDBranche
-                    ");
-                    $stmtSpecialites->execute($params);
-                    $specialitesCounts = $stmtSpecialites->fetchAll(PDO::FETCH_ASSOC);
-                }
-                $specialitesMap = [];
-                foreach ($specialitesCounts as $sc) {
-                    $specialitesMap[$sc['IDBranche']] = (int)$sc['specialites_count'];
-                }
-
-                // 3. Fetch sections count per branch
-                if ($ofWhere === '1=1') {
-                    $sectionsCounts = $this->db->query("
-                        SELECT sp.IDBranche,
-                               COUNT(s.IDSection) as sections_count
-                        FROM section s
-                        JOIN specialite sp ON s.IDSpecialite = sp.IDSpecialite
-                        GROUP BY sp.IDBranche
-                    ")->fetchAll(PDO::FETCH_ASSOC);
-                } else {
-                    $stmtSections = $this->db->prepare("
-                        SELECT sp.IDBranche,
-                               COUNT(s.IDSection) as sections_count
-                        FROM section s
-                        JOIN specialite sp ON s.IDSpecialite = sp.IDSpecialite
-                        JOIN offre o ON s.IDOffre = o.IDOffre
-                        WHERE $ofWhere
-                        GROUP BY sp.IDBranche
-                    ");
-                    $stmtSections->execute($params);
-                    $sectionsCounts = $stmtSections->fetchAll(PDO::FETCH_ASSOC);
-                }
-                $sectionsMap = [];
-                foreach ($sectionsCounts as $sec) {
-                    $sectionsMap[$sec['IDBranche']] = (int)$sec['sections_count'];
-                }
-
-                // 4. Fetch stagiaires and femmes count per branch (summing NbrInscr from offers for speed)
-                $stmtStagiaires = $this->db->prepare("
-                    SELECT sp.IDBranche,
-                           SUM(o.NbrInscr) as total_stagiaires,
-                           SUM(o.NbrInscrf) as femmes
-                    FROM offre o
+                $sql = "
+                    SELECT 
+                        e.Nom as etab_nom,
+                        b.IDBranche as id,
+                        b.Code as code,
+                        b.Nom as filiere_nom,
+                        b.NomFr as filiere_fr,
+                        COUNT(DISTINCT o.IDSpecialite) as specialites_count,
+                        COUNT(DISTINCT s.IDSection) as sections_count,
+                        SUM(o.NbrInscr) as total_stagiaires,
+                        SUM(o.NbrInscrf) as femmes
+                    FROM section s
+                    JOIN offre o ON s.IDOffre = o.IDOffre
                     JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
+                    JOIN branche b ON sp.IDBranche = b.IDBranche
+                    JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
                     WHERE $ofWhere
-                    GROUP BY sp.IDBranche
-                ");
-                $stmtStagiaires->execute($params);
-                $stagiaires = $stmtStagiaires->fetchAll(PDO::FETCH_ASSOC);
-                $stagiairesMap = [];
-                foreach ($stagiaires as $st) {
-                    $stagiairesMap[$st['IDBranche']] = $st;
-                }
-
-                // 5. Combine results
-                $list = [];
-                foreach ($branches as $b) {
-                    $bId = $b['id'];
-                    $specCount = $specialitesMap[$bId] ?? 0;
-                    $sectCount = $sectionsMap[$bId] ?? 0;
-                    $sVal = $stagiairesMap[$bId] ?? null;
-
-                    if ($ofWhere !== '1=1' && !$specCount && !$sectCount && !$sVal) {
-                        continue; // Skip branches that don't match the active filters
-                    }
-
-                    $list[] = [
-                        'id' => $bId,
-                        'code' => $b['code'],
-                        'filiere_nom' => $b['filiere_nom'],
-                        'filiere_fr' => $b['filiere_fr'],
-                        'specialites_count' => $specCount,
-                        'sections_count' => $sectCount,
-                        'total_stagiaires' => $sVal ? (int)$sVal['total_stagiaires'] : 0,
-                        'femmes' => $sVal ? (int)$sVal['femmes'] : 0
-                    ];
-                }
+                    GROUP BY e.IDetablissement, b.IDBranche
+                    ORDER BY e.Nom ASC, b.Code ASC
+                ";
+                $stmt = $this->db->prepare($sql);
+                $stmt->execute($params);
+                $list = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 return ['list' => $list];
             });
 
@@ -1951,9 +1874,16 @@ class ModulesController extends Controller {
                 ->header('Content-Type', 'application/pdf');
         }
 
+        $wilayas = \App\Services\ReferenceCache::wilayas();
+        $db = \App\Core\Database::getInstance()->getConnection();
+        $etablissements = $db->query("SELECT IDetablissement as id, Nom as nom_ar FROM etablissement ORDER BY Nom ASC")->fetchAll(PDO::FETCH_ASSOC);
+
         return $this->render('admin/modules/distribution_detaillee', [
             'title' => 'جداول التوزيع البيداغوجي المفصل',
-            'stats' => $stats, 'list' => $list,
+            'stats' => $stats, 
+            'list' => $list,
+            'wilayas' => $wilayas,
+            'etablissements' => $etablissements
         ]);
     }
 
