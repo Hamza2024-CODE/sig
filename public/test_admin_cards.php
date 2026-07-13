@@ -11,20 +11,32 @@ use Illuminate\Support\Facades\DB;
 
 echo "=== SIMULATING ADMIN VISIT TO DIGITAL CARDS ===\n\n";
 
-// Get Admin User row
-$adminUser = DB::table('utilisateur')->where('role_id', 1)->first();
-if (!$adminUser) {
-    echo "No Admin user found in the database.\n";
+try {
+    // Get Admin User row
+    $adminUser = DB::table('utilisateur')->where('role_id', 1)->first();
+    if (!$adminUser) {
+        // Try role_code or fallback
+        $adminUser = DB::table('utilisateur')->where('role_code', 'admin')->first() 
+                  ?? DB::table('utilisateur')->first();
+    }
+    
+    if (!$adminUser) {
+        echo "No Admin user found in the database.\n";
+        exit;
+    }
+
+    $adminUser = (array)$adminUser;
+    $adminUser['role_code'] = $adminUser['role_code'] ?? 'admin'; // ensure role_code is admin
+
+    echo "Simulated User: " . ($adminUser['username'] ?? 'unknown') . " | Role: " . ($adminUser['role_code'] ?? 'admin') . "\n\n";
+
+    // Set session
+    session(['user' => $adminUser]);
+} catch (\Throwable $ex) {
+    echo "❌ Error in user initialization: " . $ex->getMessage() . "\n";
+    echo "Stack trace: \n" . $ex->getTraceAsString() . "\n\n";
     exit;
 }
-
-$adminUser = (array)$adminUser;
-$adminUser['role_code'] = 'admin'; // ensure role_code is admin
-
-echo "Simulated User: {$adminUser['username']} | Role: {$adminUser['role_code']}\n\n";
-
-// Set session
-session(['user' => $adminUser]);
 
 // Run the logic from EspaceEmployeController::digitalCards() for 'trainee'
 $scope = [
