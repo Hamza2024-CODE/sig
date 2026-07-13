@@ -1068,9 +1068,14 @@ class ModulesController extends Controller {
                     FROM apprenant a
                     INNER JOIN section s   ON a.IDSection  = s.IDSection
                     INNER JOIN offre o     ON s.IDOffre    = o.IDOffre
+                    INNER JOIN session sess ON o.IDSession = sess.IDSession
+                    INNER JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
                     LEFT  JOIN ets_form ets ON o.IDEts_Form = ets.IDEts_Form
                     LEFT  JOIN candidat c  ON a.IDCandidat = c.IDCandidat
+                    LEFT  JOIN apprenant_fin af ON a.IDapprenant = af.IDapprenant
                     WHERE a.statut = 'actif'
+                      AND af.IDapprenant IS NULL
+                      AND DATE_ADD(sess.DateD, INTERVAL COALESCE(NULLIF(sp.dureeM, 0), sp.NbrSem * 6, 24) MONTH) >= CURRENT_DATE()
                       AND $ofWhere
                 ");
                 $stmtT->execute($params);
@@ -1101,9 +1106,14 @@ class ModulesController extends Controller {
                         FROM apprenant a
                         INNER JOIN section s   ON a.IDSection  = s.IDSection
                         INNER JOIN offre o     ON s.IDOffre    = o.IDOffre
+                        INNER JOIN session sess ON o.IDSession = sess.IDSession
+                        INNER JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
                         LEFT  JOIN ets_form ets ON o.IDEts_Form = ets.IDEts_Form
                         LEFT  JOIN candidat c  ON a.IDCandidat = c.IDCandidat
+                        LEFT  JOIN apprenant_fin af ON a.IDapprenant = af.IDapprenant
                         WHERE a.statut = 'actif'
+                          AND af.IDapprenant IS NULL
+                          AND DATE_ADD(sess.DateD, INTERVAL COALESCE(NULLIF(sp.dureeM, 0), sp.NbrSem * 6, 24) MONTH) >= CURRENT_DATE()
                           AND $ofWhere
                         GROUP BY COALESCE(ets.IDetablissement, o.IDEts_Form)
                     ) agg ON ef.IDetablissement = agg.etab_id
@@ -1209,9 +1219,13 @@ class ModulesController extends Controller {
                 FROM apprenant a
                 INNER JOIN section sec   ON a.IDSection    = sec.IDSection
                 INNER JOIN offre o       ON sec.IDOffre     = o.IDOffre
+                INNER JOIN session sess  ON o.IDSession     = sess.IDSession
                 LEFT JOIN specialite sp  ON o.IDSpecialite = sp.IDSpecialite
                 LEFT JOIN candidat c     ON a.IDCandidat  = c.IDCandidat
+                LEFT JOIN apprenant_fin af ON a.IDapprenant = af.IDapprenant
                 WHERE a.statut = 'actif'
+                  AND af.IDapprenant IS NULL
+                  AND DATE_ADD(sess.DateD, INTERVAL COALESCE(NULLIF(sp.dureeM, 0), sp.NbrSem * 6, 24) MONTH) >= CURRENT_DATE()
                   AND $ofWhere
                 ORDER BY COALESCE(c.Nom, '') ASC, COALESCE(c.Prenom, '') ASC, a.IDapprenant ASC
             ");
