@@ -27,6 +27,28 @@ if (is_dir($dir)) {
     echo "Status: DOES NOT EXIST\n";
 }
 
+echo "\n=== DATABASE PHOTO VALUES IN equipement_memo ===\n";
+try {
+    define('LARAVEL_START_EQ', microtime(true));
+    require_once __DIR__.'/../vendor/autoload.php';
+    $app_eq = require_once __DIR__.'/../bootstrap/app.php';
+    $app_eq->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+    
+    $photos = \Illuminate\Support\Facades\DB::table('equipement_memo')
+        ->whereNotNull('photo')
+        ->where('photo', '<>', '')
+        ->select('IDEquipement_memo', 'designation', 'photo')
+        ->limit(10)
+        ->get();
+        
+    echo "Found " . count($photos) . " equipment records with photos:\n";
+    foreach ($photos as $p) {
+        echo "ID: {$p->IDEquipement_memo} | Name: {$p->designation} | Photo path: '{$p->photo}'\n";
+    }
+} catch (\Exception $ex) {
+    echo "Error fetching from DB: " . $ex->getMessage() . "\n";
+}
+
 echo "\n=== SOURCE DIRECTORY FROM hamzaftp ===\n";
 $src = '/www/wwwroot/hamzaftp/equipement_memo';
 if (is_dir($src)) {
