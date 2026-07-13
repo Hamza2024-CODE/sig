@@ -145,6 +145,7 @@ class OffresService
                 'id' => (int)$rs['id'],
                 'code' => $rs['code'],
                 'libelle_ar' => $this->cleanString($rs['libelle_ar']),
+                'duree_semestres' => (int)($rs['duree_semestres'] ?? 2),
             ];
         }
         $db = \App\Core\Database::getInstance()->getConnection();
