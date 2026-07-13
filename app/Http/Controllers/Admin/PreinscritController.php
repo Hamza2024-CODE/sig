@@ -71,6 +71,9 @@ class PreinscritController extends Controller
             ->leftJoin('niveau_scol as ns', 'p.IDNiveau_Scol', '=', 'ns.IDNiveau_Scol')
             ->leftJoin('mode_formation as mf', 'o.IDMode_formation', '=', 'mf.IDMode_formation')
             ->leftJoin('identites as idt', 'p.Nin', '=', 'idt.nin')
+            ->leftJoin('session as sess', 'o.IDSession', '=', 'sess.IDSession')
+            ->leftJoin('semestre_formation as sf', 'sess.IDSemestre_formation', '=', 'sf.IDSemestre_formation')
+            ->where('sf.IDAnnee_Formation', '>=', 19)
             ->select(
                 'p.*',
                 'sp.Nom as spec_nom',
