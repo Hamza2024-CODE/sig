@@ -21,10 +21,10 @@ try {
         LEFT JOIN specialite sp ON s.IDSpecialite = sp.IDSpecialite
         LEFT JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
         LEFT JOIN wilaya w ON w.IDWilayaa = e.IDDFEP
-        WHERE a.IDSection != 0 AND s.DateDF >= '2024-02-01'
+        WHERE a.IDSection != 0 AND s.IDSession IN (31, 32, 33, 34, 35)
     ");
     $elapsed = microtime(true) - $start;
-    echo "Count of Active (DateDF >= 2024-02-01): " . $cnt->c . " (Took: " . round($elapsed, 4) . " seconds)\n";
+    echo "Count of Active (IDSession IN 31-35): " . $cnt->c . " (Took: " . round($elapsed, 4) . " seconds)\n";
     
 } catch (\Exception $e) {
     echo "Error: " . $e->getMessage() . "\n";
