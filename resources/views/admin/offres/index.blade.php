@@ -23,164 +23,6 @@ $is_wilaya   = in_array($role_code, ['dfep', 'apc']);
 // 'etablissement' = مراكز/معاهد التكوين المهني (يشمل الخاصة والعامة)
 $is_etab     = in_array($role_code, ['etablissement', 'directeur', 'formateur']);
 ?>
-<style>
-/* Sleek custom scrollbars for table responsiveness */
-.table-responsive::-webkit-scrollbar {
-    height: 8px;
-    width: 8px;
-}
-.table-responsive::-webkit-scrollbar-track {
-    background: #f8fafc;
-    border-radius: 8px;
-}
-.table-responsive::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 8px;
-    border: 2px solid #f8fafc;
-}
-.table-responsive::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
-}
-
-/* Premium dashboard designs */
-body {
-    background-color: #f1f5f9;
-}
-.card {
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
-    border: 1px solid rgba(226, 232, 240, 0.8) !important;
-    border-radius: 20px !important;
-}
-.card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02) !important;
-}
-
-/* Statistics Card Redesign */
-.stats-card-primary {
-    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-    position: relative;
-    overflow: hidden;
-}
-.stats-card-primary::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #482b8f 0%, #643edb 100%);
-}
-
-.kpi-card {
-    position: relative;
-    overflow: hidden;
-}
-.kpi-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    z-index: 5;
-}
-.kpi-inscrits::before { background: #3b82f6 !important; }
-.kpi-actifs::before { background: #10b981 !important; }
-.kpi-couverture::before { background: #f59e0b !important; }
-.kpi-laureats::before { background: #8b5cf6 !important; }
-
-/* Flat cohesive premium table layout */
-.table-card-container {
-    background: #ffffff;
-    border-radius: 24px !important;
-    padding: 1.5rem;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.02), 0 4px 6px -2px rgba(0, 0, 0, 0.01) !important;
-}
-#offresTable {
-    border-collapse: collapse !important;
-    width: 100% !important;
-    min-width: 100% !important;
-}
-#offresTable thead th {
-    background-color: #f8fafc !important;
-    color: #475569 !important;
-    font-weight: 700 !important;
-    font-size: 0.8rem !important;
-    border-bottom: 2px solid #e2e8f0 !important;
-    padding: 16px 10px !important;
-    text-align: center !important;
-    vertical-align: middle !important;
-}
-#offresTable tbody tr {
-    border-bottom: 1px solid #f1f5f9 !important;
-    transition: all 0.2s ease-in-out !important;
-}
-#offresTable tbody tr:hover {
-    background-color: #fcfdfe !important;
-    transform: scale(1.001) !important;
-}
-#offresTable tbody td {
-    padding: 16px 10px !important;
-    font-size: 0.88rem !important;
-    color: #334155 !important;
-    border-bottom: 1px solid #f1f5f9 !important;
-    text-align: center !important;
-    vertical-align: middle !important;
-}
-
-/* Freeze/Sticky first columns for better readability */
-#offresTable th:first-child, #offresTable td:first-child {
-    position: sticky !important;
-    left: 0 !important;
-    background-color: #ffffff !important;
-    z-index: 10 !important;
-    box-shadow: 4px 0 10px rgba(0,0,0,0.03) !important;
-    text-align: right !important;
-}
-#offresTable th:nth-child(2), #offresTable td:nth-child(2) {
-    position: sticky !important;
-    left: 110px !important;
-    background-color: #ffffff !important;
-    z-index: 10 !important;
-    box-shadow: 4px 0 10px rgba(0,0,0,0.03) !important;
-    text-align: right !important;
-}
-#offresTable tbody tr:hover td:first-child,
-#offresTable tbody tr:hover td:nth-child(2) {
-    background-color: #fcfdfe !important;
-}
-
-/* Interactive elements */
-.form-control, .form-select {
-    border-radius: 30px !important;
-    border: 1.5px solid #e2e8f0 !important;
-    padding: 0.65rem 1.25rem !important;
-    background-color: #f8fafc !important;
-    transition: all 0.2s ease-in-out;
-}
-.form-control:focus, .form-select:focus {
-    background-color: #ffffff !important;
-    border-color: #643edb !important;
-    box-shadow: 0 0 0 4px rgba(100, 62, 219, 0.12) !important;
-}
-
-.btn-premium-primary {
-    background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%) !important;
-    color: #ffffff !important;
-    border: none !important;
-    border-radius: 30px !important;
-    padding: 0.65rem 1.5rem !important;
-    font-weight: 700 !important;
-    font-size: 0.88rem !important;
-    box-shadow: 0 4px 10px rgba(79, 70, 229, 0.2) !important;
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
-}
-.btn-premium-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3) !important;
-}
-</style>
 <div class="animate__animated animate__fadeIn">
     <!-- Top Header -->
     <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-light">
@@ -212,53 +54,20 @@ body {
 
     <!-- Bento Grid High-Level Statistics -->
     <div class="row g-4 mb-4">
-        <!-- Main Highlight: Total Offers -->
+        <!-- Main Highlight -->
         <div class="col-12 col-xl-4">
-            <div class="card stats-card-primary border-0 shadow-sm rounded-4 h-100" style="background: rgba(255,255,255,0.95);">
-                <div class="card-body p-4 d-flex flex-column justify-content-center">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <div class="rounded-circle d-inline-flex align-items-center justify-content-center" style="width:48px; height:48px; background:rgba(72,43,143,0.1); color:#482b8f; flex-shrink:0; font-size: 1.2rem;">
-                            <i class="fa-solid fa-chart-pie"></i>
-                        </div>
-                        <span class="badge rounded-pill" style="background:#f3e8ff; color:#7c3aed; font-size:.65rem; font-weight: 700;">كل الدورات</span>
-                    </div>
+            <div class="card border-0 shadow-sm rounded-4 h-100" style="background: linear-gradient(135deg, #482b8f 0%, #2e1c5b 100%); color: white; position: relative; overflow: hidden;">
+                <i class="fa-solid fa-chart-pie position-absolute" style="font-size: 150px; opacity: 0.05; top: -20px; left: -20px;"></i>
+                <div class="card-body p-4 d-flex flex-column justify-content-center position-relative z-1">
+                    <h6 class="text-white-50 fw-bold mb-1">إجمالي العروض المبرمجة</h6>
+                    <h1 class="display-3 fw-bold mb-3 text-warning"><?= $stats['total_offres'] ?></h1>
                     
-                    <h6 class="text-muted fw-bold mb-1" style="font-size:.85rem;">إجمالي عروض التكوين المبرمجة</h6>
-                    <h1 class="display-4 fw-bold mb-1 text-primary" style="color: #482b8f !important;"><?= number_format($stats['total_offres']) ?></h1>
-                    <p class="text-muted small mb-3">عرض تكوين مبرمج في قاعدة البيانات</p>
-
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <span class="text-muted small"><i class="fa-solid fa-chair me-1"></i>المقاعد المتاحة (nbrPrevision)</span>
-                        <span class="fw-bold fs-5 text-dark" dir="ltr"><?= number_format($stats['total_places'], 0, ',', ' ') ?></span>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-white-50 small">المقاعد المتاحة</span>
+                        <span class="fw-bold fs-5" dir="ltr"><?= number_format($stats['total_places'], 0, ',', ' ') ?></span>
                     </div>
-                    <div class="progress mb-2" style="height: 6px; background-color: rgba(72,43,143,0.1);">
-                        <div class="progress-bar" role="progressbar" style="width: 100%; background-color: #482b8f;"></div>
-                    </div>
-                    <div class="text-muted mb-3" style="font-size:.7rem;">
-                        <i class="fa-solid fa-circle-info me-1 text-primary opacity-75"></i>
-                        إجمالي المقاعد المخصصة في جميع عروض التكوين المدخلة
-                    </div>
-
-                    <!-- Breakdown by Year (2024 - 2026) -->
-                    <div class="mt-2 pt-3 border-top" style="border-top: 1px dashed #e2e8f0 !important;">
-                        <h6 class="fw-bold mb-2 small" style="color: #64748b !important;"><i class="fa-solid fa-calendar-days me-1" style="color: #482b8f !important;"></i>توزيع العروض والمقاعد المتاحة حسب السنة:</h6>
-                        <div class="d-flex flex-column gap-2">
-                            <?php if (!empty($stats['by_year'])): ?>
-                                <?php foreach ($stats['by_year'] as $yr): ?>
-                                    <?php if ($yr['year'] >= 2024 && $yr['year'] <= 2026): ?>
-                                        <div class="d-flex justify-content-between align-items-center small">
-                                            <span class="fw-bold" style="color: #1e293b !important; font-weight: 700 !important;"><?= htmlspecialchars($yr['year']) ?></span>
-                                            <span>
-                                                <span class="badge bg-primary-subtle text-primary bold px-2 py-1 me-2" style="background-color: rgba(72,43,143,0.1); color: #482b8f !important; font-size: 0.7rem; font-weight: 700; border-radius: 6px; display: inline-block;"><?= number_format($yr['count_offres']) ?> عرض</span>
-                                                <span class="fw-bold" dir="ltr" style="color: #64748b !important; font-weight: 600 !important;"><?= number_format($yr['count_places'], 0, ',', ' ') ?> مقعد</span>
-                                            </span>
-                                        </div>
-                                    <?php endif; ?>
-                                <?php endforeach; ?>
-                            <?php else: ?>
-                                <div class="small text-center" style="color: #64748b !important;">لا توجد بيانات متوفرة</div>
-                            <?php endif; ?>
-                        </div>
+                    <div class="progress" style="height: 6px; background-color: rgba(255,255,255,0.1);">
+                        <div class="progress-bar bg-warning" role="progressbar" style="width: 100%;"></div>
                     </div>
                 </div>
             </div>
@@ -267,105 +76,61 @@ body {
         <!-- Secondary Stats -->
         <div class="col-12 col-xl-8">
             <div class="row g-4">
-
-                <!-- Inscrits -->
                 <div class="col-md-6 col-lg-3">
-                    <div class="card kpi-card premium-kpi-card kpi-inscrits border-0 shadow-sm rounded-4 h-100" style="background: rgba(255,255,255,0.95);">
-                        <div class="card-body p-3 d-flex flex-column">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <div class="rounded-circle d-inline-flex align-items-center justify-content-center" style="width:40px; height:40px; background:rgba(59,130,246,0.1); color:#3b82f6; flex-shrink:0;">
-                                    <i class="fa-solid fa-users"></i>
-                                </div>
-                                <span class="badge rounded-pill" style="background:#e8f0fe; color:#1a73e8; font-size:.6rem;">آخر 5 دورات</span>
+                    <div class="card border-0 shadow-sm rounded-4 h-100" style="background: rgba(255,255,255,0.9); backdrop-filter: blur(10px);">
+                        <div class="card-body p-4 text-center">
+                            <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 50px; height: 50px; background-color: rgba(59, 130, 246, 0.1); color: #3b82f6;">
+                                <i class="fa-solid fa-users fs-4"></i>
                             </div>
-                            <h6 class="text-muted fw-bold mb-1" style="font-size:.8rem;">إجمالي المسجلين</h6>
+                            <h6 class="text-muted fw-bold mb-1">إجمالي المسجلين</h6>
                             <h3 class="fw-bold mb-0 text-dark" dir="ltr"><?= number_format($stats['total_inscrits'], 0, ',', ' ') ?></h3>
-                            <small class="text-primary fw-bold mb-2">منهم <span dir="ltr"><?= number_format($stats['inscrits_femmes'], 0, ',', ' ') ?></span> إناث
-                                <?php if ($stats['total_inscrits'] > 0): ?>
-                                <span class="text-muted fw-normal">(<?= round(($stats['inscrits_femmes'] / $stats['total_inscrits']) * 100) ?>%)</span>
-                                <?php endif; ?>
-                            </small>
-                            <div class="mt-auto pt-2 border-top" style="font-size:.65rem; color:#6c757d; line-height:1.4;">
-                                <i class="fa-solid fa-circle-info me-1 text-primary opacity-75"></i>
-                                المرشحون المسجلون في العروض خلال الدورات 2024-2026
-                            </div>
+                            <small class="text-primary fw-bold">منهم <span dir="ltr"><?= number_format($stats['inscrits_femmes'], 0, ',', ' ') ?></span> إناث</small>
                         </div>
                     </div>
                 </div>
-
-                <!-- Actifs -->
+                
                 <div class="col-md-6 col-lg-3">
-                    <div class="card kpi-card premium-kpi-card kpi-actifs border-0 shadow-sm rounded-4 h-100" style="background: rgba(255,255,255,0.95);">
-                        <div class="card-body p-3 d-flex flex-column">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <div class="rounded-circle d-inline-flex align-items-center justify-content-center" style="width:40px; height:40px; background:rgba(16,185,129,0.1); color:#10b981; flex-shrink:0;">
-                                    <i class="fa-solid fa-user-check"></i>
-                                </div>
-                                <span class="badge rounded-pill" style="background:#e6f4ea; color:#137333; font-size:.6rem;">لم يتخرجوا بعد</span>
+                    <div class="card border-0 shadow-sm rounded-4 h-100" style="background: rgba(255,255,255,0.9); backdrop-filter: blur(10px);">
+                        <div class="card-body p-4 text-center">
+                            <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 50px; height: 50px; background-color: rgba(16, 185, 129, 0.1); color: #10b981;">
+                                <i class="fa-solid fa-user-graduate fs-4"></i>
                             </div>
-                            <h6 class="text-muted fw-bold mb-1" style="font-size:.8rem;">الطلاب النشطون</h6>
+                            <h6 class="text-muted fw-bold mb-1" title="الناشطون = المستمرون في الأقسام (apprenant) + المسجلون المنتظرون — Active = Continuing + Registered">الطلاب النشطين</h6>
                             <h3 class="fw-bold mb-0 text-dark" dir="ltr"><?= number_format($stats['total_actifs'] ?? $stats['total_diplomes'] ?? 0, 0, ',', ' ') ?></h3>
-                            <small class="text-success fw-bold mb-2">منهم <span dir="ltr"><?= number_format($stats['actifs_femmes'] ?? $stats['diplomes_femmes'] ?? 0, 0, ',', ' ') ?></span> إناث</small>
-                            <div class="mt-auto pt-2 border-top" style="font-size:.65rem; color:#6c757d; line-height:1.4;">
-                                <i class="fa-solid fa-circle-info me-1 text-success opacity-75"></i>
-                                مسجلون في أقسام نشطة ولم يُسجَّل تخرجهم بعد (apprenant - apprenant_fin)
-                            </div>
+                            <small class="text-success fw-bold">منهم <span dir="ltr"><?= number_format($stats['actifs_femmes'] ?? $stats['diplomes_femmes'] ?? 0, 0, ',', ' ') ?></span> إناث</small>
                         </div>
                     </div>
                 </div>
 
-                <!-- Taux Couverture -->
+
                 <div class="col-md-6 col-lg-3">
-                    <div class="card kpi-card premium-kpi-card kpi-couverture border-0 shadow-sm rounded-4 h-100" style="background: rgba(255,255,255,0.95);">
-                        <div class="card-body p-3 d-flex flex-column">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <div class="rounded-circle d-inline-flex align-items-center justify-content-center" style="width:40px; height:40px; background:rgba(245,158,11,0.1); color:#f59e0b; flex-shrink:0;">
-                                    <i class="fa-solid fa-bullseye"></i>
-                                </div>
-                                <span class="badge rounded-pill" style="background:#fff8e1; color:#f59e0b; font-size:.6rem;">نسبة الاستيعاب</span>
+                    <div class="card border-0 shadow-sm rounded-4 h-100" style="background: rgba(255,255,255,0.9); backdrop-filter: blur(10px);">
+                        <div class="card-body p-4 text-center">
+                            <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 50px; height: 50px; background-color: rgba(245, 158, 11, 0.1); color: #f59e0b;">
+                                <i class="fa-solid fa-bullseye fs-4"></i>
                             </div>
-                            <h6 class="text-muted fw-bold mb-1" style="font-size:.8rem;">نسبة التغطية</h6>
+                            <h6 class="text-muted fw-bold mb-1">نسبة التغطية</h6>
                             <h3 class="fw-bold mb-0 text-dark"><?= $stats['taux_inscrits_prevu'] ?>%</h3>
-                            <small class="text-warning fw-bold mb-2">من الطاقة الاستيعابية الإجمالية</small>
-                            <div class="progress mb-1" style="height:4px;">
-                                <div class="progress-bar bg-warning" style="width:<?= min(100, $stats['taux_inscrits_prevu']) ?>%;"></div>
-                            </div>
-                            <div class="mt-auto pt-2 border-top" style="font-size:.65rem; color:#6c757d; line-height:1.4;">
-                                <i class="fa-solid fa-circle-info me-1 text-warning opacity-75"></i>
-                                (المسجلون ÷ المقاعد المتاحة) × 100 — آخر 5 دورات
-                            </div>
+                            <small class="text-warning fw-bold">من الطاقة الاستيعابية</small>
                         </div>
                     </div>
                 </div>
 
-                <!-- Taux Activité -->
                 <div class="col-md-6 col-lg-3">
-                    <div class="card kpi-card premium-kpi-card kpi-laureats border-0 shadow-sm rounded-4 h-100" style="background: rgba(255,255,255,0.95);">
-                        <div class="card-body p-3 d-flex flex-column">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <div class="rounded-circle d-inline-flex align-items-center justify-content-center" style="width:40px; height:40px; background:rgba(139,92,246,0.1); color:#8b5cf6; flex-shrink:0;">
-                                    <i class="fa-solid fa-chart-line"></i>
-                                </div>
-                                <span class="badge rounded-pill" style="background:#f3e8ff; color:#7c3aed; font-size:.6rem;">معدل النشاط</span>
+                    <div class="card border-0 shadow-sm rounded-4 h-100" style="background: rgba(255,255,255,0.9); backdrop-filter: blur(10px);">
+                        <div class="card-body p-4 text-center">
+                            <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 50px; height: 50px; background-color: rgba(139, 92, 246, 0.1); color: #8b5cf6;">
+                                <i class="fa-solid fa-chart-line fs-4"></i>
                             </div>
-                            <h6 class="text-muted fw-bold mb-1" style="font-size:.8rem;">نسبة النشاط</h6>
-                            <h3 class="fw-bold mb-0 text-dark"><?= $stats['taux_actifs_prevu'] ?? $stats['taux_diplomes_prevu'] ?>%</h3>
-                            <small class="fw-bold mb-2" style="color:#8b5cf6;">معدل الطلاب النشطين / المقاعد</small>
-                            <div class="progress mb-1" style="height:4px;">
-                                <div class="progress-bar" style="width:<?= min(100, $stats['taux_actifs_prevu'] ?? $stats['taux_diplomes_prevu'] ?? 0) ?>%; background:#8b5cf6;"></div>
-                            </div>
-                            <div class="mt-auto pt-2 border-top" style="font-size:.65rem; color:#6c757d; line-height:1.4;">
-                                <i class="fa-solid fa-circle-info me-1 opacity-75" style="color:#8b5cf6;"></i>
-                                (النشطون ÷ المقاعد المتاحة) × 100 — آخر 5 دورات
-                            </div>
+                            <h6 class="text-muted fw-bold mb-1">نسبة النشاط</h6>
+                            <h3 class="fw-bold mb-0 text-dark"><?= $stats['taux_diplomes_prevu'] ?>%</h3>
+                            <small class="text-purple fw-bold" style="color:#8b5cf6;">معدل الطلاب للمقاعد</small>
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
-
 
     <div class="row g-4 mb-4">
         <!-- Distribution by Dispositif -->
@@ -386,17 +151,10 @@ body {
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php 
-                                $hasDispositifs = false;
-                                foreach($dispositifs as $d) {
-                                    if ($d['inscrits'] > 0) $hasDispositifs = true;
-                                }
-                                if(!$hasDispositifs): ?>
+                                <?php if(empty($dispositifs)): ?>
                                     <tr><td colspan="4" class="text-center text-muted">لا توجد بيانات متاحة</td></tr>
                                 <?php else: ?>
-                                    <?php foreach($dispositifs as $d): 
-                                        if ($d['inscrits'] == 0) continue;
-                                    ?>
+                                    <?php foreach($dispositifs as $d): ?>
                                     <tr>
                                         <td>
                                             <div class="fw-bold text-dark" style="font-size: 0.9rem;"><?= $d['nom_ar'] ?></div>
@@ -437,16 +195,10 @@ body {
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php 
-                                $hasFilieres = false;
-                                foreach($filieres as $f) {
-                                    if ($f['inscrits'] > 0) $hasFilieres = true;
-                                }
-                                if(!$hasFilieres): ?>
+                                <?php if(empty($filieres)): ?>
                                     <tr><td colspan="4" class="text-center text-muted">لا توجد بيانات متاحة</td></tr>
                                 <?php else: ?>
                                     <?php foreach($filieres as $f): 
-                                        if ($f['inscrits'] == 0) continue;
                                         $percent = ($f['inscrits'] / max(1, $f['places'])) * 100;
                                     ?>
                                     <tr>
@@ -476,194 +228,11 @@ body {
         </div>
     </div>
 
-
-    <!-- ===== TRAINEE STATISTICS SECTION ===== -->
-    <?php $ts = $trainee_stats ?? []; ?>
-    <div class="card border-0 shadow-sm rounded-4 mb-4 no-print" id="traineeStatsSection">
-        <div class="card-header bg-white border-0 pt-4 pb-3 px-4 d-flex justify-content-between align-items-center">
-            <h5 class="fw-bold mb-0 text-dark">
-                <i class="fa-solid fa-users-line text-primary me-2"></i>
-                إحصائيات المتربصين والطلاب
-                <span class="badge bg-primary-subtle text-primary rounded-pill ms-2 fw-normal" style="font-size:.75rem;">بيانات حية</span>
-            </h5>
-            <button class="btn btn-sm btn-link text-muted p-0" onclick="document.getElementById('traineeStatsBody').classList.toggle('d-none')" title="إخفاء / إظهار">
-                <i class="fa-solid fa-chevron-up"></i>
-            </button>
-        </div>
-        <div class="card-body px-4 pb-4" id="traineeStatsBody">
-
-            <!-- KPI Cards Row -->
-            <div class="row g-3 mb-4">
-                <!-- Total Actifs -->
-                <div class="col-6 col-md-3">
-                    <div class="rounded-4 p-3 h-100 text-white d-flex flex-column justify-content-between"
-                         style="background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%);">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <div class="bg-white bg-opacity-25 rounded-3 p-2"><i class="fa-solid fa-user-check fa-lg"></i></div>
-                            <span class="badge bg-white text-primary fw-bold small rounded-pill">نشطون</span>
-                        </div>
-                        <div>
-                            <div class="fw-bold mb-0" style="font-size:1.5rem; letter-spacing:-.5px;"><?= number_format($ts['total_actifs'] ?? 0) ?></div>
-                            <div class="small opacity-75">الطلاب النشطين</div>
-                            <div class="small mt-1 opacity-85">
-                                <i class="fa-solid fa-venus me-1"></i>
-                                <?= number_format($ts['actifs_femmes'] ?? 0) ?> إناث
-                                <?php if (($ts['total_actifs'] ?? 0) > 0): ?>
-                                    (<?= round(($ts['actifs_femmes'] / $ts['total_actifs']) * 100) ?>%)
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Total Inscrits -->
-                <div class="col-6 col-md-3">
-                    <div class="rounded-4 p-3 h-100 text-white d-flex flex-column justify-content-between"
-                         style="background: linear-gradient(135deg, #00897b 0%, #00695c 100%);">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <div class="bg-white bg-opacity-25 rounded-3 p-2"><i class="fa-solid fa-user-graduate fa-lg"></i></div>
-                            <span class="badge bg-white text-success fw-bold small rounded-pill">مسجلون</span>
-                        </div>
-                        <div>
-                            <div class="fw-bold mb-0" style="font-size:1.5rem; letter-spacing:-.5px;"><?= number_format($ts['total_inscrits'] ?? 0) ?></div>
-                            <div class="small opacity-75">إجمالي المسجلين</div>
-                            <div class="small mt-1 opacity-85">
-                                <i class="fa-solid fa-venus me-1"></i>
-                                <?= number_format($ts['inscrits_femmes'] ?? 0) ?> إناث
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Taux Couverture -->
-                <div class="col-6 col-md-3">
-                    <div class="rounded-4 p-3 h-100 text-white d-flex flex-column justify-content-between"
-                         style="background: linear-gradient(135deg, #f57c00 0%, #e65100 100%);">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <div class="bg-white bg-opacity-25 rounded-3 p-2"><i class="fa-solid fa-chart-pie fa-lg"></i></div>
-                            <span class="badge bg-white text-warning fw-bold small rounded-pill">تغطية</span>
-                        </div>
-                        <div>
-                            <div class="fw-bold mb-0" style="font-size:1.5rem; letter-spacing:-.5px;"><?= $ts['taux_couverture'] ?? 0 ?>%</div>
-                            <div class="small opacity-75">نسبة التغطية</div>
-                            <div class="small mt-1 opacity-85">من الطاقة الاستيعابية</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Total Diplômés -->
-                <div class="col-6 col-md-3">
-                    <div class="rounded-4 p-3 h-100 text-white d-flex flex-column justify-content-between"
-                         style="background: linear-gradient(135deg, #6a1b9a 0%, #4a148c 100%);">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <div class="bg-white bg-opacity-25 rounded-3 p-2"><i class="fa-solid fa-award fa-lg"></i></div>
-                            <span class="badge bg-white text-purple fw-bold small rounded-pill">خريجون</span>
-                        </div>
-                        <div>
-                            <div class="fw-bold mb-0" style="font-size:1.5rem; letter-spacing:-.5px;"><?= number_format($ts['total_diplomes'] ?? 0) ?></div>
-                            <div class="small opacity-75">إجمالي الخريجين الناجحين</div>
-                            <div class="small mt-1 opacity-85">
-                                <i class="fa-solid fa-venus me-1"></i>
-                                <?= number_format($ts['diplomes_femmes'] ?? 0) ?> إناث
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Session Breakdown -->
-            <?php if (!empty($ts['by_session'])): ?>
-            <div>
-                <h6 class="fw-bold text-secondary mb-3 small text-uppercase letter-spacing-1">
-                    <i class="fa-solid fa-calendar-days me-2 text-primary"></i>
-                    تفصيل المتربصين النشطين حسب الدورة
-                </h6>
-                <div class="row g-2">
-                    <?php
-                    $sessColors = ['#1a73e8','#00897b','#f57c00','#6a1b9a','#c62828','#0277bd','#2e7d32','#4e342e'];
-                    foreach ($ts['by_session'] as $si => $sess):
-                        $color = $sessColors[$si % count($sessColors)];
-                        $year = !empty($sess['DateD']) ? date('Y', strtotime($sess['DateD'])) : '';
-                        $actifsSess = (int)($sess['actifs'] ?? 0);
-                        $totalActifs = max(1, (int)($ts['total_actifs'] ?? 1));
-                        $pct = round(($actifsSess / $totalActifs) * 100);
-                    ?>
-                    <div class="col-6 col-md-3">
-                        <div class="border rounded-4 p-3 h-100" style="border-color: <?= $color ?>22 !important; background: <?= $color ?>08;">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <span class="badge rounded-pill fw-bold" style="background:<?= $color ?>; font-size:.7rem;">
-                                    S<?= $si + 1 ?>
-                                </span>
-                                <span class="text-muted" style="font-size:.7rem;"><?= $year ?></span>
-                            </div>
-                            <div class="fw-bold mb-0" style="font-size:1.1rem; color:<?= $color ?>;">
-                                <?= number_format($actifsSess) ?>
-                            </div>
-                            <div class="small text-muted mt-1"><?= htmlspecialchars($sess['session_nom']) ?></div>
-                            <div class="progress mt-2 rounded-pill" style="height:4px;">
-                                <div class="progress-bar" role="progressbar" style="width:<?= $pct ?>%; background:<?= $color ?>;"></div>
-                            </div>
-                            <div class="d-flex justify-content-between mt-1">
-                                <span class="text-muted" style="font-size:.65rem;"><i class="fa-solid fa-venus"></i> <?= number_format($sess['actifs_femmes'] ?? 0) ?></span>
-                                <span class="text-muted" style="font-size:.65rem;"><?= $pct ?>%</span>
-                            </div>
-                        </div>
-                    </div>
-                    <?php endforeach; ?>
-                </div>
-
-                <!-- Summary bar -->
-                <div class="mt-3 p-3 rounded-3 d-flex flex-wrap gap-3 justify-content-between align-items-center"
-                     style="background: linear-gradient(90deg, #f8f9fa 0%, #e8f4fd 100%); border: 1px solid #dee2e6;">
-                    <div class="text-center">
-                        <div class="fw-bold text-primary" style="font-size:1.1rem;"><?= number_format($ts['total_actifs'] ?? 0) ?></div>
-                        <div class="small text-muted">إجمالي المتربصين النشطين</div>
-                        <div class="small text-muted opacity-75">مقيدون بالدراسة</div>
-                    </div>
-                    <div class="text-center">
-                        <div class="fw-bold text-success" style="font-size:1.1rem;"><?= number_format($ts['total_reconduits'] ?? 0) ?></div>
-                        <div class="small text-muted">المتربصون المستمرون S2→S<?= count($ts['by_session'] ?? []) ?></div>
-                        <div class="small text-muted opacity-75">أقسام مستمرة</div>
-                    </div>
-                    <div class="text-center">
-                        <div class="fw-bold text-info" style="font-size:1.1rem;"><?= number_format($ts['total_filles'] ?? 0) ?></div>
-                        <div class="small text-muted">الطالبات — إناث</div>
-                        <?php if (($ts['total_actifs'] ?? 0) > 0): ?>
-                        <div class="small text-muted opacity-75"><?= round(($ts['total_filles'] / $ts['total_actifs']) * 100) ?>% نسبة تمثيل الإناث</div>
-                        <?php endif; ?>
-                    </div>
-                    <div class="text-center">
-                        <div class="fw-bold text-warning" style="font-size:1.1rem;"><?= number_format($ts['sections_nouvelles'] ?? 0) ?></div>
-                        <div class="small text-muted">الأقسام الجديدة S1</div>
-                        <div class="small text-muted opacity-75">الدورة الحالية</div>
-                    </div>
-                    <div class="text-center">
-                        <div class="fw-bold" style="font-size:1.1rem; color:#6a1b9a;"><?= number_format($ts['total_diplomes'] ?? 0) ?></div>
-                        <div class="small text-muted">إجمالي الخريجين (الناجحين)</div>
-                        <div class="small text-muted opacity-75">حائزو شهادات التخرج</div>
-                    </div>
-                </div>
-            </div>
-            <?php endif; ?>
-
-        </div>
-    </div>
-    <!-- ===== END TRAINEE STATISTICS SECTION ===== -->
-
     <!-- Detailed Offers Table -->
-    <div class="card table-card-container border-0 shadow-sm rounded-4 mb-4">
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
         <div class="card-header bg-white border-0 pt-4 pb-0 px-4 d-flex justify-content-between align-items-center">
-            <div class="d-flex align-items-center gap-2">
-                <h5 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-list-check text-primary me-2"></i> تفاصيل الفروع والتخصصات المبرمجة</h5>
-                <?php
-                $hasFilter = !empty($_GET['filter_etab']) || !empty($_GET['filter_session']) || !empty($_GET['filter_mode']) || !empty($_GET['filter_status']) || !empty($_GET['filter_wilaya']);
-                if ($hasFilter): ?>
-                    <a href="<?= route('offres.index') ?>" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold">
-                        <i class="fa-solid fa-xmark me-1"></i> إلغاء الفلاتر
-                    </a>
-                <?php endif; ?>
-            </div>
-
+            <h5 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-list-check text-primary me-2"></i> تفاصيل الفروع والتخصصات المبرمجة</h5>
+            
             <div class="d-flex gap-2 align-items-center no-print">
                 <button onclick="exportTableToExcel('offresTable', 'offres_formation.xls')" class="btn btn-sm btn-success rounded-pill px-3 fw-bold shadow-sm">
                     <i class="fa-solid fa-file-excel me-1"></i> Excel
@@ -674,194 +243,80 @@ body {
                 <button onclick="window.print()" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold shadow-sm">
                     <i class="fa-solid fa-print me-1"></i> طباعة
                 </button>
-                <input type="text" id="search_offre" onkeyup="applyFilters()" class="form-control rounded-pill bg-light border-0 px-4" placeholder="بحث عن تخصص..." style="width: 220px;">
-                <!-- Column Selector Dropdown -->
-                <div class="dropdown d-inline-block no-print">
-                    <button class="btn btn-light rounded-pill px-3 dropdown-toggle shadow-sm" type="button" id="columnSelectorBtn" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" style="border: 1px solid #cbd5e1; font-weight:600; font-size:0.88rem;">
-                        <i class="fa-solid fa-table-columns me-1 text-primary"></i> الأعمدة / Colonnes
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 p-3 fs-7" aria-labelledby="columnSelectorBtn" style="max-height: 400px; overflow-y: auto; border-radius: 12px; min-width: 260px; text-align: right; z-index: 1050;">
-                        <h6 class="dropdown-header text-muted fw-bold p-0 mb-2 border-bottom pb-1">إظهار / إخفاء الأعمدة</h6>
-                        <?php
-                        $cols = [
-                            1 => 'رمز التخصص (Code Spec)',
-                            3 => 'الدورة التكوينية (Session)',
-                            4 => 'تاريخ التكوين (Dates)',
-                            7 => 'عدد الأفواج (Groupes)',
-                            8 => 'المستوى (Niveau)',
-                            9 => 'المستوى المطلوب (Niveau Requis)',
-                            10 => 'الدوام (Régime)',
-                            11 => 'صفة الفرع (Statut Branche)',
-                            12 => 'التأطير (Encadrement)',
-                            13 => 'البرنامج (Programme)',
-                            14 => 'التجهيزات (Equipements)',
-                            15 => 'المدة (Durée)',
-                            18 => 'المسجلون إناث (Femmes Inscr)',
-                            19 => 'الناجحون (Lauréats)',
-                            20 => 'الناجحون إناث (Femmes Laur)',
-                            21 => 'مصادقة المؤسسة (Valid Etab)',
-                            22 => 'مصادقة المديرية (Valid Dfep)'
-                        ];
-                        foreach ($cols as $idx => $label):
-                        ?>
-                        <li class="mb-1">
-                            <label class="dropdown-item d-flex align-items-center gap-2 rounded px-2 py-1 cursor-pointer">
-                                <input type="checkbox" class="col-toggle-checkbox form-check-input m-0" data-column-index="<?= $idx ?>" onchange="toggleTableColumn(<?= $idx ?>, this.checked)">
-                                <span><?= $label ?></span>
-                            </label>
-                        </li>
-                        <?php endforeach; ?>
-                    </ul>
-                </div>
-                <button class="btn btn-light rounded-circle <?= $hasFilter ? 'text-primary bg-primary-subtle border-primary' : '' ?>"
-                        id="filterToggleBtn" title="تصفية متقدمة" type="button" onclick="offresToggleFilter()">
-                    <i class="fa-solid fa-filter" id="filterToggleIcon"></i>
-                </button>
+                <input type="text" id="search_offre" onkeyup="applyFilters()" class="form-control rounded-pill bg-light border-0 px-4" placeholder="بحث عن تخصص..." style="width: 250px;">
+                <button class="btn btn-light rounded-circle" data-bs-toggle="collapse" data-bs-target="#filterCollapse" title="تصفية متقدمة"><i class="fa-solid fa-filter"></i></button>
             </div>
         </div>
 
-        <!-- ════ Filter Bar (Server-Side GET Form) ════ -->
-        <div id="filterCollapse" class="no-print border-bottom border-light px-4 pt-3 pb-3 bg-light-subtle"
-             style="display:<?= $hasFilter ? 'block' : 'none' ?>;">
-            <form method="GET" action="" id="offresFilterForm">
-                <div class="row g-3 align-items-end">
-
-                    <?php if ($is_central): ?>
-                    <!-- ① الولاية (للمستوى المركزي فقط) -->
-                    <div class="col-12 col-md-2">
-                        <label class="form-label small fw-bold text-muted mb-1">
-                            <i class="fa-solid fa-map-marker-alt me-1 text-primary"></i>الولاية
-                        </label>
-                        <select name="filter_wilaya" id="filter_wilaya"
-                                class="form-select rounded-pill border-light bg-light"
-                                onchange="const etab = document.getElementById('filter_etab'); if(etab) etab.value = ''; const mode = document.getElementById('filter_mode'); if(mode) mode.value = ''; const sess = document.getElementById('filter_session'); if(sess) sess.value = ''; this.form.submit();">
-                            <option value="">كل الولايات</option>
-                            <?php
-                            // Load wilayas (DFEPs) list
-                            $dfepList = \App\Core\Database::getInstance()->getConnection()
-                                ->query("SELECT IDDFEP as id, Nom as nom FROM dfep ORDER BY Nom ASC")
-                                ->fetchAll(\PDO::FETCH_ASSOC);
-                            foreach ($dfepList as $dfep):
-                            ?>
-                            <option value="<?= $dfep['id'] ?>"
-                                <?= (isset($_GET['filter_wilaya']) && $_GET['filter_wilaya'] == $dfep['id']) ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($dfep['nom']) ?>
-                            </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <?php endif; ?>
-
-                    <?php if ($is_wilaya || $is_central): ?>
-                    <!-- ② المؤسسة -->
-                    <div class="col-12 col-md-3" id="filter_etab_wrapper">
-                        <label class="form-label small fw-bold text-muted mb-1">
-                            <i class="fa-solid fa-building-flag me-1 text-success"></i>المؤسسة التكوينية
-                        </label>
-                        <select name="filter_etab" id="filter_etab"
-                                class="form-select rounded-pill border-light bg-light"
-                                onchange="const mode = document.getElementById('filter_mode'); if(mode) mode.value = ''; const sess = document.getElementById('filter_session'); if(sess) sess.value = ''; this.form.submit();">
-                            <option value="">كل المؤسسات</option>
-                            <?php foreach ($etablissements as $e): ?>
-                            <option value="<?= htmlspecialchars($e['id']) ?>"
-                                <?= (isset($_GET['filter_etab']) && $_GET['filter_etab'] == $e['id']) ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($e['nom_ar']) ?>
-                            </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <?php endif; ?>
-
-                    <!-- ③ نمط التكوين -->
-                    <div class="col-12 col-md-2">
-                        <label class="form-label small fw-bold text-muted mb-1">
-                            <i class="fa-solid fa-chalkboard-user me-1 text-warning"></i>نمط التكوين
-                        </label>
-                        <select name="filter_mode" id="filter_mode"
-                                class="form-select rounded-pill border-light bg-light"
-                                onchange="const sess = document.getElementById('filter_session'); if(sess) sess.value = ''; this.form.submit();"
-                                <?= ((int)(session('user.IDMode_formation') ?? 0) === 10) ? 'disabled' : '' ?>>
-                            <?php if ((int)(session('user.IDMode_formation') ?? 0) === 10): ?>
-                                <option value="10" selected>تكوين عن طريق التمهين / Apprentissage</option>
-                            <?php else: ?>
-                                <option value="">كل الأنماط</option>
-                                <?php foreach ($modes_formation ?? [] as $m): ?>
-                                    <option value="<?= htmlspecialchars($m['id']) ?>" <?= (isset($_GET['filter_mode']) && $_GET['filter_mode'] == $m['id']) ? 'selected' : '' ?>>
-                                        <?= htmlspecialchars($m['nom_ar']) ?> / <?= htmlspecialchars($m['nom_fr']) ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            <?php endif; ?>
-                        </select>
-                    </div>
-
-                    <!-- ④ الدورة التكوينية -->
-                    <div class="col-12 col-md-3">
-                        <label class="form-label small fw-bold text-muted mb-1">
-                            <i class="fa-solid fa-calendar-days me-1 text-info"></i>الدورة التكوينية
-                        </label>
-                        <select name="filter_session" id="filter_session"
-                                class="form-select rounded-pill border-light bg-light"
-                                onchange="this.form.submit();">
-                            <option value="">كل الدورات</option>
-                            <?php foreach ($sessions as $s): ?>
-                            <option value="<?= $s['id'] ?>"
-                                <?= (isset($_GET['filter_session']) && $_GET['filter_session'] == $s['id']) ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($s['intitule_ar']) ?>
-                            </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-
-                    <!-- ⑤ حالة العرض -->
-                    <div class="col-12 col-md-2">
-                        <label class="form-label small fw-bold text-muted mb-1">
-                            <i class="fa-solid fa-circle-check me-1 text-success"></i>الحالة
-                        </label>
-                        <select name="filter_status" id="filter_status"
-                                class="form-select rounded-pill border-light bg-light"
-                                onchange="this.form.submit();">
-                            <option value="">كل الحالات</option>
-                            <option value="brouillon"      <?= (($_GET['filter_status'] ?? '') === 'brouillon')      ? 'selected' : '' ?>>مسودة</option>
-                            <option value="soumis"         <?= (($_GET['filter_status'] ?? '') === 'soumis')         ? 'selected' : '' ?>>مرفوع للولاية</option>
-                            <option value="valide_wilaya"  <?= (($_GET['filter_status'] ?? '') === 'valide_wilaya')  ? 'selected' : '' ?>>مصادق عليه ولائياً</option>
-                            <option value="valide_central" <?= (($_GET['filter_status'] ?? '') === 'valide_central') ? 'selected' : '' ?>>مقبول مركزياً</option>
-                            <option value="rejete_wilaya"  <?= (($_GET['filter_status'] ?? '') === 'rejete_wilaya')  ? 'selected' : '' ?>>مرفوض ولائياً</option>
-                            <option value="rejete_central" <?= (($_GET['filter_status'] ?? '') === 'rejete_central') ? 'selected' : '' ?>>مرفوض مركزياً</option>
-                        </select>
-                    </div>
-
+        <!-- Collapsible Filters Bar -->
+        <div class="collapse show no-print border-bottom border-light px-4 pt-3 pb-3 bg-light-subtle" id="filterCollapse">
+            <div class="row g-3">
+                <!-- Session Filter -->
+                <div class="col-12 col-md-3">
+                    <label class="form-label small fw-bold text-muted mb-1">الدورة التكوينية (Session)</label>
+                    <select id="filter_session" class="form-select rounded-pill border-light bg-light" onchange="applyFilters()">
+                        <option value="">كل الدورات</option>
+                        <?php foreach($sessions as $s): ?>
+                            <option value="<?= $s['id'] ?>" <?= (isset($_GET['filter_session']) && $_GET['filter_session'] == $s['id']) ? 'selected' : '' ?>><?= htmlspecialchars($s['intitule_ar']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
                 </div>
-            </form>
+                <!-- Etablissement Filter -->
+                <?php if ($is_wilaya || $is_central): ?>
+                <div class="col-12 col-md-3">
+                    <label class="form-label small fw-bold text-muted mb-1">المؤسسة التكوينية (Etablissement)</label>
+                    <select id="filter_etab" class="form-select rounded-pill border-light bg-light" onchange="applyFilters()">
+                        <option value="">كل المؤسسات</option>
+                        <?php foreach($etablissements as $e): ?>
+                            <option value="<?= htmlspecialchars($e['id']) ?>" <?= (isset($_GET['filter_etab']) && $_GET['filter_etab'] == $e['id']) ? 'selected' : '' ?>><?= htmlspecialchars($e['nom_ar']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <?php endif; ?>
+                <!-- Mode Filter -->
+                <div class="col-12 col-md-3">
+                    <label class="form-label small fw-bold text-muted mb-1">نمط التكوين (Mode)</label>
+                    <select id="filter_mode" class="form-select rounded-pill border-light bg-light" onchange="applyFilters()" <?= ((int)(session('user.IDMode_formation') ?? 0) === 10) ? 'disabled' : '' ?>>
+                        <?php if ((int)(session('user.IDMode_formation') ?? 0) === 10): ?>
+                            <option value="apprentissage" selected>تمهين / Apprentissage</option>
+                        <?php else: ?>
+                            <option value="">كل الأنماط</option>
+                            <option value="apprentissage" <?= (isset($_GET['filter_mode']) && $_GET['filter_mode'] === 'apprentissage') ? 'selected' : '' ?>>تمهين / Apprentissage</option>
+                            <option value="presentiel" <?= (isset($_GET['filter_mode']) && $_GET['filter_mode'] === 'presentiel') ? 'selected' : '' ?>>حضوري / Présentiel</option>
+                            <option value="residentiell" <?= (isset($_GET['filter_mode']) && $_GET['filter_mode'] === 'residentiell') ? 'selected' : '' ?>>إقامي / Résidentiel</option>
+                            <option value="continu" <?= (isset($_GET['filter_mode']) && $_GET['filter_mode'] === 'continu') ? 'selected' : '' ?>>تكوين متواصل / Continu</option>
+                        <?php endif; ?>
+                    </select>
+                </div>
+                <!-- Status Filter -->
+                <div class="col-12 col-md-3">
+                    <label class="form-label small fw-bold text-muted mb-1">حالة العرض (Statut)</label>
+                    <select id="filter_status" class="form-select rounded-pill border-light bg-light" onchange="applyFilters()">
+                        <option value="">كل الحالات</option>
+                        <option value="brouillon" <?= (isset($_GET['filter_status']) && $_GET['filter_status'] === 'brouillon') ? 'selected' : '' ?>>مسودة</option>
+                        <option value="soumis" <?= (isset($_GET['filter_status']) && $_GET['filter_status'] === 'soumis') ? 'selected' : '' ?>>مرفوع للولاية</option>
+                        <option value="valide_wilaya" <?= (isset($_GET['filter_status']) && $_GET['filter_status'] === 'valide_wilaya') ? 'selected' : '' ?>>مصادق عليه ولائيا</option>
+                        <option value="valide_central" <?= (isset($_GET['filter_status']) && $_GET['filter_status'] === 'valide_central') ? 'selected' : '' ?>>مقبول مركزيا</option>
+                        <option value="rejete_wilaya" <?= (isset($_GET['filter_status']) && $_GET['filter_status'] === 'rejete_wilaya') ? 'selected' : '' ?>>مرفوض ولائيا</option>
+                        <option value="rejete_central" <?= (isset($_GET['filter_status']) && $_GET['filter_status'] === 'rejete_central') ? 'selected' : '' ?>>مرفوض مركزيا</option>
+                    </select>
+                </div>
+            </div>
         </div>
 
         <div class="card-body p-0 mt-2">
-            <div class="table-responsive" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
-                <table class="table table-hover align-middle mb-0" id="offresTable" style="width: 100%; table-layout: auto;">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" id="offresTable" style="min-width: 1100px;">
                     <thead class="bg-light text-muted small fw-bold">
                         <tr>
-                            <th class="ps-4" style="min-width:110px;">رمز العرض</th>
-                            <th style="min-width:90px;">رمز التخصص</th>
-                            <th class="text-center" style="min-width:120px;">النمط</th>
-                            <th style="min-width:130px;">الدورة التكوينية</th>
-                            <th style="min-width:130px;">تاريخ التكوين</th>
-                            <th style="min-width:260px;">الفرع / التخصص المهني</th>
-                            <th style="min-width:200px;">المؤسسة التكوينية</th>
-                            <th class="text-center">عدد الأفواج</th>
-                            <th class="text-center">المستوى</th>
+                            <th class="ps-4">رمز العرض</th>
+                            <th>الدورة التكوينية</th>
+                            <th>الفرع / التخصص المهني</th>
+                            <th>المؤسسة التكوينية</th>
                             <th class="text-center">المستوى المطلوب</th>
-                            <th class="text-center">الدوام</th>
-                            <th class="text-center">صفة الفرع</th>
-                            <th class="text-center">التأطير</th>
-                            <th class="text-center">البرنامج</th>
-                            <th class="text-center">التجهيزات</th>
                             <th class="text-center">المدة</th>
                             <th class="text-center">المقاعد</th>
                             <th class="text-center">المسجلين</th>
-                            <th class="text-center">منهم إناث</th>
-                            <th class="text-center">الناجحين</th>
-                            <th class="text-center">منهم إناث</th>
-                            <th class="text-center">مصادقة المؤسسة</th>
-                            <th class="text-center">مصادقة المديرية</th>
                             <th class="text-center">الحالة</th>
                             <th class="pe-4 text-end no-print no-export">الإجراءات</th>
                         </tr>
@@ -869,64 +324,20 @@ body {
                     <tbody>
                         <?php if(empty($offres_detail)): ?>
                             <tr>
-                                <td colspan="25" class="text-center py-4 text-muted">لا توجد عروض مبرمجة حالياً.</td>
+                                <td colspan="10" class="text-center py-4 text-muted">لا توجد عروض مبرمجة حالياً.</td>
                             </tr>
                         <?php else: ?>
                             <?php foreach($offres_detail as $od): ?>
-                            <tr style="transition: background 0.2s;" data-session-id="<?= htmlspecialchars($od['session_id'] ?? '') ?>" data-etab-id="<?= htmlspecialchars($od['etablissement_id'] ?? '') ?>">
+                            <tr style="transition: background 0.2s;">
                                 <td class="ps-4">
                                     <span class="badge bg-light text-primary border border-primary fw-bold" style="font-family:'Outfit'; font-size:0.8rem;"><?= $od['code'] ?></span>
-                                </td>
-                                <td>
-                                    <span class="badge bg-light text-dark border border-secondary fw-bold" style="font-family:'Outfit'; font-size:0.8rem;"><?= htmlspecialchars($od['spec_code'] ?: '—') ?></span>
-                                </td>
-                                <td class="text-center">
-                                    <?php
-                                    $modeId = (int)($od['mode_id'] ?? 1);
-                                    $modeName = $od['mode_formation'] ?? '';
-                                    // Pick badge color by mode
-                                    $modeBadgeClass = match($modeId) {
-                                        10 => 'bg-warning text-dark',   // تمهين
-                                        2  => 'bg-info text-white',     // متواصل
-                                        3  => 'bg-secondary text-white',// مسائي
-                                        default => 'bg-primary text-white'
-                                    };
-                                    $modeIcon = match($modeId) {
-                                        10 => 'fa-hammer',
-                                        2  => 'fa-rotate',
-                                        3  => 'fa-moon',
-                                        default => 'fa-chalkboard-user'
-                                    };
-                                    ?>
-                                    <span class="badge <?= $modeBadgeClass ?> rounded-pill px-2" style="font-size:0.72rem; white-space:nowrap;">
-                                        <i class="fa-solid <?= $modeIcon ?> me-1"></i><?= htmlspecialchars($modeName ?: '—') ?>
-                                    </span>
                                 </td>
                                 <td>
                                     <div class="fw-bold text-dark" style="font-size:0.85rem;"><?= htmlspecialchars($od['session_name'] ?: 'غير محددة') ?></div>
                                 </td>
                                 <td>
-                                    <div class="small fw-semibold text-muted" style="font-size:0.75rem; white-space: nowrap;">
-                                        <div>من: <?= $od['date_debut'] ? date('Y/m/d', strtotime($od['date_debut'])) : '—' ?></div>
-                                        <div>إلى: <?= $od['date_fin'] ? date('Y/m/d', strtotime($od['date_fin'])) : '—' ?></div>
-                                    </div>
-                                </td>
-                                <td style="max-width:260px; word-wrap:break-word; overflow-wrap:break-word; white-space:normal;">
-                                    <?php
-                                    // If mode is on-demand and custom names are set, use them
-                                    $hasCustomName = !empty($od['nom_spec_custom_ar']) || !empty($od['nom_spec_custom_fr']);
-                                    $dispAr = $hasCustomName && !empty($od['nom_spec_custom_ar'])
-                                        ? $od['nom_spec_custom_ar'] : $od['spec_ar'];
-                                    $dispFr = $hasCustomName && !empty($od['nom_spec_custom_fr'])
-                                        ? $od['nom_spec_custom_fr'] : $od['spec_fr'];
-                                    ?>
-                                    <div class="fw-bold text-dark mb-1" style="font-size:0.88rem; line-height:1.4; word-break:break-word;">
-                                        <?= htmlspecialchars($dispAr) ?>
-                                        <?php if ($hasCustomName): ?>
-                                            <span class="badge bg-purple-subtle text-purple border rounded-pill ms-1" style="font-size:0.65rem; background:#ede9fe; color:#7c3aed;"><i class="fa-solid fa-star fa-xs"></i> مخصص</span>
-                                        <?php endif; ?>
-                                    </div>
-                                    <div class="text-muted" style="font-size:0.78rem; line-height:1.35; word-break:break-word; white-space:normal; overflow-wrap:break-word;"><?= htmlspecialchars($dispFr) ?></div>
+                                    <div class="fw-bold text-dark mb-1" style="font-size:0.95rem;"><?= htmlspecialchars($od['spec_ar']) ?></div>
+                                    <div class="text-muted small" style="font-size:0.8rem;"><?= htmlspecialchars($od['spec_fr']) ?></div>
                                 </td>
                                 <td>
                                     <div class="text-muted fw-bold" style="font-size:0.8rem;"><i class="fa-solid fa-building-flag me-1"></i> <?= htmlspecialchars($od['centre']) ?></div>
@@ -934,47 +345,17 @@ body {
                                         <div class="small text-warning fw-bold mt-1"><i class="fa-solid fa-handshake me-1"></i> منتدبة: <?= htmlspecialchars($od['centre_delegue']) ?></div>
                                     <?php endif; ?>
                                 </td>
-                                <td class="text-center">
-                                    <span class="fw-bold text-dark fs-6"><?= $od['nbr_groupe'] ?></span>
-                                </td>
-                                <td class="text-center">
-                                    <span class="badge bg-info text-white rounded-pill px-3"><?= htmlspecialchars($od['level_name'] ?: '—') ?></span>
-                                </td>
                                 <td>
                                     <div class="text-center">
                                         <span class="badge bg-secondary text-white rounded-pill px-3"><?= htmlspecialchars($od['niveau_txt']) ?></span>
                                     </div>
                                 </td>
-                                <td class="text-center">
-                                    <span class="badge bg-light text-dark border border-light-subtle rounded-pill px-2"><?= htmlspecialchars($od['regime_cours'] ?: '—') ?></span>
-                                </td>
-                                <td class="text-center">
-                                    <span class="badge bg-light text-primary border border-primary-subtle rounded-pill px-2"><?= htmlspecialchars($od['type_branche'] ?: '—') ?></span>
-                                </td>
-                                <td class="text-center">
-                                    <?= $od['toggle_encadrement'] ? '<span class="badge bg-success-subtle text-success border border-success rounded-pill px-2"><i class="fa-solid fa-check"></i></span>' : '<span class="badge bg-danger-subtle text-danger border border-danger rounded-pill px-2"><i class="fa-solid fa-xmark"></i></span>' ?>
-                                </td>
-                                <td class="text-center">
-                                    <?= $od['toggle_programme'] ? '<span class="badge bg-success-subtle text-success border border-success rounded-pill px-2"><i class="fa-solid fa-check"></i></span>' : '<span class="badge bg-danger-subtle text-danger border border-danger rounded-pill px-2"><i class="fa-solid fa-xmark"></i></span>' ?>
-                                </td>
-                                <td class="text-center">
-                                    <?= $od['toggle_equipement'] ? '<span class="badge bg-success-subtle text-success border border-success rounded-pill px-2"><i class="fa-solid fa-check"></i></span>' : '<span class="badge bg-danger-subtle text-danger border border-danger rounded-pill px-2"><i class="fa-solid fa-xmark"></i></span>' ?>
-                                </td>
-                                <td class="text-center fw-bold text-dark" style="white-space: nowrap;"><?= $od['duree'] ?></td>
+                                <td class="text-center fw-bold text-dark"><?= $od['duree'] ?></td>
                                 <td class="text-center fw-bold text-muted fs-6"><?= $od['places'] ?></td>
                                 <td class="text-center">
                                     <span class="badge <?= $od['inscrits'] >= $od['places'] ? 'bg-success' : ($od['inscrits'] > 0 ? 'bg-warning text-dark' : 'bg-danger') ?> rounded-pill" style="font-size:0.85rem;">
                                         <?= $od['inscrits'] ?> / <?= $od['places'] ?>
                                     </span>
-                                </td>
-                                <td class="text-center fw-bold text-dark"><?= $od['inscrits_females'] ?></td>
-                                <td class="text-center fw-bold text-success fs-6"><?= $od['laureats'] ?></td>
-                                <td class="text-center fw-bold text-pink fs-6" style="color: #ec4899;"><?= $od['laureats_females'] ?></td>
-                                <td class="text-center">
-                                    <?= $od['valide'] ? '<span class="badge bg-success-subtle text-success border border-success rounded-pill px-2"><i class="fa-solid fa-circle-check"></i> نعم</span>' : '<span class="badge bg-warning-subtle text-warning border border-warning rounded-pill px-2"><i class="fa-solid fa-circle-question"></i> لا</span>' ?>
-                                </td>
-                                <td class="text-center">
-                                    <?= $od['valid_dfp'] ? '<span class="badge bg-success-subtle text-success border border-success rounded-pill px-2"><i class="fa-solid fa-circle-check"></i> نعم</span>' : '<span class="badge bg-warning-subtle text-warning border border-warning rounded-pill px-2"><i class="fa-solid fa-circle-question"></i> لا</span>' ?>
                                 </td>
                                 <td class="text-center">
                                     <?php
@@ -984,19 +365,19 @@ body {
                                             echo '<span class="badge bg-warning-subtle text-warning border border-warning rounded-pill px-3"><i class="fa-solid fa-pen-ruler me-1"></i> مسودة</span>';
                                             break;
                                         case 'مرفوع للولاية':
-                                            echo '<span class="badge bg-info-subtle text-info border border-info rounded-pill px-3"><i class="fa-solid fa-paper-plane me-1"></i> مرفوع</span>';
+                                            echo '<span class="badge bg-info-subtle text-info border border-info rounded-pill px-3"><i class="fa-solid fa-paper-plane me-1"></i> مرفوع للولاية</span>';
                                             break;
                                         case 'مصادق عليه ولائيا':
-                                            echo '<span class="badge bg-primary-subtle text-primary border border-primary rounded-pill px-3"><i class="fa-solid fa-circle-check me-1"></i> مصادق ولائيا</span>';
+                                            echo '<span class="badge bg-primary-subtle text-primary border border-primary rounded-pill px-3"><i class="fa-solid fa-circle-check me-1"></i> مصادق عليه ولائيا</span>';
                                             break;
                                         case 'مقبول مركزيا':
                                             echo '<span class="badge bg-success-subtle text-success border border-success rounded-pill px-3"><i class="fa-solid fa-award me-1"></i> مقبول مركزيا</span>';
                                             break;
                                         case 'مرفوض ولائيا':
-                                            echo '<span class="badge bg-danger-subtle text-danger border border-danger rounded-pill px-3 cursor-pointer" data-bs-toggle="tooltip" data-bs-html="true" title="سبب الرفض: ' . htmlspecialchars($od['motif_rejet'] ?? '') . '"><i class="fa-solid fa-circle-xmark me-1"></i> مرفوض ولائيا</span>';
+                                            echo '<span class="badge bg-danger-subtle text-danger border border-danger rounded-pill px-3 cursor-pointer" data-bs-toggle="tooltip" data-bs-html="true" title="سبب الرفض: ' . htmlspecialchars($od['motif_rejet'] ?? '') . '"><i class="fa-solid fa-circle-xmark me-1"></i> مرفوض ولائيا <i class="fa-solid fa-circle-info ms-1 text-danger"></i></span>';
                                             break;
                                         case 'مرفوض مركزيا':
-                                            echo '<span class="badge bg-danger-subtle text-danger border border-danger rounded-pill px-3 cursor-pointer" data-bs-toggle="tooltip" data-bs-html="true" title="سبب الرفض: ' . htmlspecialchars($od['motif_rejet'] ?? '') . '"><i class="fa-solid fa-circle-xmark me-1"></i> مرفوض مركزيا</span>';
+                                            echo '<span class="badge bg-danger-subtle text-danger border border-danger rounded-pill px-3 cursor-pointer" data-bs-toggle="tooltip" data-bs-html="true" title="سبب الرفض: ' . htmlspecialchars($od['motif_rejet'] ?? '') . '"><i class="fa-solid fa-circle-xmark me-1"></i> مرفوض مركزيا <i class="fa-solid fa-circle-info ms-1 text-danger"></i></span>';
                                             break;
                                         case 'مغلق':
                                             echo '<span class="badge bg-secondary-subtle text-secondary border border-secondary rounded-pill px-3"><i class="fa-solid fa-lock me-1"></i> مغلق</span>';
@@ -1010,7 +391,7 @@ body {
                                 <td class="pe-4 text-end no-print no-export">
                                     <!-- Hidden spans for client-side JS filtering -->
                                     <span class="d-none filter-session-id"><?= $od['session_id'] ?></span>
-                                    <span class="d-none filter-mode-val"><?= (int)$od['mode_id'] ?></span>
+                                    <span class="d-none filter-mode-val"><?= $od['mode_formation'] ?></span>
                                     <span class="d-none filter-status-val"><?php
                                         switch($status) {
                                             case 'مسودة': echo 'brouillon'; break;
@@ -1445,47 +826,7 @@ body {
                                             <?php endif; ?>
                                         </div>
                                     </div>
-
-                                    <!-- Custom Specialty Name Panel — shown only when mode requires it -->
-                                    <div class="col-12" id="add_custom_spec_panel" style="display:none;">
-                                        <div class="p-3 rounded-3 border border-2" style="border-color:#7c3aed!important; background:linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);">
-                                            <div class="d-flex align-items-center gap-2 mb-3">
-                                                <span class="badge rounded-pill px-3 py-2 fw-bold" style="background:#7c3aed; font-size:0.82rem;">
-                                                    <i class="fa-solid fa-wand-magic-sparkles me-1"></i> تسمية التخصص حسب الطلب
-                                                </span>
-                                                <small class="text-muted">— عندما يكون النمط "حسب الطلب"، يمكنك كتابة تسمية مخصصة للتخصص</small>
-                                            </div>
-                                            <div class="row g-3">
-                                                <div class="col-md-6">
-                                                    <label class="premium-label" style="color:#7c3aed;">
-                                                        <i class="fa-solid fa-language me-1"></i> تسمية التخصص بالعربية
-                                                    </label>
-                                                    <div class="input-group premium-input-group">
-                                                        <span class="input-group-text" style="background:#ede9fe; border-color:#c4b5fd;"><i class="fa-solid fa-pen-nib" style="color:#7c3aed;"></i></span>
-                                                        <input type="text" name="nom_spec_custom_ar" id="add_nom_spec_custom_ar"
-                                                            class="premium-input form-control"
-                                                            placeholder="مثال: تقني في الطبخ التقليدي الجزائري..."
-                                                            dir="rtl">
-                                                    </div>
-                                                    <small class="text-muted d-block mt-1"><i class="fa-solid fa-circle-info me-1"></i> التسمية بالعربية كما ستظهر في الوثائق الرسمية</small>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <label class="premium-label" style="color:#7c3aed;">
-                                                        <i class="fa-solid fa-language me-1"></i> Intitulé de la spécialité (Français)
-                                                    </label>
-                                                    <div class="input-group premium-input-group">
-                                                        <span class="input-group-text" style="background:#ede9fe; border-color:#c4b5fd;"><i class="fa-solid fa-pen-nib" style="color:#7c3aed;"></i></span>
-                                                        <input type="text" name="nom_spec_custom_fr" id="add_nom_spec_custom_fr"
-                                                            class="premium-input form-control"
-                                                            placeholder="Ex: Technicien en cuisine traditionnelle..."
-                                                            dir="ltr">
-                                                    </div>
-                                                    <small class="text-muted d-block mt-1"><i class="fa-solid fa-circle-info me-1"></i> L'intitulé en français tel qu'il apparaîtra sur les documents officiels</small>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
+                                    
                                     <div class="col-md-3">
                                         <label class="premium-label">الطاقة الاستيعابية *</label>
                                         <div class="input-group premium-input-group">
@@ -1813,46 +1154,7 @@ body {
                                             <?php endif; ?>
                                         </div>
                                     </div>
-
-                                    <!-- Custom Specialty Name Panel — shown only when mode requires it -->
-                                    <div class="col-12" id="edit_custom_spec_panel" style="display:none;">
-                                        <div class="p-3 rounded-3 border border-2" style="border-color:#7c3aed!important; background:linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);">
-                                            <div class="d-flex align-items-center gap-2 mb-3">
-                                                <span class="badge rounded-pill px-3 py-2 fw-bold" style="background:#7c3aed; font-size:0.82rem;">
-                                                    <i class="fa-solid fa-wand-magic-sparkles me-1"></i> تسمية التخصص حسب الطلب
-                                                </span>
-                                                <small class="text-muted">— عندما يكون النمط "حسب الطلب"، يمكنك كتابة تسمية مخصصة للتخصص</small>
-                                            </div>
-                                            <div class="row g-3">
-                                                <div class="col-md-6">
-                                                    <label class="premium-label" style="color:#7c3aed;">
-                                                        <i class="fa-solid fa-language me-1"></i> تسمية التخصص بالعربية
-                                                    </label>
-                                                    <div class="input-group premium-input-group">
-                                                        <span class="input-group-text" style="background:#ede9fe; border-color:#c4b5fd;"><i class="fa-solid fa-pen-nib" style="color:#7c3aed;"></i></span>
-                                                        <input type="text" name="nom_spec_custom_ar" id="edit_nom_spec_custom_ar"
-                                                            class="premium-input form-control"
-                                                            placeholder="مثال: تقني في الطبخ التقليدي الجزائري..."
-                                                            dir="rtl">
-                                                    </div>
-                                                    <small class="text-muted d-block mt-1"><i class="fa-solid fa-circle-info me-1"></i> التسمية بالعربية كما ستظهر في الوثائق الرسمية</small>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <label class="premium-label" style="color:#7c3aed;">
-                                                        <i class="fa-solid fa-language me-1"></i> Intitulé de la spécialité (Français)
-                                                    </label>
-                                                    <div class="input-group premium-input-group">
-                                                        <span class="input-group-text" style="background:#ede9fe; border-color:#c4b5fd;"><i class="fa-solid fa-pen-nib" style="color:#7c3aed;"></i></span>
-                                                        <input type="text" name="nom_spec_custom_fr" id="edit_nom_spec_custom_fr"
-                                                            class="premium-input form-control"
-                                                            placeholder="Ex: Technicien en cuisine traditionnelle..."
-                                                            dir="ltr">
-                                                    </div>
-                                                    <small class="text-muted d-block mt-1"><i class="fa-solid fa-circle-info me-1"></i> L'intitulé en français tel qu'il apparaîtra sur les documents officiels</small>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    
                                     <div class="col-md-3">
                                         <label class="premium-label">الطاقة الاستيعابية *</label>
                                         <div class="input-group premium-input-group">
@@ -2076,121 +1378,12 @@ body {
 </div>
 
 <script>
-// Dynamic table column selector functions
-function toggleTableColumn(index, show) {
-    const table = document.getElementById('offresTable');
-    if (!table) return;
-    const rows = table.rows;
-    for (let i = 0; i < rows.length; i++) {
-        const cell = rows[i].cells[index];
-        if (cell) {
-            if (show) {
-                cell.style.setProperty('display', '', 'important');
-            } else {
-                cell.style.setProperty('display', 'none', 'important');
-            }
-        }
-    }
-    // Save to localStorage
-    let hiddenCols = JSON.parse(localStorage.getItem('hidden_offres_cols') || '[]');
-    if (show) {
-        hiddenCols = hiddenCols.filter(c => c !== index);
-    } else {
-        if (!hiddenCols.includes(index)) {
-            hiddenCols.push(index);
-        }
-    }
-    localStorage.setItem('hidden_offres_cols', JSON.stringify(hiddenCols));
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    const defaultHidden = [1, 3, 4, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18, 19, 20, 21, 22];
-    const savedHidden = localStorage.getItem('hidden_offres_cols');
-    const hiddenCols = savedHidden ? JSON.parse(savedHidden) : defaultHidden;
-    
-    document.querySelectorAll('.col-toggle-checkbox').forEach(cb => {
-        const idx = parseInt(cb.getAttribute('data-column-index'));
-        const show = !hiddenCols.includes(idx);
-        cb.checked = show;
-        toggleTableColumn(idx, show);
-    });
-});
-
 // Initialize Tooltips
 document.addEventListener("DOMContentLoaded", function() {
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl)
     });
-});
-
-/**
- * Determines if a given mode_id allows custom specialty naming.
- * The on-demand / à la demande modes allow free-form specialty names.
- * We use the select option text to detect "حسب الطلب" substring,
- * but also fall back to a known ID list if needed.
- */
-function isOnDemandMode(modeId) {
-    const select = document.getElementById('add_offre_mode') || document.getElementById('edit_offre_mode');
-    if (select) {
-        for (let i = 0; i < select.options.length; i++) {
-            if (parseInt(select.options[i].value) === parseInt(modeId)) {
-                const label = select.options[i].textContent || '';
-                if (label.includes('حسب الطلب') || label.toLowerCase().includes('demande') || label.toLowerCase().includes('demand')) {
-                    return true;
-                }
-            }
-        }
-    }
-    return false;
-}
-
-/**
- * Show or hide the custom specialty name panel based on the selected mode.
- * @param {string} prefix - 'add' or 'edit'
- * @param {number} modeId - numeric mode ID
- */
-function toggleCustomSpecPanel(prefix, modeId) {
-    const panel = document.getElementById(prefix + '_custom_spec_panel');
-    if (!panel) return;
-    const shouldShow = isOnDemandMode(modeId);
-    panel.style.display = shouldShow ? 'block' : 'none';
-    // Clear fields when hiding
-    if (!shouldShow) {
-        const arField = document.getElementById(prefix + '_nom_spec_custom_ar');
-        const frField = document.getElementById(prefix + '_nom_spec_custom_fr');
-        if (arField) arField.value = '';
-        if (frField) frField.value = '';
-    }
-    // Animate in
-    if (shouldShow) {
-        panel.style.opacity = '0';
-        panel.style.transform = 'translateY(-8px)';
-        setTimeout(() => {
-            panel.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-            panel.style.opacity = '1';
-            panel.style.transform = 'translateY(0)';
-        }, 10);
-    }
-}
-
-// Attach mode change listeners to both add and edit modal mode selects
-document.addEventListener('DOMContentLoaded', function() {
-    const addModeSelect = document.getElementById('add_offre_mode');
-    if (addModeSelect) {
-        addModeSelect.addEventListener('change', function() {
-            toggleCustomSpecPanel('add', parseInt(this.value));
-        });
-        // Initialize on page load
-        toggleCustomSpecPanel('add', parseInt(addModeSelect.value) || 1);
-    }
-
-    const editModeSelect = document.getElementById('edit_offre_mode');
-    if (editModeSelect) {
-        editModeSelect.addEventListener('change', function() {
-            toggleCustomSpecPanel('edit', parseInt(this.value));
-        });
-    }
 });
 
 function editOffre(o) {
@@ -2248,13 +1441,6 @@ function editOffre(o) {
         }
     }
     
-    // Populate custom specialty name fields
-    document.getElementById('edit_nom_spec_custom_ar').value = o.nom_spec_custom_ar || '';
-    document.getElementById('edit_nom_spec_custom_fr').value = o.nom_spec_custom_fr || '';
-    
-    // Show/hide custom spec panel based on mode loaded
-    toggleCustomSpecPanel('edit', parseInt(o.mode_id) || 1);
-    
     // Trigger Live Preview Update
     if (typeof window.updateLivePreview === 'function') {
         window.updateLivePreview('edit');
@@ -2276,75 +1462,65 @@ function showRejectionModal(id, type) {
     modal.show();
 }
 
-// ── Filter Panel Toggle ───────────────────────────────────────────────────
-function toggleFilterPanel(btn) {
-    var panel = document.getElementById('filterCollapse');
-    var icon  = document.getElementById('filterToggleIcon');
-    if (!panel) return;
-
-    var isHidden = (panel.style.display === 'none' || panel.style.display === '');
-    if (isHidden) {
-        panel.style.display = 'block';
-        if (icon) { icon.classList.add('text-primary'); }
-        if (btn)  { btn.classList.add('bg-primary-subtle'); }
-    } else {
-        panel.style.display = 'none';
-        if (icon) { icon.classList.remove('text-primary'); }
-        if (btn)  { btn.classList.remove('bg-primary-subtle'); }
-    }
-}
-
-// applyFilters: بحث نصي فقط في الجدول (باقي الفلاتر server-side)
 function applyFilters() {
-    var searchQuery = (document.getElementById('search_offre')?.value ?? '').toLowerCase().trim();
+    var searchQuery = document.getElementById('search_offre').value.toLowerCase();
+    var sessionVal = document.getElementById('filter_session').value;
+    var etabValSelect = document.getElementById('filter_etab');
+    var etabVal = etabValSelect ? etabValSelect.value : '';
+    var modeVal = document.getElementById('filter_mode').value;
+    var statusVal = document.getElementById('filter_status').value;
+
+    var url = new URL(window.location.href);
+    var urlChanged = false;
+
+    if (url.searchParams.get('filter_session') !== (sessionVal || null)) {
+        if (sessionVal) url.searchParams.set('filter_session', sessionVal); else url.searchParams.delete('filter_session');
+        urlChanged = true;
+    }
+    if (url.searchParams.get('filter_etab') !== (etabVal || null)) {
+        if (etabVal) url.searchParams.set('filter_etab', etabVal); else url.searchParams.delete('filter_etab');
+        urlChanged = true;
+    }
+    if (url.searchParams.get('filter_mode') !== (modeVal || null)) {
+        if (modeVal) url.searchParams.set('filter_mode', modeVal); else url.searchParams.delete('filter_mode');
+        urlChanged = true;
+    }
+    if (url.searchParams.get('filter_status') !== (statusVal || null)) {
+        if (statusVal) url.searchParams.set('filter_status', statusVal); else url.searchParams.delete('filter_status');
+        urlChanged = true;
+    }
+
+    if (urlChanged) {
+        // Preserve search in URL when reloading if there's any
+        if (searchQuery) url.searchParams.set('search', searchQuery); else url.searchParams.delete('search');
+        window.location.href = url.toString();
+        return;
+    }
+
+    // Client-side text search filtering on already loaded server-filtered rows
     var rows = document.querySelectorAll('#offresTable tbody tr');
-    var visibleCount = 0;
-
     rows.forEach(function(row) {
-        if (row.querySelector('td[colspan]')) { row.style.display = ''; return; }
-        var matches = !searchQuery || row.textContent.toLowerCase().indexOf(searchQuery) > -1;
-        row.style.display = matches ? '' : 'none';
-        if (matches) visibleCount++;
+        if (row.querySelector('td[colspan]')) return;
+        var textContent = row.textContent.toLowerCase();
+        var matchesSearch = textContent.indexOf(searchQuery) > -1;
+        if (matchesSearch) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
     });
-
-    var emptyMsg = document.getElementById('offresEmptyMsg');
-    if (emptyMsg) emptyMsg.style.display = visibleCount === 0 ? '' : 'none';
 }
 
-
-// ── Filter Panel Toggle (No Bootstrap) ─────────────────────────────
-function offresToggleFilter() {
-    var p = document.getElementById('filterCollapse');
-    if (!p) return;
-    // getComputedStyle to handle both inline style and CSS class display values
-    var isVisible = window.getComputedStyle(p).display !== 'none';
-    p.style.display = isVisible ? 'none' : 'block';
-    var icon = document.getElementById('filterToggleIcon');
-    if (icon) icon.style.color = isVisible ? '' : '#0d6efd';
-}
-
-
+// Proactive restoration of search from URL on page load
 document.addEventListener("DOMContentLoaded", function() {
     var urlParams = new URLSearchParams(window.location.search);
-
-    // Restore search text
     var searchVal = urlParams.get('search');
     if (searchVal) {
         var input = document.getElementById('search_offre');
-        if (input) { input.value = searchVal; applyFilters(); }
-    }
-
-    // Auto-open filter panel if any filter was active
-    var hasActiveFilter = urlParams.get('filter_session') || urlParams.get('filter_etab') ||
-                          urlParams.get('filter_mode')    || urlParams.get('filter_status') ||
-                          urlParams.get('filter_open');
-    if (hasActiveFilter) {
-        var panel = document.getElementById('filterCollapse');
-        var icon  = document.getElementById('filterToggleIcon');
-        var btn   = document.getElementById('filterToggleBtn');
-        if (panel) panel.style.display = 'block';
-        if (icon)  icon.classList.add('text-primary');
-        if (btn)   btn.classList.add('bg-primary-subtle');
+        if (input) {
+            input.value = searchVal;
+            applyFilters();
+        }
     }
 });
 </script>
