@@ -56,6 +56,49 @@ $is_etab     = in_array($role_code, ['etablissement', 'directeur', 'formateur'])
     z-index: 2;
     box-shadow: 2px 0 5px rgba(0,0,0,0.05);
 }
+/* Premium dashboard designs */
+.card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid rgba(226, 232, 240, 0.8) !important;
+}
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 20px -8px rgba(0, 0, 0, 0.08) !important;
+}
+#offresTable {
+    border-collapse: separate;
+    border-spacing: 0 8px;
+}
+#offresTable tr {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    border-radius: 8px;
+    background-color: #ffffff;
+    transition: all 0.2s ease;
+}
+#offresTable tr:hover {
+    background-color: #f8fafc !important;
+}
+#offresTable td, #offresTable th {
+    border: none !important;
+    padding: 12px 16px !important;
+}
+#offresTable th {
+    background-color: transparent !important;
+    font-weight: 700;
+    color: #64748b;
+    font-size: 0.78rem;
+}
+#offresTable td {
+    background-color: #ffffff;
+}
+#offresTable tr td:first-child {
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+}
+#offresTable tr td:last-child {
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
 </style>
 <div class="animate__animated animate__fadeIn">
     <!-- Top Header -->
