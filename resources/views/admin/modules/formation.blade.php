@@ -142,7 +142,8 @@
                                                     data-specialite-id="<?= $item['specialite_id'] ?>"
                                                     data-quantite="<?= $item['quantite'] ?>"
                                                     data-etat="<?= htmlspecialchars($item['etat']) ?>"
-                                                    data-date-acquisition="<?= $item['date_inventaire'] ?>">
+                                                    data-date-acquisition="<?= $item['date_inventaire'] ?>"
+                                                    data-etablissement-id="<?= $item['IDetablissement'] ?>">
                                                 <i class="fa-solid fa-edit me-1"></i> تعديل
                                             </button>
                                             <form action="/dashboard/formation/delete/<?= $item['id'] ?>" method="POST" class="d-inline" onsubmit="return confirm('هل أنت متأكد من حذف هذا التجهيز من الجرد؟')">
@@ -175,6 +176,14 @@
                     <div class="mb-3">
                         <label for="nom_equipement" class="form-label small fw-bold text-muted">اسم التجهيز / الوصف الفني</label>
                         <input type="text" class="form-control rounded-pill border-light-subtle shadow-sm px-3" id="nom_equipement" name="nom_equipement" placeholder="مثال: لوحة التحكم الرقمي CNC" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="etablissement_id" class="form-label small fw-bold text-muted">المؤسسة التكوينية التابع لها العتاد</label>
+                        <select class="form-select rounded-pill border-light-subtle shadow-sm px-3" id="etablissement_id" name="etablissement_id" required>
+                            <?php foreach ($etablissements as $et): ?>
+                                <option value="<?= $et['id'] ?>" <?= (session('user')['etablissement_id'] == $et['id']) ? 'selected' : '' ?>><?= htmlspecialchars($et['nom_ar']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
                     </div>
                     <div class="mb-3">
                         <label for="specialite_id" class="form-label small fw-bold text-muted">التخصص الموجه له ورشة التكوين</label>
@@ -230,6 +239,14 @@
                         <input type="text" class="form-control rounded-pill border-light-subtle shadow-sm px-3" id="edit_nom_equipement" name="nom_equipement" required>
                     </div>
                     <div class="mb-3">
+                        <label for="edit_etablissement_id" class="form-label small fw-bold text-muted">المؤسسة التكوينية التابع لها العتاد</label>
+                        <select class="form-select rounded-pill border-light-subtle shadow-sm px-3" id="edit_etablissement_id" name="etablissement_id" required>
+                            <?php foreach ($etablissements as $et): ?>
+                                <option value="<?= $et['id'] ?>"><?= htmlspecialchars($et['nom_ar']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="mb-3">
                         <label for="edit_specialite_id" class="form-label small fw-bold text-muted">التخصص الموجه له ورشة التكوين</label>
                         <select class="form-select rounded-pill border-light-subtle shadow-sm px-3" id="edit_specialite_id" name="specialite_id" required>
                             <?php foreach ($specialites as $sp): ?>
@@ -274,6 +291,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const id = this.getAttribute('data-id');
             const designation = this.getAttribute('data-designation');
             const specId = this.getAttribute('data-specialite-id');
+            const etabId = this.getAttribute('data-etablissement-id');
             const qty = this.getAttribute('data-quantite');
             const etat = this.getAttribute('data-etat');
             const date = this.getAttribute('data-date-acquisition');
@@ -281,6 +299,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('edit_id').value = id;
             document.getElementById('edit_nom_equipement').value = designation;
             document.getElementById('edit_specialite_id').value = specId;
+            document.getElementById('edit_etablissement_id').value = etabId;
             document.getElementById('edit_quantite').value = qty;
             document.getElementById('edit_etat').value = etat;
             document.getElementById('edit_date_acquisition').value = date;

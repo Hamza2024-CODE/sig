@@ -67,6 +67,7 @@ class FormationController extends Controller {
             $list = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             $specialites = $this->db->query("SELECT IDSpecialite as id, Nom as libelle_ar FROM specialite ORDER BY Nom ASC")->fetchAll(PDO::FETCH_ASSOC);
+            $etablissements = $this->db->query("SELECT IDetablissement as id, Nom as nom_ar FROM etablissement ORDER BY Nom ASC")->fetchAll(PDO::FETCH_ASSOC);
         } catch (\Exception $e) {
             error_log("Error in formation(): " . $e->getMessage());
         }
@@ -75,7 +76,8 @@ class FormationController extends Controller {
             'title' => 'تسيير التكوين والعتاد / Gestion de la Formation',
             'stats' => $stats,
             'list' => $list,
-            'specialites' => $specialites
+            'specialites' => $specialites,
+            'etablissements' => $etablissements
         ]);
     }
 
@@ -85,7 +87,7 @@ class FormationController extends Controller {
             $specialite_id = (int)request()->all()['specialite_id'];
             $etat = request()->all()['etat'] ?? 'ممتاز';
             $date_acq = request()->all()['date_acquisition'];
-            $etab_id = (int)(session('user')['etablissement_id'] ?? 0);
+            $etab_id = (int)(request()->all()['etablissement_id'] ?? session('user')['etablissement_id'] ?? 0);
 
             try {
                 $stmt = $this->db->prepare("
@@ -108,14 +110,15 @@ class FormationController extends Controller {
             $specialite_id = (int)request()->all()['specialite_id'];
             $date_acq = request()->all()['date_acquisition'];
             $etat = request()->all()['etat'] ?? 'ممتاز';
+            $etab_id = (int)request()->all()['etablissement_id'];
 
             try {
                 $stmt = $this->db->prepare("
                     UPDATE equipement
-                    SET Nom = ?, IDSpecialite = ?, DateInstalation = ?, Obs = ?
+                    SET Nom = ?, IDSpecialite = ?, DateInstalation = ?, Obs = ?, IDetablissement = ?
                     WHERE IDEquipement = ?
                 ");
-                $stmt->execute([$nom, $specialite_id, $date_acq, $etat, $id]);
+                $stmt->execute([$nom, $specialite_id, $date_acq, $etat, $etab_id, $id]);
                 session(['flash_success' => 'تم تحديث بيانات التجهيز التقني بنجاح!']);
             } catch (\Exception $e) {
                 session(['flash_error' => 'حدث خطأ أثناء التحديث: ' . $e->getMessage()]);
