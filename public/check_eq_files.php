@@ -34,16 +34,19 @@ try {
     $app_eq = require_once __DIR__.'/../bootstrap/app.php';
     $app_eq->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
     
+    $columns = \Illuminate\Support\Facades\Schema::getColumnListing('equipement_memo');
+    echo "Columns in equipement_memo: " . implode(', ', $columns) . "\n\n";
+
     $photos = \Illuminate\Support\Facades\DB::table('equipement_memo')
         ->whereNotNull('photo')
         ->where('photo', '<>', '')
-        ->select('IDEquipement_memo', 'designation', 'photo')
         ->limit(10)
         ->get();
         
     echo "Found " . count($photos) . " equipment records with photos:\n";
     foreach ($photos as $p) {
-        echo "ID: {$p->IDEquipement_memo} | Name: {$p->designation} | Photo path: '{$p->photo}'\n";
+        $p = (array)$p;
+        echo "ID: {$p['IDEquipement_memo']} | Photo path: '{$p['photo']}'\n";
     }
 } catch (\Exception $ex) {
     echo "Error fetching from DB: " . $ex->getMessage() . "\n";
