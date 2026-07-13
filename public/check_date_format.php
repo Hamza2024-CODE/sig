@@ -12,29 +12,33 @@ use Illuminate\Support\Facades\DB;
 echo "=== DIAGNOSING ACTUAL DATES AND COLUMNS ===\n\n";
 
 try {
-    $row = DB::table('section')->whereNotNull('DateDF')->first();
-    if ($row) {
-        echo "✓ Found Section record!\n";
-        echo "DateDF value: '" . ($row->DateDF ?? 'NULL') . "' (Type: " . gettype($row->DateDF) . ")\n";
-        echo "DateFF value: '" . ($row->DateFF ?? 'NULL') . "'\n\n";
-        echo "All fields in this row:\n";
-        print_r((array)$row);
-    } else {
-        echo "❌ No sections found with DateDF not null.\n";
+    echo "--- Section Counts by Year ---\n";
+    $years = [2022, 2023, 2024, 2025, 2026];
+    foreach ($years as $yr) {
+        $count = DB::table('section')
+            ->where('DateDF', '>=', "$yr-01-01")
+            ->where('DateDF', '<=', "$yr-12-31")
+            ->count();
+        echo "Year $yr: $count sections\n";
     }
-} catch (\Exception $e) {
-    echo "❌ Error reading section: " . $e->getMessage() . "\n";
-}
 
-try {
-    $rowOffre = DB::table('offre')->first();
-    if ($rowOffre) {
-        echo "\n✓ Found Offre record!\n";
-        echo "All fields in this row:\n";
-        print_r((array)$rowOffre);
-    } else {
-        echo "❌ No offre records found.\n";
+    echo "\n--- Trainee Count for s.DateDF >= '2024-02-01' ---\n";
+    $countTrainees = DB::table('apprenant as a')
+        ->join('section as s', 'a.IDSection', '=', 's.IDSection')
+        ->where('s.DateDF', '>=', '2024-02-01')
+        ->count();
+    echo "Trainees with section starting >= 2024-02-01: $countTrainees\n";
+
+    echo "\n--- Sample sections with DateDF starting in 2024 ---\n";
+    $samples = DB::table('section')
+        ->where('DateDF', '>=', '2024-01-01')
+        ->select('IDSection', 'DateDF', 'DateFF')
+        ->limit(5)
+        ->get();
+    foreach ($samples as $sm) {
+        echo "ID: {$sm->IDSection} | DateDF: {$sm->DateDF} | DateFF: {$sm->DateFF}\n";
     }
+
 } catch (\Exception $e) {
-    echo "❌ Error reading offre: " . $e->getMessage() . "\n";
+    echo "❌ Error in diagnosis: " . $e->getMessage() . "\n";
 }
