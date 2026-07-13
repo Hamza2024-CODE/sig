@@ -278,8 +278,8 @@ class OffresRepository
             LEFT JOIN etablissement ed   ON o.IDEts_FormM     = ed.IDetablissement
             LEFT JOIN session       sess ON o.IDSession       = sess.IDSession
             LEFT JOIN mode_formation mf  ON o.IDMode_formation = mf.IDMode_formation
-            WHERE $scopeWhere
-            ORDER BY e.IDDFEP ASC, e.IDetablissement ASC, o.IDOffre DESC
+            WHERE $scopeWhere AND sess.DateD >= '2024-01-01'
+            ORDER BY o.IDOffre DESC
             LIMIT 2000
         ");
         $stmtDet->execute($scopeParams);

@@ -23,6 +23,40 @@ $is_wilaya   = in_array($role_code, ['dfep', 'apc']);
 // 'etablissement' = مراكز/معاهد التكوين المهني (يشمل الخاصة والعامة)
 $is_etab     = in_array($role_code, ['etablissement', 'directeur', 'formateur']);
 ?>
+<style>
+/* Sleek custom scrollbars for table responsiveness */
+.table-responsive::-webkit-scrollbar {
+    height: 8px;
+    width: 8px;
+}
+.table-responsive::-webkit-scrollbar-track {
+    background: #f8fafc;
+    border-radius: 8px;
+}
+.table-responsive::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 8px;
+    border: 2px solid #f8fafc;
+}
+.table-responsive::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+/* Freeze/Sticky first columns for better readability */
+#offresTable th:first-child, #offresTable td:first-child {
+    position: sticky;
+    left: 0;
+    background-color: var(--card-bg, #fff);
+    z-index: 2;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+}
+#offresTable th:nth-child(2), #offresTable td:nth-child(2) {
+    position: sticky;
+    left: 110px;
+    background-color: var(--card-bg, #fff);
+    z-index: 2;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+}
+</style>
 <div class="animate__animated animate__fadeIn">
     <!-- Top Header -->
     <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-light">
@@ -228,10 +262,17 @@ $is_etab     = in_array($role_code, ['etablissement', 'directeur', 'formateur'])
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php if(empty($dispositifs)): ?>
+                                <?php 
+                                $hasDispositifs = false;
+                                foreach($dispositifs as $d) {
+                                    if ($d['inscrits'] > 0) $hasDispositifs = true;
+                                }
+                                if(!$hasDispositifs): ?>
                                     <tr><td colspan="4" class="text-center text-muted">لا توجد بيانات متاحة</td></tr>
                                 <?php else: ?>
-                                    <?php foreach($dispositifs as $d): ?>
+                                    <?php foreach($dispositifs as $d): 
+                                        if ($d['inscrits'] == 0) continue;
+                                    ?>
                                     <tr>
                                         <td>
                                             <div class="fw-bold text-dark" style="font-size: 0.9rem;"><?= $d['nom_ar'] ?></div>
@@ -272,10 +313,16 @@ $is_etab     = in_array($role_code, ['etablissement', 'directeur', 'formateur'])
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php if(empty($filieres)): ?>
+                                <?php 
+                                $hasFilieres = false;
+                                foreach($filieres as $f) {
+                                    if ($f['inscrits'] > 0) $hasFilieres = true;
+                                }
+                                if(!$hasFilieres): ?>
                                     <tr><td colspan="4" class="text-center text-muted">لا توجد بيانات متاحة</td></tr>
                                 <?php else: ?>
                                     <?php foreach($filieres as $f): 
+                                        if ($f['inscrits'] == 0) continue;
                                         $percent = ($f['inscrits'] / max(1, $f['places'])) * 100;
                                     ?>
                                     <tr>
