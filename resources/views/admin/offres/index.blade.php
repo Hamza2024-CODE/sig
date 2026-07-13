@@ -41,21 +41,7 @@ $is_etab     = in_array($role_code, ['etablissement', 'directeur', 'formateur'])
 .table-responsive::-webkit-scrollbar-thumb:hover {
     background: #94a3b8;
 }
-/* Freeze/Sticky first columns for better readability */
-#offresTable th:first-child, #offresTable td:first-child {
-    position: sticky;
-    left: 0;
-    background-color: var(--card-bg, #fff);
-    z-index: 2;
-    box-shadow: 2px 0 5px rgba(0,0,0,0.05);
-}
-#offresTable th:nth-child(2), #offresTable td:nth-child(2) {
-    position: sticky;
-    left: 110px;
-    background-color: var(--card-bg, #fff);
-    z-index: 2;
-    box-shadow: 2px 0 5px rgba(0,0,0,0.05);
-}
+
 /* Premium dashboard designs */
 .card {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -65,39 +51,89 @@ $is_etab     = in_array($role_code, ['etablissement', 'directeur', 'formateur'])
     transform: translateY(-4px);
     box-shadow: 0 12px 20px -8px rgba(0, 0, 0, 0.08) !important;
 }
+
+/* Statistics Card Redesign */
+.kpi-card {
+    position: relative;
+    overflow: hidden;
+}
+.kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    z-index: 5;
+}
+.kpi-inscrits::before { background: #3b82f6 !important; }
+.kpi-actifs::before { background: #10b981 !important; }
+.kpi-couverture::before { background: #f59e0b !important; }
+.kpi-laureats::before { background: #8b5cf6 !important; }
+
+/* Flat cohesive premium table layout */
 #offresTable {
-    border-collapse: separate;
-    border-spacing: 0 8px;
+    border-collapse: collapse !important;
+    width: 100% !important;
+    min-width: 100% !important;
 }
-#offresTable tr {
-    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-    border-radius: 8px;
-    background-color: #ffffff;
-    transition: all 0.2s ease;
+#offresTable thead th {
+    background-color: #f1f5f9 !important;
+    color: #475569 !important;
+    font-weight: 700 !important;
+    font-size: 0.78rem !important;
+    border-bottom: 2px solid #e2e8f0 !important;
+    padding: 14px 10px !important;
+    text-align: center !important;
+    vertical-align: middle !important;
 }
-#offresTable tr:hover {
+#offresTable tbody tr {
+    border-bottom: 1px solid #e2e8f0 !important;
+    transition: all 0.15s ease-in-out !important;
+}
+#offresTable tbody tr:hover {
     background-color: #f8fafc !important;
 }
-#offresTable td, #offresTable th {
-    border: none !important;
-    padding: 12px 16px !important;
+#offresTable tbody td {
+    padding: 12px 10px !important;
+    font-size: 0.85rem !important;
+    color: #334155 !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    text-align: center !important;
+    vertical-align: middle !important;
 }
-#offresTable th {
-    background-color: transparent !important;
-    font-weight: 700;
-    color: #64748b;
-    font-size: 0.78rem;
+
+/* Freeze/Sticky first columns for better readability */
+#offresTable th:first-child, #offresTable td:first-child {
+    position: sticky !important;
+    left: 0 !important;
+    background-color: #ffffff !important;
+    z-index: 10 !important;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.05) !important;
+    text-align: right !important;
 }
-#offresTable td {
-    background-color: #ffffff;
+#offresTable th:nth-child(2), #offresTable td:nth-child(2) {
+    position: sticky !important;
+    left: 110px !important;
+    background-color: #ffffff !important;
+    z-index: 10 !important;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.05) !important;
+    text-align: right !important;
 }
-#offresTable tr td:first-child {
-    border-top-left-radius: 8px;
-    border-bottom-left-radius: 8px;
+#offresTable tbody tr:hover td:first-child,
+#offresTable tbody tr:hover td:nth-child(2) {
+    background-color: #f8fafc !important;
 }
-#offresTable tr td:last-child {
-    border-top-right-radius: 8px;
-    border-bottom-right-radius: 8px;
+
+/* Interactive elements */
+.form-control, .form-select {
+    border-radius: 30px !important;
+    border: 1px solid #cbd5e1 !important;
+    transition: all 0.2s ease-in-out;
+}
+.form-control:focus, .form-select:focus {
+    border-color: #643edb !important;
+    box-shadow: 0 0 0 4px rgba(100, 62, 219, 0.15) !important;
 }
 </style>
 <div class="animate__animated animate__fadeIn">
@@ -189,7 +225,7 @@ $is_etab     = in_array($role_code, ['etablissement', 'directeur', 'formateur'])
 
                 <!-- Inscrits -->
                 <div class="col-md-6 col-lg-3">
-                    <div class="card border-0 shadow-sm rounded-4 h-100" style="background: rgba(255,255,255,0.95);">
+                    <div class="card kpi-card kpi-inscrits border-0 shadow-sm rounded-4 h-100" style="background: rgba(255,255,255,0.95);">
                         <div class="card-body p-3 d-flex flex-column">
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <div class="rounded-circle d-inline-flex align-items-center justify-content-center" style="width:40px; height:40px; background:rgba(59,130,246,0.1); color:#3b82f6; flex-shrink:0;">
@@ -214,7 +250,7 @@ $is_etab     = in_array($role_code, ['etablissement', 'directeur', 'formateur'])
 
                 <!-- Actifs -->
                 <div class="col-md-6 col-lg-3">
-                    <div class="card border-0 shadow-sm rounded-4 h-100" style="background: rgba(255,255,255,0.95);">
+                    <div class="card kpi-card kpi-actifs border-0 shadow-sm rounded-4 h-100" style="background: rgba(255,255,255,0.95);">
                         <div class="card-body p-3 d-flex flex-column">
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <div class="rounded-circle d-inline-flex align-items-center justify-content-center" style="width:40px; height:40px; background:rgba(16,185,129,0.1); color:#10b981; flex-shrink:0;">
@@ -235,7 +271,7 @@ $is_etab     = in_array($role_code, ['etablissement', 'directeur', 'formateur'])
 
                 <!-- Taux Couverture -->
                 <div class="col-md-6 col-lg-3">
-                    <div class="card border-0 shadow-sm rounded-4 h-100" style="background: rgba(255,255,255,0.95);">
+                    <div class="card kpi-card kpi-couverture border-0 shadow-sm rounded-4 h-100" style="background: rgba(255,255,255,0.95);">
                         <div class="card-body p-3 d-flex flex-column">
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <div class="rounded-circle d-inline-flex align-items-center justify-content-center" style="width:40px; height:40px; background:rgba(245,158,11,0.1); color:#f59e0b; flex-shrink:0;">
@@ -259,7 +295,7 @@ $is_etab     = in_array($role_code, ['etablissement', 'directeur', 'formateur'])
 
                 <!-- Taux Activité -->
                 <div class="col-md-6 col-lg-3">
-                    <div class="card border-0 shadow-sm rounded-4 h-100" style="background: rgba(255,255,255,0.95);">
+                    <div class="card kpi-card kpi-laureats border-0 shadow-sm rounded-4 h-100" style="background: rgba(255,255,255,0.95);">
                         <div class="card-body p-3 d-flex flex-column">
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <div class="rounded-circle d-inline-flex align-items-center justify-content-center" style="width:40px; height:40px; background:rgba(139,92,246,0.1); color:#8b5cf6; flex-shrink:0;">
@@ -755,7 +791,7 @@ $is_etab     = in_array($role_code, ['etablissement', 'directeur', 'formateur'])
 
         <div class="card-body p-0 mt-2">
             <div class="table-responsive" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
-                <table class="table table-hover align-middle mb-0" id="offresTable" style="min-width: 2700px; table-layout: auto;">
+                <table class="table table-hover align-middle mb-0" id="offresTable" style="width: 100%; table-layout: auto;">
                     <thead class="bg-light text-muted small fw-bold">
                         <tr>
                             <th class="ps-4" style="min-width:110px;">رمز العرض</th>
