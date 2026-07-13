@@ -43,11 +43,14 @@ class DiplomeController extends Controller
             if (!session()->has("user")) {
                 return redirect('/login');
             }
-            $user = session('user') ?? [];
-            $role = strtolower($user['role_code'] ?? '');
-            $allowedRoles = ['admin', 'ministre', 'secretaire_general', 'central', 'high_admin', 'dfep'];
-            if (!in_array($role, $allowedRoles)) {
-                abort(403, 'Unauthorized action.');
+            $path = $request->path();
+            if (str_contains($path, 'statistiques') || str_contains($path, 'liste-2021-present')) {
+                $user = session('user') ?? [];
+                $role = strtolower($user['role_code'] ?? '');
+                $allowedRoles = ['admin', 'ministre', 'secretaire_general', 'central', 'high_admin', 'dfep'];
+                if (!in_array($role, $allowedRoles)) {
+                    abort(403, 'Unauthorized action.');
+                }
             }
             return $next($request);
         });
@@ -156,8 +159,6 @@ class DiplomeController extends Controller
         if ($filterAnnee > 0) {
             $where[] = "sf.IDAnnee_Formation = ?";
             $params[] = $filterAnnee;
-        } else {
-            $where[] = "sf.IDAnnee_Formation >= 14";
         }
         if ($filterSpec > 0) {
             $where[] = "o.IDSpecialite = ?";
@@ -334,6 +335,239 @@ class DiplomeController extends Controller
             'has_more'       => $nextCursor > 0,
         ]);
     }
+
+    /**
+     * Dedicated page displaying all graduates since 2021 (for DFEP/Admin only)
+     */
+    public function liste2021(\Illuminate\Http\Request $request): mixed
+    {
+        $user      = session('user') ?? [];
+        $role_code = strtolower($user['role_code'] ?? '');
+        $etab_id   = (int)($user['etablissement_id'] ?? $user['IDEts_Form'] ?? 0);
+        $dfep_id   = (int)($user['iddfep'] ?? $user['IDDFEP'] ?? 0);
+
+        $search      = trim($request->query('search', ''));
+        $filterEtab  = (int)$request->query('filter_etab', 0);
+        $filterStatus = $request->query('filter_status', 'all');
+        $filterMode  = (int)$request->query('filter_mode', 0);
+        $filterAnnee = (int)$request->query('filter_annee', 0);
+        $filterSpec  = (int)$request->query('filter_spec', 0);
+        $filterQualif = (int)$request->query('filter_qualif', 0);
+        $cursor      = (int)$request->query('cursor', 0);   // IDapprenant of last row seen (keyset)
+        $page        = max(1, (int)$request->query('page', 1)); // for display only
+
+        $isAdmin = in_array($role_code, ['admin', 'ministre', 'secretaire_general', 'central', 'high_admin']);
+        $isDfep  = ($role_code === 'dfep' && $dfep_id > 0);
+        $isEtab  = (!$isAdmin && !$isDfep && $etab_id > 0);
+
+        // ── WHERE clauses ─────────────────────────────────────────
+        $where  = [];
+        $params = [];
+
+        // Scope by role / establishment
+        if ($isAdmin && $filterEtab > 0) {
+            $where[]  = "o.IDEts_Form = ?";
+            $params[] = $filterEtab;
+        } elseif ($isDfep) {
+            if ($filterEtab > 0) {
+                $where[]  = "o.IDEts_Form = ?";
+                $params[] = $filterEtab;
+            } else {
+                $where[]  = "o.IDEts_Form IN (SELECT IDetablissement FROM etablissement WHERE IDDFEP = ?)";
+                $params[] = $dfep_id;
+            }
+        } elseif ($isEtab) {
+            $where[]  = "o.IDEts_Form = ?";
+            $params[] = $etab_id;
+        } elseif (!$isAdmin) {
+            $where[] = "1=0";
+        }
+
+        // Status filter
+        if ($filterStatus === 'issued') {
+            $where[] = "f.Numdiplome IS NOT NULL AND f.Numdiplome != ''";
+        } elseif ($filterStatus === 'not_issued') {
+            $where[] = "(f.Numdiplome IS NULL OR f.Numdiplome = '')";
+        }
+
+        // Advanced filters
+        if ($filterMode > 0) {
+            $where[] = "o.IDMode_formation = ?";
+            $params[] = $filterMode;
+        }
+        if ($filterAnnee > 0) {
+            $where[] = "sf.IDAnnee_Formation = ?";
+            $params[] = $filterAnnee;
+        } else {
+            // Default to showing graduates from 2021 onwards
+            $where[] = "sf.IDAnnee_Formation >= 14";
+        }
+        if ($filterSpec > 0) {
+            $where[] = "o.IDSpecialite = ?";
+            $params[] = $filterSpec;
+        }
+        if ($filterQualif > 0) {
+            $where[] = "o.IDqualification_dplm = ?";
+            $params[] = $filterQualif;
+        }
+
+        // Search filter: resolve candidate IDs first
+        $hasSearch = $search !== '';
+        if ($hasSearch) {
+            if (is_numeric($search)) {
+                $appRows = DB::select(
+                    "SELECT IDapprenant FROM apprenant WHERE Nccp = ? LIMIT 500",
+                    [$search]
+                );
+                $aids = array_map(fn($r) => (int)$r->IDapprenant, $appRows);
+                if (!empty($aids)) {
+                    $ph      = implode(',', array_fill(0, count($aids), '?'));
+                    $where[] = "a.IDapprenant IN ($ph)";
+                    $params  = array_merge($params, $aids);
+                } else {
+                    $where[] = "1=0";
+                }
+            } else {
+                $isArabic = (bool)preg_match('/\p{Arabic}/u', $search);
+                $like     = $search . '%';
+                $cRows    = $this->searchCandidats($isArabic, $like);
+                if (empty($cRows)) {
+                    $cRows = $this->searchCandidats($isArabic, '%' . $search . '%');
+                }
+                if (!empty($cRows)) {
+                    $cids    = array_map(fn($r) => (int)$r->IDCandidat, $cRows);
+                    $cidPh   = implode(',', array_fill(0, count($cids), '?'));
+                    $aRows   = DB::select("SELECT IDapprenant FROM apprenant WHERE IDCandidat IN ($cidPh) LIMIT 500", $cids);
+                    $aids    = array_map(fn($r) => (int)$r->IDapprenant, $aRows);
+                    if (!empty($aids)) {
+                        $aidPh   = implode(',', array_fill(0, count($aids), '?'));
+                        $where[] = "a.IDapprenant IN ($aidPh)";
+                        $params  = array_merge($params, $aids);
+                    } else {
+                        $where[] = "1=0";
+                    }
+                } else {
+                    $where[] = "1=0";
+                }
+            }
+        }
+
+        // Keyset pagination cursor (only for unfiltered/unstatus queries)
+        $useCursor = ($cursor > 0 && !$hasSearch);
+        if ($useCursor) {
+            $where[] = "a.IDapprenant < ?";
+            $params[] = $cursor;
+        }
+
+        $whereSQL = !empty($where) ? 'WHERE ' . implode(' AND ', $where) : '';
+
+        // Determine if we should use STRAIGHT_JOIN (unfiltered admin views only)
+        $isFiltered = (!$isAdmin || $filterEtab > 0 || $filterMode > 0 || $filterAnnee > 0 || $filterSpec > 0 || $filterQualif > 0 || $search !== '' || $filterStatus !== 'all');
+        $selectPrefix = $isFiltered ? "SELECT" : "SELECT STRAIGHT_JOIN";
+        $baseSelect = str_replace("SELECT STRAIGHT_JOIN", $selectPrefix, self::BASE_SELECT);
+        $baseCount  = str_replace("SELECT STRAIGHT_JOIN", $selectPrefix, self::BASE_COUNT);
+
+        // ── Total count (cached, computed async) ──────────────────
+        $ckSuffix    = md5($whereSQL . serialize(array_filter($params, fn($p) => $p !== $cursor)));
+        $countCacheKey = "dip_count_v3_{$ckSuffix}";
+
+        $totalCount = (int)Cache::get($countCacheKey, 0);
+
+        // If cache is cold and no filters, use the known baseline to avoid blocking
+        if ($totalCount === 0 && $isAdmin && empty($where)) {
+            $totalCount = (int)Cache::get('dip_total_baseline', 94135);
+        }
+
+        // If count is missing, refresh it in the background (non-blocking)
+        if ($totalCount === 0 || (!Cache::has($countCacheKey) && !$hasSearch)) {
+            if ($hasSearch || !$isAdmin) {
+                $countWhere = $whereSQL;
+                $countParams = $params;
+                if ($useCursor) {
+                    $countWhere = !empty($where)
+                        ? 'WHERE ' . implode(' AND ', array_filter($where, fn($w) => !str_contains($w, 'IDapprenant <')))
+                        : '';
+                    $countParams = array_filter($params, fn($p) => $p !== $cursor);
+                }
+                try {
+                    $totalCount = (int)(DB::selectOne($baseCount . ' ' . $countWhere, array_values($countParams))->c ?? 0);
+                    Cache::put($countCacheKey, $totalCount, 120);
+                } catch (\Throwable $e) {
+                    $totalCount = 0;
+                }
+            }
+        }
+
+        // ── Issued count (always fast on apprenant_fin alone for admin) ──
+        $issuedCount = Cache::remember('dip_issued_v3', 600, function () {
+            try {
+                return (int)DB::selectOne("SELECT COUNT(*) as c FROM apprenant_fin WHERE Numdiplome IS NOT NULL AND Numdiplome != ''")->c;
+            } catch (\Throwable $e) {
+                return 0;
+            }
+        });
+
+        // ── Page data query (STRAIGHT_JOIN, always fast ~3s) ─────
+        $stagiaires = [];
+        $nextCursor = 0;
+
+        try {
+            $rows = DB::select(
+                $baseSelect . ' ' . $whereSQL .
+                " ORDER BY a.IDapprenant DESC LIMIT " . (self::PER_PAGE + 1),
+                $params
+            );
+
+            $hasMore = count($rows) > self::PER_PAGE;
+            if ($hasMore) {
+                array_pop($rows);
+            }
+
+            $stagiaires = array_map(fn($item) => (array)$item, $rows);
+            $nextCursor = $hasMore && !empty($stagiaires) ? (int)(end($stagiaires)['id']) : 0;
+        } catch (\Throwable $e) {
+            $stagiaires = [];
+        }
+
+        $totalPages = $totalCount > 0 ? (int)ceil($totalCount / self::PER_PAGE) : 1;
+
+        // ── Reference data ────────────────────────────────────────
+        $etablissements = [];
+        if ($isAdmin) {
+            $etablissements = \App\Services\ReferenceCache::etablissements();
+        } elseif ($isDfep) {
+            $etablissements = \App\Services\ReferenceCache::etablissementsForDfep($dfep_id);
+        }
+
+        $modes = \App\Services\ReferenceCache::modesFormation();
+        $annees = \App\Services\ReferenceCache::anneesFormation();
+        $specialites = \App\Services\ReferenceCache::specialites();
+        $qualifications = \App\Services\ReferenceCache::qualifications();
+
+        return $this->render('admin/diplomes/liste_2021', [
+            'title'          => 'سجل وخريجي الفترة (منذ 2021) / Registre des Diplômés (Depuis 2021)',
+            'stagiaires'     => $stagiaires,
+            'issuedCount'    => $issuedCount,
+            'total_count'    => $totalCount,
+            'page'           => $page,
+            'total_pages'    => $totalPages,
+            'per_page'       => self::PER_PAGE,
+            'search'         => $search,
+            'filter_etab'    => $filterEtab,
+            'filter_status'  => $filterStatus,
+            'filter_mode'    => $filterMode,
+            'filter_annee'   => $filterAnnee,
+            'filter_spec'    => $filterSpec,
+            'filter_qualif'  => $filterQualif,
+            'etablissements' => $etablissements,
+            'modes'          => $modes,
+            'annees'         => $annees,
+            'specialites'    => $specialites,
+            'qualifications' => $qualifications,
+            'role_code'      => $role_code,
+            'next_cursor'    => $nextCursor,
+            'has_more'       => $nextCursor > 0,
+        ]);
     
     /**
      * Display graduates statistics dashboard

@@ -433,6 +433,7 @@ Route::middleware('check.session')->group(function () {
     // ── Diplomes ──────────────────────────────────────────────────────────
     Route::prefix('dashboard/diplomes')->group(function () {
         Route::get('/',                     [\App\Http\Controllers\Admin\DiplomeController::class, 'index'])->name('diplomes.index');
+        Route::get('/liste-2021-present',   [\App\Http\Controllers\Admin\DiplomeController::class, 'liste2021'])->name('diplomes.liste2021');
         Route::get('/statistiques',         [\App\Http\Controllers\Admin\DiplomeController::class, 'statistiques'])->name('diplomes.statistiques');
         Route::get('/generate/{id}',        [\App\Http\Controllers\Admin\DiplomeController::class, 'generate'])->name('diplomes.generate');
         Route::get('/print/{id}',           [\App\Http\Controllers\Admin\DiplomeController::class, 'printDiploma'])->name('diplomes.print');
@@ -1053,6 +1054,7 @@ Route::prefix('sig')->middleware('check.session')->group(function () {
 
     Route::prefix('dashboard/diplomes')->group(function () {
         Route::get('/',                [\App\Http\Controllers\Admin\DiplomeController::class, 'index']);
+        Route::get('/liste-2021-present', [\App\Http\Controllers\Admin\DiplomeController::class, 'liste2021']);
         Route::get('/generate/{id}',   [\App\Http\Controllers\Admin\DiplomeController::class, 'generate']);
         Route::get('/print/{id}',      [\App\Http\Controllers\Admin\DiplomeController::class, 'printDiploma']);
         Route::get('/show/{id}',       [\App\Http\Controllers\Admin\DiplomeController::class, 'show']);

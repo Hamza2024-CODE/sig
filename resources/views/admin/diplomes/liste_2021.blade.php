@@ -32,8 +32,8 @@ $filterQs  = http_build_query(array_filter([
     <!-- Sovereign Title Header -->
     <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom border-secondary border-opacity-10 flex-wrap gap-3">
         <div>
-            <h3 class="fw-bold mb-1" style="color: var(--color-gov-purple-dark);">التقييم النهائي وإصدار الشهادات / Délibération & Diplômes</h3>
-            <p class="text-muted small mb-0">المداولات النهائية، احتساب المعدلات التراكمية العامة، وتوليد شهادات تخرج الدولة الرسمية (BTS)</p>
+            <h3 class="fw-bold mb-1" style="color: var(--color-gov-purple-dark, #4b154b);">سجل وشواهد خريجي الفترة (منذ 2021) / Registre des Diplômés (Depuis 2021)</h3>
+            <p class="text-muted small mb-0">المداولات النهائية واستخراج الشهادات الرسمية لخريجي دفعات الفترة الممتدة من سنة 2021 إلى يومنا هذا</p>
         </div>
         <div class="badge bg-primary-subtle text-primary px-3 py-2 fw-bold" style="font-size:0.9rem; border-radius:30px;">
             <i class="fa-solid fa-graduation-cap me-1"></i> إجمالي الشهادات المطبوعة: {{ number_format($issuedCount) }} شهادة دولة
@@ -56,7 +56,7 @@ $filterQs  = http_build_query(array_filter([
 
     <!-- Advanced Filter Bar -->
     <div class="card border-0 shadow-sm p-4 mb-4 no-print" style="border-radius:16px; background:var(--card-bg, #ffffff); border:1px solid var(--card-border, #f1f5f9)!important;">
-        <form method="GET" action="{{ url('dashboard/diplomes') }}" class="row g-3 align-items-end">
+        <form method="GET" action="{{ url('dashboard/diplomes/liste-2021-present') }}" class="row g-3 align-items-end">
 
             <!-- Search input -->
             <div class="col-12 col-md-3">
