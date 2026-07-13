@@ -43,16 +43,35 @@ $is_etab     = in_array($role_code, ['etablissement', 'directeur', 'formateur'])
 }
 
 /* Premium dashboard designs */
+body {
+    background-color: #f1f5f9;
+}
 .card {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
     border: 1px solid rgba(226, 232, 240, 0.8) !important;
+    border-radius: 20px !important;
 }
 .card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 12px 20px -8px rgba(0, 0, 0, 0.08) !important;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02) !important;
 }
 
 /* Statistics Card Redesign */
+.stats-card-primary {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    position: relative;
+    overflow: hidden;
+}
+.stats-card-primary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #482b8f 0%, #643edb 100%);
+}
+
 .kpi-card {
     position: relative;
     overflow: hidden;
@@ -72,33 +91,40 @@ $is_etab     = in_array($role_code, ['etablissement', 'directeur', 'formateur'])
 .kpi-laureats::before { background: #8b5cf6 !important; }
 
 /* Flat cohesive premium table layout */
+.table-card-container {
+    background: #ffffff;
+    border-radius: 24px !important;
+    padding: 1.5rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.02), 0 4px 6px -2px rgba(0, 0, 0, 0.01) !important;
+}
 #offresTable {
     border-collapse: collapse !important;
     width: 100% !important;
     min-width: 100% !important;
 }
 #offresTable thead th {
-    background-color: #f1f5f9 !important;
+    background-color: #f8fafc !important;
     color: #475569 !important;
     font-weight: 700 !important;
-    font-size: 0.78rem !important;
+    font-size: 0.8rem !important;
     border-bottom: 2px solid #e2e8f0 !important;
-    padding: 14px 10px !important;
+    padding: 16px 10px !important;
     text-align: center !important;
     vertical-align: middle !important;
 }
 #offresTable tbody tr {
-    border-bottom: 1px solid #e2e8f0 !important;
-    transition: all 0.15s ease-in-out !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    transition: all 0.2s ease-in-out !important;
 }
 #offresTable tbody tr:hover {
-    background-color: #f8fafc !important;
+    background-color: #fcfdfe !important;
+    transform: scale(1.001) !important;
 }
 #offresTable tbody td {
-    padding: 12px 10px !important;
-    font-size: 0.85rem !important;
+    padding: 16px 10px !important;
+    font-size: 0.88rem !important;
     color: #334155 !important;
-    border-bottom: 1px solid #e2e8f0 !important;
+    border-bottom: 1px solid #f1f5f9 !important;
     text-align: center !important;
     vertical-align: middle !important;
 }
@@ -109,7 +135,7 @@ $is_etab     = in_array($role_code, ['etablissement', 'directeur', 'formateur'])
     left: 0 !important;
     background-color: #ffffff !important;
     z-index: 10 !important;
-    box-shadow: 2px 0 5px rgba(0,0,0,0.05) !important;
+    box-shadow: 4px 0 10px rgba(0,0,0,0.03) !important;
     text-align: right !important;
 }
 #offresTable th:nth-child(2), #offresTable td:nth-child(2) {
@@ -117,23 +143,42 @@ $is_etab     = in_array($role_code, ['etablissement', 'directeur', 'formateur'])
     left: 110px !important;
     background-color: #ffffff !important;
     z-index: 10 !important;
-    box-shadow: 2px 0 5px rgba(0,0,0,0.05) !important;
+    box-shadow: 4px 0 10px rgba(0,0,0,0.03) !important;
     text-align: right !important;
 }
 #offresTable tbody tr:hover td:first-child,
 #offresTable tbody tr:hover td:nth-child(2) {
-    background-color: #f8fafc !important;
+    background-color: #fcfdfe !important;
 }
 
 /* Interactive elements */
 .form-control, .form-select {
     border-radius: 30px !important;
-    border: 1px solid #cbd5e1 !important;
+    border: 1.5px solid #e2e8f0 !important;
+    padding: 0.65rem 1.25rem !important;
+    background-color: #f8fafc !important;
     transition: all 0.2s ease-in-out;
 }
 .form-control:focus, .form-select:focus {
+    background-color: #ffffff !important;
     border-color: #643edb !important;
-    box-shadow: 0 0 0 4px rgba(100, 62, 219, 0.15) !important;
+    box-shadow: 0 0 0 4px rgba(100, 62, 219, 0.12) !important;
+}
+
+.btn-premium-primary {
+    background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 30px !important;
+    padding: 0.65rem 1.5rem !important;
+    font-weight: 700 !important;
+    font-size: 0.88rem !important;
+    box-shadow: 0 4px 10px rgba(79, 70, 229, 0.2) !important;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+.btn-premium-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3) !important;
 }
 </style>
 <div class="animate__animated animate__fadeIn">
@@ -169,7 +214,7 @@ $is_etab     = in_array($role_code, ['etablissement', 'directeur', 'formateur'])
     <div class="row g-4 mb-4">
         <!-- Main Highlight: Total Offers -->
         <div class="col-12 col-xl-4">
-            <div class="card border-0 shadow-sm rounded-4 h-100" style="background: rgba(255,255,255,0.95);">
+            <div class="card stats-card-primary border-0 shadow-sm rounded-4 h-100" style="background: rgba(255,255,255,0.95);">
                 <div class="card-body p-4 d-flex flex-column justify-content-center">
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <div class="rounded-circle d-inline-flex align-items-center justify-content-center" style="width:48px; height:48px; background:rgba(72,43,143,0.1); color:#482b8f; flex-shrink:0; font-size: 1.2rem;">
@@ -225,7 +270,7 @@ $is_etab     = in_array($role_code, ['etablissement', 'directeur', 'formateur'])
 
                 <!-- Inscrits -->
                 <div class="col-md-6 col-lg-3">
-                    <div class="card kpi-card kpi-inscrits border-0 shadow-sm rounded-4 h-100" style="background: rgba(255,255,255,0.95);">
+                    <div class="card kpi-card premium-kpi-card kpi-inscrits border-0 shadow-sm rounded-4 h-100" style="background: rgba(255,255,255,0.95);">
                         <div class="card-body p-3 d-flex flex-column">
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <div class="rounded-circle d-inline-flex align-items-center justify-content-center" style="width:40px; height:40px; background:rgba(59,130,246,0.1); color:#3b82f6; flex-shrink:0;">
@@ -250,7 +295,7 @@ $is_etab     = in_array($role_code, ['etablissement', 'directeur', 'formateur'])
 
                 <!-- Actifs -->
                 <div class="col-md-6 col-lg-3">
-                    <div class="card kpi-card kpi-actifs border-0 shadow-sm rounded-4 h-100" style="background: rgba(255,255,255,0.95);">
+                    <div class="card kpi-card premium-kpi-card kpi-actifs border-0 shadow-sm rounded-4 h-100" style="background: rgba(255,255,255,0.95);">
                         <div class="card-body p-3 d-flex flex-column">
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <div class="rounded-circle d-inline-flex align-items-center justify-content-center" style="width:40px; height:40px; background:rgba(16,185,129,0.1); color:#10b981; flex-shrink:0;">
@@ -271,7 +316,7 @@ $is_etab     = in_array($role_code, ['etablissement', 'directeur', 'formateur'])
 
                 <!-- Taux Couverture -->
                 <div class="col-md-6 col-lg-3">
-                    <div class="card kpi-card kpi-couverture border-0 shadow-sm rounded-4 h-100" style="background: rgba(255,255,255,0.95);">
+                    <div class="card kpi-card premium-kpi-card kpi-couverture border-0 shadow-sm rounded-4 h-100" style="background: rgba(255,255,255,0.95);">
                         <div class="card-body p-3 d-flex flex-column">
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <div class="rounded-circle d-inline-flex align-items-center justify-content-center" style="width:40px; height:40px; background:rgba(245,158,11,0.1); color:#f59e0b; flex-shrink:0;">
@@ -295,7 +340,7 @@ $is_etab     = in_array($role_code, ['etablissement', 'directeur', 'formateur'])
 
                 <!-- Taux Activité -->
                 <div class="col-md-6 col-lg-3">
-                    <div class="card kpi-card kpi-laureats border-0 shadow-sm rounded-4 h-100" style="background: rgba(255,255,255,0.95);">
+                    <div class="card kpi-card premium-kpi-card kpi-laureats border-0 shadow-sm rounded-4 h-100" style="background: rgba(255,255,255,0.95);">
                         <div class="card-body p-3 d-flex flex-column">
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <div class="rounded-circle d-inline-flex align-items-center justify-content-center" style="width:40px; height:40px; background:rgba(139,92,246,0.1); color:#8b5cf6; flex-shrink:0;">
@@ -606,7 +651,7 @@ $is_etab     = in_array($role_code, ['etablissement', 'directeur', 'formateur'])
     <!-- ===== END TRAINEE STATISTICS SECTION ===== -->
 
     <!-- Detailed Offers Table -->
-    <div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card table-card-container border-0 shadow-sm rounded-4 mb-4">
         <div class="card-header bg-white border-0 pt-4 pb-0 px-4 d-flex justify-content-between align-items-center">
             <div class="d-flex align-items-center gap-2">
                 <h5 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-list-check text-primary me-2"></i> تفاصيل الفروع والتخصصات المبرمجة</h5>
