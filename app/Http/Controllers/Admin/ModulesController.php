@@ -242,6 +242,9 @@ class ModulesController extends Controller {
             $params[] = (int)$offreId;
         }
 
+        // Only show new registration requests (training year 2025/2026 and 2026/2027 onwards)
+        $ofWhere .= " AND sf.IDAnnee_Formation >= 19";
+
         $stats = ['total' => 0, 'acceptes' => 0, 'en_attente' => 0, 'refuses' => 0];
         $list  = []; $error = null;
         $page  = max(1, (int)(request()->all()['page'] ?? 1));
@@ -250,17 +253,16 @@ class ModulesController extends Controller {
         $joinBase = "FROM candidat c
                      LEFT JOIN offre o ON c.IDOffre = o.IDOffre
                      LEFT JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
-                     LEFT JOIN etablissement ef ON o.IDEts_Form = ef.IDetablissement";
+                     LEFT JOIN etablissement ef ON o.IDEts_Form = ef.IDetablissement
+                     LEFT JOIN session sess ON o.IDSession = sess.IDSession
+                     LEFT JOIN semestre_formation sf ON sess.IDSemestre_formation = sf.IDSemestre_formation";
 
         try {
-            // Optimize count query by only joining what is needed for the where condition
-            $countJoin = "FROM candidat c";
-            if (stripos($ofWhere, 'o.') !== false || stripos($ofWhere, 'ef.') !== false) {
-                $countJoin .= " LEFT JOIN offre o ON c.IDOffre = o.IDOffre";
-            }
-            if (stripos($ofWhere, 'ef.') !== false) {
-                $countJoin .= " LEFT JOIN etablissement ef ON o.IDEts_Form = ef.IDetablissement";
-            }
+            $countJoin = "FROM candidat c
+                          LEFT JOIN offre o ON c.IDOffre = o.IDOffre
+                          LEFT JOIN etablissement ef ON o.IDEts_Form = ef.IDetablissement
+                          LEFT JOIN session sess ON o.IDSession = sess.IDSession
+                          LEFT JOIN semestre_formation sf ON sess.IDSemestre_formation = sf.IDSemestre_formation";
 
             $stmtStats = $this->db->prepare("
                 SELECT COUNT(*) as total,
