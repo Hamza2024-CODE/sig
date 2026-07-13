@@ -6,32 +6,32 @@ $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 use Illuminate\Support\Facades\DB;
 
 try {
-    $total = DB::table('preinscrit')->count();
-    echo "<h1>Total Pre-registrations in DB: $total</h1>";
+    echo "<h1>Checking NULL Year Records:</h1>";
+    $rows = DB::table('preinscrit')
+        ->select('DatePreinscrit', 'dateInscr', 'IDOffre', DB::raw('COUNT(*) as count'))
+        ->whereNotExists(function($query) {
+            $query->select(DB::raw(1))
+                ->from('offre as o')
+                ->join('session as sess', 'o.IDSession', '=', 'sess.IDSession')
+                ->join('semestre_formation as sf', 'sess.IDSemestre_formation', '=', 'sf.IDSemestre_formation')
+                ->whereColumn('o.IDOffre', 'preinscrit.IDOffre');
+        })
+        ->groupBy('DatePreinscrit', 'dateInscr', 'IDOffre')
+        ->limit(20)
+        ->get();
 
-    if ($total > 0) {
-        $stats = DB::table('preinscrit as p')
-            ->leftJoin('offre as o', 'p.IDOffre', '=', 'o.IDOffre')
-            ->leftJoin('session as sess', 'o.IDSession', '=', 'sess.IDSession')
-            ->leftJoin('semestre_formation as sf', 'sess.IDSemestre_formation', '=', 'sf.IDSemestre_formation')
-            ->leftJoin('annee_formation as af', 'sf.IDAnnee_Formation', '=', 'af.IDAnnee_Formation')
-            ->select('sf.IDAnnee_Formation', 'af.Nom', DB::raw('COUNT(*) as count'))
-            ->groupBy('sf.IDAnnee_Formation', 'af.Nom')
-            ->orderBy('sf.IDAnnee_Formation', 'desc')
-            ->get();
-
-        echo "<h2>Distribution by Training Year:</h2>";
-        echo "<table border='1' cellpadding='10'>";
-        echo "<tr><th>Year ID</th><th>Year Name</th><th>Count</th></tr>";
-        foreach ($stats as $row) {
-            echo "<tr>";
-            echo "<td>" . ($row->IDAnnee_Formation ?? 'NULL') . "</td>";
-            echo "<td>" . ($row->Nom ?? 'NULL') . "</td>";
-            echo "<td>" . $row->count . "</td>";
-            echo "</tr>";
-        }
-        echo "</table>";
+    echo "<table border='1' cellpadding='10'>";
+    echo "<tr><th>DatePreinscrit</th><th>dateInscr</th><th>IDOffre</th><th>Count</th></tr>";
+    foreach ($rows as $row) {
+        echo "<tr>";
+        echo "<td>" . ($row->DatePreinscrit ?? 'NULL') . "</td>";
+        echo "<td>" . ($row->dateInscr ?? 'NULL') . "</td>";
+        echo "<td>" . ($row->IDOffre ?? 'NULL') . "</td>";
+        echo "<td>" . $row->count . "</td>";
+        echo "</tr>";
     }
+    echo "</table>";
+
 } catch (\Exception $e) {
     echo "Error: " . $e->getMessage();
 }
