@@ -12,6 +12,20 @@ try {
         echo "<h1>OPCache Reset Successfully!</h1>";
     }
     
+    // Manually delete cached files to bypass file ownership/permission issues
+    $cacheDir = __DIR__ . '/../bootstrap/cache';
+    $filesToClear = ['routes-v7.php', 'config.php', 'services.php', 'packages.php'];
+    foreach ($filesToClear as $f) {
+        $path = $cacheDir . '/' . $f;
+        if (file_exists($path)) {
+            if (@unlink($path)) {
+                echo "<h1>Manually Deleted Cache File: $f</h1>";
+            } else {
+                echo "<h1>Failed to Delete Cache File: $f (Permission Denied)</h1>";
+            }
+        }
+    }
+    
     \Illuminate\Support\Facades\Artisan::call('route:clear');
     echo "<h1>Route Cache Cleared!</h1>";
     
