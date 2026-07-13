@@ -4,6 +4,45 @@ $app = require_once __DIR__.'/../bootstrap/app.php';
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
 
+if (isset($_GET['debug_db'])) {
+    header('Content-Type: text/plain; charset=utf-8');
+    try {
+        $db = \App\Core\Database::getInstance()->getConnection();
+        
+        echo "1. Checking table columns for 'ets_form':\n";
+        $cols = $db->query("DESCRIBE ets_form")->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($cols as $c) {
+            echo " - {$c['Field']} ({$c['Type']})\n";
+        }
+
+        echo "\n2. Checking table columns for 'etablissement':\n";
+        $cols2 = $db->query("DESCRIBE etablissement")->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($cols2 as $c) {
+            echo " - {$c['Field']} ({$c['Type']})\n";
+        }
+
+        echo "\n3. Testing the subquery for filter_wilaya = 1:\n";
+        $wId = 1;
+        $sql = "
+            SELECT ets.IDEts_Form FROM ets_form ets
+            INNER JOIN etablissement e ON ets.IDetablissement = e.IDetablissement
+            WHERE e.IDDFEP = $wId
+            UNION
+            SELECT e2.IDetablissement FROM etablissement e2
+            LEFT JOIN ets_form ets2 ON ets2.IDetablissement = e2.IDetablissement
+            WHERE e2.IDDFEP = $wId AND ets2.IDEts_Form IS NULL
+        ";
+        $db->query($sql)->fetchAll();
+        echo " -> Subquery succeeded!\n";
+
+    } catch (\Throwable $e) {
+        echo "ERROR: " . $e->getMessage() . "\n";
+        echo "File: " . $e->getFile() . " on line " . $e->getLine() . "\n";
+        echo $e->getTraceAsString() . "\n";
+    }
+    exit;
+}
+
 use Illuminate\Support\Facades\Artisan;
 
 echo "<h1>Auto-Updating All Modified Files...</h1>";
