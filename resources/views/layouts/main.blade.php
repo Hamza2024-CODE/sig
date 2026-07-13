@@ -1142,7 +1142,8 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
                             <a href="{{ url('dashboard/evaluation-finale') }}" class="sidebar-subitem {{ $isActive('/dashboard/evaluation-finale') }}" title="التقييم نهائي"><i class="fa-solid fa-flag-checkered"></i> <span>التقييم نهائي</span></a>
                         @endif
                         @if (in_array($dept, ['general', 'diplomes']))
-                            <a href="{{ url('dashboard/diplomes') }}" class="sidebar-subitem {{ $isActive('/dashboard/diplomes') }}" title="الشهادات"><i class="fa-solid fa-award"></i> <span>الشهادات</span></a>
+                            <a href="{{ url('dashboard/diplomes') }}" class="sidebar-subitem {{ ($isActive('/dashboard/diplomes') && !request('filter_promo')) ? 'active' : '' }}" title="الشهادات"><i class="fa-solid fa-award"></i> <span>الشهادات</span></a>
+                            <a href="{{ url('dashboard/diplomes?filter_promo=1') }}" class="sidebar-subitem {{ ($isActive('/dashboard/diplomes') && request('filter_promo') == '1') ? 'active' : '' }}" title="خريجي 2021 - 2026"><i class="fa-solid fa-user-graduate text-warning"></i> <span>الخريجين (2021 - 2026)</span></a>
                             <a href="{{ url('dashboard/diplomes/statistiques') }}" class="sidebar-subitem {{ $isActive('/dashboard/diplomes/statistiques') }}" title="إحصائيات الخريجين"><i class="fa-solid fa-chart-pie"></i> <span>إحصائيات الخريجين</span></a>
                         @endif
                     </div>
@@ -1522,46 +1523,71 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
                 </div>
 
                 <script>
+                let allGlobalEtabOptions = [];
+
+                function initGlobalEtabCache() {
+                    const etabSelect = document.getElementById('global-filter-etablissement');
+                    if (etabSelect && allGlobalEtabOptions.length === 0) {
+                        allGlobalEtabOptions = Array.from(etabSelect.options).map(opt => ({
+                            value: opt.value,
+                            text: opt.textContent || opt.innerText,
+                            wilaya: opt.getAttribute('data-wilaya')
+                        }));
+                    }
+                }
+
                 function onGlobalWilayaChange() {
                     const wilayaVal = document.getElementById('global-filter-wilaya').value;
                     const etabSelect = document.getElementById('global-filter-etablissement');
                     if (!etabSelect) return;
                     
-                    etabSelect.value = "";
+                    initGlobalEtabCache();
                     
-                    Array.from(etabSelect.options).forEach(opt => {
-                        if (opt.value === "") {
-                            opt.style.display = "";
-                            return;
-                        }
-                        const optWilaya = opt.getAttribute('data-wilaya');
-                        if (!wilayaVal || optWilaya === wilayaVal) {
-                            opt.style.display = "";
-                        } else {
-                            opt.style.display = "none";
+                    const fragment = document.createDocumentFragment();
+                    allGlobalEtabOptions.forEach(opt => {
+                        if (opt.value === "" || !wilayaVal || opt.wilaya === wilayaVal) {
+                            const optionEl = document.createElement('option');
+                            optionEl.value = opt.value;
+                            optionEl.textContent = opt.text;
+                            if (opt.wilaya) {
+                                optionEl.setAttribute('data-wilaya', opt.wilaya);
+                            }
+                            fragment.appendChild(optionEl);
                         }
                     });
+                    
+                    etabSelect.innerHTML = "";
+                    etabSelect.appendChild(fragment);
+                    etabSelect.value = "";
                 }
+
                 document.addEventListener('DOMContentLoaded', () => {
                     const wilayaSelect = document.getElementById('global-filter-wilaya');
                     if (wilayaSelect) {
                         const wilayaVal = wilayaSelect.value;
                         const etabSelect = document.getElementById('global-filter-etablissement');
                         if (etabSelect && wilayaVal) {
+                            initGlobalEtabCache();
                             const currentVal = etabSelect.value;
-                            Array.from(etabSelect.options).forEach(opt => {
-                                if (opt.value === "") {
-                                    opt.style.display = "";
-                                    return;
-                                }
-                                const optWilaya = opt.getAttribute('data-wilaya');
-                                if (optWilaya == wilayaVal) {
-                                    opt.style.display = "";
-                                } else {
-                                    opt.style.display = "none";
+                            
+                            const fragment = document.createDocumentFragment();
+                            allGlobalEtabOptions.forEach(opt => {
+                                if (opt.value === "" || opt.wilaya == wilayaVal) {
+                                    const optionEl = document.createElement('option');
+                                    optionEl.value = opt.value;
+                                    optionEl.textContent = opt.text;
+                                    if (opt.wilaya) {
+                                        optionEl.setAttribute('data-wilaya', opt.wilaya);
+                                    }
+                                    if (opt.value === currentVal) {
+                                        optionEl.selected = true;
+                                    }
+                                    fragment.appendChild(optionEl);
                                 }
                             });
-                            etabSelect.value = currentVal;
+                            
+                            etabSelect.innerHTML = "";
+                            etabSelect.appendChild(fragment);
                         }
                     }
                 });

@@ -101,6 +101,7 @@ class DiplomeController extends Controller
         $filterAnnee = (int)$request->query('filter_annee', 0);
         $filterSpec  = (int)$request->query('filter_spec', 0);
         $filterQualif = (int)$request->query('filter_qualif', 0);
+        $filterPromo = (int)$request->query('filter_promo', 0);
         $cursor      = (int)$request->query('cursor', 0);   // IDapprenant of last row seen (keyset)
         $page        = max(1, (int)$request->query('page', 1)); // for display only
 
@@ -154,6 +155,9 @@ class DiplomeController extends Controller
         if ($filterQualif > 0) {
             $where[] = "o.IDqualification_dplm = ?";
             $params[] = $filterQualif;
+        }
+        if ($filterPromo === 1) {
+            $where[] = "o.IDAnnee_Formation IN (14, 15, 16, 17, 18, 19)";
         }
 
         // Search filter: resolve candidate IDs first
@@ -312,6 +316,7 @@ class DiplomeController extends Controller
             'filter_annee'   => $filterAnnee,
             'filter_spec'    => $filterSpec,
             'filter_qualif'  => $filterQualif,
+            'filter_promo'   => $filterPromo,
             'etablissements' => $etablissements,
             'modes'          => $modes,
             'annees'         => $annees,
@@ -404,9 +409,34 @@ class DiplomeController extends Controller
                 
                 // Launch asynchronously
                 if (strncasecmp(PHP_OS, 'WIN', 3) === 0) {
-                    pclose(popen("start /B " . $cmd . " > NUL 2>&1", "r"));
+                    if (function_exists('popen')) {
+                        @pclose(popen("start /B " . $cmd . " > NUL 2>&1", "r"));
+                    }
                 } else {
-                    exec($cmd . " > /dev/null 2>&1 &");
+                    $launched = false;
+                    foreach (['exec', 'shell_exec', 'system', 'passthru'] as $func) {
+                        if (function_exists($func)) {
+                            try {
+                                @$func($cmd . " > /dev/null 2>&1 &");
+                                $launched = true;
+                                break;
+                            } catch (\Throwable $e) {}
+                        }
+                    }
+                    if (!$launched) {
+                        // Fallback: Run synchronously using Artisan to prevent Call to undefined function/disabled function crashes
+                        try {
+                            \Illuminate\Support\Facades\Artisan::call('sgfep:generate-graduates-stats', [
+                                'cacheKey' => $cacheKey,
+                                'role' => $role_code,
+                                'dfepId' => $dfep_id,
+                                'etabId' => $etab_id,
+                                'filtersJson' => json_encode($filtersArray),
+                            ]);
+                        } catch (\Throwable $e) {
+                            \Illuminate\Support\Facades\Log::error("Failed to run stats synchronously: " . $e->getMessage());
+                        }
+                    }
                 }
             }
 
@@ -566,6 +596,7 @@ class DiplomeController extends Controller
                    sp.Nom as spec_ar, sp.NomFr as spec_fr,
                    e.Nom as etab_ar, e.NomFr as etab_fr, e.IDetablissement as etab_id,
                    w.Nom as wilaya_ar, w.NomFr as wilaya_fr,
+                    f.IDApprenant_Fin as diplome_id,
                    f.Numdiplome as numero_diplome, f.MoyGen as moyenne_generale,
                    f.DateDiplome as date_deliberation, f.DateDiplome as date_emission,
                    f.DateDiplome as date_delivrance,
@@ -573,7 +604,8 @@ class DiplomeController extends Controller
                    q.Nom as type_diplome_ar, q.NomFr as type_diplome_fr,
                    q.IDqualification_dplm as qualif_id,
                    f.NumPvFin as num_deliberation,
-                   f.DatePvFin as date_pv_fin
+                   f.DatePvFin as date_pv_fin,
+                   nfp.Nom as niveau_qualification
             FROM apprenant_fin f
             JOIN apprenant a  ON f.IDapprenant     = a.IDapprenant
             JOIN candidat c   ON a.IDCandidat       = c.IDCandidat
@@ -583,6 +615,7 @@ class DiplomeController extends Controller
             JOIN etablissement e ON o.IDEts_Form    = e.IDetablissement
             LEFT JOIN wilaya w ON e.IDDFEP           = w.IDWilayaa
             LEFT JOIN qualification_dplm q ON COALESCE(NULLIF(o.IDqualification_dplm, 0), NULLIF(sp.IDqualification_dplm, 0)) = q.IDqualification_dplm
+            LEFT JOIN niveau_fp nfp ON sp.IDNiveau_Fp = nfp.IDNiveau_Fp
             WHERE f.IDApprenant_Fin = ? {$etabFilter}
         ", $params);
 
@@ -591,6 +624,13 @@ class DiplomeController extends Controller
         }
 
         $d = (array)$d;
+
+        try {
+            $qrUrl = url('/verify-diploma?id=' . $d['diplome_id']);
+            $d['qr_base64'] = (new \chillerlan\QRCode\QRCode)->render($qrUrl);
+        } catch (\Throwable $e) {
+            $d['qr_base64'] = '';
+        }
 
         // Custom date formatting for Arabic (YYYY/MM/DD) and French (DD/MM/YYYY)
         if (!empty($d['date_naissance'])) {
@@ -672,7 +712,7 @@ class DiplomeController extends Controller
         ][$mention] ?? 'مقبول';
 
         $qualifId = (int)($d['qualif_id'] ?? 0);
-        $d['niveau_qualification'] = match ($qualifId) {
+        $d['niveau_qualification'] = !empty($d['niveau_qualification']) ? $d['niveau_qualification'] : match ($qualifId) {
             5, 12, 14 => 'الخامس',
             7, 11, 13 => 'الرابع',
             6         => 'الثالث',
@@ -742,6 +782,222 @@ class DiplomeController extends Controller
         $d['pedagogical_title']= ($pedagogical && !empty($pedagogical->TachesPrincipale)) ? ($this->cleanJobTitle($pedagogical->TachesPrincipale) ?: 'مدير فرعي للتعليم والتوجيه المهني المتواصل') : 'مدير فرعي للتعليم والتوجيه المهني المتواصل';
 
         return $this->render('admin/diplomes/print', ['d' => $d], 'print');
+    }
+
+    /**
+     * Bulk-print all diplomas for a cohort (section / offre / custom IDs list).
+     * URL params:
+     *   ids        — comma-separated apprenant_fin IDs  (highest priority)
+     *   section_id — print all issued diplomas of a section
+     *   offre_id   — print all issued diplomas of an offre
+     * At most 200 diplomas per batch to prevent browser freeze.
+     */
+    public function printBatch(\Illuminate\Http\Request $request): mixed
+    {
+        if (\App\Helpers\SovereignLicensingHelper::getSetting('feature_print_actions_enabled', '1') !== '1') {
+            abort(403, 'طباعة الشهادة معطلة من قبل مدير النظام.');
+        }
+
+        $user      = session('user') ?? [];
+        $role_code = strtolower($user['role_code'] ?? '');
+        $etab_id   = (int)($user['etablissement_id'] ?? $user['IDEts_Form'] ?? 0);
+        $dfep_id   = (int)($user['iddfep'] ?? $user['IDDFEP'] ?? 0);
+
+        $isAdmin = in_array($role_code, ['admin', 'ministre', 'secretaire_general', 'central', 'high_admin']);
+        $isDfep  = ($role_code === 'dfep' && $dfep_id > 0);
+        $isEtab  = (!$isAdmin && !$isDfep && $etab_id > 0);
+
+        // ── Scope filter ──────────────────────────────────────────────
+        $scopeFilter = '';
+        $scopeParams = [];
+        if ($isDfep) {
+            $scopeFilter = " AND o.IDEts_Form IN (SELECT IDetablissement FROM etablissement WHERE IDDFEP = ?)";
+            $scopeParams[] = $dfep_id;
+        } elseif ($isEtab) {
+            $scopeFilter = " AND o.IDEts_Form = ?";
+            $scopeParams[] = $etab_id;
+        } elseif (!$isAdmin) {
+            abort(403);
+        }
+
+        // ── Build WHERE for the selection mode ───────────────────────
+        $idsRaw    = trim($request->query('ids', ''));
+        $sectionId = (int)$request->query('section_id', 0);
+        $offreId   = (int)$request->query('offre_id', 0);
+
+        $selectionWhere  = '';
+        $selectionParams = [];
+
+        if ($idsRaw !== '') {
+            // Custom ID list (apprenant_fin IDs)
+            $idList = array_filter(array_map('intval', explode(',', $idsRaw)));
+            if (empty($idList)) abort(400, 'IDs invalides.');
+            $idList = array_slice($idList, 0, 200); // cap at 200
+            $ph = implode(',', array_fill(0, count($idList), '?'));
+            $selectionWhere  = " AND f.IDApprenant_Fin IN ($ph)";
+            $selectionParams = $idList;
+        } elseif ($sectionId > 0) {
+            $selectionWhere  = " AND a.IDSection = ?";
+            $selectionParams = [$sectionId];
+        } elseif ($offreId > 0) {
+            $selectionWhere  = " AND s.IDOffre = ?";
+            $selectionParams = [$offreId];
+        } else {
+            abort(400, 'يجب تحديد ids أو section_id أو offre_id.');
+        }
+
+        $rows = DB::select("
+            SELECT a.IDapprenant as stagiaire_id, a.Nccp as numero_matricule,
+                   c.Nom as nom_ar, c.Prenom as prenom_ar, c.NomFr as nom_fr, c.PrenomFr as prenom_fr,
+                   DATE_FORMAT(c.DateNais, '%d/%m/%Y') as date_naissance,
+                   c.LieuNais as lieu_naissance, c.LieuNaisFr as lieu_naissance_fr,
+                   sp.Nom as spec_ar, sp.NomFr as spec_fr,
+                   e.Nom as etab_ar, e.NomFr as etab_fr, e.IDetablissement as etab_id,
+                   w.Nom as wilaya_ar, w.NomFr as wilaya_fr,
+                   f.IDApprenant_Fin as diplome_id,
+                   f.Numdiplome as numero_diplome, f.MoyGen as moyenne_generale,
+                   f.DateDiplome as date_deliberation, f.DateDiplome as date_emission,
+                   f.numSerieDiplome as num_serie,
+                   q.Nom as type_diplome_ar, q.NomFr as type_diplome_fr,
+                   q.IDqualification_dplm as qualif_id,
+                   f.NumPvFin as num_deliberation, f.DatePvFin as date_pv_fin,
+                   nfp.Nom as niveau_qualification
+            FROM apprenant_fin f
+            JOIN apprenant a   ON f.IDapprenant  = a.IDapprenant
+            JOIN candidat c    ON a.IDCandidat   = c.IDCandidat
+            JOIN section s     ON a.IDSection    = s.IDSection
+            JOIN offre o       ON s.IDOffre      = o.IDOffre
+            JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
+            JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
+            LEFT JOIN wilaya w ON e.IDDFEP = w.IDWilayaa
+            LEFT JOIN qualification_dplm q ON COALESCE(NULLIF(o.IDqualification_dplm,0), NULLIF(sp.IDqualification_dplm,0)) = q.IDqualification_dplm
+            LEFT JOIN niveau_fp nfp ON sp.IDNiveau_Fp = nfp.IDNiveau_Fp
+            WHERE f.Numdiplome IS NOT NULL AND f.Numdiplome != ''
+              {$scopeFilter}
+              {$selectionWhere}
+            ORDER BY a.IDSection, c.Nom, c.Prenom
+            LIMIT 200
+        ", array_merge($scopeParams, $selectionParams));
+
+        if (empty($rows)) {
+            return back()->with('flash_error', 'لا توجد شهادات محررة لهذه المجموعة.');
+        }
+
+        // ── Format each diploma record (same logic as printDiploma) ──
+        $diplomas = [];
+        foreach ($rows as $row) {
+            $d = (array)$row;
+
+            try {
+                $qrUrl = url('/verify-diploma?id=' . $d['diplome_id']);
+                $d['qr_base64'] = (new \chillerlan\QRCode\QRCode)->render($qrUrl);
+            } catch (\Throwable $e) {
+                $d['qr_base64'] = '';
+            }
+
+            // Date formatting
+            if (!empty($d['date_naissance'])) {
+                $parts = explode('/', $d['date_naissance']);
+                if (count($parts) === 3) {
+                    $d['date_naissance_ar'] = $parts[2] . '/' . $parts[1] . '/' . $parts[0];
+                    $d['date_naissance_fr'] = $d['date_naissance'];
+                } else {
+                    $d['date_naissance_ar'] = $d['date_naissance'];
+                    $d['date_naissance_fr'] = $d['date_naissance'];
+                }
+            } else {
+                $d['date_naissance_ar'] = '';
+                $d['date_naissance_fr'] = '';
+            }
+
+            $d['num_deliberation'] = (!empty($d['num_deliberation']) && $d['num_deliberation'] != 0) ? $d['num_deliberation'] : '31';
+
+            $delibDate = (!empty($d['date_pv_fin']) && $d['date_pv_fin'] !== '0000-00-00') ? $d['date_pv_fin'] : ($d['date_deliberation'] ?? '');
+            $d['date_deliberation_ar'] = !empty($delibDate) ? date('Y/m/d', strtotime($delibDate)) : '';
+            $d['date_emission_ar']     = !empty($d['date_emission']) ? date('Y/m/d', strtotime($d['date_emission'])) : '';
+
+            if (empty($d['nom_fr']) && !empty($d['nom_ar'])) {
+                $d['nom_fr'] = \App\Helpers\TakwinHelper::transliterateArabic($d['nom_ar']);
+            }
+            if (empty($d['prenom_fr']) && !empty($d['prenom_ar'])) {
+                $d['prenom_fr'] = \App\Helpers\TakwinHelper::transliterateArabic($d['prenom_ar']);
+            }
+
+            if (!empty($d['lieu_naissance'])) {
+                $d['lieu_naissance'] = trim(preg_replace('/\s+/', ' ', $d['lieu_naissance']));
+                $d['lieu_naissance'] = str_replace('الجزا ئر', 'الجزائر', $d['lieu_naissance']);
+            }
+            if (!empty($d['wilaya_ar'])) {
+                $d['wilaya_ar'] = trim(preg_replace('/\s+/', ' ', $d['wilaya_ar']));
+                $d['wilaya_ar'] = str_replace('الجزا ئر', 'الجزائر', $d['wilaya_ar']);
+            }
+            if (empty($d['wilaya_ar']) && !empty($d['etab_ar'])) {
+                $detected = \App\Helpers\TakwinHelper::detectWilayaFromEtab($d['etab_ar']);
+                $d['wilaya_ar'] = $detected['ar'];
+                $d['wilaya_fr'] = $detected['fr'];
+            }
+
+            $moyenne = (float)$d['moyenne_generale'];
+            $mention = 'passable';
+            if ($moyenne >= 16)     $mention = 'tres_bien';
+            elseif ($moyenne >= 14) $mention = 'bien';
+            elseif ($moyenne >= 12) $mention = 'assez_bien';
+
+            $d['mention_ar'] = [
+                'tres_bien'  => 'جيد جداً',
+                'bien'       => 'حسن',
+                'assez_bien' => 'قريب من الحسن',
+                'passable'   => 'مقبول',
+            ][$mention] ?? 'مقبول';
+
+            $qualifId = (int)($d['qualif_id'] ?? 0);
+            $d['niveau_qualification'] = !empty($d['niveau_qualification']) ? $d['niveau_qualification'] : match ($qualifId) {
+                5, 12, 14 => 'الخامس',
+                7, 11, 13 => 'الرابع',
+                6         => 'الثالث',
+                9         => 'الثاني',
+                10        => 'الأول',
+                default   => 'الخامس'
+            };
+
+            // Signatures (one DB query per unique etablissement, cached in-process)
+            static $sigCache = [];
+            $eid = (int)($d['etab_id'] ?? 0);
+            if (!isset($sigCache[$eid])) {
+                $director = DB::selectOne("
+                    SELECT Nom, Prenom, TachesPrincipale FROM encadrement
+                    WHERE IDetablissement = ?
+                      AND (TachesPrincipale LIKE '%مدير%المعهد%' OR TachesPrincipale LIKE '%مديرة%المعهد%'
+                           OR TachesPrincipale LIKE '%مدير%المركز%' OR TachesPrincipale LIKE '%مدير%مؤسسة%'
+                           OR TachesPrincipale LIKE '%مدير%')
+                      AND TachesPrincipale NOT LIKE '%مدير فرعي%'
+                    LIMIT 1
+                ", [$eid]);
+                $pedagogical = DB::selectOne("
+                    SELECT Nom, Prenom, TachesPrincipale FROM encadrement
+                    WHERE IDetablissement = ?
+                      AND (TachesPrincipale LIKE '%دراسات%' OR TachesPrincipale LIKE '%بيداغوجي%'
+                           OR TachesPrincipale LIKE '%تعليم%' OR TachesPrincipale LIKE '%تمهين%')
+                      AND TachesPrincipale LIKE '%مدير فرعي%'
+                    LIMIT 1
+                ", [$eid]);
+                $sigCache[$eid] = [
+                    'director_name'     => $director    ? ($director->Prenom    . ' ' . $director->Nom)    : 'ولد سعيد فتيحة',
+                    'director_title'    => ($director && !empty($director->TachesPrincipale)) ? ($this->cleanJobTitle($director->TachesPrincipale) ?: 'مديرة المعهد') : 'مديرة المعهد',
+                    'pedagogical_name'  => $pedagogical ? ($pedagogical->Prenom . ' ' . $pedagogical->Nom) : 'زقنون عمر',
+                    'pedagogical_title' => ($pedagogical && !empty($pedagogical->TachesPrincipale)) ? ($this->cleanJobTitle($pedagogical->TachesPrincipale) ?: 'مدير فرعي للتعليم') : 'مدير فرعي للتعليم والتوجيه المهني المتواصل',
+                ];
+            }
+            $d = array_merge($d, $sigCache[$eid]);
+            $diplomas[] = $d;
+        }
+
+        $settings = \App\Helpers\TakwinHelper::getSettings();
+        return $this->render('admin/diplomes/print_batch', [
+            'diplomas' => $diplomas,
+            'count'    => count($diplomas),
+            'title'    => 'طباعة جماعية — ' . count($diplomas) . ' شهادة',
+        ], 'print');
     }
 
     /**
@@ -942,12 +1198,345 @@ class DiplomeController extends Controller
                 DB::delete("DELETE FROM apprenant_fin WHERE IDApprenant_Fin = ?", [$id]);
             });
 
-            // Clear cache for count
-            Cache::forget('dip_issued_v3');
-
             return redirect()->back()->with('flash_success', 'تم إلغاء الشهادة وإرجاع الحالة بنجاح / Certificat annulé avec succès');
         } catch (Exception $e) {
             return redirect()->back()->with('flash_error', 'حدث خطأ أثناء الإلغاء / Erreur lors de l\'annulation: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Download diploma as PDF.
+     */
+    public function downloadPdf(string|int $id): mixed
+    {
+        if (\App\Helpers\SovereignLicensingHelper::getSetting('feature_print_actions_enabled', '1') !== '1') {
+            abort(403);
+        }
+
+        $id        = (int)$id;
+        $user      = session('user');
+        $role_code = strtolower($user['role_code'] ?? '');
+        $etab_id   = $user['etablissement_id'] ?? null;
+        $dfep_id   = $user['iddfep'] ?? null;
+
+        $etabFilter = "";
+        $params = [$id];
+
+        if ($role_code === 'dfep' && $dfep_id) {
+            $etabFilter = " AND o.IDEts_Form IN (SELECT IDetablissement FROM etablissement WHERE IDDFEP = ?) ";
+            $params[] = $dfep_id;
+        } elseif (in_array($role_code, ['etablissement', 'directeur', 'formateur']) && $etab_id) {
+            $etabFilter = " AND o.IDEts_Form = ? ";
+            $params[] = $etab_id;
+        }
+
+        $d = DB::selectOne("
+            SELECT a.IDapprenant as stagiaire_id, a.Nccp as numero_matricule,
+                   c.Nom as nom_ar, c.Prenom as prenom_ar, c.NomFr as nom_fr, c.PrenomFr as prenom_fr,
+                   DATE_FORMAT(c.DateNais, '%d/%m/%Y') as date_naissance,
+                   c.LieuNais as lieu_naissance, c.LieuNaisFr as lieu_naissance_fr,
+                   sp.Nom as spec_ar, sp.NomFr as spec_fr,
+                   e.Nom as etab_ar, e.NomFr as etab_fr, e.IDetablissement as etab_id,
+                   w.Nom as wilaya_ar, w.NomFr as wilaya_fr,
+                   f.IDApprenant_Fin as diplome_id,
+                   f.Numdiplome as numero_diplome, f.MoyGen as moyenne_generale,
+                   f.DateDiplome as date_deliberation, f.DateDiplome as date_emission,
+                   f.DateDiplome as date_delivrance,
+                   f.numSerieDiplome as num_serie,
+                   q.Nom as type_diplome_ar, q.NomFr as type_diplome_fr,
+                   q.IDqualification_dplm as qualif_id,
+                   f.NumPvFin as num_deliberation,
+                   f.DatePvFin as date_pv_fin,
+                   nfp.Nom as niveau_qualification
+            FROM apprenant_fin f
+            JOIN apprenant a  ON f.IDapprenant     = a.IDapprenant
+            JOIN candidat c   ON a.IDCandidat       = c.IDCandidat
+            JOIN section s    ON a.IDSection        = s.IDSection
+            JOIN offre o      ON s.IDOffre          = o.IDOffre
+            JOIN specialite sp ON o.IDSpecialite    = sp.IDSpecialite
+            JOIN etablissement e ON o.IDEts_Form    = e.IDetablissement
+            LEFT JOIN wilaya w ON e.IDDFEP           = w.IDWilayaa
+            LEFT JOIN qualification_dplm q ON COALESCE(NULLIF(o.IDqualification_dplm, 0), NULLIF(sp.IDqualification_dplm, 0)) = q.IDqualification_dplm
+            LEFT JOIN niveau_fp nfp ON sp.IDNiveau_Fp = nfp.IDNiveau_Fp
+            WHERE f.IDApprenant_Fin = ? {$etabFilter}
+        ", $params);
+
+        if (!$d) {
+            return response('الشهادة غير موجودة', 404);
+        }
+
+        $d = (array)$d;
+
+        // Custom formatting (same as printDiploma)
+        try {
+            $qrUrl = url('/verify-diploma?id=' . $d['diplome_id']);
+            $d['qr_base64'] = (new \chillerlan\QRCode\QRCode)->render($qrUrl);
+        } catch (\Throwable $e) {
+            $d['qr_base64'] = '';
+        }
+
+        if (!empty($d['date_naissance'])) {
+            $parts = explode('/', $d['date_naissance']);
+            if (count($parts) === 3) {
+                $d['date_naissance_ar'] = $parts[2] . '/' . $parts[1] . '/' . $parts[0];
+                $d['date_naissance_fr'] = $d['date_naissance'];
+            }
+        }
+        $d['num_deliberation'] = (!empty($d['num_deliberation']) && $d['num_deliberation'] != 0) ? $d['num_deliberation'] : '31';
+        $delibDate = (!empty($d['date_pv_fin']) && $d['date_pv_fin'] !== '0000-00-00') ? $d['date_pv_fin'] : ($d['date_deliberation'] ?? '');
+        $d['date_deliberation_ar'] = !empty($delibDate) ? date('Y/m/d', strtotime($delibDate)) : '';
+        $d['date_emission_ar'] = !empty($d['date_emission']) ? date('Y/m/d', strtotime($d['date_emission'])) : '';
+
+        if (empty($d['nom_fr']) && !empty($d['nom_ar'])) {
+            $d['nom_fr'] = \App\Helpers\TakwinHelper::transliterateArabic($d['nom_ar']);
+        }
+        if (empty($d['prenom_fr']) && !empty($d['prenom_ar'])) {
+            $d['prenom_fr'] = \App\Helpers\TakwinHelper::transliterateArabic($d['prenom_ar']);
+        }
+        if (!empty($d['lieu_naissance'])) {
+            $d['lieu_naissance'] = trim(preg_replace('/\s+/', ' ', $d['lieu_naissance']));
+            $d['lieu_naissance'] = str_replace('الجزا ئر', 'الجزائر', $d['lieu_naissance']);
+        }
+        if (!empty($d['wilaya_ar'])) {
+            $d['wilaya_ar'] = trim(preg_replace('/\s+/', ' ', $d['wilaya_ar']));
+            $d['wilaya_ar'] = str_replace('الجزا ئر', 'الجزائر', $d['wilaya_ar']);
+        }
+        if (empty($d['wilaya_ar']) && !empty($d['etab_ar'])) {
+            $detected = \App\Helpers\TakwinHelper::detectWilayaFromEtab($d['etab_ar']);
+            $d['wilaya_ar'] = $detected['ar'];
+            $d['wilaya_fr'] = $detected['fr'];
+        }
+
+        $moyenne = (float)$d['moyenne_generale'];
+        $mention = 'passable';
+        if ($moyenne >= 16)      $mention = 'tres_bien';
+        elseif ($moyenne >= 14)  $mention = 'bien';
+        elseif ($moyenne >= 12)  $mention = 'assez_bien';
+
+        $d['mention_ar'] = [
+            'tres_bien'  => 'جيد جداً',
+            'bien'       => 'حسن',
+            'assez_bien' => 'قريب من الحسن',
+            'passable'   => 'مقبول',
+        ][$mention] ?? 'مقبول';
+
+        $qualifId = (int)($d['qualif_id'] ?? 0);
+        $d['niveau_qualification'] = !empty($d['niveau_qualification']) ? $d['niveau_qualification'] : match ($qualifId) {
+            5, 12, 14 => 'الخامس',
+            7, 11, 13 => 'الرابع',
+            6         => 'الثالث',
+            9         => 'الثاني',
+            10        => 'الأول',
+            default   => 'الخامس'
+        };
+
+        $background = request()->query('background', '1') === '1';
+
+        $mpdf = new \Mpdf\Mpdf([
+            'mode' => 'utf-8',
+            'format' => 'A4-L',
+            'autoScriptToLang' => true,
+            'autoLangToFont' => true,
+            'margin_top' => 0,
+            'margin_bottom' => 0,
+            'margin_left' => 0,
+            'margin_right' => 0
+        ]);
+        $mpdf->SetDirectionality('rtl');
+
+        $html = view('admin.diplomes.pdf', [
+            'diplomas' => [$d],
+            'background' => $background,
+            'settings' => \App\Helpers\TakwinHelper::getSettings()
+        ])->render();
+
+        $mpdf->WriteHTML($html);
+        return response($mpdf->Output('diplome_' . $d['numero_matricule'] . '.pdf', \Mpdf\Output\Destination::DOWNLOAD))
+            ->header('Content-Type', 'application/pdf');
+    }
+
+    /**
+     * Download batch of diplomas as a single PDF.
+     */
+    public function downloadPdfBatch(\Illuminate\Http\Request $request): mixed
+    {
+        if (\App\Helpers\SovereignLicensingHelper::getSetting('feature_print_actions_enabled', '1') !== '1') {
+            abort(403);
+        }
+
+        $user      = session('user') ?? [];
+        $role_code = strtolower($user['role_code'] ?? '');
+        $etab_id   = (int)($user['etablissement_id'] ?? $user['IDEts_Form'] ?? 0);
+        $dfep_id   = (int)($user['iddfep'] ?? $user['IDDFEP'] ?? 0);
+
+        $isAdmin = in_array($role_code, ['admin', 'ministre', 'secretaire_general', 'central', 'high_admin']);
+        $isDfep  = ($role_code === 'dfep' && $dfep_id > 0);
+        $isEtab  = (!$isAdmin && !$isDfep && $etab_id > 0);
+
+        $scopeFilter = '';
+        $scopeParams = [];
+        if ($isDfep) {
+            $scopeFilter = " AND o.IDEts_Form IN (SELECT IDetablissement FROM etablissement WHERE IDDFEP = ?)";
+            $scopeParams[] = $dfep_id;
+        } elseif ($isEtab) {
+            $scopeFilter = " AND o.IDEts_Form = ?";
+            $scopeParams[] = $etab_id;
+        } elseif (!$isAdmin) {
+            abort(403);
+        }
+
+        $idsRaw    = trim($request->query('ids', ''));
+        $sectionId = (int)$request->query('section_id', 0);
+        $offreId   = (int)$request->query('offre_id', 0);
+
+        $selectionWhere  = '';
+        $selectionParams = [];
+
+        if ($idsRaw !== '') {
+            $idList = array_filter(array_map('intval', explode(',', $idsRaw)));
+            if (empty($idList)) abort(400, 'IDs invalides.');
+            $idList = array_slice($idList, 0, 100); // cap at 100 for PDF to avoid timeout
+            $ph = implode(',', array_fill(0, count($idList), '?'));
+            $selectionWhere  = " AND f.IDApprenant_Fin IN ($ph)";
+            $selectionParams = $idList;
+        } elseif ($sectionId > 0) {
+            $selectionWhere  = " AND a.IDSection = ?";
+            $selectionParams = [$sectionId];
+        } elseif ($offreId > 0) {
+            $selectionWhere  = " AND s.IDOffre = ?";
+            $selectionParams = [$offreId];
+        } else {
+            abort(400, 'Paramètres manquants.');
+        }
+
+        $rows = DB::select("
+            SELECT a.IDapprenant as stagiaire_id, a.Nccp as numero_matricule,
+                   c.Nom as nom_ar, c.Prenom as prenom_ar, c.NomFr as nom_fr, c.PrenomFr as prenom_fr,
+                   DATE_FORMAT(c.DateNais, '%d/%m/%Y') as date_naissance,
+                   c.LieuNais as lieu_naissance, c.LieuNaisFr as lieu_naissance_fr,
+                   sp.Nom as spec_ar, sp.NomFr as spec_fr,
+                   e.Nom as etab_ar, e.NomFr as etab_fr, e.IDetablissement as etab_id,
+                   w.Nom as wilaya_ar, w.NomFr as wilaya_fr,
+                   f.IDApprenant_Fin as diplome_id,
+                   f.Numdiplome as numero_diplome, f.MoyGen as moyenne_generale,
+                   f.DateDiplome as date_deliberation, f.DateDiplome as date_emission,
+                   f.numSerieDiplome as num_serie,
+                   q.Nom as type_diplome_ar, q.NomFr as type_diplome_fr,
+                   q.IDqualification_dplm as qualif_id,
+                   f.NumPvFin as num_deliberation, f.DatePvFin as date_pv_fin,
+                   nfp.Nom as niveau_qualification
+            FROM apprenant_fin f
+            JOIN apprenant a   ON f.IDapprenant  = a.IDapprenant
+            JOIN candidat c    ON a.IDCandidat   = c.IDCandidat
+            JOIN section s     ON a.IDSection    = s.IDSection
+            JOIN offre o       ON s.IDOffre      = o.IDOffre
+            JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
+            JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
+            LEFT JOIN wilaya w ON e.IDDFEP = w.IDWilayaa
+            LEFT JOIN qualification_dplm q ON COALESCE(NULLIF(o.IDqualification_dplm,0), NULLIF(sp.IDqualification_dplm,0)) = q.IDqualification_dplm
+            LEFT JOIN niveau_fp nfp ON sp.IDNiveau_Fp = nfp.IDNiveau_Fp
+            WHERE f.Numdiplome IS NOT NULL AND f.Numdiplome != ''
+              {$scopeFilter}
+              {$selectionWhere}
+            ORDER BY a.IDSection, c.Nom, c.Prenom
+            LIMIT 100
+        ", array_merge($scopeParams, $selectionParams));
+
+        if (empty($rows)) {
+            return back()->with('flash_error', 'لا توجد شهادات محررة لهذه المجموعة.');
+        }
+
+        $diplomas = [];
+        foreach ($rows as $row) {
+            $d = (array)$row;
+
+            try {
+                $qrUrl = url('/verify-diploma?id=' . $d['diplome_id']);
+                $d['qr_base64'] = (new \chillerlan\QRCode\QRCode)->render($qrUrl);
+            } catch (\Throwable $e) {
+                $d['qr_base64'] = '';
+            }
+
+            if (!empty($d['date_naissance'])) {
+                $parts = explode('/', $d['date_naissance']);
+                if (count($parts) === 3) {
+                    $d['date_naissance_ar'] = $parts[2] . '/' . $parts[1] . '/' . $parts[0];
+                    $d['date_naissance_fr'] = $d['date_naissance'];
+                }
+            }
+            $d['num_deliberation'] = (!empty($d['num_deliberation']) && $d['num_deliberation'] != 0) ? $d['num_deliberation'] : '31';
+            $delibDate = (!empty($d['date_pv_fin']) && $d['date_pv_fin'] !== '0000-00-00') ? $d['date_pv_fin'] : ($d['date_deliberation'] ?? '');
+            $d['date_deliberation_ar'] = !empty($delibDate) ? date('Y/m/d', strtotime($delibDate)) : '';
+            $d['date_emission_ar'] = !empty($d['date_emission']) ? date('Y/m/d', strtotime($d['date_emission'])) : '';
+
+            if (empty($d['nom_fr']) && !empty($d['nom_ar'])) {
+                $d['nom_fr'] = \App\Helpers\TakwinHelper::transliterateArabic($d['nom_ar']);
+            }
+            if (empty($d['prenom_fr']) && !empty($d['prenom_ar'])) {
+                $d['prenom_fr'] = \App\Helpers\TakwinHelper::transliterateArabic($d['prenom_ar']);
+            }
+            if (!empty($d['lieu_naissance'])) {
+                $d['lieu_naissance'] = trim(preg_replace('/\s+/', ' ', $d['lieu_naissance']));
+                $d['lieu_naissance'] = str_replace('الجزا ئر', 'الجزائر', $d['lieu_naissance']);
+            }
+            if (!empty($d['wilaya_ar'])) {
+                $d['wilaya_ar'] = trim(preg_replace('/\s+/', ' ', $d['wilaya_ar']));
+                $d['wilaya_ar'] = str_replace('الجزا ئر', 'الجزائر', $d['wilaya_ar']);
+            }
+            if (empty($d['wilaya_ar']) && !empty($d['etab_ar'])) {
+                $detected = \App\Helpers\TakwinHelper::detectWilayaFromEtab($d['etab_ar']);
+                $d['wilaya_ar'] = $detected['ar'];
+                $d['wilaya_fr'] = $detected['fr'];
+            }
+
+            $moyenne = (float)$d['moyenne_generale'];
+            $mention = 'passable';
+            if ($moyenne >= 16)      $mention = 'tres_bien';
+            elseif ($moyenne >= 14)  $mention = 'bien';
+            elseif ($moyenne >= 12)  $mention = 'assez_bien';
+
+            $d['mention_ar'] = [
+                'tres_bien'  => 'جيد جداً',
+                'bien'       => 'حسن',
+                'assez_bien' => 'قريب من الحسن',
+                'passable'   => 'مقبول',
+            ][$mention] ?? 'مقبول';
+
+            $qualifId = (int)($d['qualif_id'] ?? 0);
+            $d['niveau_qualification'] = !empty($d['niveau_qualification']) ? $d['niveau_qualification'] : match ($qualifId) {
+                5, 12, 14 => 'الخامس',
+                7, 11, 13 => 'الرابع',
+                6         => 'الثالث',
+                9         => 'الثاني',
+                10        => 'الأول',
+                default   => 'الخامس'
+            };
+
+            $diplomas[] = $d;
+        }
+
+        $background = $request->query('background', '1') === '1';
+
+        $mpdf = new \Mpdf\Mpdf([
+            'mode' => 'utf-8',
+            'format' => 'A4-L',
+            'autoScriptToLang' => true,
+            'autoLangToFont' => true,
+            'margin_top' => 0,
+            'margin_bottom' => 0,
+            'margin_left' => 0,
+            'margin_right' => 0
+        ]);
+        $mpdf->SetDirectionality('rtl');
+
+        $html = view('admin.diplomes.pdf', [
+            'diplomas' => $diplomas,
+            'background' => $background,
+            'settings' => \App\Helpers\TakwinHelper::getSettings()
+        ])->render();
+
+        $mpdf->WriteHTML($html);
+        return response($mpdf->Output('diplomes_batch.pdf', \Mpdf\Output\Destination::DOWNLOAD))
+            ->header('Content-Type', 'application/pdf');
     }
 }

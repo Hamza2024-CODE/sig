@@ -25,15 +25,22 @@ $filterQs  = http_build_query(array_filter([
     'filter_annee'  => $filter_annee ?: null,
     'filter_spec'   => $filter_spec ?: null,
     'filter_qualif' => $filter_qualif ?: null,
+    'filter_promo'  => request()->query('filter_promo') ?: null,
 ]));
+$isPromo = request()->query('filter_promo') == '1';
 ?>
 <div class="container-fluid animate__animated animate__fadeIn" style="font-family: 'Cairo', sans-serif;">
 
     <!-- Sovereign Title Header -->
     <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom border-secondary border-opacity-10 flex-wrap gap-3">
         <div>
+            @if($isPromo)
+            <h3 class="fw-bold mb-1" style="color: var(--color-gov-purple-dark, #4b154b);">دليل وخريجي الفترة 2021 - 2026 / Diplômés 2021 - 2026</h3>
+            <p class="text-muted small mb-0">المداولات النهائية واستخراج الشهادات الرسمية لخريجي دفعات الفترة الممتدة بين 2021 و 2026</p>
+            @else
             <h3 class="fw-bold mb-1" style="color: var(--color-gov-purple-dark);">التقييم النهائي وإصدار الشهادات / Délibération & Diplômes</h3>
             <p class="text-muted small mb-0">المداولات النهائية، احتساب المعدلات التراكمية العامة، وتوليد شهادات تخرج الدولة الرسمية (BTS)</p>
+            @endif
         </div>
         <div class="badge bg-primary-subtle text-primary px-3 py-2 fw-bold" style="font-size:0.9rem; border-radius:30px;">
             <i class="fa-solid fa-graduation-cap me-1"></i> إجمالي الشهادات المطبوعة: {{ number_format($issuedCount) }} شهادة دولة
@@ -57,6 +64,9 @@ $filterQs  = http_build_query(array_filter([
     <!-- Advanced Filter Bar -->
     <div class="card border-0 shadow-sm p-4 mb-4 no-print" style="border-radius:16px; background:var(--card-bg, #ffffff); border:1px solid var(--card-border, #f1f5f9)!important;">
         <form method="GET" action="{{ url('dashboard/diplomes') }}" class="row g-3 align-items-end">
+            @if(request()->query('filter_promo'))
+                <input type="hidden" name="filter_promo" value="1">
+            @endif
 
             <!-- Search input -->
             <div class="col-12 col-md-3">
@@ -177,7 +187,7 @@ $filterQs  = http_build_query(array_filter([
     <div class="card border-0 shadow-sm p-4 bg-white" style="border-radius: 20px;">
         <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
             <h5 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-gavel text-primary me-1"></i> كشف مداولات اللجنة والتقييم النهائي للمتربصين</h5>
-            <div class="d-flex gap-2 no-print">
+            <div class="d-flex gap-2 no-print flex-wrap">
                 <button onclick="exportTableToExcel('diplomesTable', 'diplomes_deliberations.xls')" class="btn btn-sm btn-success rounded-pill px-3 fw-bold shadow-sm">
                     <i class="fa-solid fa-file-excel me-1"></i> Excel
                 </button>
@@ -187,6 +197,21 @@ $filterQs  = http_build_query(array_filter([
                 <button onclick="window.print()" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold shadow-sm">
                     <i class="fa-solid fa-print me-1"></i> طباعة
                 </button>
+                <!-- ═══ BULK PRINT BUTTON ═══ -->
+                <button id="btn-batch-print"
+                        onclick="openBatchPrint()"
+                        class="btn btn-sm rounded-pill px-3 fw-bold shadow-sm text-white"
+                        style="background: linear-gradient(135deg,#006233 0%,#10b981 100%); border:none; display:none;"
+                        title="طباعة الشهادات المحددة دفعة واحدة">
+                    <i class="fa-solid fa-layer-group me-1"></i>
+                    <span id="batch-count-label">طباعة المحدد</span>
+                </button>
+                <button onclick="openBatchPrintAll()"
+                        class="btn btn-sm rounded-pill px-3 fw-bold shadow-sm text-white"
+                        style="background: linear-gradient(135deg,#1e3a5f 0%,#3b82f6 100%); border:none;"
+                        title="طباعة جميع الشهادات المحررة في الصفحة الحالية">
+                    <i class="fa-solid fa-print me-1"></i> 🖨️ طباعة الكل
+                </button>
             </div>
         </div>
         
@@ -194,6 +219,11 @@ $filterQs  = http_build_query(array_filter([
             <table class="table table-hover align-middle text-center mb-0" id="diplomesTable">
                 <thead class="table-light">
                     <tr class="fw-bold text-muted" style="font-size:0.85rem;">
+                        <th class="no-print no-export" style="width:36px;">
+                            <input type="checkbox" id="select-all-diplomas" title="تحديد الكل"
+                                   style="width:16px;height:16px;cursor:pointer;"
+                                   onchange="toggleSelectAll(this)">
+                        </th>
                         <th>رقم التسجيل / Matricule</th>
                         <th class="text-right">المتكون / Trainee</th>
                         <th class="text-right">التخصص / Spécialité</th>
@@ -214,6 +244,13 @@ $filterQs  = http_build_query(array_filter([
                     @else
                     @foreach ($stagiaires as $s)
                         <tr>
+                            <td class="no-print no-export" style="width:36px;">
+                                @if ($s['numero_diplome'])
+                                <input type="checkbox" class="diploma-check" value="{{ $s['diplome_id'] }}"
+                                       style="width:16px;height:16px;cursor:pointer;"
+                                       onchange="updateBatchBtn()">
+                                @endif
+                            </td>
                             <td class="fw-bold text-dark" style="font-family:'Outfit';">{{ htmlspecialchars($s['numero_matricule']) }}</td>
                             <td class="text-right">
                                 <strong class="d-block text-dark">{{ htmlspecialchars($s['nom_ar'] . ' ' . $s['prenom_ar']) }}</strong>
@@ -436,6 +473,59 @@ function confirmDeleteDiploma(id, name) {
         form.action = '{{ url("dashboard/diplomes/delete") }}/' + id;
         form.submit();
     }
+}
+
+// ══════════════════════════════════════════════════════════════
+// Bulk Diploma Print — Select All / Batch Print
+// ══════════════════════════════════════════════════════════════
+
+function toggleSelectAll(masterCb) {
+    document.querySelectorAll('.diploma-check').forEach(function(cb) {
+        cb.checked = masterCb.checked;
+    });
+    updateBatchBtn();
+}
+
+function updateBatchBtn() {
+    var checked = document.querySelectorAll('.diploma-check:checked');
+    var btn = document.getElementById('btn-batch-print');
+    var label = document.getElementById('batch-count-label');
+    if (checked.length > 0) {
+        btn.style.display = '';
+        label.textContent = '🖨️ طباعة المحدد (' + checked.length + ')';
+    } else {
+        btn.style.display = 'none';
+    }
+    // sync master checkbox state
+    var all = document.querySelectorAll('.diploma-check');
+    var master = document.getElementById('select-all-diplomas');
+    if (master) {
+        master.indeterminate = (checked.length > 0 && checked.length < all.length);
+        master.checked = (all.length > 0 && checked.length === all.length);
+    }
+}
+
+function openBatchPrint() {
+    var checked = document.querySelectorAll('.diploma-check:checked');
+    if (checked.length === 0) {
+        alert('يرجى تحديد شهادة واحدة على الأقل أولاً.');
+        return;
+    }
+    var ids = Array.from(checked).map(function(cb) { return cb.value; }).join(',');
+    var url = '{{ url("dashboard/diplomes/print-batch") }}?ids=' + ids;
+    window.open(url, '_blank');
+}
+
+function openBatchPrintAll() {
+    // Collect all visible issued diploma IDs from the current page
+    var allChecks = document.querySelectorAll('.diploma-check');
+    if (allChecks.length === 0) {
+        alert('لا توجد شهادات محررة في هذه الصفحة.');
+        return;
+    }
+    var ids = Array.from(allChecks).map(function(cb) { return cb.value; }).join(',');
+    var url = '{{ url("dashboard/diplomes/print-batch") }}?ids=' + ids + '&noprint=1';
+    window.open(url, '_blank');
 }
 </script>
 @endsection
