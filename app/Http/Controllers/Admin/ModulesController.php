@@ -1800,6 +1800,7 @@ class ModulesController extends Controller {
     // 7. DISTRIBUTION DETAILLEE — branche + specialite + section counts
     // ================================================================
     public function distributionDetaillee() {
+        @ini_set('memory_limit', '512M');
         $scope = $this->getScope();
         [$ofWhere, $params] = $this->offreWhere($scope, 'o');
 
@@ -1872,6 +1873,11 @@ class ModulesController extends Controller {
                     $grouped[$key]['total_stagiaires'] += (int)$o['NbrInscr'];
                     $grouped[$key]['femmes'] += (int)$o['NbrInscrf'];
                 }
+
+                unset($etabRows);
+                unset($branchRows);
+                unset($specRows);
+                unset($offres);
 
                 // Convert to list and sort
                 $list = [];
