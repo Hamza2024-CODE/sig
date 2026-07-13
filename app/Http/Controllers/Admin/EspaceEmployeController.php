@@ -388,7 +388,7 @@ class EspaceEmployeController extends Controller
 
         } else {
             if ($scope['role'] === 'admin') {
-                $clauses = ['a.IDSection != 0', '(af.IDapprenant IS NULL OR af.SituationFin IN (0,4))'];
+                $clauses = ['a.IDSection != 0', 's.IDSession IN (31, 32, 33, 34, 35)'];
                 $params = [];
 
                 // Search text
@@ -424,18 +424,29 @@ class EspaceEmployeController extends Controller
 
                 $whereClause = implode(' AND ', $clauses);
 
-                // Fetch Total Count
+                // Fetch Total Count with selective/dynamic joins for speed
                 $totalCount = 0;
                 try {
+                    $countJoins = ["JOIN section s ON a.IDSection = s.IDSection"];
+                    if (!empty($branche)) {
+                        $countJoins[] = "LEFT JOIN specialite sp ON s.IDSpecialite = sp.IDSpecialite";
+                    }
+                    $needEtab = !empty($wilaya) || (!empty($search) && !is_numeric($search));
+                    if ($needEtab) {
+                        $countJoins[] = "LEFT JOIN etablissement e ON s.IDEts_Form = e.IDetablissement";
+                    }
+                    if (!empty($wilaya)) {
+                        $countJoins[] = "LEFT JOIN wilaya w ON w.IDWilayaa = e.IDDFEP";
+                    }
+                    if (!empty($search)) {
+                        $countJoins[] = "JOIN candidat c ON a.IDCandidat = c.IDCandidat";
+                    }
+                    $joinString = implode("\n", $countJoins);
+
                     $countSql = "
                         SELECT COUNT(*)
                         FROM apprenant a
-                        JOIN candidat c ON a.IDCandidat = c.IDCandidat
-                        JOIN section s ON a.IDSection = s.IDSection
-                        LEFT JOIN apprenant_fin af ON a.IDapprenant = af.IDapprenant
-                        LEFT JOIN specialite sp ON s.IDSpecialite = sp.IDSpecialite
-                        LEFT JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
-                        LEFT JOIN wilaya w ON w.IDWilayaa = e.IDDFEP
+                        $joinString
                         WHERE $whereClause
                     ";
                     $countCacheKey = 'admin_trainees_count_' . md5($countSql . serialize($params));
@@ -457,7 +468,6 @@ class EspaceEmployeController extends Controller
                         FROM apprenant a
                         JOIN candidat c ON a.IDCandidat = c.IDCandidat
                         JOIN section s ON a.IDSection = s.IDSection
-                        LEFT JOIN apprenant_fin af ON a.IDapprenant = af.IDapprenant
                         LEFT JOIN specialite sp ON s.IDSpecialite = sp.IDSpecialite
                         LEFT JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
                         LEFT JOIN wilaya w ON w.IDWilayaa = e.IDDFEP
