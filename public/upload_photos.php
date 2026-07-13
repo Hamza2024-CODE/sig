@@ -33,22 +33,36 @@ if (!is_dir($targetDir)) {
     mkdir($targetDir, 0755, true);
 }
 
-$tempZipPath = $targetDir . '/upload_temp.zip';
+$tempFilePath = $targetDir . '/upload_temp';
 
-if (move_uploaded_file($file['tmp_name'], $tempZipPath)) {
-    // Extract zip
-    $zip = new ZipArchive;
-    if ($zip->open($tempZipPath) === TRUE) {
-        $zip->extractTo($targetDir);
-        $zip->close();
-        unlink($tempZipPath);
-        echo "SUCCESS: Extracted successfully to target path.";
+if (move_uploaded_file($file['tmp_name'], $tempFilePath)) {
+    $clientFileName = strtolower($file['name']);
+    if (str_ends_with($clientFileName, '.tar')) {
+        try {
+            $phar = new PharData($tempFilePath);
+            $phar->extractTo($targetDir, null, true);
+            unlink($tempFilePath);
+            echo "SUCCESS: Extracted TAR successfully.";
+        } catch (\Exception $e) {
+            unlink($tempFilePath);
+            http_response_code(500);
+            die("ERROR: Failed to extract TAR archive: " . $e->getMessage());
+        }
     } else {
-        unlink($tempZipPath);
-        http_response_code(500);
-        die("ERROR: Failed to open ZIP archive.");
+        // Extract zip
+        $zip = new ZipArchive;
+        if ($zip->open($tempFilePath) === TRUE) {
+            $zip->extractTo($targetDir);
+            $zip->close();
+            unlink($tempFilePath);
+            echo "SUCCESS: Extracted ZIP successfully.";
+        } else {
+            unlink($tempFilePath);
+            http_response_code(500);
+            die("ERROR: Failed to open ZIP archive.");
+        }
     }
 } else {
     http_response_code(500);
-    die("ERROR: Failed to save uploaded ZIP file.");
+    die("ERROR: Failed to save uploaded file.");
 }
