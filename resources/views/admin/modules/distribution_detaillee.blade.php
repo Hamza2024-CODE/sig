@@ -30,6 +30,14 @@
         <div class="card-body p-3">
             <form method="GET" action="" class="row g-3 align-items-center">
                 <div class="col-md-4">
+                    <label class="form-label small fw-bold text-muted mb-1">البحث السريع (المؤسسة أو الشعبة)</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0" style="border-top-right-radius: 50rem; border-bottom-right-radius: 50rem; border-top-left-radius: 0; border-bottom-left-radius: 0;"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                        <input type="text" name="search" class="form-control border-start-0 ps-0" style="border-top-left-radius: 0; border-bottom-left-radius: 0; border-top-right-radius: 0; border-bottom-right-radius: 0;" placeholder="اكتب للبحث ثم اضغط Enter..." value="<?= htmlspecialchars(request('search') ?? '') ?>">
+                        <button type="submit" class="btn btn-primary" style="border-top-left-radius: 50rem; border-bottom-left-radius: 50rem; border-top-right-radius: 0; border-bottom-right-radius: 0; background: linear-gradient(135deg, #482b8f 0%, #643edb 100%); border: none;">بحث</button>
+                    </div>
+                </div>
+                <div class="col-md-3">
                     <label class="form-label small fw-bold text-muted mb-1">تصفية حسب الولاية</label>
                     <select name="filter_wilaya" class="form-select rounded-pill" onchange="this.form.submit()">
                         <option value="">-- كل الولايات --</option>
@@ -38,7 +46,7 @@
                         <?php endforeach; ?>
                     </select>
                 </div>
-                <div class="col-md-5">
+                <div class="col-md-3">
                     <label class="form-label small fw-bold text-muted mb-1">المؤسسة التكوينية</label>
                     <select name="filter_etablissement" class="form-select rounded-pill" onchange="this.form.submit()">
                         <option value="">-- كل المؤسسات --</option>
@@ -47,7 +55,7 @@
                         <?php endforeach; ?>
                     </select>
                 </div>
-                <div class="col-md-3 d-flex align-items-end pt-3">
+                <div class="col-md-2 d-flex align-items-end pt-3">
                     <a href="{{ url('dashboard/distribution-detaillee') }}" class="btn btn-outline-secondary rounded-pill px-3 fw-bold w-100">
                         <i class="fa-solid fa-arrows-rotate me-1"></i> إعادة تعيين
                     </a>
@@ -114,7 +122,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <?php if (empty($list)): ?>
+                        <?php if (empty($list) || (method_exists($list, 'total') && $list->total() === 0)): ?>
                             <tr>
                                 <td colspan="6" class="text-center py-4 text-muted">
                                     <i class="fa-solid fa-circle-info me-2"></i> لا توجد بيانات للمؤسسات حالياً وفقاً للفلاتر المحددة.
@@ -146,6 +154,18 @@
                 </table>
             </div>
         </div>
+        <?php if (method_exists($list, 'links')): ?>
+            <div class="card-footer bg-white border-0 pb-4 px-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="text-muted small">
+                        عرض <?= $list->firstItem() ?> إلى <?= $list->lastItem() ?> من أصل <?= $list->total() ?> سجل
+                    </div>
+                    <div>
+                        <?= $list->links('pagination::bootstrap-5') ?>
+                    </div>
+                </div>
+            </div>
+        <?php endif; ?>
     </div>
 </div>
 

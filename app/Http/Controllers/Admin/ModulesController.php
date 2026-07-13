@@ -1899,6 +1899,33 @@ class ModulesController extends Controller {
 
             $list = $cachedData['list'];
 
+            $search = trim(request()->query('search', ''));
+            if ($search !== '') {
+                $list = array_filter($list, function($item) use ($search) {
+                    return mb_stripos($item['etab_nom'], $search) !== false ||
+                           mb_stripos($item['filiere_nom'], $search) !== false ||
+                           mb_stripos($item['filiere_fr'], $search) !== false ||
+                           mb_stripos($item['code'], $search) !== false;
+                });
+            }
+
+            if (!request()->query('pdf')) {
+                $currentPage = \Illuminate\Pagination\Paginator::resolveCurrentPage() ?: 1;
+                $perPage = 50;
+                $currentPageItems = array_slice($list, ($currentPage - 1) * $perPage, $perPage);
+                
+                $list = new \Illuminate\Pagination\LengthAwarePaginator(
+                    $currentPageItems,
+                    count($list),
+                    $perPage,
+                    $currentPage,
+                    [
+                        'path' => \Illuminate\Pagination\Paginator::resolveCurrentPath(),
+                        'query' => request()->query()
+                    ]
+                );
+            }
+
         } catch (\Exception $e) {
             $stats = ['filieres' => 0, 'specialites' => 0, 'sections' => 0, 'taux_couverture' => '0%'];
             $list = [];
