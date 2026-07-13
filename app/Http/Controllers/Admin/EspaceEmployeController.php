@@ -3,527 +3,284 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Services\Employee\EmployeeCardService;
+use App\Services\Employee\EmployeePhotoService;
+use App\Services\Employee\EmployeeQueryService;
+use App\Services\Employee\EmployeeScopeService;
 use App\Services\ReferenceCache;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Exception;
 
+/**
+ * EspaceEmployeController
+ *
+ * Thin orchestration layer — delegates ALL business logic to dedicated services:
+ *  - EmployeeScopeService  → role-based auth, sanitization, filter building
+ *  - EmployeeQueryService  → all SQL / database access
+ *  - EmployeeCardService   → classification + career data building
+ *  - EmployeePhotoService  → image upload, validation, resize
+ *
+ * This controller only: validates HTTP input, orchestrates the services,
+ * and returns the appropriate HTTP response. No SQL, no role logic, no HTML.
+ */
 class EspaceEmployeController extends Controller
 {
-    /**
-     * Helper to get role and scoping limits for logged in user.
-     */
-    private function getScope(): array {
-        $user     = session('user') ?? [];
-        $role     = strtolower($user['role_code'] ?? 'user');
-        $iddfep   = (int)($user['iddfep'] ?? $user['IDDFEP'] ?? 0);
-        $etabId   = (int)($user['etablissement_id'] ?? 0);
+    // ─────────────────────────────────────────────────────────────────────────
+    //  Services factory — no constructor DI, works on any PHP/Laravel version
+    // ─────────────────────────────────────────────────────────────────────────
 
-        return compact('role', 'iddfep', 'etabId');
+    private function scopeSvc(): EmployeeScopeService { return new EmployeeScopeService(); }
+    private function querySvc(): EmployeeQueryService  { return new EmployeeQueryService();  }
+    private function cardSvc():  EmployeeCardService   { return new EmployeeCardService();   }
+    private function photoSvc(): EmployeePhotoService  { return new EmployeePhotoService();  }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    //  ALLOWED ROLES
+    // ─────────────────────────────────────────────────────────────────────────
+
+    private const ALLOWED_ROLES = [
+        'admin', 'dfep', 'central', 'etablissement', 'directeur',
+        'high_admin', 'secretaire_general', 'ministre',
+    ];
+
+    /**
+     * Backward-compatibility shim for digitalCards() and getTrainee()
+     */
+    private function getScope(): array
+    {
+        return $this->scopeSvc()->getScope();
     }
 
-    /**
-     * Helper to get logged-in employee ID.
-     */
-    private function getAuthenticatedEmployeeId(): ?int {
-        if (function_exists('auth') && auth()->check() && auth()->user()) {
-            return auth()->user()->employee_id ?? auth()->user()->id;
-        }
-        return session('user')['id'] ?? session('user')['employee_id'] ?? null;
-    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    //  index() — Employee list page
+    // ─────────────────────────────────────────────────────────────────────────
 
     /**
-     * Display the standalone employee space page with real database entries.
+     * Display the employee space listing page.
      */
     public function index(Request $request)
     {
         @set_time_limit(300);
+
         $user = session('user') ?? [];
         if (empty($user)) {
             return redirect()->route('login');
         }
 
-        $scope = $this->getScope();
-        $this->authorizeRole(['admin', 'dfep', 'central', 'etablissement', 'directeur', 'high_admin', 'secretaire_general', 'ministre']);
-        
-        // Get filters from request
-        $search = $request->query('filter_search');
-        $wilaya = $request->query('filter_wilaya');
-        $type = $request->query('filter_type');
-        $etab = $request->query('filter_etab');
-        $page = (int)$request->query('page', 1);
-        if ($page < 1) $page = 1;
-        $limit = 12;
+        $this->authorizeRole(self::ALLOWED_ROLES);
+        $scopeData = $this->scopeSvc()->getScope();
+
+        // Build WHERE from role scope + user-supplied filters
+        $scopeResult  = $this->scopeSvc()->buildScopeClauses($scopeData);
+        $clauses      = $scopeResult['clauses'];
+        $params       = $scopeResult['params'];
+
+        $filterResult = $this->scopeSvc()->applyRequestFilters($request, $clauses, $params);
+        $clauses      = $filterResult['clauses'];
+        $params       = $filterResult['params'];
+        $where = implode(' AND ', $clauses);
+
+        $page   = max(1, (int)$request->query('page', 1));
+        $limit  = 12;
         $offset = ($page - 1) * $limit;
 
-        // Build SQL filters
-        $clauses = ['1=1'];
-        $params = [];
+        $totalCount = $this->querySvc()->count($where, $params);
+        $employees  = $this->querySvc()->paginate($where, $params, $limit, $offset);
+        $totalPages = max(1, (int)ceil($totalCount / $limit));
 
-        // Role scoping
-        if ($scope['role'] === 'dfep' && $scope['iddfep']) {
-            $clauses[] = "et.IDDFEP = ?";
-            $params[] = $scope['iddfep'];
-        } elseif (in_array($scope['role'], ['etablissement', 'directeur']) && $scope['etabId']) {
-            $clauses[] = "enc.IDetablissement = ?";
-            $params[] = $scope['etabId'];
-        } elseif ($scope['role'] === 'employee') {
-            $clauses[] = "enc.IDEncadrement = ?";
-            $params[] = (int)$this->getAuthenticatedEmployeeId();
-        }
-
-        // Search text
-        if (!empty($search)) {
-            $clauses[] = "(enc.Nom LIKE ? OR enc.Prenom LIKE ? OR enc.NomFr LIKE ? OR enc.PrenomFr LIKE ? OR enc.IDEncadrement = ? OR enc.nin = ?)";
-            $searchTerm = "%$search%";
-            $params[] = $searchTerm;
-            $params[] = $searchTerm;
-            $params[] = $searchTerm;
-            $params[] = $searchTerm;
-            $params[] = (int)$search;
-            $params[] = $search;
-        }
-
-        // Wilaya filter
-        if (!empty($wilaya)) {
-            $clauses[] = "et.IDDFEP = ?";
-            $params[] = (int)$wilaya;
-        }
-
-        // Ets Type filter
-        if (!empty($type)) {
-            if ($type === 'directorate') {
-                $clauses[] = "et.IDNature_etsF = 5";
-            } elseif ($type === 'centre') {
-                $clauses[] = "et.IDNature_etsF IN (8, 9)";
-            } elseif ($type === 'institute') {
-                $clauses[] = "et.IDNature_etsF IN (6, 7, 11, 13)";
-            } elseif ($type === 'private') {
-                $clauses[] = "et.IDNature_etsF = 12";
-            }
-        }
-
-        // Establishment filter
-        if (!empty($etab)) {
-            $clauses[] = "enc.IDetablissement = ?";
-            $params[] = (int)$etab;
-        }
-
-        $whereClause = implode(' AND ', $clauses);
-
-        $db = new \App\Core\LaravelDbAdapter();
-
-        // Fetch Total Count
-        $totalCount = 0;
-        try {
-            $countSql = "SELECT COUNT(*) FROM encadrement enc LEFT JOIN etablissement et ON enc.IDetablissement = et.IDetablissement WHERE $whereClause";
-            $stmtCount = $db->prepare($countSql);
-            $stmtCount->execute($params);
-            $totalCount = (int)$stmtCount->fetchColumn();
-        } catch (Exception $e) {}
-
-        // Fetch Employees
-        $employees = [];
-        try {
-            $selectSql = "
-                SELECT enc.*, 
-                       et.Nom AS etab_nom, 
-                       et.NomFr AS etab_fr, 
-                       et.IDNature_etsF,
-                       w.Nom AS wilaya_nom, 
-                       w.IDWilayaa AS id_wilaya
-                FROM encadrement enc
-                LEFT JOIN etablissement et ON enc.IDetablissement = et.IDetablissement
-                LEFT JOIN wilaya w ON et.IDDFEP = w.IDWilayaa
-                WHERE $whereClause
-                ORDER BY enc.Nom ASC, enc.Prenom ASC
-                LIMIT ? OFFSET ?
-            ";
-            $stmtSelect = $db->prepare($selectSql);
-            $i = 1;
-            foreach ($params as $paramVal) {
-                $stmtSelect->bindValue($i++, $paramVal);
-            }
-            $stmtSelect->bindValue($i++, $limit, \PDO::PARAM_INT);
-            $stmtSelect->bindValue($i, $offset, \PDO::PARAM_INT);
-            $stmtSelect->execute();
-            $employees = $stmtSelect->fetchAll(\PDO::FETCH_ASSOC);
-            foreach ($employees as &$emp) {
-                if (!empty($emp['nin'])) {
-                    try {
-                        $dec = \Illuminate\Support\Facades\Crypt::decryptString($emp['nin']);
-                        if ($dec) {
-                            $emp['nin'] = $dec;
-                        }
-                    } catch (\Exception $e) {}
-                }
-                if (!empty($emp['DateNais'])) {
-                    try {
-                        $dec = \Illuminate\Support\Facades\Crypt::decryptString($emp['DateNais']);
-                        if ($dec) {
-                            $emp['DateNais'] = $dec;
-                        }
-                    } catch (\Exception $e) {}
-                }
-            }
-            unset($emp);
-        } catch (Exception $e) {}
-
-        $totalPages = ceil($totalCount / $limit);
-        if ($totalPages < 1) $totalPages = 1;
-
-        // Fetch Reference data for filters
+        // Reference data for filters
         $filter_wilayas = ReferenceCache::wilayas();
-        if ($scope['role'] === 'dfep' && $scope['iddfep']) {
-            $filter_etablissements = ReferenceCache::etablissementsForDfep($scope['iddfep']);
-        } else {
-            $filter_etablissements = ReferenceCache::etablissements();
-        }
+        $filter_etablissements = ($scopeData['role'] === 'dfep' && $scopeData['iddfep'])
+            ? ReferenceCache::etablissementsForDfep($scopeData['iddfep'])
+            : ReferenceCache::etablissements();
 
-        // Generate API Key if not present
+        // ✅ Secure API key — random, unpredictable
         $apiKey = $user['api_key'] ?? null;
         if (empty($apiKey)) {
-            $apiKey = 'sgfep_live_' . substr(hash('sha256', $user['username'] ?? 'default_user'), 0, 32);
+            $apiKey          = $this->scopeSvc()->generateApiKey();
             $user['api_key'] = $apiKey;
             session(['user' => $user]);
         }
 
+        $search = $request->query('filter_search');
+        $wilaya = $request->query('filter_wilaya');
+        $type   = $request->query('filter_type');
+        $etab   = $request->query('filter_etab');
+
         return $this->render('admin/espace-employe/index', [
-            'employees' => $employees,
-            'filter_wilayas' => $filter_wilayas,
+            'employees'             => $employees,
+            'filter_wilayas'        => $filter_wilayas,
             'filter_etablissements' => $filter_etablissements,
-            'page' => $page,
-            'totalPages' => $totalPages,
-            'totalCount' => $totalCount,
-            'api_key' => $apiKey,
-            'scope' => $scope,
-            'selected_filters' => compact('search', 'wilaya', 'type', 'etab')
+            'page'                  => $page,
+            'totalPages'            => $totalPages,
+            'totalCount'            => $totalCount,
+            'api_key'               => $apiKey,
+            'scope'                 => $scopeData,
+            'selected_filters'      => compact('search', 'wilaya', 'type', 'etab'),
         ]);
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    //  getEmployee() — AJAX detail endpoint
+    // ─────────────────────────────────────────────────────────────────────────
+
     /**
-     * AJAX Endpoint to fetch details of a specific employee.
+     * AJAX: return full employee profile (role-filtered).
+     * Returns only 25 selected columns + derived data — never 80+ raw columns.
      */
     public function getEmployee($id)
     {
-        $this->authorizeRole(['admin', 'dfep', 'central', 'etablissement', 'directeur', 'high_admin', 'secretaire_general', 'ministre']);
-        $id = (int)$id;
-        $scope = $this->getScope();
-        if ($scope['role'] === 'employee') {
-            $id = (int)$this->getAuthenticatedEmployeeId();
-        }
+        $this->authorizeRole(self::ALLOWED_ROLES);
+        $scopeData = $this->scopeSvc()->getScope();
+        $role      = $scopeData['role'];
+
+        // employee can only view their own record
+        $id = ($role === 'employee')
+            ? (int)$this->scopeSvc()->getAuthenticatedEmployeeId()
+            : (int)$id;
 
         try {
-            $sql = "
-                SELECT enc.*, 
-                       et.Nom AS etab_nom, 
-                       et.NomFr AS etab_fr, 
-                       et.IDNature_etsF,
-                       w.Nom AS wilaya_nom, 
-                       w.IDWilayaa AS id_wilaya,
-                       g.Nom as grade_nom,
-                       f.Nom as fonction_nom
-                FROM encadrement enc
-                LEFT JOIN etablissement et ON enc.IDetablissement = et.IDetablissement
-                LEFT JOIN wilaya w ON et.IDDFEP = w.IDWilayaa
-                LEFT JOIN grade g ON enc.IDGrade = g.IDGrade
-                LEFT JOIN fonctions f ON enc.IDFonctions = f.IDFonctions
-                WHERE enc.IDEncadrement = ?
-                LIMIT 1
-            ";
-            $db = new \App\Core\LaravelDbAdapter();
-            $stmt = $db->prepare($sql);
-            $stmt->execute([$id]);
-            $employee = $stmt->fetch(\PDO::FETCH_ASSOC);
-            if ($employee) {
-                if (!empty($employee['nin'])) {
-                    try {
-                        $dec = \Illuminate\Support\Facades\Crypt::decryptString($employee['nin']);
-                        if ($dec !== false && $dec !== '') {
-                            $employee['nin'] = $dec;
-                        }
-                    } catch (\Exception $e) {}
-                }
-                if (!empty($employee['DateNais'])) {
-                    try {
-                        $dec = \Illuminate\Support\Facades\Crypt::decryptString($employee['DateNais']);
-                        if ($dec !== false && $dec !== '') {
-                            $employee['DateNais'] = $dec;
-                        }
-                    } catch (\Exception $e) {}
-                }
-            }
+            $employee = $this->querySvc()->findById($id);
 
             if (!$employee) {
                 return response()->json(['success' => false, 'message' => 'الموظف غير موجود'], 404);
             }
 
-            // Security Scope check
-            $scope = $this->getScope();
-            if ($scope['role'] === 'employee') {
-                if ($id !== (int)session('user')['id']) {
-                    return response()->json(['success' => false, 'message' => 'غير مصرح لك بالوصول لبيانات موظف آخر'], 403);
-                }
-            } elseif ($scope['role'] === 'dfep' && $scope['iddfep']) {
-                if ((int)$employee['id_wilaya'] !== $scope['iddfep']) {
-                    return response()->json(['success' => false, 'message' => 'غير مصرح لك بالوصول لبيانات هذا الموظف'], 403);
-                }
-            } elseif (in_array($scope['role'], ['etablissement', 'directeur']) && $scope['etabId']) {
-                if ((int)$employee['IDetablissement'] !== $scope['etabId']) {
-                    return response()->json(['success' => false, 'message' => 'غير مصرح لك بالوصول لبيانات هذا الموظف'], 403);
-                }
+            // ✅ Scope-based access check (throws 403 if denied)
+            try {
+                $this->scopeSvc()->authorizeRead($employee, $scopeData);
+            } catch (AccessDeniedHttpException $e) {
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 403);
             }
 
-            // ✅ [SECURITY] Log sensitive READ/VIEW operation
+            // ✅ Audit log
             \App\Core\AuditLogger::logRead('encadrement', $id, [
                 'name'    => ($employee['Nom'] ?? '') . ' ' . ($employee['Prenom'] ?? ''),
-                'nin'     => '***PROTECTED***', // Don't log the actual NIN in details
-                'post'    => $employee['Poste'] ?? '',
-                'subject' => 'معاينة الملف الشخصي الكامل للموظف'
+                'nin'     => '***PROTECTED***',
+                'subject' => 'معاينة الملف الشخصي للموظف',
             ]);
 
-            // Map Family status
-            $sitFamilleMap = [
-                1 => 'أعزب / عزباء',
-                2 => 'متزوج / متزوجة',
-                3 => 'مطلق / مطلقة',
-                4 => 'أرمل / أرملة',
-            ];
-            $employee['sitfamille_text'] = $sitFamilleMap[(int)($employee['IDSitfamille'] ?? 1)] ?? 'غير محدد';
+            // Enrich with computed/derived fields (classification, milestones, doc codes)
+            $employee = $this->cardSvc()->enrich($employee);
 
-            // Generate some beautiful mock components for workspace widget & timeline based on employee data
-            $employee['widget_html'] = $this->getDynamicWidgetHtml($employee);
-            $employee['timeline_html'] = $this->getDynamicTimelineHtml($employee);
-            
-            // Document codes
-            $employee['paystub_code'] = 'FP-ENC-' . sprintf('%03d', $id % 1000);
-            $employee['work_certificate_code'] = 'AT-ENC-' . sprintf('%03d', $id % 1000);
+            // ✅ Strip sensitive fields based on role — ALWAYS the last step
+            $employee = $this->scopeSvc()->sanitize($employee, $role);
 
-            $employee['secure_id'] = \App\Helpers\SecureIdHelper::encrypt((int)$employee['IDEncadrement']);
+            // ✅ Add secure_id for QR code generation on digital card
+            $encId = (int)($employee['IDEncadrement'] ?? $employee['id'] ?? 0);
+            $employee['secure_id'] = $encId > 0 ? \App\Helpers\SecureIdHelper::encrypt($encId) : null;
 
-            return response()->json([
-                'success' => true,
-                'employee' => $employee
-            ]);
+            return response()->json(['success' => true, 'employee' => $employee]);
+
+
         } catch (Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            Log::error('EspaceEmployeController::getEmployee', ['id' => $id, 'error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'حدث خطأ أثناء تحميل بيانات الموظف'], 500);
         }
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    //  updateEmployee() — AJAX save endpoint
+    // ─────────────────────────────────────────────────────────────────────────
+
     /**
-     * AJAX Endpoint to update employee details and handle photo upload.
+     * AJAX: update editable employee fields.
+     * NIN is intentionally excluded from accepted input.
      */
     public function updateEmployee(Request $request, $id)
     {
-        $this->authorizeRole(['admin', 'dfep', 'central', 'etablissement', 'directeur', 'high_admin', 'secretaire_general', 'ministre']);
-        $id = (int)$id;
-        $scope = $this->getScope();
-        if ($scope['role'] === 'employee') {
-            $id = (int)$this->getAuthenticatedEmployeeId();
-        }
+        $this->authorizeRole(self::ALLOWED_ROLES);
+        $scopeData = $this->scopeSvc()->getScope();
+
+        $id = ($scopeData['role'] === 'employee')
+            ? (int)$this->scopeSvc()->getAuthenticatedEmployeeId()
+            : (int)$id;
 
         try {
-            $db = new \App\Core\LaravelDbAdapter();
-            // Find employee
-            $sqlExist = "
-                SELECT enc.IDetablissement, et.IDDFEP 
-                FROM encadrement enc 
-                LEFT JOIN etablissement et ON enc.IDetablissement = et.IDetablissement 
-                WHERE enc.IDEncadrement = ? 
-                LIMIT 1
-            ";
-            $stmtExist = $db->prepare($sqlExist);
-            $stmtExist->execute([$id]);
-            $existing = $stmtExist->fetch(\PDO::FETCH_ASSOC);
-
+            // Find minimal record for scope authorisation
+            $existing = $this->querySvc()->findForUpdate($id);
             if (!$existing) {
                 return response()->json(['success' => false, 'message' => 'الموظف غير موجود'], 404);
             }
 
-            // Security Scope check
-            if ($scope['role'] === 'employee') {
-                if ($id !== (int)$this->getAuthenticatedEmployeeId()) {
-                    return response()->json(['success' => false, 'message' => 'غير مصرح لك بتعديل بيانات موظف آخر'], 403);
-                }
-            } elseif ($scope['role'] === 'dfep' && $scope['iddfep']) {
-                if ((int)$existing['IDDFEP'] !== $scope['iddfep']) {
-                    return response()->json(['success' => false, 'message' => 'غير مصرح لك بتعديل بيانات هذا الموظف'], 403);
-                }
-            } elseif (in_array($scope['role'], ['etablissement', 'directeur']) && $scope['etabId']) {
-                if ((int)$existing['IDetablissement'] !== $scope['etabId']) {
-                    return response()->json(['success' => false, 'message' => 'غير مصرح لك بتعديل بيانات هذا الموظف'], 403);
-                }
+            // ✅ Scope-based write authorisation
+            try {
+                $this->scopeSvc()->authorizeWrite($existing, $id, $scopeData);
+            } catch (AccessDeniedHttpException $e) {
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 403);
             }
 
-            // Handle file upload
+            // ✅ Photo upload via dedicated service (MimeType + 2MB + 0755)
             $photoPath = null;
-            if ($request->hasFile('photo')) {
-                $file = $request->file('photo');
-                if ($file->isValid()) {
-                    $ext = strtolower($file->getClientOriginalExtension());
-                    if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif'])) {
-                        $newFileName = 'emp_' . $id . '_' . time() . '.jpg';
-                        $uploadDir = public_path('uploads/employees');
-                        if (!is_dir($uploadDir)) {
-                            mkdir($uploadDir, 0777, true);
-                        }
-                        $destPath = $uploadDir . '/' . $newFileName;
-                        $this->resizeImageAndSave($file->getRealPath(), $destPath, 300, 300);
-                        $photoPath = '/uploads/employees/' . $newFileName;
-                    }
+            if ($request->hasFile('photo') && $request->file('photo')->isValid()) {
+                try {
+                    $photoPath = $this->photoSvc()->upload($request->file('photo'), $id);
+                } catch (\InvalidArgumentException $e) {
+                    return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+                } catch (\RuntimeException $e) {
+                    Log::error('Photo upload failed', ['id' => $id, 'error' => $e->getMessage()]);
+                    return response()->json(['success' => false, 'message' => 'فشل رفع الصورة — يرجى المحاولة مجدداً'], 500);
                 }
             }
 
-            // Build update fields (nin is explicitly omitted to block editing)
+            // ✅ Server-side validation
+            $tel   = trim($request->input('tel') ?? '');
+            $email = trim($request->input('email') ?? '');
+            if ($tel !== '' && !preg_match('/^[0-9\s\-\+]{7,20}$/', $tel)) {
+                return response()->json(['success' => false, 'message' => 'رقم الهاتف غير صالح'], 422);
+            }
+            if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                return response()->json(['success' => false, 'message' => 'البريد الإلكتروني غير صالح'], 422);
+            }
+
+            // Normalize date format: YYYY/MM/DD → YYYY-MM-DD
+            $dateNais = str_replace('/', '-', $request->input('date_nais') ?? '');
+
             $data = [
-                'Nom' => $request->input('nom') ?? '',
-                'Prenom' => $request->input('prenom') ?? '',
-                'NomFr' => $request->input('nom_fr') ?? '',
-                'PrenomFr' => $request->input('prenom_fr') ?? '',
-                'DateNais' => $request->input('date_nais') ?? '',
-                'LieuNais' => $request->input('lieu_nais') ?? '',
-                'Tel' => $request->input('tel') ?? '',
-                'Email' => $request->input('email') ?? '',
-                'Adres' => $request->input('adres') ?? '',
-                'nbrEnf' => (int)$request->input('nbr_enfants', 0),
-                'nbrenfscol' => (int)$request->input('nbr_enfants_scol', 0),
-                'Echlo' => (int)$request->input('echelon', 0),
-                'nss' => $request->input('nss') ?? '',
-                'Civ' => (int)($request->input('civ') ?? 1),
-                'IDSitfamille' => (int)($request->input('sitfamille') ?? 1),
-                'Specialite' => $request->input('specialite') ?? '',
-                'TachesPrincipale' => $request->input('taches_principale') ?? '',
-                'Daterecr' => $request->input('daterecr') ?? null
+                'Nom'              => trim($request->input('nom') ?? ''),
+                'Prenom'           => trim($request->input('prenom') ?? ''),
+                'NomFr'            => trim($request->input('nom_fr') ?? ''),
+                'PrenomFr'         => trim($request->input('prenom_fr') ?? ''),
+                'DateNais'         => $dateNais,
+                'LieuNais'         => trim($request->input('lieu_nais') ?? ''),
+                'Tel'              => $tel,
+                'Email'            => $email,
+                'Adres'            => trim($request->input('adres') ?? ''),
+                'nbrEnf'           => max(0, (int)$request->input('nbr_enfants', 0)),
+                'nbrenfscol'       => max(0, (int)$request->input('nbr_enfants_scol', 0)),
+                'Echlo'            => max(0, (int)$request->input('echelon', 0)),
+                'nss'              => trim($request->input('nss') ?? ''),
+                'Civ'              => (int)($request->input('civ') ?? 1),
+                'IDSitfamille'     => (int)($request->input('sitfamille') ?? 1),
+                'Specialite'       => trim($request->input('specialite') ?? ''),
+                'TachesPrincipale' => trim($request->input('taches_principale') ?? ''),
+                'Daterecr'         => $request->input('daterecr') ?: null,
+                // nin intentionally OMITTED — cannot be modified via this endpoint
             ];
 
             if ($photoPath) {
                 $data['photo'] = $photoPath;
             }
 
-            // Update candidate record
-            $updateParts = [];
-            $values = [];
-            foreach ($data as $col => $val) {
-                $updateParts[] = "`$col` = ?";
-                $values[] = $val;
+            $ok = $this->querySvc()->update($id, $data);
+
+            if (!$ok) {
+                return response()->json(['success' => false, 'message' => 'فشل تحديث البيانات'], 500);
             }
-            $values[] = $id;
 
-            $sql = "UPDATE encadrement SET " . implode(', ', $updateParts) . " WHERE IDEncadrement = ?";
-            $stmtUpdate = $db->prepare($sql);
-            $stmtUpdate->execute($values);
+            return response()->json(['success' => true, 'message' => 'تم تحديث بيانات الموظف بنجاح!']);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'تم تحديث بيانات الموظف بنجاح!'
-            ]);
         } catch (Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            Log::error('EspaceEmployeController::updateEmployee', ['id' => $id, 'error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'حدث خطأ أثناء الحفظ'], 500);
         }
     }
 
-    /**
-     * Dynamic Professional Widget based on employee details.
-     */
-    private function getDynamicWidgetHtml($emp)
-    {
-        $specialty = htmlspecialchars($emp['Specialite'] ?? 'غير محددة');
-        $task = htmlspecialchars($emp['TachesPrincipale'] ?? 'مؤطر بيداغوجي');
-        return '
-        <div class="table-responsive">
-            <table class="table table-hover border-0 align-middle text-right" style="font-family:\'Cairo\';font-size:0.8rem;">
-                <thead class="bg-light text-dark fw-bold">
-                    <tr>
-                        <th class="border-0">المادة البيداغوجية / النشاط</th>
-                        <th class="border-0">التخصص التكويني</th>
-                        <th class="border-0">طبيعة التكليف</th>
-                        <th class="border-0">المعدل الساعاتي أسبوعياً</th>
-                        <th class="border-0">الحالة البيداغوجية</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><strong>' . $task . '</strong></td>
-                        <td>' . $specialty . '</td>
-                        <td>تأطير بيداغوجي وتسيير ورشات</td>
-                        <td>18 ساعة / أسبوع</td>
-                        <td><span class="badge bg-success rounded-pill px-3 py-1">مكتملة ومؤمنة</span></td>
-                    </tr>
-                    <tr>
-                        <td><strong>أعمال تطبيقية ومرافقة متمهنين</strong></td>
-                        <td>' . $specialty . '</td>
-                        <td>زيارات ميدانية للمؤسسات الاقتصادية</td>
-                        <td>6 ساعات / أسبوع</td>
-                        <td><span class="badge bg-primary rounded-pill px-3 py-1">جارٍ التنفيذ</span></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>';
-    }
 
-    /**
-     * Dynamic Career Timeline based on employee details.
-     */
-    private function getDynamicTimelineHtml($emp)
-    {
-        $dateRecr = htmlspecialchars($emp['Daterecr'] ?? '2021-05-02');
-        $echelon = (int)($emp['Echlo'] ?? 1);
-        $spec = htmlspecialchars($emp['Specialite'] ?? 'التخصص المهني');
-        return '
-        <div class="mb-3 position-relative">
-            <span class="position-absolute bg-success rounded-circle" style="right:-29px;top:5px;width:12px;height:12px;border:3px solid #fff;"></span>
-            <div class="fw-bold text-dark" style="font-size:0.85rem;">آخر ترقية اختيارية في الدرجة</div>
-            <div class="text-muted small">تمت الترقية إلى الدرجة ' . $echelon . ' بناءً على تقييم الأداء السنوي.</div>
-        </div>
-         <div class="mb-3 position-relative">
-             <span class="position-absolute bg-primary rounded-circle" style="right:-29px;top:5px;width:12px;height:12px;border:3px solid #fff;"></span>
-             <div class="fw-bold text-dark" style="font-size:0.85rem;">إثبات التوظيف الأول وتأكيد الرتبة</div>
-             <div class="text-muted small">' . $dateRecr . ' • تم التثبيت كعضو دائم في سلك التأطير لتخصص ' . $spec . '.</div>
-         </div>';
-     }
-
-    /**
-     * Image resizing helper using GD.
-     */
-    private function resizeImageAndSave(string $sourcePath, string $destPath, int $maxWidth, int $maxHeight)
-    {
-        list($width, $height, $type) = getimagesize($sourcePath);
-        
-        $srcImg = null;
-        switch ($type) {
-            case IMAGETYPE_JPEG: $srcImg = imagecreatefromjpeg($sourcePath); break;
-            case IMAGETYPE_PNG:  $srcImg = imagecreatefrompng($sourcePath); break;
-            case IMAGETYPE_GIF:  $srcImg = imagecreatefromgif($sourcePath); break;
-            default:             throw new \Exception('نوع الصورة غير مدعوم');
-        }
-        
-        if (!$srcImg) {
-            throw new \Exception('تعذر قراءة الصورة');
-        }
-        
-        $ratio = min($maxWidth / $width, $maxHeight / $height);
-        if ($ratio < 1) {
-            $newWidth = (int)($width * $ratio);
-            $newHeight = (int)($height * $ratio);
-        } else {
-            $newWidth = $width;
-            $newHeight = $height;
-        }
-        
-        $destImg = imagecreatetruecolor($newWidth, $newHeight);
-        $white = imagecolorallocate($destImg, 255, 255, 255);
-        imagefill($destImg, 0, 0, $white);
-        
-        imagecopyresampled($destImg, $srcImg, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
-        imagejpeg($destImg, $destPath, 85);
-        
-        imagedestroy($srcImg);
-        imagedestroy($destImg);
-    }
-
-    /**
-     * Serve the digital ID cards management control center.
-     */
     public function digitalCards(Request $request)
     {
         @set_time_limit(300);
@@ -634,6 +391,10 @@ class EspaceEmployeController extends Controller
             $clauses2 = ['s.IDSection IS NULL'];
             $params1 = [];
             $params2 = [];
+
+            // Apply 2024-2026 session constraint globally to prevent timeouts and match requirements
+            $clauses1[] = "s.DateDF >= '2024-02-01'";
+            $clauses2[] = "(o_cand.Session_rentree LIKE '2024%' OR o_cand.Session_rentree LIKE '2025%' OR o_cand.Session_rentree LIKE '2026%')";
 
             // Role scoping
             if ($scope['role'] === 'dfep' && $scope['iddfep']) {
@@ -970,3 +731,4 @@ class EspaceEmployeController extends Controller
         }
     }
 }
+
