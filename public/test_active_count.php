@@ -9,29 +9,8 @@ $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
 use Illuminate\Support\Facades\DB;
 
-try {
-    $db = new \App\Core\LaravelDbAdapter();
-    
-    // Test count with outer join only
-    $cnt1 = DB::selectOne("
-        SELECT COUNT(*) as c
-        FROM apprenant a
-        LEFT JOIN apprenant_fin af ON a.IDapprenant = af.IDapprenant
-        WHERE a.IDSection != 0 AND (af.IDapprenant IS NULL OR af.SituationFin IN (0,4))
-    ");
-    echo "Count 1 (Simple Active): " . $cnt1->c . "\n";
-
-    // Test count with candidat and section joins
-    $cnt2 = DB::selectOne("
-        SELECT COUNT(*) as c
-        FROM apprenant a
-        JOIN candidat c ON a.IDCandidat = c.IDCandidat
-        JOIN section s ON a.IDSection = s.IDSection
-        LEFT JOIN apprenant_fin af ON a.IDapprenant = af.IDapprenant
-        WHERE a.IDSection != 0 AND (af.IDapprenant IS NULL OR af.SituationFin IN (0,4))
-    ");
-    echo "Count 2 (With joins): " . $cnt2->c . "\n";
-    
+    $columns = \Illuminate\Support\Facades\Schema::getColumnListing('apprenant_fin');
+    echo "Columns in apprenant_fin: " . implode(', ', $columns) . "\n\n";
 } catch (\Exception $e) {
     echo "Error: " . $e->getMessage() . "\n";
 }
