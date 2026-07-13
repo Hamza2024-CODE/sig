@@ -17,7 +17,8 @@ $files = [
     'public/upload_photos.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/upload_photos.php',
     'public/check_ssh_port.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/check_ssh_port.php',
     'app/Http/Controllers/Admin/OffresController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/OffresController.php',
-    'resources/views/admin/offres/validation.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/offres/validation.blade.php'
+    'resources/views/admin/offres/validation.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/offres/validation.blade.php',
+    'resources/views/layouts/main.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/layouts/main.blade.php'
 ];
 
 foreach ($files as $localPath => $remoteUrl) {

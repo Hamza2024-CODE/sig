@@ -958,7 +958,7 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
             @endif
 
             <!-- DSS (Decision Support System) Link -->
-            @if (in_array($roleCode, ['admin', 'central', 'high_admin', 'secretaire_general', 'ministre', 'dir_finance', 'dir_edu']) && $dept !== 'diplomes')
+            @if (in_array($roleCode, ['admin', 'central', 'high_admin', 'secretaire_general', 'ministre', 'dir_finance', 'dir_edu']) && $dept !== 'diplomes' && !$isDosfpUser && !$isDfcriUser)
                 <a href="{{ request()->is('sig/*') ? url('sig/dashboard/dss') : url('dashboard/dss') }}" class="sidebar-item {{ $isActive('/dashboard/dss') }}" title="دعم القرار الاستراتيجي">
                     <i class="fa-solid fa-brain text-info"></i>
                     <span>دعم القرار الاستراتيجي</span>
@@ -989,7 +989,7 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
 
 
             <!-- Category: Digital Cards (بطاقات التكوين المهني) -->
-            @if (in_array($roleCode, ['admin', 'dfep', 'central', 'etablissement', 'directeur']) && (int)(session('user.IDMode_formation') ?? 0) !== 10 && $dept !== 'diplomes' && !$isDfmUser && !$isDrhUser && !$isDepUser && !$isDeohUser)
+            @if (in_array($roleCode, ['admin', 'dfep', 'central', 'etablissement', 'directeur']) && (int)(session('user.IDMode_formation') ?? 0) !== 10 && $dept !== 'diplomes' && !$isDfmUser && !$isDrhUser && !$isDepUser && !$isDeohUser && !$isDosfpUser && !$isDfcriUser)
                 <div class="sidebar-dropdown">
                     <button type="button" class="sidebar-item {{ $isActive('/dashboard/digital-cards') ? 'active' : '' }}" onclick="toggleSidebarDropdown(this)" title="بطاقات التكوين المهني">
                         <i class="fa-solid fa-id-card-clip text-primary"></i>
@@ -1212,7 +1212,7 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
                         <i class="fa-solid fa-chevron-down ms-auto dropdown-chevron" style="font-size: 0.7rem;"></i>
                     </button>
                     <div class="sidebar-submenu {{ ($isActive('/dashboard/absences') || $isActive('/dashboard/discipline') || $isActive('/dashboard/repas') || $isActive('/dashboard/documents')) ? 'open' : '' }}">
-                        @if ($hasPerm('discipline') || $roleCode === 'dfep')
+                        @if (($hasPerm('discipline') || $roleCode === 'dfep') && !$isDosfpUser && !$isDfcriUser)
                             <a href="{{ url('dashboard/absences') }}" class="sidebar-subitem {{ $isActive('/dashboard/absences') }}" title="المتابعة، الانضباط"><i class="fa-solid fa-user-check"></i> <span>المتابعة، الانضباط</span></a>
                         @endif
                         @if ($hasPerm('inscriptions') || $roleCode === 'dfep')
@@ -1225,7 +1225,7 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
                         @if (false && ($hasPerm('repas') || $roleCode === 'dfep'))
                             <a href="{{ url('dashboard/repas') }}" class="sidebar-subitem {{ $isActive('/dashboard/repas') }}" title="الخدمات المادية"><i class="fa-solid fa-utensils"></i> <span>الخدمات المادية</span></a>
                         @endif
-                        @if ($hasPerm('documents') || $roleCode === 'dfep')
+                        @if (($hasPerm('documents') || $roleCode === 'dfep') && !$isDosfpUser && !$isDfcriUser)
                             <a href="{{ url('dashboard/documents') }}" class="sidebar-subitem {{ $isActive('/dashboard/documents') }}" title="الشهادات والمطبوعات"><i class="fa-solid fa-print"></i> <span>الشهادات والمطبوعات</span></a>
                         @endif
                     </div>
@@ -1233,7 +1233,7 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
             @endif
 
             <!-- Category: Instant Official Documents & Biometrics -->
-            @if (($hasPerm('documents') || $roleCode === 'dfep' || in_array($roleCode, ['admin', 'central', 'etablissement', 'directeur'])) && !$isDfmUser && !$isDrhUser && !$isDepUser && !$isDeohUser)
+            @if (($hasPerm('documents') || $roleCode === 'dfep' || in_array($roleCode, ['admin', 'central', 'etablissement', 'directeur'])) && !$isDfmUser && !$isDrhUser && !$isDepUser && !$isDeohUser && !$isDosfpUser && !$isDfcriUser)
                 <div class="sidebar-dropdown">
                     <button type="button" class="sidebar-item {{ ($isActive('/dashboard/documents') && !str_contains(request()->fullUrl(), 'tab=')) ? 'active' : '' }}" onclick="toggleSidebarDropdown(this)" title="الوثائق الرسمية الفورية">
                         <i class="fa-solid fa-file-shield text-warning"></i>
