@@ -1811,32 +1811,83 @@ class ModulesController extends Controller {
             $stats['specialites'] = (int)$this->db->query("SELECT COUNT(*) FROM specialite")->fetchColumn();
             $stats['sections']    = (int)$this->db->query("SELECT COUNT(*) FROM section")->fetchColumn();
 
-            $cacheKey = 'distribution_detaillee_data_v3_' . md5($ofWhere . serialize($params));
+            $cacheKey = 'distribution_detaillee_data_v4_' . md5($ofWhere . serialize($params));
 
             $cachedData = \Illuminate\Support\Facades\Cache::remember($cacheKey, 900, function() use ($ofWhere, $params) {
-                $sql = "
-                    SELECT 
-                        e.Nom as etab_nom,
-                        b.IDBranche as id,
-                        b.Code as code,
-                        b.Nom as filiere_nom,
-                        b.NomFr as filiere_fr,
-                        COUNT(DISTINCT o.IDSpecialite) as specialites_count,
-                        COUNT(DISTINCT s.IDSection) as sections_count,
-                        SUM(o.NbrInscr) as total_stagiaires,
-                        SUM(o.NbrInscrf) as femmes
-                    FROM section s
-                    JOIN offre o ON s.IDOffre = o.IDOffre
-                    JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
-                    JOIN branche b ON sp.IDBranche = b.IDBranche
-                    JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
-                    WHERE $ofWhere
-                    GROUP BY e.IDetablissement, b.IDBranche
-                    ORDER BY e.Nom ASC, b.Code ASC
-                ";
-                $stmt = $this->db->prepare($sql);
+                // Fetch etabs with name fallbacks
+                $etabs = [];
+                $etabRows = $this->db->query("SELECT IDetablissement, Nom, Abr, NomFr FROM etablissement")->fetchAll(PDO::FETCH_ASSOC);
+                foreach ($etabRows as $er) {
+                    $etabs[$er['IDetablissement']] = trim($er['Nom']) ?: trim($er['Abr']) ?: trim($er['NomFr']) ?: 'مؤسسة تكوينية';
+                }
+
+                // Fetch branches
+                $branches = [];
+                $branchRows = $this->db->query("SELECT IDBranche, Code, Nom, NomFr FROM branche")->fetchAll(PDO::FETCH_ASSOC);
+                foreach ($branchRows as $br) {
+                    $branches[$br['IDBranche']] = $br;
+                }
+
+                // Fetch specialties
+                $specs = [];
+                $specRows = $this->db->query("SELECT IDSpecialite, IDBranche FROM specialite")->fetchAll(PDO::FETCH_ASSOC);
+                foreach ($specRows as $sr) {
+                    $specs[$sr['IDSpecialite']] = (int)$sr['IDBranche'];
+                }
+
+                // Fetch offers
+                $sqlOffres = "SELECT IDEts_Form, IDSpecialite, NbrInscr, NbrInscrf FROM offre WHERE $ofWhere";
+                $stmt = $this->db->prepare($sqlOffres);
                 $stmt->execute($params);
-                $list = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                $offres = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                // Group and aggregate in PHP
+                $grouped = [];
+                foreach ($offres as $o) {
+                    $etabId = (int)$o['IDEts_Form'];
+                    $specId = (int)$o['IDSpecialite'];
+                    
+                    $branchId = $specs[$specId] ?? null;
+                    if (!$branchId) continue;
+                    
+                    $etabNom = $etabs[$etabId] ?? 'مؤسسة غير معروفة';
+                    $branch = $branches[$branchId] ?? null;
+                    if (!$branch) continue;
+
+                    $key = $etabId . '_' . $branchId;
+                    if (!isset($grouped[$key])) {
+                        $grouped[$key] = [
+                            'etab_nom' => $etabNom,
+                            'id' => $branchId,
+                            'code' => $branch['Code'],
+                            'filiere_nom' => $branch['Nom'],
+                            'filiere_fr' => $branch['NomFr'],
+                            'specialites' => [],
+                            'total_stagiaires' => 0,
+                            'femmes' => 0
+                        ];
+                    }
+                    
+                    $grouped[$key]['specialites'][$specId] = true;
+                    $grouped[$key]['total_stagiaires'] += (int)$o['NbrInscr'];
+                    $grouped[$key]['femmes'] += (int)$o['NbrInscrf'];
+                }
+
+                // Convert to list and sort
+                $list = [];
+                foreach ($grouped as $g) {
+                    if ($g['total_stagiaires'] === 0) continue;
+                    $g['specialites_count'] = count($g['specialites']);
+                    unset($g['specialites']);
+                    $list[] = $g;
+                }
+
+                usort($list, function($a, $b) {
+                    $cmp = strcmp($a['etab_nom'], $b['etab_nom']);
+                    if ($cmp !== 0) return $cmp;
+                    return strcmp($a['code'], $b['code']);
+                });
+
                 return ['list' => $list];
             });
 
