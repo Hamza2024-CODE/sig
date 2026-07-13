@@ -43,7 +43,7 @@
 /* Stat Cards */
 .fin-stat-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: 1rem;
     margin-bottom: 2rem;
 }
@@ -68,7 +68,7 @@
     border-radius: 0 16px 16px 0;
 }
 .fin-stat-label { font-size: 0.75rem; color: var(--tx-3, #8898b0); font-weight: 700; font-family:'Cairo',sans-serif; margin-bottom: 0.4rem; }
-.fin-stat-value { font-size: 1.8rem; font-weight: 900; color: var(--tx-1, #0f2752); font-family:'Cairo',sans-serif; line-height: 1; }
+.fin-stat-value { font-size: 1.45rem; font-weight: 900; color: var(--tx-1, #0f2752); font-family:'Cairo',sans-serif; line-height: 1.3; }
 .fin-stat-sub   { font-size: 0.7rem; color: var(--tx-3, #8898b0); margin-top: 0.3rem; }
 .fin-stat-icon  { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); font-size: 2.2rem; opacity: 0.06; }
 
