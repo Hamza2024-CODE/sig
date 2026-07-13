@@ -9,8 +9,23 @@ $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
 use Illuminate\Support\Facades\DB;
 
-    $columns = \Illuminate\Support\Facades\Schema::getColumnListing('apprenant_fin');
-    echo "Columns in apprenant_fin: " . implode(', ', $columns) . "\n\n";
+try {
+    $db = new \App\Core\LaravelDbAdapter();
+    
+    $start = microtime(true);
+    $cnt = DB::selectOne("
+        SELECT COUNT(*) as c
+        FROM apprenant a
+        JOIN candidat c ON a.IDCandidat = c.IDCandidat
+        JOIN section s ON a.IDSection = s.IDSection
+        LEFT JOIN specialite sp ON s.IDSpecialite = sp.IDSpecialite
+        LEFT JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
+        LEFT JOIN wilaya w ON w.IDWilayaa = e.IDDFEP
+        WHERE a.IDSection != 0 AND s.DateDF >= '2024-02-01'
+    ");
+    $elapsed = microtime(true) - $start;
+    echo "Count of Active (DateDF >= 2024-02-01): " . $cnt->c . " (Took: " . round($elapsed, 4) . " seconds)\n";
+    
 } catch (\Exception $e) {
     echo "Error: " . $e->getMessage() . "\n";
 }
