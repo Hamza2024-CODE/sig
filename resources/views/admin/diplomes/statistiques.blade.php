@@ -163,7 +163,7 @@ $filterQs = http_build_query(array_filter([
         <div class="row g-3 mb-4">
             <!-- Total Graduates -->
             <div class="col-12 col-md-4">
-                <div class="card border-0 shadow-sm p-4 text-right position-relative overflow-hidden" style="border-radius:20px; background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%); color:#fff;">
+                <div class="card border-0 shadow-sm p-4 text-right position-relative overflow-hidden" style="border-radius:20px; background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%) !important; color:#ffffff !important;">
                     <div class="position-relative" style="z-index: 2;">
                         <span class="d-block small text-white-50 fw-bold mb-1">إجمالي خريجي القطاع / Total Diplômés</span>
                         <h2 class="fw-bold mb-0 text-white" style="font-family:'Outfit', sans-serif;">{{ number_format($kpi['total_graduates'] ?? 0) }}</h2>
@@ -175,7 +175,7 @@ $filterQs = http_build_query(array_filter([
 
             <!-- Issued Diplomas -->
             <div class="col-12 col-md-4">
-                <div class="card border-0 shadow-sm p-4 text-right position-relative overflow-hidden" style="border-radius:20px; background: linear-gradient(135deg, #059669 0%, #10b981 100%); color:#fff;">
+                <div class="card border-0 shadow-sm p-4 text-right position-relative overflow-hidden" style="border-radius:20px; background: linear-gradient(135deg, #059669 0%, #10b981 100%) !important; color:#ffffff !important;">
                     <div class="position-relative" style="z-index: 2;">
                         <span class="d-block small text-white-50 fw-bold mb-1">الشهادات المحررة والموقعة / Validés</span>
                         <h2 class="fw-bold mb-0 text-white" style="font-family:'Outfit', sans-serif;">{{ number_format($kpi['issued_diplomas'] ?? 0) }}</h2>
@@ -187,7 +187,7 @@ $filterQs = http_build_query(array_filter([
 
             <!-- Pending Diplomas -->
             <div class="col-12 col-md-4">
-                <div class="card border-0 shadow-sm p-4 text-right position-relative overflow-hidden" style="border-radius:20px; background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%); color:#fff;">
+                <div class="card border-0 shadow-sm p-4 text-right position-relative overflow-hidden" style="border-radius:20px; background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%) !important; color:#ffffff !important;">
                     <div class="position-relative" style="z-index: 2;">
                         <span class="d-block small text-white-50 fw-bold mb-1">الشهادات قيد التحرير / En Attente</span>
                         <h2 class="fw-bold mb-0 text-white" style="font-family:'Outfit', sans-serif;">{{ number_format($kpi['pending_diplomas'] ?? 0) }}</h2>
