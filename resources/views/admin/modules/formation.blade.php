@@ -59,9 +59,9 @@
         <div class="col-md-4">
             <div class="card border-0 shadow-sm rounded-4 h-100" style="background: white;">
                 <div class="card-body p-4">
-                    <h6 class="text-muted fw-bold mb-1">برامج قيد التحديث والتحيين</h6>
-                    <h2 class="display-5 fw-bold my-2 text-danger"><?= $stats['en_cours_maj'] ?> تخصص</h2>
-                    <span class="small text-muted"><i class="fa-solid fa-arrows-rotate text-danger"></i> بالشراكة مع اللجان التقنية الاستشارية</span>
+                    <h6 class="text-muted fw-bold mb-1">تجهيزات قيد المصادقة والتحديث</h6>
+                    <h2 class="display-5 fw-bold my-2 text-danger"><?= $stats['en_cours_maj'] ?> تجهيز</h2>
+                    <span class="small text-muted"><i class="fa-solid fa-arrows-rotate text-danger"></i> عتاد بيداغوجي مضاف حديثاً أو بانتظار المراجعة</span>
                 </div>
             </div>
         </div>
