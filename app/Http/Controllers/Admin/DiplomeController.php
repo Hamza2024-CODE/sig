@@ -565,6 +565,7 @@ class DiplomeController extends Controller
             'qualifications' => $qualifications,
             'role_code'      => $role_code,
             'next_cursor'    => $nextCursor,
+            'has_more'       => $nextCursor > 0,
         ]);
     }
     
