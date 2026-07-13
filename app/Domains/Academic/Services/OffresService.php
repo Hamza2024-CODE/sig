@@ -138,7 +138,15 @@ class OffresService
         }
 
         // 5. Fetch dropdown lists (Cascading Filters)
-        $specialites = $this->repository->getModalSpecialites();
+        $rawSpecs = $this->repository->getModalSpecialites();
+        $specialites = [];
+        foreach ($rawSpecs as $rs) {
+            $specialites[] = [
+                'id' => (int)$rs['id'],
+                'code' => $rs['code'],
+                'libelle_ar' => $this->cleanString($rs['libelle_ar']),
+            ];
+        }
         $db = \App\Core\Database::getInstance()->getConnection();
 
         // 5.1 Etablissements filtered by Wilaya
@@ -146,9 +154,16 @@ class OffresService
             $filterDfepId = (int)$getParams['filter_wilaya'];
             $stmtE = $db->prepare("SELECT IDetablissement as id, Nom as nom_ar FROM etablissement WHERE IDDFEP = ? ORDER BY Nom ASC");
             $stmtE->execute([$filterDfepId]);
-            $etablissements = $stmtE->fetchAll(\PDO::FETCH_ASSOC);
+            $rawEtabs = $stmtE->fetchAll(\PDO::FETCH_ASSOC);
         } else {
-            $etablissements = $this->repository->getModalEtablissements($roleCode, $etabId, $dfepId);
+            $rawEtabs = $this->repository->getModalEtablissements($roleCode, $etabId, $dfepId);
+        }
+        $etablissements = [];
+        foreach ($rawEtabs as $re) {
+            $etablissements[] = [
+                'id' => (int)$re['id'],
+                'nom_ar' => $this->cleanString($re['nom_ar']),
+            ];
         }
 
         // 5.2 Modes filtered by active Wilaya and Etablissement filters
@@ -955,12 +970,12 @@ class OffresService
             'id'           => $rd['id'],
             'code'         => 'OFF-' . $rd['id'],
             'specialite_id'=> $rd['specialite_id'],
-            'spec_ar'      => $rd['spec_ar'],
-            'spec_fr'      => $rd['spec_fr'],
+            'spec_ar'      => $this->cleanString($rd['spec_ar']),
+            'spec_fr'      => $this->cleanString($rd['spec_fr']),
             'spec_code'    => $rd['spec_code'] ?? '',
             'level_name'   => $rd['level_name'] ?? $niveau_txt,
-            'centre'       => $rd['centre'],
-            'centre_delegue'=> $rd['centre_delegue'] ?? '',
+            'centre'       => $this->cleanString($rd['centre']),
+            'centre_delegue'=> $this->cleanString($rd['centre_delegue'] ?? ''),
             'session_id'   => $rd['session_id'],
             'session_name' => $rd['session_name'] ?? '',
             'etablissement_delegue_id' => $rd['etablissement_delegue_id'] ?? null,
@@ -994,9 +1009,31 @@ class OffresService
             'date_validation_direction' => null,
             'valide_par_central' => $rd['ValideCentral'],
             'date_approbation_centrale' => null,
-            'motif_rejet' => $rd['Obs_Central'] ?: ($rd['Obs_Dfep'] ?: null),
-            'nom_spec_custom_ar' => $rd['nom_spec_custom_ar'] ?? null,
-            'nom_spec_custom_fr' => $rd['nom_spec_custom_fr'] ?? null,
+            'motif_rejet' => $this->cleanString($rd['Obs_Central'] ?: ($rd['Obs_Dfep'] ?: null)),
+            'nom_spec_custom_ar' => $this->cleanString($rd['nom_spec_custom_ar'] ?? null),
+            'nom_spec_custom_fr' => $this->cleanString($rd['nom_spec_custom_fr'] ?? null),
         ];
+    }
+
+    /**
+     * Fix CP850/OEM 850 corrupted UTF-8 strings.
+     * When raw UTF-8 bytes like \xc3\xa9 (é) were interpreted as CP850 box characters (├®),
+     * this function converts them back to correct UTF-8.
+     */
+    private function cleanString(mixed $str): string
+    {
+        if ($str === null) return '';
+        $str = (string)$str;
+        
+        // If typical CP850 corrupted character combinations are found, repair them
+        if (strpos($str, '├') !== false || strpos($str, '┬') !== false || strpos($str, '┬а') !== false) {
+            $converted = @iconv("UTF-8", "CP850//IGNORE", $str);
+            if ($converted !== false && $converted !== '') {
+                return $converted;
+            }
+        }
+        
+        // Ensure valid UTF-8 string output to prevent htmlspecialchars truncation
+        return mb_convert_encoding($str, 'UTF-8', 'UTF-8');
     }
 }
