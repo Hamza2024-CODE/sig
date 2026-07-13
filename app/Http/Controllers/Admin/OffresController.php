@@ -145,17 +145,35 @@ class OffresController extends Controller
             return redirect()->route('login');
         }
 
-        $id = (int)$request->input('id');
+        $idsInput = $request->input('ids');
         $action = $request->input('action', '');
         $motif = ($action === 'rejeter') ? $request->input('motif_rejet', '') : null;
 
         try {
-            $this->service->validateDirection($id, $action, $motif, $user);
-            session([
-                'flash_success' => ($action === 'approuver')
-                    ? 'تمت المصادقة الولائية على عرض التكوين / Offre validée par la wilaya'
-                    : 'تم رفض عرض التكوين ولائيا / Offre rejetée par la wilaya'
-            ]);
+            if (!empty($idsInput)) {
+                $ids = is_array($idsInput) ? $idsInput : explode(',', $idsInput);
+                $successCount = 0;
+                foreach ($ids as $id) {
+                    $id = (int)$id;
+                    if ($id > 0) {
+                        $this->service->validateDirection($id, $action, $motif, $user);
+                        $successCount++;
+                    }
+                }
+                session([
+                    'flash_success' => ($action === 'approuver')
+                        ? "تمت المصادقة الولائية بنجاح على {$successCount} عرض تكوين / {$successCount} Offres validées"
+                        : "تم رفض {$successCount} عرض تكوين ولائيا / {$successCount} Offres rejetées"
+                ]);
+            } else {
+                $id = (int)$request->input('id');
+                $this->service->validateDirection($id, $action, $motif, $user);
+                session([
+                    'flash_success' => ($action === 'approuver')
+                        ? 'تمت المصادقة الولائية على عرض التكوين / Offre validée par la wilaya'
+                        : 'تم رفض عرض التكوين ولائيا / Offre rejetée par la wilaya'
+                ]);
+            }
         } catch (Exception $e) {
             session(['flash_error' => $e->getMessage()]);
         }
@@ -173,17 +191,35 @@ class OffresController extends Controller
             return redirect()->route('login');
         }
 
-        $id = (int)$request->input('id');
+        $idsInput = $request->input('ids');
         $action = $request->input('action', '');
         $motif = ($action === 'rejeter') ? $request->input('motif_rejet', '') : null;
 
         try {
-            $this->service->validateCentral($id, $action, $motif, $user);
-            session([
-                'flash_success' => ($action === 'approuver')
-                    ? 'تم القبول النهائي والمصادقة المركزية على عرض التكوين بنجاح / Offre approuvée par la centrale'
-                    : 'تم رفض عرض التكوين مركزيا / Offre rejetée par la centrale'
-            ]);
+            if (!empty($idsInput)) {
+                $ids = is_array($idsInput) ? $idsInput : explode(',', $idsInput);
+                $successCount = 0;
+                foreach ($ids as $id) {
+                    $id = (int)$id;
+                    if ($id > 0) {
+                        $this->service->validateCentral($id, $action, $motif, $user);
+                        $successCount++;
+                    }
+                }
+                session([
+                    'flash_success' => ($action === 'approuver')
+                        ? "تم القبول النهائي والمصادقة المركزية بنجاح على {$successCount} عرض تكوين / {$successCount} Offres approuvées"
+                        : "تم رفض {$successCount} عرض تكوين مركزيا / {$successCount} Offres rejetées"
+                ]);
+            } else {
+                $id = (int)$request->input('id');
+                $this->service->validateCentral($id, $action, $motif, $user);
+                session([
+                    'flash_success' => ($action === 'approuver')
+                        ? 'تم القبول النهائي والمصادقة المركزية على عرض التكوين بنجاح / Offre approuvée par la centrale'
+                        : 'تم رفض عرض التكوين مركزيا / Offre rejetée par la centrale'
+                ]);
+            }
         } catch (Exception $e) {
             session(['flash_error' => $e->getMessage()]);
         }

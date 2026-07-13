@@ -979,7 +979,13 @@ class OffresService
             'session_id'   => $rd['session_id'],
             'session_name' => $rd['session_name'] ?? '',
             'etablissement_delegue_id' => $rd['etablissement_delegue_id'] ?? null,
-            'mode_formation' => $rd['mode_formation'] ?? '',
+            'mode_formation' => !empty($rd['mode_formation']) ? $this->cleanString($rd['mode_formation']) : match((int)($rd['IDMode_formation'] ?? 1)) {
+                10 => 'تكوين عن طريق التمهين',
+                2  => 'تكوين متواصل',
+                3  => 'تكوين مسائي',
+                1  => 'حضوري أولي',
+                default => 'تكوين حضوري'
+            },
             'mode_id'      => (int)($rd['IDMode_formation'] ?? 1),
             'date_debut'   => $rd['date_debut'],
             'date_fin'     => $rd['date_fin'],
