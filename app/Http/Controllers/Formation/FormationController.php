@@ -53,10 +53,12 @@ class FormationController extends Controller {
                 SELECT e.IDEquipement as id, e.Nom as designation, ee.DateMiseExploitation as date_inventaire,
                        e.Obs as etat, sp.Nom as spec_ar, e.IDSpecialite as specialite_id,
                        e.DateInstalation, e.IDetablissement,
+                       COALESCE(NULLIF(TRIM(ef.Nom), ''), NULLIF(TRIM(ef.Abr), ''), NULLIF(TRIM(ef.NomFr), ''), 'مؤسسة تكوينية') as etab_nom,
                        1 as quantite
                 FROM equipement e
                 LEFT JOIN specialite sp ON e.IDSpecialite = sp.IDSpecialite
                 LEFT JOIN equipement_etablissement ee ON e.IDEquipement = ee.IDEquipement
+                LEFT JOIN etablissement ef ON e.IDetablissement = ef.IDetablissement
                 WHERE $where
                 ORDER BY e.IDEquipement DESC
                 LIMIT 100

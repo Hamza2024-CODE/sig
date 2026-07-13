@@ -97,7 +97,8 @@
                 <table class="table table-hover align-middle mb-0" id="equipTable">
                     <thead class="bg-light text-muted small fw-bold">
                         <tr>
-                            <th class="ps-4">المحترف / التخصص المعني</th>
+                            <th class="ps-4">المؤسسة التكوينية</th>
+                            <th>المحترف / التخصص المعني</th>
                             <th>التجهيز الرئيسي المعتمد</th>
                             <th class="text-center">الكمية المتوفرة</th>
                             <th class="text-center">الحالة التشغيلية</th>
@@ -108,13 +109,17 @@
                     <tbody>
                         <?php if (empty($list)): ?>
                             <tr>
-                                <td colspan="6" class="text-center py-4 text-muted">لا توجد تجهيزات مقيدة بسجل الجرد حالياً.</td>
+                                <td colspan="7" class="text-center py-4 text-muted">لا توجد تجهيزات مقيدة بسجل الجرد حالياً.</td>
                             </tr>
                         <?php else: ?>
                             <?php foreach ($list as $item): ?>
                                 <tr>
-                                    <td class="ps-4">
-                                        <div class="fw-bold text-dark"><?= htmlspecialchars($item['spec_ar']) ?></div>
+                                    <td class="ps-4 fw-bold text-dark" style="font-size: 0.85rem;">
+                                        <i class="fa-solid fa-hotel text-primary me-2 small"></i>
+                                        <?= htmlspecialchars($item['etab_nom'] ?? 'مؤسسة تكوينية') ?>
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold text-secondary"><?= htmlspecialchars($item['spec_ar']) ?></div>
                                         <div class="text-muted small">محترف تطبيقي رسمي</div>
                                     </td>
                                     <td><span class="fw-semibold text-dark"><?= htmlspecialchars($item['designation']) ?></span></td>
