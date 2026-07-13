@@ -11,6 +11,16 @@ try {
         opcache_reset();
         echo "<h1>OPCache Reset Successfully!</h1>";
     }
+    
+    \Illuminate\Support\Facades\Artisan::call('route:clear');
+    echo "<h1>Route Cache Cleared!</h1>";
+    
+    \Illuminate\Support\Facades\Artisan::call('view:clear');
+    echo "<h1>View Cache Cleared!</h1>";
+    
+    \Illuminate\Support\Facades\Artisan::call('config:clear');
+    echo "<h1>Config Cache Cleared!</h1>";
+    
     \Illuminate\Support\Facades\Artisan::call('cache:clear');
     echo "<h1>Cache Cleared Successfully!</h1>";
     echo "<pre>" . \Illuminate\Support\Facades\Artisan::output() . "</pre>";
