@@ -88,6 +88,12 @@
         <div class="title">تقرير التنوع البيداغوجي وتوزيع الشعب المهنية</div>
     </div>
 
+    <?php if (!empty($limit_warning)): ?>
+        <div style="background-color: #fffbeb; border: 1px solid #fef3c7; color: #b45309; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-weight: bold; font-size: 9.5pt; text-align: right; direction: rtl;">
+            ⚠️ تنبيه: تم عرض أول 1,000 سجل فقط من أصل <?= number_format($total_count) ?> للحد من حجم مستند PDF وتفادي مهلة خادم الويب (504 Gateway Timeout). للحصول على تقرير كامل لمؤسسات محددة، يرجى تصفية النتائج بالبحث أو اختيار الولاية/المؤسسة قبل الضغط على طباعة.
+        </div>
+    <?php endif; ?>
+
     <table class="summary-table">
         <tr>
             <th>الشعب المهنية الكلية:</th>

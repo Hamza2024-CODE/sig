@@ -1927,6 +1927,13 @@ class ModulesController extends Controller {
             @set_time_limit(300);
             @ini_set('memory_limit', '1536M');
             @ini_set('pcre.backtrack_limit', '10000000');
+
+            $pdfList = $list;
+            $limitWarning = false;
+            if (empty(request()->query('filter_wilaya')) && empty(request()->query('filter_etablissement')) && empty(request()->query('search')) && count($list) > 1000) {
+                $pdfList = array_slice($list, 0, 1000);
+                $limitWarning = true;
+            }
             
             $mpdf = new \Mpdf\Mpdf([
                 'mode' => 'utf-8',
@@ -1943,7 +1950,9 @@ class ModulesController extends Controller {
 
             $html = view('admin.modules.distribution_detaillee_pdf', [
                 'stats' => $stats,
-                'list'  => $list
+                'list'  => $pdfList,
+                'total_count' => count($list),
+                'limit_warning' => $limitWarning
             ])->render();
 
             $mpdf->WriteHTML($html);
