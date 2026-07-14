@@ -990,18 +990,60 @@
         { search: /(?<!\p{L})الطلبة(?!\p{L})/gu, replace: 'المتربصين' },
         { search: /(?<!\p{L})طالبي التكوين(?!\p{L})/gu, replace: 'متربصي التكوين' },
         { search: /(?<!\p{L})طالبي(?!\p{L})/gu, replace: 'متربصي' },
+        { search: /(?<!\p{L})طالبين(?!\p{L})/gu, replace: 'متربصين' },
+        { search: /(?<!\p{L})طالبان(?!\p{L})/gu, replace: 'متربصان' },
+        { search: /(?<!\p{L})طالبون(?!\p{L})/gu, replace: 'متربصون' },
+        { search: /(?<!\p{L})طالباً(?!\p{L})/gu, replace: 'متربصاً' },
         { search: /(?<!\p{L})الطالبات(?!\p{L})/gu, replace: 'المتربصات' },
         { search: /(?<!\p{L})طالبة(?!\p{L})/gu, replace: 'متربصة' },
         { search: /(?<!\p{L})طالب(?!\p{L})/gu, replace: 'متربص' }
     ];
 
+    function replaceAttributes(node) {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+            const placeholder = node.getAttribute('placeholder');
+            if (placeholder) {
+                let text = placeholder;
+                let changed = false;
+                replacements.forEach(r => {
+                    r.search.lastIndex = 0;
+                    if (r.search.test(text)) {
+                        text = text.replace(r.search, r.replace);
+                        changed = true;
+                    }
+                });
+                if (changed) {
+                    node.setAttribute('placeholder', text);
+                }
+            }
+
+            const title = node.getAttribute('title');
+            if (title) {
+                let text = title;
+                let changed = false;
+                replacements.forEach(r => {
+                    r.search.lastIndex = 0;
+                    if (r.search.test(text)) {
+                        text = text.replace(r.search, r.replace);
+                        changed = true;
+                    }
+                });
+                if (changed) {
+                    node.setAttribute('title', text);
+                }
+            }
+        }
+    }
+
     function replaceTextInNode(node) {
+        replaceAttributes(node);
+
         if (node.nodeType === Node.TEXT_NODE) {
             let text = node.nodeValue;
             let changed = false;
             
             const parent = node.parentNode;
-            if (parent && (parent.tagName === 'SCRIPT' || parent.tagName === 'STYLE' || parent.tagName === 'TEXTAREA' || parent.tagName === 'INPUT')) {
+            if (parent && (parent.tagName === 'SCRIPT' || parent.tagName === 'STYLE' || parent.tagName === 'TEXTAREA')) {
                 return;
             }
 
@@ -1023,8 +1065,24 @@
         }
     }
 
+    function replaceTitle() {
+        let titleText = document.title;
+        let titleChanged = false;
+        replacements.forEach(r => {
+            r.search.lastIndex = 0;
+            if (r.search.test(titleText)) {
+                titleText = titleText.replace(r.search, r.replace);
+                titleChanged = true;
+            }
+        });
+        if (titleChanged) {
+            document.title = titleText;
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         replaceTextInNode(document.body);
+        replaceTitle();
 
         const observer = new MutationObserver((mutations) => {
             mutations.forEach(mutation => {
