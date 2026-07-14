@@ -916,7 +916,8 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
                 <i class="fa-solid fa-chart-line"></i>
                 <span>لوحة التحكم</span>
             </a>
-<!-- Category: Digital Cards (بطاقات التكوين المهني) -->
+
+            <!-- Category: Digital Cards (بطاقات التكوين المهني) -->
             @if (in_array($roleCode, ['admin', 'dfep', 'central', 'etablissement', 'directeur']) && (int)(session('user.IDMode_formation') ?? 0) !== 10 && $dept !== 'diplomes' && !$isDfmUser && !$isDrhUser && !$isDepUser && !$isDeohUser && !$isDosfpUser && !$isDfcriUser)
                 <div class="sidebar-dropdown">
                     <button type="button" class="sidebar-item {{ $isActive('/dashboard/digital-cards') ? 'active' : '' }}" onclick="toggleSidebarDropdown(this)" title="بطاقات التكوين المهني">
@@ -935,7 +936,6 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
                 </div>
             @endif
 
-
             <!-- محرك سير العمل -->
             @if(!in_array($roleCode, ['employee', 'formateur', 'dfep', 'central', 'etablissement', 'directeur']) && $dept === 'general')
             <a href="{{ url('dashboard/workflow') }}" class="sidebar-item {{ $isActive('/dashboard/workflow') }}" title="محرك سير العمل — طلبات الإجازات والترقيات">
@@ -944,30 +944,12 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
             </a>
             @endif
 
-            <!-- البريد الداخلي -->
-            <a href="{{ url('dashboard/messages') }}" class="sidebar-item {{ $isActive('/dashboard/messages') }}" title="البريد الداخلي">
-                <i class="fa-solid fa-envelope text-warning"></i>
-                <span>البريد الداخلي</span>
-                @php try { $unreadCount = \App\Models\EmployeeMessage::unreadCount(session('user.id', 0)); } catch(\Exception $e) { $unreadCount = 0; } @endphp
-                @if($unreadCount > 0)
-                <span style="background:#dc3545;color:#fff;border-radius:20px;padding:.1rem .45rem;font-size:.68rem;font-weight:800;margin-right:auto;font-family:'Outfit';">{{ $unreadCount }}</span>
-                @endif
-            </a>
-
             <!-- منشئ التقارير -->
             @if(!in_array($roleCode, ['employee', 'formateur', 'dfep', 'central', 'etablissement', 'directeur']) && $dept === 'general')
             <a href="{{ url('dashboard/reports') }}" class="sidebar-item {{ $isActive('/dashboard/reports') }}" title="منشئ التقارير الديناميكية">
                 <i class="fa-solid fa-chart-bar text-info"></i>
                 <span>التقارير</span>
             </a>
-            @endif
-
-            <!-- Etablissement Profile Link -->
-            @if (in_array($roleCode, ['admin', 'dfep', 'central', 'etablissement', 'directeur', 'high_admin', 'secretaire_general', 'ministre']) && $dept !== 'diplomes' && !$isDfmUser && !$isDrhUser && !$isDosfpUser && !$isDeohUser)
-                <a href="{{ request()->is('sig/*') ? url('sig/dashboard/etablissement') : url('dashboard/etablissement') }}" class="sidebar-item {{ $isActive('/dashboard/etablissement') }}" title="ملف المؤسسة">
-                    <i class="fa-solid fa-hotel text-warning"></i>
-                    <span>ملف المؤسسة</span>
-                </a>
             @endif
 
             <!-- DSS (Decision Support System) Link -->
@@ -997,20 +979,6 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
                     <span>مزامنة صور HFSQL</span>
                 </a>
             @endif
-
-            <!-- ══ Category: إعدادات المستخدم ══ -->
-            @if (in_array($roleCode, ['admin', 'dfep', 'central', 'etablissement', 'directeur', 'high_admin']) && !$isDfmUser && !$isDrhUser)
-                <a href="{{ request()->is('sig/*') ? url('sig/dashboard/preferences') : url('dashboard/preferences') }}" class="sidebar-item {{ $isActive('/dashboard/preferences') }}" title="إعدادات المظهر والتفضيلات">
-                    <i class="fa-solid fa-palette text-info"></i>
-                    <span>إعدادات المظهر والتفضيلات</span>
-                </a>
-            @endif
-
-            <!-- User MFA Settings Link -->
-            <a href="{{ request()->is('sig/*') ? url('sig/security/mfa') : url('security/mfa') }}" class="sidebar-item {{ $isActive('/security/mfa') }}" title="المصادقة الثنائية (MFA)">
-                <i class="fa-solid fa-key text-warning"></i>
-                <span>المصادقة الثنائية (MFA)</span>
-            </a>
 
             <!-- ══ Section 2: الشؤون البيداغوجية والتعليم ══ -->
             @if (in_array($dept, ['general', 'pedagogie', 'orientation', 'diplomes', 'apprentissage']) && !$isDfmUser && !$isDrhUser)
@@ -1167,7 +1135,7 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
             @endif
 
             <!-- Category: Instant Official Documents & Biometrics -->
-            @if (($hasPerm('documents') || $roleCode === 'dfep' || in_array($roleCode, ['admin', 'central', 'etablissement', 'directeur'])) && !$isDfmUser && !$isDrhUser && !$isDepUser && !$isDeohUser && !$isDosfpUser && !$isDfcriUser && $roleCode !== 'etablissement' && $roleCode !== 'directeur')
+            @if (($hasPerm('documents') || $roleCode === 'dfep' || in_array($roleCode, ['admin', 'central', 'etablissement', 'directeur'])) && !$isDfmUser && !$isDrhUser && !$isDepUser && !$isDeohUser && !$isDosfpUser && !$isDfcriUser)
                 <div class="sidebar-dropdown">
                     <button type="button" class="sidebar-item {{ ($isActive('/dashboard/documents') && !str_contains(request()->fullUrl(), 'tab=')) ? 'active' : '' }}" onclick="toggleSidebarDropdown(this)" title="الوثائق الرسمية الفورية">
                         <i class="fa-solid fa-file-shield text-warning"></i>
@@ -1206,7 +1174,86 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
                     </div>
                 </div>
             @endif
+
+            <!-- ══ Section: الإدارة والخدمات العامة ══ -->
+            <div class="sidebar-section-line"></div>
+            <div class="sidebar-section-label"><span>الإدارة والخدمات العامة</span></div>
+
+            <!-- ══ Category: التسيير المالي والإداري ══ -->
+            @if (in_array($roleCode, ['admin', 'dfep', 'central', 'etablissement', 'directeur', 'high_admin', 'secretaire_general', 'ministre']) && !$isDosfpUser && !$isDepUser && !$isDeohUser)
+                <div class="sidebar-dropdown">
+                    <button type="button" class="sidebar-item {{ ($isActive('/dashboard/finances') || $isActive('/dashboard/patrimoine') || $isActive('/dashboard/rh-gestion') || $isActive('/dashboard/identities')) ? 'active' : '' }}" onclick="toggleSidebarDropdown(this)" title="التسيير المالي والإداري">
+                        <i class="fa-solid fa-coins text-warning"></i>
+                        <span>التسيير المالي والإداري</span>
+                        <i class="fa-solid fa-chevron-down ms-auto dropdown-chevron" style="font-size: 0.7rem;"></i>
+                    </button>
+                    <div class="sidebar-submenu {{ ($isActive('/dashboard/finances') || $isActive('/dashboard/patrimoine') || $isActive('/dashboard/rh-gestion') || $isActive('/dashboard/identities')) ? 'open' : '' }}">
+                        <a href="{{ url('dashboard/finances') }}" class="sidebar-subitem {{ ($isActive('/dashboard/finances') && !request('tab')) ? 'active' : '' }}" title="المناصب المالية والميزانية">
+                            <i class="fa-solid fa-money-bill-wave text-success"></i> <span>المناصب المالية والميزانية</span>
+                        </a>
+                        @if($isDfmUser)
+                            <a href="{{ url('dashboard/documents') }}" class="sidebar-subitem {{ $isActive('/dashboard/documents') }}" title="الوثائق الرسمية">
+                                <i class="fa-solid fa-file-shield text-warning"></i> <span>الوثائق الرسمية</span>
+                            </a>
+                        @endif
+                        @if(!$isDrhUser)
+                            <a href="{{ url('dashboard/finances?tab=grants_dashboard') }}" class="sidebar-subitem {{ ($isActive('/dashboard/finances') && request('tab')==='grants_dashboard') ? 'active' : '' }}" title="لوحة إحصائيات المنح">
+                                <i class="fa-solid fa-chart-pie text-warning"></i> <span>لوحة إحصائيات المنح</span>
+                            </a>
+                            <a href="{{ url('dashboard/finances?tab=employees_dashboard') }}" class="sidebar-subitem {{ ($isActive('/dashboard/finances') && request('tab')==='employees_dashboard') ? 'active' : '' }}" title="لوحة إحصائيات الموظفين">
+                                <i class="fa-solid fa-users-gear text-warning"></i> <span>لوحة إحصائيات الموظفين</span>
+                            </a>
+                            <a href="{{ url('dashboard/finances?tab=programmes') }}" class="sidebar-subitem {{ ($isActive('/dashboard/finances') && request('tab')==='programmes') ? 'active' : '' }}" title="البرامج والبرامج الفرعية">
+                                <i class="fa-solid fa-layer-group"></i> <span>البرامج والبرامج الفرعية</span>
+                            </a>
+                            <a href="{{ url('dashboard/finances?tab=fournisseurs') }}" class="sidebar-subitem {{ ($isActive('/dashboard/finances') && request('tab')==='fournisseurs') ? 'active' : '' }}" title="تسيير الموردين">
+                                <i class="fa-solid fa-truck"></i> <span>تسيير الموردين</span>
+                            </a>
+                            <a href="{{ url('dashboard/patrimoine') }}" class="sidebar-subitem {{ $isActive('/dashboard/patrimoine') }}" title="تسيير الوسائل والممتلكات">
+                                <i class="fa-solid fa-building text-info"></i> <span>تسيير الوسائل والممتلكات</span>
+                            </a>
+                            <a href="{{ url('dashboard/rh-gestion') }}" class="sidebar-subitem {{ $isActive('/dashboard/rh-gestion') }}" title="الموارد البشرية والإدارية">
+                                <i class="fa-solid fa-users-gear text-primary"></i> <span>الموارد البشرية والإدارية</span>
+                            </a>
+                            <a href="{{ url('dashboard/identities') }}" class="sidebar-subitem {{ $isActive('/dashboard/identities') }}" title="سجل التحقق من الهوية الوطنية">
+                                <i class="fa-solid fa-id-card text-danger"></i> <span>سجل التحقق من الهوية الوطنية</span>
+                            </a>
+                        @endif
+                    </div>
+                </div>
             @endif
+
+            <!-- البريد الداخلي -->
+            <a href="{{ url('dashboard/messages') }}" class="sidebar-item {{ $isActive('/dashboard/messages') }}" title="البريد الداخلي">
+                <i class="fa-solid fa-envelope text-warning"></i>
+                <span>البريد الداخلي</span>
+                @php try { $unreadCount = \App\Models\EmployeeMessage::unreadCount(session('user.id', 0)); } catch(\Exception $e) { $unreadCount = 0; } @endphp
+                @if($unreadCount > 0)
+                <span style="background:#dc3545;color:#fff;border-radius:20px;padding:.1rem .45rem;font-size:.68rem;font-weight:800;margin-right:auto;font-family:'Outfit';">{{ $unreadCount }}</span>
+                @endif
+            </a>
+
+            <!-- ملف المؤسسة -->
+            @if (in_array($roleCode, ['admin', 'dfep', 'central', 'etablissement', 'directeur', 'high_admin', 'secretaire_general', 'ministre']) && $dept !== 'diplomes' && !$isDfmUser && !$isDrhUser && !$isDosfpUser && !$isDeohUser)
+                <a href="{{ request()->is('sig/*') ? url('sig/dashboard/etablissement') : url('dashboard/etablissement') }}" class="sidebar-item {{ $isActive('/dashboard/etablissement') }}" title="ملف المؤسسة">
+                    <i class="fa-solid fa-hotel text-warning"></i>
+                    <span>ملف المؤسسة</span>
+                </a>
+            @endif
+
+            <!-- إعدادات المظهر والتفضيلات -->
+            @if (in_array($roleCode, ['admin', 'dfep', 'central', 'etablissement', 'directeur', 'high_admin']) && !$isDfmUser && !$isDrhUser)
+                <a href="{{ request()->is('sig/*') ? url('sig/dashboard/preferences') : url('dashboard/preferences') }}" class="sidebar-item {{ $isActive('/dashboard/preferences') }}" title="إعدادات المظهر والتفضيلات">
+                    <i class="fa-solid fa-palette text-info"></i>
+                    <span>إعدادات المظهر والتفضيلات</span>
+                </a>
+            @endif
+
+            <!-- المصادقة الثنائية (MFA) -->
+            <a href="{{ request()->is('sig/*') ? url('sig/security/mfa') : url('security/mfa') }}" class="sidebar-item {{ $isActive('/security/mfa') }}" title="المصادقة الثنائية (MFA)">
+                <i class="fa-solid fa-key text-warning"></i>
+                <span>المصادقة الثنائية (MFA)</span>
+            </a>            @endif
 
             <!-- Category: Directorate Tabs -->
             @if (strpos($roleCode, 'dir_') === 0 && isset($depNames[$roleCode]))
