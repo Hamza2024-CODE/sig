@@ -47,12 +47,14 @@ class SectionController extends Controller
             $params   = array_merge($params, [$like, $like, $like, $like]);
         }
 
-        // Session filter
+        // Session filter (defaults to active session where Encour = 1)
         $filterSession = (int)$request->query('filter_session', 0);
-        if ($filterSession > 0) {
-            $where[]  = 'sec.IDSession = ?';
-            $params[] = $filterSession;
+        if ($filterSession === 0) {
+            $activeSessionId = (int)DB::table('session')->where('Encour', 1)->value('IDSession');
+            $filterSession = $activeSessionId > 0 ? $activeSessionId : 35;
         }
+        $where[]  = 'sec.IDSession = ?';
+        $params[] = $filterSession;
 
         // Establishment filter (only for admin/dfep)
         $filterEtab = (int)$request->query('filter_etab', 0);
@@ -126,11 +128,11 @@ class SectionController extends Controller
             default      => \App\Services\ReferenceCache::etablissements(),
         };
 
-        // Available Offers (filtered by role / establishment)
         $offersQuery = DB::table('offre')
             ->join('specialite', 'offre.IDSpecialite', '=', 'specialite.IDSpecialite')
             ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDetablissement')
-            ->select('offre.IDOffre as id', 'specialite.Nom as spec_ar', 'specialite.NomFr as spec_fr', 'etablissement.Nom as etab_ar', 'offre.IDSession as session_id', 'offre.DateD as date_debut', 'offre.DateF as date_fin', DB::raw('COALESCE(NULLIF(specialite.dureeM, 0), specialite.NbrSem * 6, 24) as duree'));
+            ->select('offre.IDOffre as id', 'specialite.Nom as spec_ar', 'specialite.NomFr as spec_fr', 'etablissement.Nom as etab_ar', 'offre.IDSession as session_id', 'offre.DateD as date_debut', 'offre.DateF as date_fin', DB::raw('COALESCE(NULLIF(specialite.dureeM, 0), specialite.NbrSem * 6, 24) as duree'))
+            ->where('offre.IDSession', '=', $filterSession);
 
         if ($dfepId > 0) {
             $offersQuery->whereIn('offre.IDEts_Form', function($q) use ($dfepId) {
@@ -318,5 +320,73 @@ class SectionController extends Controller
         }
 
         return redirect()->back();
+    }
+
+    public function ajaxGetTrainees($id)
+    {
+        try {
+            $section = DB::selectOne("
+                SELECT sec.IDSection as id,
+                       sec.Nom as nom_ar,
+                       sec.IDMode_formation,
+                       sec.DateDF as date_debut,
+                       sec.DateFF as date_fin,
+                       sec.Groupe as groupe,
+                       sp.Nom as spec_ar,
+                       sp.CodeSpec as spec_code,
+                       sp.NiveauQualif as niveau_qualif,
+                       et.Nom as etab_nom,
+                       df.Nom as dfep_nom,
+                       w.Nom as wilaya_nom,
+                       CONCAT(enc.Nom, ' ', enc.Prenom) as responsable
+                FROM section sec
+                LEFT JOIN etablissement et ON sec.IDEts_Form = et.IDetablissement
+                LEFT JOIN dfep df ON et.IDDFEP = df.IDDFEP
+                LEFT JOIN wilaya w ON df.IDWilayaa = w.IDWilaya
+                LEFT JOIN specialite sp ON sec.IDSpecialite = sp.IDSpecialite
+                LEFT JOIN encadrement enc ON sec.IDEncadrement = enc.IDEncadrement
+                WHERE sec.IDSection = ?
+            ", [(int)$id]);
+
+            if (!$section) {
+                return response()->json(['success' => false, 'message' => 'القسم غير موجود'], 404);
+            }
+
+            $trainees = DB::select("
+                SELECT a.IDapprenant,
+                       a.Nccp as nccp,
+                       c.Nin as nin,
+                       c.Nom as nom_ar,
+                       c.Prenom as prenom_ar,
+                       c.NomFr as nom_fr,
+                       c.PrenomFr as prenom_fr,
+                       c.DateNais as date_naissance,
+                       c.LieuNais as lieu_naissance,
+                       c.Adres as adresse,
+                       c.PrenomPere as prenom_pere,
+                       c.NomMere as nom_mere,
+                       c.PrenomMere as prenom_mere,
+                       a.NumActe as num_contrat,
+                       a.DateActe as date_contrat,
+                       a.NomEmployeur as nom_employeur,
+                       c.Civ as sexe,
+                       c.endicape,
+                       c.Nationalite,
+                       ns.Nom as niveau_scolaire
+                FROM apprenant a
+                JOIN candidat c ON a.IDCandidat = c.IDCandidat
+                LEFT JOIN niveau_scol ns ON c.IDNiveau_Scol = ns.IDNiveau_Scol
+                WHERE a.IDSection = ? AND a.statut = 'actif'
+                ORDER BY c.Nom ASC, c.Prenom ASC
+            ", [(int)$id]);
+
+            return response()->json([
+                'success'  => true,
+                'section'  => $section,
+                'trainees' => $trainees
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
     }
 }

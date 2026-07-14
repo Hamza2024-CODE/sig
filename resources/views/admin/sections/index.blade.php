@@ -159,7 +159,9 @@ $to   = min($page * $per_page, $total_count);
                         onmouseout="this.style.background=''">
                         <td class="py-2 ps-4 text-muted" style="font-family:'Inter';font-size:0.75rem;"><?= $rowNum ?></td>
                         <td>
-                            <div class="fw-bold text-dark" style="font-size:0.85rem;"><?= htmlspecialchars($sec['nom_ar']) ?></div>
+                            <a href="javascript:void(0)" class="fw-bold text-primary show-trainees-btn" style="font-size:0.85rem;text-decoration:none;" data-id="<?= $sec['id'] ?>">
+                                <i class="fa-solid fa-list-check me-1"></i> <?= htmlspecialchars($sec['nom_ar']) ?>
+                            </a>
                             <div class="text-muted" style="font-size:0.72rem;font-family:'Outfit';"><?= htmlspecialchars($sec['nom_fr']) ?></div>
                         </td>
                         <td>
@@ -409,12 +411,531 @@ $to   = min($page * $per_page, $total_count);
     </div>
 </div>
 
+<style>
+@media print {
+    body * {
+        visibility: hidden !important;
+    }
+    #printable_branch_report, #printable_branch_report * {
+        visibility: visible !important;
+    }
+    #printable_branch_report {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        direction: rtl !important;
+        text-align: right !important;
+        font-family: 'Cairo', sans-serif !important;
+        font-size: 13px !important;
+        line-height: 1.6 !important;
+        color: #000 !important;
+        background: #fff !important;
+    }
+    .print-page {
+        page-break-after: always;
+        padding: 40px;
+        box-sizing: border-box;
+    }
+    .print-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    .print-header h5 {
+        margin: 5px 0;
+        font-weight: bold;
+    }
+    .print-title {
+        text-align: center;
+        margin: 40px 0;
+    }
+    .print-title h2 {
+        font-weight: bold;
+        text-decoration: underline;
+        font-size: 26px;
+    }
+    .print-info-table {
+        width: 100%;
+        margin-bottom: 30px;
+        border-collapse: collapse;
+    }
+    .print-info-table td {
+        padding: 10px 15px;
+        font-size: 15px;
+        vertical-align: top;
+    }
+    .print-signatures {
+        width: 100%;
+        margin-top: 50px;
+    }
+    .print-signatures td {
+        text-align: center;
+        width: 50%;
+        font-weight: bold;
+        font-size: 15px;
+    }
+    .print-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+    .print-table th, .print-table td {
+        border: 1px solid #000 !important;
+        padding: 6px 8px !important;
+        font-size: 11px !important;
+        text-align: center !important;
+    }
+    .print-table th {
+        background-color: #f2f2f2 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}
+</style>
+
+<!-- Printable Hidden Report -->
+<div id="printable_branch_report" class="d-none">
+    <!-- Page 1: Administrative opening report -->
+    <div class="print-page">
+        <div class="print-header">
+            <h5>الجمهورية الجزائرية الديمقراطية الشعبية</h5>
+            <h5>وزارة التكوين والتعليم المهنيين</h5>
+            <div style="display: flex; justify-content: space-between; margin-top: 20px; text-align: right; width: 100%;">
+                <div style="font-weight: bold;">
+                    <div>ولاية: <span id="print_out_wilaya">...</span></div>
+                    <div>مديرية التكوين والتعليم المهنيين لولاية: <span id="print_out_dfep">...</span></div>
+                    <div>المؤسسة التكوينية: <span id="print_out_etab">...</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="print-title">
+            <h2>محضر فتح الفرع</h2>
+            <h4 style="margin-top: 15px; font-weight: bold;">الرقم: <span id="print_out_num">1</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; التاريخ: <span id="print_out_date">...</span></h4>
+        </div>
+
+        <div style="margin-top: 40px;">
+            <table class="print-info-table">
+                <tr>
+                    <td style="width: 50%;"><strong>الاختصاص:</strong> <span id="print_out_spec">...</span></td>
+                    <td style="width: 50%;"><strong>رمز الاختصاص:</strong> <span id="print_out_spec_code">...</span></td>
+                </tr>
+                <tr>
+                    <td><strong>الفوج:</strong> <span id="print_out_foug">...</span></td>
+                    <td><strong>مستوى التأهيل:</strong> <span id="print_out_level">...</span></td>
+                </tr>
+                <tr>
+                    <td><strong>نمط تنظيم التكوين:</strong> <span id="print_out_org_mode">...</span></td>
+                    <td><strong>نمط التسيير:</strong> <span id="print_out_mgmt_mode">...</span></td>
+                </tr>
+                <tr style="height: 20px;"><td></td><td></td></tr>
+                <tr>
+                    <td><strong>بداية التكوين:</strong> <span id="print_out_date_debut">...</span></td>
+                    <td><strong>نهاية التكوين:</strong> <span id="print_out_date_fin">...</span></td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <strong>عدد المتكونين:</strong> <span id="print_out_count_total">...</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        <strong>منهم إناث:</strong> <span id="print_out_count_females">...</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        <strong>منهم أجانب:</strong> <span id="print_out_count_foreigners">...</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        <strong>منهم احتياجات خاصة:</strong> <span id="print_out_count_special">...</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2"><strong>المسؤول عن الفرع:</strong> <span id="print_out_responsable">...</span></td>
+                </tr>
+            </table>
+        </div>
+
+        <div style="margin-top: 80px;">
+            <table class="print-signatures">
+                <tr>
+                    <td>المسؤول البيداغوجي</td>
+                    <td>مدير المؤسسة</td>
+                </tr>
+                <tr style="height: 120px;"><td></td><td></td></tr>
+                <tr>
+                    <td colspan="2" style="text-align: center; font-weight: bold; font-size: 16px;">تأشيرة المديرية</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- Page 2: Trainees list -->
+    <div class="print-page">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <h4 style="font-weight: bold; text-decoration: underline;">قائمة المتربصين والمتمهنين المقيدين بالقسم</h4>
+            <div style="font-size: 14px; margin-top: 10px; font-weight: bold;">
+                الاختصاص: <span class="print_out_spec_linked">...</span> &nbsp;&nbsp; | &nbsp;&nbsp; الفوج: <span class="print_out_foug_linked">...</span>
+            </div>
+        </div>
+
+        <table class="print-table">
+            <thead>
+                <tr>
+                    <th style="width: 30px;">#</th>
+                    <th>رقم التسجيل</th>
+                    <th>الرقم التعريفي الوطني</th>
+                    <th>اللقب</th>
+                    <th>الاسم</th>
+                    <th>تاريخ الميلاد</th>
+                    <th>مكان الميلاد</th>
+                    <th>المستوى الدراسي</th>
+                    <th>العنوان</th>
+                    <th>اسم الأب</th>
+                    <th>لقب الأم</th>
+                    <th>اسم الأم</th>
+                    <th class="print-app-col">رقم العقد</th>
+                    <th class="print-app-col">تاريخ العقد</th>
+                    <th class="print-app-col">المستخدم</th>
+                </tr>
+            </thead>
+            <tbody id="print_trainees_rows">
+                <!-- Populated dynamically via JS -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Trainees List Modal -->
+<div class="modal fade" id="viewTraineesModal" tabindex="-1" aria-labelledby="viewTraineesModalLabel" aria-true="true" style="font-family:'Cairo', sans-serif;">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-0 pb-0 pt-4 px-4 bg-primary text-white" style="border-top-left-radius: 16px; border-top-right-radius: 16px; background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%) !important;">
+                <h5 class="modal-title fw-bold" id="viewTraineesModalLabel"><i class="fa-solid fa-users me-2"></i> قائمة المتربصين المقيدين بالقسم بيداغوجياً</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <!-- Meta Info Alert -->
+                <div class="alert alert-info border-0 shadow-sm mb-4 rounded-3 d-flex justify-content-between align-items-center flex-wrap gap-2" id="section_meta_info" style="background-color: #f0f9ff; border: 1px solid #bae6fd !important;">
+                    <div class="d-flex flex-wrap gap-3">
+                        <div><strong>الاختصاص:</strong> <span id="meta_spec_name" class="text-primary fw-bold">...</span></div>
+                        <div><strong>الرمز:</strong> <span id="meta_spec_code" class="text-secondary fw-bold">...</span></div>
+                        <div><strong>الفوج:</strong> <span id="meta_section_name" class="text-dark fw-bold">...</span></div>
+                        <div><strong>تاريخ التكوين:</strong> <span id="meta_dates" class="text-muted fw-bold">...</span></div>
+                        <div><strong>المسؤول عن الفرع:</strong> <span id="meta_trainer" class="text-success fw-bold">...</span></div>
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-success btn-sm rounded-pill px-3 fw-bold shadow-sm" id="btn_trigger_print_options">
+                            <i class="fa-solid fa-print me-1"></i> طباعة محضر فتح الفرع
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Spinner -->
+                <div id="traineesSpinner" class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;"></div>
+                    <p class="text-muted mt-2">جاري تحميل قائمة المتربصين والمتمهنين...</p>
+                </div>
+
+                <!-- Trainees Table -->
+                <div id="traineesTableContainer" class="table-responsive d-none">
+                    <table class="table table-hover align-middle mb-0 small" id="modalTraineesTable">
+                        <thead class="bg-light text-muted small fw-bold">
+                            <tr>
+                                <th>#</th>
+                                <th>رقم التسجيل</th>
+                                <th>الرقم التعريفي الوطني</th>
+                                <th>اللقب والاسم</th>
+                                <th>تاريخ ومكان الميلاد</th>
+                                <th>المستوى الدراسي</th>
+                                <th>العنوان</th>
+                                <th>بيانات الوالدين</th>
+                                <th class="apprenticeship-col d-none">رقم العقد</th>
+                                <th class="apprenticeship-col d-none">تاريخ العقد</th>
+                                <th class="apprenticeship-col d-none">المستخدم</th>
+                            </tr>
+                        </thead>
+                        <tbody id="trainees_list_body">
+                            <!-- Populated dynamically via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer bg-light p-3 border-top-0" style="border-bottom-left-radius:18px; border-bottom-right-radius:18px;">
+                <button type="button" class="btn btn-outline-secondary px-4 fw-bold btn-sm rounded-pill" data-bs-dismiss="modal">إغلاق</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Print Options Modal -->
+<div class="modal fade" id="printOptionsModal" tabindex="-1" aria-labelledby="printOptionsModalLabel" aria-hidden="true" style="z-index: 1060; font-family:'Cairo', sans-serif;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-0 pb-0 pt-4 px-4">
+                <h5 class="modal-title fw-bold" id="printOptionsModalLabel"><i class="fa-solid fa-print text-success me-2"></i> خيارات طباعة محضر فتح الفرع</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-3">
+                    <label for="print_num" class="form-label small fw-bold text-muted">رقم المحضر</label>
+                    <input type="text" id="print_num" class="form-control rounded-pill border-light-subtle shadow-sm px-3" value="1">
+                </div>
+                <div class="mb-3">
+                    <label for="print_date" class="form-label small fw-bold text-muted">تاريخ المحضر</label>
+                    <input type="date" id="print_date" class="form-control rounded-pill border-light-subtle shadow-sm px-3" value="<?= date('Y-m-d') ?>">
+                </div>
+                <div class="mb-3">
+                    <label for="print_date_debut" class="form-label small fw-bold text-muted">تاريخ بداية التكوين</label>
+                    <input type="date" id="print_date_debut" class="form-control rounded-pill border-light-subtle shadow-sm px-3">
+                </div>
+                <div class="mb-3">
+                    <label for="print_date_fin" class="form-label small fw-bold text-muted">تاريخ نهاية التكوين</label>
+                    <input type="date" id="print_date_fin" class="form-control rounded-pill border-light-subtle shadow-sm px-3">
+                </div>
+                <div class="mb-3">
+                    <label for="print_org_mode" class="form-label small fw-bold text-muted">نمط تنظيم التكوين</label>
+                    <input type="text" id="print_org_mode" class="form-control rounded-pill border-light-subtle shadow-sm px-3">
+                </div>
+                <div class="mb-3">
+                    <label for="print_mgmt_mode" class="form-label small fw-bold text-muted">نمط التسيير</label>
+                    <input type="text" id="print_mgmt_mode" class="form-control rounded-pill border-light-subtle shadow-sm px-3" value="معهد">
+                </div>
+            </div>
+            <div class="modal-footer border-0 p-4 pt-0">
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-success rounded-pill px-4 fw-bold shadow-sm" id="btn_confirm_print">
+                    <i class="fa-solid fa-print me-1"></i> معاينة والطباعة
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {{-- ══ DELETE FORM (HIDDEN) ══ --}}
 <form id="deleteForm" action="" method="POST" class="d-none">
     <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
 </form>
 
 <script>
+let currentSectionData = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    const viewTraineesModalEl = document.getElementById('viewTraineesModal');
+    const printOptionsModalEl = document.getElementById('printOptionsModal');
+    
+    // Add click listeners to section name links
+    document.body.addEventListener('click', function(e) {
+        const target = e.target.closest('.show-trainees-btn');
+        if (target) {
+            e.preventDefault();
+            const id = target.getAttribute('data-id');
+            openTraineesModal(id);
+        }
+    });
+
+    function openTraineesModal(id) {
+        const viewTraineesModal = new bootstrap.Modal(viewTraineesModalEl);
+        viewTraineesModal.show();
+
+        document.getElementById('traineesSpinner').classList.remove('d-none');
+        document.getElementById('traineesTableContainer').classList.add('d-none');
+
+        fetch('{{ url("dashboard/sections/trainees") }}/' + id)
+            .then(res => res.json())
+            .then(res => {
+                if (res.success) {
+                    currentSectionData = res;
+                    populateTraineesModal(res);
+                } else {
+                    alert('خطأ في جلب المتربصين: ' + res.message);
+                }
+            })
+            .catch(err => {
+                alert('حدث خطأ أثناء تحميل قائمة المتربصين.');
+            });
+    }
+
+    function populateTraineesModal(data) {
+        const sec = data.section;
+        const trainees = data.trainees;
+
+        // Meta info
+        document.getElementById('meta_spec_name').textContent = sec.spec_ar || '—';
+        document.getElementById('meta_spec_code').textContent = sec.spec_code || '—';
+        document.getElementById('meta_section_name').textContent = sec.nom_ar || '—';
+        document.getElementById('meta_dates').textContent = 'من ' + sec.date_debut + ' إلى ' + sec.date_fin;
+        document.getElementById('meta_trainer').textContent = sec.responsable || 'لم يحدد بعد';
+
+        // Trainees list
+        const tbody = document.getElementById('trainees_list_body');
+        tbody.innerHTML = '';
+
+        const isApprenticeship = (parseInt(sec.IDMode_formation) === 10);
+        
+        // Show/hide apprenticeship columns
+        const appCols = document.querySelectorAll('.apprenticeship-col');
+        appCols.forEach(col => {
+            if (isApprenticeship) {
+                col.classList.remove('d-none');
+            } else {
+                col.classList.add('d-none');
+            }
+        });
+
+        if (trainees.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="${isApprenticeship ? 11 : 8}" class="text-center py-4 text-muted">لا يوجد متربصون مقيدون في هذا القسم حالياً.</td></tr>`;
+        } else {
+            trainees.forEach((tr, index) => {
+                const trRow = document.createElement('tr');
+                trRow.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${escapeHtml(tr.nccp)}</td>
+                    <td><span style="font-family:'Outfit';">${escapeHtml(tr.nin || '—')}</span></td>
+                    <td><strong>${escapeHtml(tr.nom_ar)} ${escapeHtml(tr.prenom_ar)}</strong></td>
+                    <td>${escapeHtml(tr.date_naissance)} بـ ${escapeHtml(tr.lieu_naissance)}</td>
+                    <td>${escapeHtml(tr.niveau_scolaire || '—')}</td>
+                    <td>${escapeHtml(tr.adresse || '—')}</td>
+                    <td>
+                        <div class="small">الأب: ${escapeHtml(tr.prenom_pere || '—')}</div>
+                        <div class="small">الأم: ${escapeHtml(tr.prenom_mere || '—')} ${escapeHtml(tr.nom_mere || '—')}</div>
+                    </td>
+                    <td class="apprenticeship-col ${isApprenticeship ? '' : 'd-none'}">${escapeHtml(tr.num_contrat || '—')}</td>
+                    <td class="apprenticeship-col ${isApprenticeship ? '' : 'd-none'}">${escapeHtml(tr.date_contrat || '—')}</td>
+                    <td class="apprenticeship-col ${isApprenticeship ? '' : 'd-none'}">${escapeHtml(tr.nom_employeur || '—')}</td>
+                `;
+                tbody.appendChild(trRow);
+            });
+        }
+
+        document.getElementById('traineesSpinner').classList.add('d-none');
+        document.getElementById('traineesTableContainer').classList.remove('d-none');
+    }
+
+    // Trigger Print Options Modal
+    document.getElementById('btn_trigger_print_options').addEventListener('click', function() {
+        if (!currentSectionData) return;
+        const sec = currentSectionData.section;
+
+        document.getElementById('print_date_debut').value = sec.date_debut || '';
+        document.getElementById('print_date_fin').value = sec.date_fin || '';
+        document.getElementById('print_org_mode').value = (parseInt(sec.IDMode_formation) === 10) ? 'تكوين عن طريق التمهين' : 'حضوري أولي';
+        document.getElementById('print_mgmt_mode').value = (sec.etab_nom && (sec.etab_nom.indexOf('المعهد') !== -1 || sec.etab_nom.indexOf('معهد') !== -1)) ? 'معهد' : 'مركز';
+
+        const printModal = new bootstrap.Modal(printOptionsModalEl);
+        printModal.show();
+    });
+
+    // Confirm and Print
+    document.getElementById('btn_confirm_print').addEventListener('click', function() {
+        if (!currentSectionData) return;
+        const sec = currentSectionData.section;
+        const trainees = currentSectionData.trainees;
+
+        // Fetch inputs from options modal
+        const printNum = document.getElementById('print_num').value;
+        const printDate = formatDateArabic(document.getElementById('print_date').value);
+        const printDateDebut = formatDateArabic(document.getElementById('print_date_debut').value);
+        const printDateFin = formatDateArabic(document.getElementById('print_date_fin').value);
+        const printOrgMode = document.getElementById('print_org_mode').value;
+        const printMgmtMode = document.getElementById('print_mgmt_mode').value;
+
+        // Populate printout elements
+        document.getElementById('print_out_wilaya').textContent = sec.wilaya_nom || '—';
+        document.getElementById('print_out_dfep').textContent = sec.dfep_nom || '—';
+        document.getElementById('print_out_etab').textContent = sec.etab_nom || '—';
+        
+        document.getElementById('print_out_num').textContent = printNum || '1';
+        document.getElementById('print_out_date').textContent = printDate || '—';
+        
+        document.getElementById('print_out_spec').textContent = sec.spec_ar || '—';
+        document.getElementById('print_out_spec_code').textContent = sec.spec_code || '—';
+        document.getElementById('print_out_foug').textContent = sec.groupe || '1';
+        document.getElementById('print_out_level').textContent = sec.niveau_qualif || '—';
+        document.getElementById('print_out_org_mode').textContent = printOrgMode || '—';
+        document.getElementById('print_out_mgmt_mode').textContent = printMgmtMode || '—';
+        
+        document.getElementById('print_out_date_debut').textContent = printDateDebut || '—';
+        document.getElementById('print_out_date_fin').textContent = printDateFin || '—';
+
+        // Count stats
+        let total = trainees.length;
+        let females = 0;
+        let foreigners = 0;
+        let specialNeeds = 0;
+
+        trainees.forEach(tr => {
+            if (tr.sexe == 2 || tr.sexe == 'أنثى' || tr.sexe == 'F') females++;
+            if (tr.Nationalite != 0) foreigners++;
+            if (tr.endicape == 1) specialNeeds++;
+        });
+
+        document.getElementById('print_out_count_total').textContent = total;
+        document.getElementById('print_out_count_females').textContent = females;
+        document.getElementById('print_out_count_foreigners').textContent = foreigners;
+        document.getElementById('print_out_count_special').textContent = specialNeeds;
+        
+        document.getElementById('print_out_responsable').textContent = sec.responsable || 'لم يحدد بعد';
+
+        // Document link titles
+        document.querySelectorAll('.print_out_spec_linked').forEach(el => el.textContent = sec.spec_ar || '—');
+        document.querySelectorAll('.print_out_foug_linked').forEach(el => el.textContent = sec.groupe || '1');
+
+        // Populate printed rows
+        const printBody = document.getElementById('print_trainees_rows');
+        printBody.innerHTML = '';
+
+        const isApprenticeship = (parseInt(sec.IDMode_formation) === 10);
+        
+        // Show/hide printed apprenticeship columns
+        document.querySelectorAll('.print-app-col').forEach(col => {
+            if (isApprenticeship) {
+                col.style.display = 'table-cell';
+            } else {
+                col.style.display = 'none';
+            }
+        });
+
+        trainees.forEach((tr, index) => {
+            const trRow = document.createElement('tr');
+            trRow.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${escapeHtml(tr.nccp)}</td>
+                <td>${escapeHtml(tr.nin || '—')}</td>
+                <td>${escapeHtml(tr.nom_ar)}</td>
+                <td>${escapeHtml(tr.prenom_ar)}</td>
+                <td>${escapeHtml(tr.date_naissance)}</td>
+                <td>${escapeHtml(tr.lieu_naissance)}</td>
+                <td>${escapeHtml(tr.niveau_scolaire || '—')}</td>
+                <td>${escapeHtml(tr.adresse || '—')}</td>
+                <td>${escapeHtml(tr.prenom_pere || '—')}</td>
+                <td>${escapeHtml(tr.nom_mere || '—')}</td>
+                <td>${escapeHtml(tr.prenom_mere || '—')}</td>
+                <td class="print-app-col" style="display: ${isApprenticeship ? 'table-cell' : 'none'}">${escapeHtml(tr.num_contrat || '—')}</td>
+                <td class="print-app-col" style="display: ${isApprenticeship ? 'table-cell' : 'none'}">${escapeHtml(tr.date_contrat || '—')}</td>
+                <td class="print-app-col" style="display: ${isApprenticeship ? 'table-cell' : 'none'}">${escapeHtml(tr.nom_employeur || '—')}</td>
+            `;
+            printBody.appendChild(trRow);
+        });
+
+        // Hide modals to clean print screen
+        const printModalInstance = bootstrap.Modal.getInstance(printOptionsModalEl);
+        if (printModalInstance) printModalInstance.hide();
+
+        const traineesModalInstance = bootstrap.Modal.getInstance(viewTraineesModalEl);
+        if (traineesModalInstance) traineesModalInstance.hide();
+
+        // Print!
+        setTimeout(() => {
+            window.print();
+        }, 300);
+    });
+
+    // Helper functions
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
+    function formatDateArabic(dateStr) {
+        if (!dateStr) return '';
+        const parts = dateStr.split('-');
+        if (parts.length !== 3) return dateStr;
+        return parts[0] + '/' + parts[1] + '/' + parts[2];
+    }
+});
+
 function openEditModal(id) {
     var myModal = new bootstrap.Modal(document.getElementById('editSectionModal'));
     myModal.show();

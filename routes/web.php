@@ -459,6 +459,7 @@ Route::middleware('check.session')->group(function () {
         Route::get('/',                     [\App\Http\Controllers\Admin\SectionController::class, 'index'])->name('sections.index');
         Route::post('/store',               [\App\Http\Controllers\Admin\SectionController::class, 'store'])->name('sections.store');
         Route::get('/show/{id}',            [\App\Http\Controllers\Admin\SectionController::class, 'show'])->name('sections.show');
+        Route::get('/trainees/{id}',        [\App\Http\Controllers\Admin\SectionController::class, 'ajaxGetTrainees'])->name('sections.trainees');
         Route::post('/update',              [\App\Http\Controllers\Admin\SectionController::class, 'update'])->name('sections.update');
         Route::post('/delete/{id}',         [\App\Http\Controllers\Admin\SectionController::class, 'destroy'])->name('sections.delete');
     });
