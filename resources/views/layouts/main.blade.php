@@ -845,14 +845,16 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
 
                     <!-- 1. الشؤون البيداغوجية والتعليم -->
                     <div class="sidebar-dropdown">
-                        <button type="button" class="sidebar-item {{ ($isActive('/dashboard/offres') || $isActive('/dashboard/inscriptions') || $isActive('/dashboard/specialites') || $isActive('/dashboard/sessions') || $isActive('/dashboard/effectifs')) ? 'active' : '' }}" onclick="toggleSidebarDropdown(this)" title="التكوين والتعليم">
+                        <button type="button" class="sidebar-item {{ ($isActive('/dashboard/offres') || $isActive('/dashboard/inscriptions') || $isActive('/dashboard/apprenants') || $isActive('/dashboard/sections') || $isActive('/dashboard/specialites') || $isActive('/dashboard/sessions') || $isActive('/dashboard/effectifs')) ? 'active' : '' }}" onclick="toggleSidebarDropdown(this)" title="التكوين والتعليم">
                             <i class="fa-solid fa-graduation-cap text-primary"></i>
                             <span>التكوين والتعليم</span>
                             <i class="fa-solid fa-chevron-down ms-auto dropdown-chevron" style="font-size: 0.7rem;"></i>
                         </button>
-                        <div class="sidebar-submenu {{ ($isActive('/dashboard/offres') || $isActive('/dashboard/inscriptions') || $isActive('/dashboard/specialites') || $isActive('/dashboard/sessions') || $isActive('/dashboard/effectifs')) ? 'open' : '' }}">
+                        <div class="sidebar-submenu {{ ($isActive('/dashboard/offres') || $isActive('/dashboard/inscriptions') || $isActive('/dashboard/apprenants') || $isActive('/dashboard/sections') || $isActive('/dashboard/specialites') || $isActive('/dashboard/sessions') || $isActive('/dashboard/effectifs')) ? 'open' : '' }}">
                             <a href="{{ url('dashboard/offres') }}" class="sidebar-subitem {{ $isActive('/dashboard/offres', true) }}" title="العروض"><i class="fa-solid fa-briefcase text-primary"></i> <span>العروض</span></a>
                             <a href="{{ url('dashboard/inscriptions') }}" class="sidebar-subitem {{ $isActive('/dashboard/inscriptions') }}" title="التسجيل والتوجيه"><i class="fa-solid fa-user-plus text-primary"></i> <span>التسجيل والتوجيه</span></a>
+                            <a href="{{ url('dashboard/apprenants') }}" class="sidebar-subitem {{ $isActive('/dashboard/apprenants') }}" title="المتربصين والطلاب"><i class="fa-solid fa-user-graduate text-primary"></i> <span>المتربصين والطلاب</span></a>
+                            <a href="{{ url('dashboard/sections') }}" class="sidebar-subitem {{ $isActive('/dashboard/sections') }}" title="الأقسام التكوينية"><i class="fa-solid fa-users-rectangle text-primary"></i> <span>الأقسام التكوينية</span></a>
                             <a href="{{ url('dashboard/specialites') }}" class="sidebar-subitem {{ $isActive('/dashboard/specialites') }}" title="تنظيم الفروع"><i class="fa-solid fa-sitemap text-primary"></i> <span>تنظيم الفروع</span></a>
                             <a href="{{ url('dashboard/sessions') }}" class="sidebar-subitem {{ $isActive('/dashboard/sessions') }}" title="تخطيط الدورات"><i class="fa-solid fa-calendar-alt text-primary"></i> <span>تخطيط الدورات</span></a>
                             <a href="{{ url('dashboard/effectifs') }}" class="sidebar-subitem {{ $isActive('/dashboard/effectifs') }}" title="تسيير التعداد"><i class="fa-solid fa-users text-primary"></i> <span>تسيير التعداد</span></a>
@@ -1028,7 +1030,7 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
             <div class="sidebar-section-label"><span>الشؤون البيداغوجية والتعليم</span></div>
 
             <!-- Category: Training (التكوين والتعليم) -->
-            @if (($hasPerm('offres') || $hasPerm('inscriptions') || in_array($roleCode, ['dfep', 'admin', 'central', 'etablissement', 'directeur'])) && in_array($dept, ['general', 'pedagogie', 'orientation', 'apprentissage']))
+            @if (($hasPerm('offres') || $hasPerm('inscriptions') || in_array($roleCode, ['dfep', 'admin', 'central', 'etablissement', 'directeur', 'employee'])) && in_array($dept, ['general', 'pedagogie', 'orientation', 'apprentissage']))
                 <div class="sidebar-dropdown">
                     <button type="button" class="sidebar-item {{ ($isActive('/dashboard/offres') || $isActive('/dashboard/inscriptions') || $isActive('/dashboard/preinscrits') || $isActive('/dashboard/specialites') || $isActive('/dashboard/integration') || $isActive('/dashboard/sessions') || $isActive('/dashboard/schedule') || $isActive('/dashboard/effectifs') || $isActive('/dashboard/apprenants') || $isActive('/dashboard/sections')) ? 'active' : '' }}" onclick="toggleSidebarDropdown(this)" title="التكوين والتعليم">
                         <i class="fa-solid fa-graduation-cap"></i>
