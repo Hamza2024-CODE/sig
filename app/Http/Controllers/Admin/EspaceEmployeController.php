@@ -394,7 +394,7 @@ class EspaceEmployeController extends Controller
                 // Search text
                 if (!empty($search)) {
                     $searchTerm = "%$search%";
-                    $clauses[] = "(c.Nom LIKE ? OR c.Prenom LIKE ? OR c.NomFr LIKE ? OR c.PrenomFr LIKE ? OR a.IDapprenant = ? OR c.nin = ? OR a.Nccp = ? OR sp.Nom LIKE ? OR e.Nom LIKE ?)";
+                    $clauses[] = "(c.Nom LIKE ? OR c.Prenom LIKE ? OR c.NomFr LIKE ? OR c.PrenomFr LIKE ? OR a.IDapprenant = ? OR c.nin = ? OR c.NumIns = ? OR sp.Nom LIKE ? OR e.Nom LIKE ?)";
                     array_push($params, $searchTerm, $searchTerm, $searchTerm, $searchTerm, (int)$search, $search, $search, $searchTerm, $searchTerm);
                 }
 
@@ -514,10 +514,10 @@ class EspaceEmployeController extends Controller
                 // Search text
                 if (!empty($search)) {
                     $searchTerm = "%$search%";
-                    $clauses1[] = "(c.Nom LIKE ? OR c.Prenom LIKE ? OR c.NomFr LIKE ? OR c.PrenomFr LIKE ? OR a.IDapprenant = ? OR c.nin = ? OR a.Nccp = ? OR sp.Nom LIKE ? OR e.Nom LIKE ?)";
+                    $clauses1[] = "(c.Nom LIKE ? OR c.Prenom LIKE ? OR c.NomFr LIKE ? OR c.PrenomFr LIKE ? OR a.IDapprenant = ? OR c.nin = ? OR c.NumIns = ? OR sp.Nom LIKE ? OR e.Nom LIKE ?)";
                     array_push($params1, $searchTerm, $searchTerm, $searchTerm, $searchTerm, (int)$search, $search, $search, $searchTerm, $searchTerm);
 
-                    $clauses2[] = "(c.Nom LIKE ? OR c.Prenom LIKE ? OR c.NomFr LIKE ? OR c.PrenomFr LIKE ? OR a.IDapprenant = ? OR c.nin = ? OR a.Nccp = ? OR sp.Nom LIKE ? OR e.Nom LIKE ?)";
+                    $clauses2[] = "(c.Nom LIKE ? OR c.Prenom LIKE ? OR c.NomFr LIKE ? OR c.PrenomFr LIKE ? OR a.IDapprenant = ? OR c.nin = ? OR c.NumIns = ? OR sp.Nom LIKE ? OR e.Nom LIKE ?)";
                     array_push($params2, $searchTerm, $searchTerm, $searchTerm, $searchTerm, (int)$search, $search, $search, $searchTerm, $searchTerm);
                 }
 
@@ -643,14 +643,15 @@ class EspaceEmployeController extends Controller
                     foreach ($params1 as $paramVal) {
                         $stmtSelect->bindValue($i++, $paramVal);
                     }
-                    $stmtSelect->bindValue($i++, $limit, \PDO::PARAM_INT);
-                    $stmtSelect->bindValue($i++, $offset, \PDO::PARAM_INT);
+                    $subLimit = $limit + $offset;
+                    $stmtSelect->bindValue($i++, $subLimit, \PDO::PARAM_INT);
+                    $stmtSelect->bindValue($i++, 0, \PDO::PARAM_INT);
 
                     foreach ($params2 as $paramVal) {
                         $stmtSelect->bindValue($i++, $paramVal);
                     }
-                    $stmtSelect->bindValue($i++, $limit, \PDO::PARAM_INT);
-                    $stmtSelect->bindValue($i++, $offset, \PDO::PARAM_INT);
+                    $stmtSelect->bindValue($i++, $subLimit, \PDO::PARAM_INT);
+                    $stmtSelect->bindValue($i++, 0, \PDO::PARAM_INT);
 
                     $stmtSelect->bindValue($i++, $limit, \PDO::PARAM_INT);
                     $stmtSelect->bindValue($i, $offset, \PDO::PARAM_INT);
