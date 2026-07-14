@@ -355,7 +355,7 @@ class SectionController extends Controller
 
             $trainees = DB::select("
                 SELECT a.IDapprenant,
-                       a.Nccp as nccp,
+                       c.NumIns as nccp,
                        c.Nin as nin,
                        c.Nom as nom_ar,
                        c.Prenom as prenom_ar,
