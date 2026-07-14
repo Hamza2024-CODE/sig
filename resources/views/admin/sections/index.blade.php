@@ -1017,6 +1017,8 @@ function onOfferSelectChange(select) {
     if (duree) {
         document.getElementById('add_duree').value = duree;
     }
+}
+
 function triggerPrintFromRow(id) {
     fetch('{{ url("dashboard/sections/trainees") }}/' + id)
         .then(res => res.json())
