@@ -288,6 +288,7 @@ class ModulesController extends Controller {
             $sql = "SELECT c.IDCandidat as id,
                            c.IDOffre,
                            a.IDSection,
+                           a.Groupe,
                            c.Nom as nom_ar, c.NomFr as nom_fr,
                            c.Prenom as prenom_ar, c.PrenomFr as prenom_fr,
                            CASE WHEN c.Civ IN ('M', 'ذكر', '1') THEN 'ذكر' WHEN c.Civ IN ('F', 'أنثى', 'انثى', '2') THEN 'أنثى' ELSE '-' END as sexe,
@@ -454,6 +455,7 @@ class ModulesController extends Controller {
             $validation = (int)request()->all()['validation'];
             $offreId = (int)(request()->all()['offre_id'] ?? 0);
             $sectionId = (int)(request()->all()['section_id'] ?? 0);
+            $groupe = (int)(request()->all()['groupe'] ?? 1);
             $statutDossier = trim(request()->all()['statut_dossier'] ?? 'en_attente');
 
             try {
@@ -487,11 +489,11 @@ class ModulesController extends Controller {
                                 // Generate manual ID for apprenant
                                 $maxApp = (int)$this->db->query("SELECT COALESCE(MAX(IDapprenant), 0) FROM apprenant")->fetchColumn();
                                 $newAppId = $maxApp + 1;
-                                $this->db->prepare("INSERT INTO apprenant (IDapprenant, IDCandidat, IDSection, Nccp, statut) VALUES (?,?,?,?,'actif')")
-                                    ->execute([$newAppId, $id, $secId, $nccp]);
+                                $this->db->prepare("INSERT INTO apprenant (IDapprenant, IDCandidat, IDSection, Groupe, Nccp, Valide, statut) VALUES (?,?,?,?,?,1,'actif')")
+                                    ->execute([$newAppId, $id, $secId, $groupe, $nccp]);
                             } else {
-                                $this->db->prepare("UPDATE apprenant SET IDSection=?, statut='actif' WHERE IDapprenant=?")
-                                    ->execute([$secId, $apprenantId]);
+                                $this->db->prepare("UPDATE apprenant SET IDSection=?, Groupe=?, Valide=1, statut='actif' WHERE IDapprenant=?")
+                                    ->execute([$secId, $groupe, $apprenantId]);
                             }
                         }
                     }
@@ -519,6 +521,7 @@ class ModulesController extends Controller {
             $candidateIds = request()->all()['candidate_ids'] ?? '';
             $ids = array_filter(array_map('intval', explode(',', $candidateIds)));
             $sectionId = (int)(request()->all()['bulk_section_id'] ?? 0);
+            $groupe = (int)(request()->all()['bulk_groupe'] ?? 1);
             $validation = (int)(request()->all()['bulk_validation'] ?? 1);
             $statutDossier = trim(request()->all()['bulk_statut_dossier'] ?? 'valide');
 
@@ -553,11 +556,11 @@ class ModulesController extends Controller {
                             $nccp = 'APP-' . date('Y') . '-' . sprintf('%05d', $id);
                             $maxApp = (int)$this->db->query("SELECT COALESCE(MAX(IDapprenant), 0) FROM apprenant")->fetchColumn();
                             $newAppId = $maxApp + 1;
-                            $this->db->prepare("INSERT INTO apprenant (IDapprenant, IDCandidat, IDSection, Nccp, statut) VALUES (?,?,?,?,'actif')")
-                                ->execute([$newAppId, $id, $sectionId, $nccp]);
+                            $this->db->prepare("INSERT INTO apprenant (IDapprenant, IDCandidat, IDSection, Groupe, Nccp, Valide, statut) VALUES (?,?,?,?,?,1,'actif')")
+                                ->execute([$newAppId, $id, $sectionId, $groupe, $nccp]);
                         } else {
-                            $this->db->prepare("UPDATE apprenant SET IDSection=?, statut='actif' WHERE IDapprenant=?")
-                                ->execute([$sectionId, $apprenantId]);
+                            $this->db->prepare("UPDATE apprenant SET IDSection=?, Groupe=?, Valide=1, statut='actif' WHERE IDapprenant=?")
+                                ->execute([$sectionId, $groupe, $apprenantId]);
                         }
                     } else {
                         $this->db->prepare("DELETE FROM apprenant WHERE IDCandidat=?")->execute([$id]);

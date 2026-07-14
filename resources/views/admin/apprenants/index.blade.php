@@ -1,5 +1,5 @@
 @extends('layouts.main')
-@section('title', $title ?? 'سجل الطلاب والمتكونين')
+@section('title', $title ?? 'سجل المتربصين والمتمهنين')
 @section('content')
 <?php
 /**
@@ -29,16 +29,16 @@ $to   = min($page * $per_page, $total_count);
         <div>
             <h4 class="fw-bold mb-1" style="color:var(--text-main);">
                 <i class="fa-solid fa-user-graduate text-primary me-2"></i>
-                سجل الطلاب والمتكونين / Registre des Stagiaires
+                سجل المتربصين والمتمهنين / Registre des Stagiaires
             </h4>
             <p class="text-muted small mb-0">
                 عرض <?= number_format($from) ?>–<?= number_format($to) ?> من إجمالي
-                <strong class="text-primary"><?= number_format($total_count) ?></strong> طالب ومتكون نشط
+                <strong class="text-primary"><?= number_format($total_count) ?></strong> متربص ومتمهن نشط
             </p>
         </div>
         <div class="d-flex gap-2 no-print">
             <button class="btn btn-primary rounded-pill px-4 fw-bold btn-sm shadow-sm" data-bs-toggle="modal" data-bs-target="#addStudentModal">
-                <i class="fa-solid fa-user-plus me-1"></i> تسجيل طالب جديد
+                <i class="fa-solid fa-user-plus me-1"></i> تسجيل متربص جديد
             </button>
             @if(\App\Helpers\SovereignLicensingHelper::getSetting('feature_print_actions_enabled', '1') === '1')
             <button onclick="window.print()" class="btn btn-outline-secondary rounded-pill px-3 fw-bold btn-sm">
@@ -72,7 +72,7 @@ $to   = min($page * $per_page, $total_count);
 
             {{-- بحث نصي --}}
             <div class="col-12 col-md-3">
-                <label class="form-label small fw-bold text-muted mb-1">بحث باسم الطالب أو رقم التسجيل</label>
+                <label class="form-label small fw-bold text-muted mb-1">بحث باسم المتربص أو رقم التسجيل</label>
                 <div class="input-group">
                     <span class="input-group-text border-0" style="background:var(--input-bg,#f8f9fa);">
                         <i class="fa-solid fa-magnifying-glass text-muted small"></i>
@@ -145,7 +145,7 @@ $to   = min($page * $per_page, $total_count);
                 <thead style="background:rgba(0,0,0,0.03);">
                     <tr class="text-muted fw-bold" style="font-size:0.78rem;">
                         <th class="py-3 ps-4">#</th>
-                        <th>اسم الطالب / المتكون</th>
+                        <th>اسم المتربص / المتكون</th>
                         <th>رقم التسجيل / الدخول</th>
                         <th>القسم / التخصص</th>
                         <th>المؤسسة التكوينية</th>
@@ -341,7 +341,7 @@ $to   = min($page * $per_page, $total_count);
                                 </option>
                                 <?php endforeach; ?>
                             </select>
-                            <span class="text-muted small d-block mt-1">تظهر فقط ملفات المترشحين المقبولين الذين لم يتم تسجيلهم كأعضاء بعد في النظام.</span>
+                            <span class="text-muted small d-block mt-1">تظهر فقط ملفات المتربصين المقبولين الذين لم يتم تسجيلهم كأعضاء بعد في النظام.</span>
                         </div>
 
                         <div class="col-md-6">
@@ -398,7 +398,7 @@ $to   = min($page * $per_page, $total_count);
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content" style="border-radius:18px; border:none; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
             <div class="modal-header bg-primary text-white" style="border-top-left-radius:18px; border-top-right-radius:18px;">
-                <h5 class="modal-title fw-bold" id="editStudentModalLabel"><i class="fa-solid fa-pen-to-square me-2"></i> تعديل معلومات الطالب</h5>
+                <h5 class="modal-title fw-bold" id="editStudentModalLabel"><i class="fa-solid fa-pen-to-square me-2"></i> تعديل معلومات المتربص</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form action="{{ url('dashboard/apprenants/update') }}" method="POST">
@@ -410,7 +410,7 @@ $to   = min($page * $per_page, $total_count);
                         <div class="spinner-border text-primary" role="status">
                             <span class="visually-hidden">جاري التحميل...</span>
                         </div>
-                        <p class="text-muted mt-2">جاري استرجاع بيانات الطالب...</p>
+                        <p class="text-muted mt-2">جاري استرجاع بيانات المتربص...</p>
                     </div>
 
                     {{-- Form Fields (Hidden by default, shown when loaded) --}}
@@ -422,7 +422,7 @@ $to   = min($page * $per_page, $total_count);
                                         <i class="fa-solid fa-user-graduate"></i>
                                     </div>
                                     <div>
-                                        <span class="d-block small mb-1" style="font-size:0.8rem; color: #1e40af; font-weight: 500;">اسم المترشح المقيد بالنظام</span>
+                                        <span class="d-block small mb-1" style="font-size:0.8rem; color: #1e40af; font-weight: 500;">اسم المتربص المقيد بالنظام</span>
                                         <strong class="fs-5" id="edit_student_name" style="font-family:'Cairo'; color: #1e3a8a !important;"></strong>
                                     </div>
                                 </div>

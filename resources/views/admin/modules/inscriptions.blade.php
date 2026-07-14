@@ -206,7 +206,8 @@
                                                 data-validation="<?= (int)$item['validation_code'] ?>"
                                                 data-status="<?= htmlspecialchars($item['statut_dossier'] ?? 'en_attente') ?>"
                                                 data-offre-id="<?= $item['IDOffre'] ?>"
-                                                data-section-id="<?= $item['IDSection'] ?? '' ?>">
+                                                data-section-id="<?= $item['IDSection'] ?? '' ?>"
+                                                data-groupe="<?= $item['Groupe'] ?? '1' ?>">
                                             <i class="fa-solid fa-arrows-turn-to-dots me-1"></i> توجيه ومعالجة
                                         </button>
                                     </td>
@@ -296,7 +297,7 @@ function buildPageUrl(int $p, int $lim, $etabId = null): string {
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4">
             <div class="modal-header border-0 pb-0 pt-4 px-4">
-                <h5 class="modal-title fw-bold" id="orienterModalLabel"><i class="fa-solid fa-arrows-turn-to-dots text-primary me-2"></i> دراسة الملف وتوجيه المترشح</h5>
+                <h5 class="modal-title fw-bold" id="orienterModalLabel"><i class="fa-solid fa-arrows-turn-to-dots text-primary me-2"></i> دراسة الملف وتوجيه المتربص</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form action="/dashboard/inscriptions/orienter" method="POST">
@@ -320,6 +321,11 @@ function buildPageUrl(int $p, int $lim, $etabId = null): string {
                         <select class="form-select rounded-pill border-light-subtle shadow-sm px-3" id="orient_section_id" name="section_id" required>
                             <option value="">-- اختر القسم البيداغوجي --</option>
                         </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="orient_groupe" class="form-label small fw-bold text-muted">رقم القسم (الفوج) *</label>
+                        <input type="text" name="groupe" id="orient_groupe" class="form-control rounded-pill border-light-subtle shadow-sm px-3" required oninput="this.value = this.value.replace(/[^0-9]/g, '')" value="1">
+                        <span class="text-muted small d-block mt-1" style="font-size: 0.72rem; margin-right: 10px;">رقم الفوج المعتمد من 1 إلى 50</span>
                     </div>
                     <div class="mb-3">
                         <label for="decision" class="form-label small fw-bold text-muted">قرار التوجيه والالتحاق</label>
@@ -371,6 +377,11 @@ function buildPageUrl(int $p, int $lim, $etabId = null): string {
                                 <option value="<?= $sec['id'] ?>"><?= htmlspecialchars($sec['spec_ar'] . ' - ' . $sec['nom_ar']) ?></option>
                             <?php endforeach; ?>
                         </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="bulk_groupe" class="form-label small fw-bold text-muted">رقم القسم (الفوج) *</label>
+                        <input type="text" name="bulk_groupe" id="bulk_groupe" class="form-control rounded-pill border-light-subtle shadow-sm px-3" required oninput="this.value = this.value.replace(/[^0-9]/g, '')" value="1">
+                        <span class="text-muted small d-block mt-1" style="font-size: 0.72rem; margin-right: 10px;">رقم الفوج المعتمد من 1 إلى 50</span>
                     </div>
                     <div class="mb-3">
                         <label for="bulk_validation" class="form-label small fw-bold text-muted">قرار التوجيه والالتحاق الجماعي</label>
@@ -483,12 +494,14 @@ document.addEventListener('DOMContentLoaded', function() {
             const status     = this.getAttribute('data-status');
             const offreId    = this.getAttribute('data-offre-id');
             const sectionId  = this.getAttribute('data-section-id');
+            const groupe     = this.getAttribute('data-groupe') || '1';
 
             document.getElementById('orient_id').value        = id;
             document.getElementById('orient_name').value      = name;
             document.getElementById('decision').value         = validation;
             document.getElementById('statut_dossier').value   = status;
             document.getElementById('orient_offre_id').value  = offreId;
+            document.getElementById('orient_groupe').value    = groupe;
 
             loadSectionsForOffer(offreId, sectionId);
 
