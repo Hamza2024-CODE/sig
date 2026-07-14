@@ -180,6 +180,9 @@ $to   = min($page * $per_page, $total_count);
                         <td class="text-center" style="font-family:'Outfit';"><?= $sec['groupe'] ?? '1' ?> أفوَاج</td>
                         <td class="text-center no-print">
                             <div class="d-flex justify-content-center gap-1">
+                                <button onclick="triggerPrintFromRow(<?= $sec['id'] ?>)" class="btn btn-sm btn-outline-success px-2" style="border-radius:6px;" title="طباعة محضر فتح الفرع">
+                                    <i class="fa-solid fa-print"></i>
+                                </button>
                                 <button onclick="openEditModal(<?= $sec['id'] ?>)" class="btn btn-sm btn-outline-primary px-2" style="border-radius:6px;" title="تعديل">
                                     <i class="fa-solid fa-pen-to-square"></i>
                                 </button>
@@ -1014,6 +1017,27 @@ function onOfferSelectChange(select) {
     if (duree) {
         document.getElementById('add_duree').value = duree;
     }
+function triggerPrintFromRow(id) {
+    fetch('{{ url("dashboard/sections/trainees") }}/' + id)
+        .then(res => res.json())
+        .then(res => {
+            if (res.success) {
+                currentSectionData = res;
+                const sec = res.section;
+                document.getElementById('print_date_debut').value = sec.date_debut || '';
+                document.getElementById('print_date_fin').value = sec.date_fin || '';
+                document.getElementById('print_org_mode').value = (parseInt(sec.IDMode_formation) === 10) ? 'تكوين عن طريق التمهين' : 'حضوري أولي';
+                document.getElementById('print_mgmt_mode').value = (sec.etab_nom && (sec.etab_nom.indexOf('المعهد') !== -1 || sec.etab_nom.indexOf('معهد') !== -1)) ? 'معهد' : 'مركز';
+
+                const printModal = new bootstrap.Modal(document.getElementById('printOptionsModal'));
+                printModal.show();
+            } else {
+                alert('خطأ في جلب بيانات القسم: ' + res.message);
+            }
+        })
+        .catch(err => {
+            alert('حدث خطأ أثناء تحميل بيانات الطباعة.');
+        });
 }
 </script>
 @endsection
