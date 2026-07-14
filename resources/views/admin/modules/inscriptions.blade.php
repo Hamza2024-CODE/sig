@@ -141,6 +141,9 @@
         <div class="card-header bg-white border-0 pt-4 pb-0 px-4 d-flex justify-content-between align-items-center">
             <h5 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-user-gear text-primary me-2"></i> وضعية طلبات التوجيه والالتحاق</h5>
             <div class="d-flex gap-2 no-print">
+                <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold shadow-sm" id="header_bulk_orient_btn">
+                    <i class="fa-solid fa-arrows-turn-to-dots me-1"></i> توجيه جماعي
+                </button>
                 <button onclick="exportTableToExcel('inscriptionsTable', 'inscriptions.xls')" class="btn btn-sm btn-success rounded-pill px-3 fw-bold shadow-sm">
                     <i class="fa-solid fa-file-excel me-1"></i> Excel
                 </button>
@@ -559,6 +562,18 @@ document.addEventListener('DOMContentLoaded', function() {
         const bulkModal = new bootstrap.Modal(bulkModalEl, { backdrop: true, keyboard: true });
         bulkModal.show();
     });
+
+    const headerBulkOrientBtn = document.getElementById('header_bulk_orient_btn');
+    if (headerBulkOrientBtn) {
+        headerBulkOrientBtn.addEventListener('click', function() {
+            const checked = document.querySelectorAll('.candidate-select:checked');
+            if (checked.length === 0) {
+                alert('يرجى تحديد متربص واحد على الأقل من الجدول أولاً (عن طريق وضع علامة الصح في المربعات الجانبية المجاورة للأسماء).');
+                return;
+            }
+            document.getElementById('trigger_bulk_modal').click();
+        });
+    }
 
     // Cleanup backdrops
     modalEl.addEventListener('hidden.bs.modal', function () {
