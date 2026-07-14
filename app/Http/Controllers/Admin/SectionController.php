@@ -15,8 +15,8 @@ class SectionController extends Controller
     {
         $user   = session('user') ?? [];
         $role   = strtolower($user['role_code'] ?? '');
-        $etabId = (int)($user['etablissement_id'] ?? $user['IDEts_Form'] ?? $user['IDBureau'] ?? $user['IDetablissement'] ?? $user['id_etablissement'] ?? 0);
-        $dfepId = (int)($user['iddfep'] ?? $user['IDDFEP'] ?? $user['dfep_id'] ?? 0);
+        $etabId = (int)($user['etablissement_id'] ?? $user['IDEts_Form'] ?? 0);
+        $dfepId = (int)($user['iddfep'] ?? $user['IDDFEP'] ?? 0);
 
         // ── build filters ────────────────────────────────────────────
         $where  = [];
@@ -310,7 +310,7 @@ class SectionController extends Controller
             // Guard: check if section contains students
             $hasStudents = DB::table('apprenant')->where('IDSection', $id)->exists();
             if ($hasStudents) {
-                session(['flash_error' => 'لا يمكن حذف القسم لوجود طلاب مسجلين فيه / Section contains trainees']);
+                session(['flash_error' => 'لا يمكن حذف القسم لوجود متربصين مسجلين فيه / Section contains trainees']);
             } else {
                 DB::table('section')->where('IDSection', $id)->delete();
                 session(['flash_success' => 'تم حذف القسم بنجاح / Section supprimée avec succès']);
@@ -381,10 +381,39 @@ class SectionController extends Controller
                 ORDER BY c.Nom ASC, c.Prenom ASC
             ", [(int)$id]);
 
-            return response()->json([
+             return response()->json([
                 'success'  => true,
                 'section'  => $section,
                 'trainees' => $trainees
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function bulkValidateTrainees($id)
+    {
+        $user = session('user');
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        try {
+            $updated = DB::table('apprenant')
+                ->where('IDSection', (int)$id)
+                ->update([
+                    'Valide' => 1,
+                    'statut' => 'actif'
+                ]);
+
+            try {
+                \App\Core\AuditLogger::logInfo("[ACADEMIC] Bulk validated {$updated} trainees for section ID: {$id}");
+            } catch (\Exception $e) {}
+
+            return response()->json([
+                'success' => true,
+                'message' => 'تم تثبيت وتفعيل جميع متربصي القسم بنجاح / Trainees validated successfully',
+                'count' => $updated
             ]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);

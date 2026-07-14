@@ -636,7 +636,12 @@ $to   = min($page * $per_page, $total_count);
                         <div><strong>تاريخ التكوين:</strong> <span id="meta_dates" class="text-muted fw-bold">...</span></div>
                         <div><strong>المسؤول عن الفرع:</strong> <span id="meta_trainer" class="text-success fw-bold">...</span></div>
                     </div>
-                    <div>
+                    <div class="d-flex gap-2">
+                        <?php if (in_array($role_code, ['admin', 'etablissement', 'directeur', 'employee'])): ?>
+                        <button type="button" class="btn btn-warning btn-sm rounded-pill px-3 fw-bold shadow-sm" id="btn_bulk_validate_trainees" onclick="bulkValidateTrainees()">
+                            <i class="fa-solid fa-circle-check me-1"></i> تثبيت جميع متربصي القسم
+                        </button>
+                        <?php endif; ?>
                         <button type="button" class="btn btn-success btn-sm rounded-pill px-3 fw-bold shadow-sm" id="btn_trigger_print_options">
                             <i class="fa-solid fa-print me-1"></i> طباعة محضر فتح الفرع
                         </button>
@@ -731,6 +736,7 @@ $to   = min($page * $per_page, $total_count);
 
 <script>
 let currentSectionData = null;
+let currentSectionId = null;
 
 document.addEventListener('DOMContentLoaded', function() {
     const viewTraineesModalEl = document.getElementById('viewTraineesModal');
@@ -747,6 +753,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     function openTraineesModal(id) {
+        currentSectionId = id;
         const viewTraineesModal = new bootstrap.Modal(viewTraineesModalEl);
         viewTraineesModal.show();
 
@@ -954,6 +961,41 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!str) return '';
         return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
     }
+
+    window.bulkValidateTrainees = function() {
+        if (!currentSectionId) return;
+        if (!confirm('هل أنت متأكد من تثبيت وتفعيل جميع متربصي هذا القسم دفعة واحدة؟')) return;
+
+        const btn = document.getElementById('btn_bulk_validate_trainees');
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> جاري التثبيت...';
+
+        fetch('{{ url("dashboard/sections/validate-trainees") }}/' + currentSectionId, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        })
+        .then(res => res.json())
+        .then(res => {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            if (res.success) {
+                alert(res.message);
+                openTraineesModal(currentSectionId);
+            } else {
+                alert('خطأ أثناء التثبيت: ' + res.message);
+            }
+        })
+        .catch(err => {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            alert('حدث خطأ أثناء الاتصال بالسيرفر.');
+        });
+    };
 
     function formatDateArabic(dateStr) {
         if (!dateStr) return '';
