@@ -93,10 +93,11 @@ $files = [
     'resources/views/admin/grades/windows.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/grades/windows.blade.php',
     'resources/views/admin/modules/print_template.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/modules/print_template.blade.php',
     'resources/views/admin/specialites/index.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/specialites/index.blade.php',
-    'resources/views/layouts/main.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/layouts/main.blade.php',
     'public/debug_session.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/debug_session.php',
     'public/debug_cheese_trainees.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/debug_cheese_trainees.php',
     'public/confirm_trainees.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/confirm_trainees.php',
+    'public/debug_logs.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/debug_logs.php',
+    'public/import_on_server.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/import_on_server.php',
     'public/pull.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/pull.php'
 ];
 
