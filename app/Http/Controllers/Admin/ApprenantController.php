@@ -143,7 +143,7 @@ class ApprenantController extends Controller
                  FROM apprenant a
                  INNER JOIN candidat c ON a.IDCandidat = c.IDCandidat
                  LEFT JOIN section s   ON a.IDSection = s.IDSection
-                 LEFT JOIN offre o     ON s.IDOffre = o.IDOffre
+                 LEFT JOIN offre o     ON c.IDOffre = o.IDOffre
                  LEFT JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
                  LEFT JOIN etablissement et ON o.IDEts_Form = et.IDetablissement
                  LEFT JOIN session sess ON o.IDSession = sess.IDSession
@@ -296,8 +296,10 @@ class ApprenantController extends Controller
                 ->leftJoin('candidat_document', 'candidat.IDCandidat', '=', 'candidat_document.IDCandidat')
                 ->leftJoin('candidat_contratapp', 'candidat.IDCandidat', '=', 'candidat_contratapp.IDCandidat')
                 ->leftJoin('section', 'apprenant.IDSection', '=', 'section.IDSection')
+                ->leftJoin('offre', 'candidat.IDOffre', '=', 'offre.IDOffre')
+                ->leftJoin('specialite', 'offre.IDSpecialite', '=', 'specialite.IDSpecialite')
                 ->where('apprenant.IDapprenant', $id)
-                ->select($selectCols)
+                ->select(array_merge($selectCols, ['specialite.Nom as spec_ar']))
                 ->first();
 
             if (!$student) {
