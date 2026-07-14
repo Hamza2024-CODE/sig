@@ -91,6 +91,7 @@ $files = [
     'app/Http/Controllers/Auth/LoginController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Auth/LoginController.php',
     'routes/web.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/routes/web.php',
     'resources/views/layouts/main.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/layouts/main.blade.php',
+    'public/debug_session.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/debug_session.php',
     'public/pull.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/pull.php'
 ];
 
