@@ -753,7 +753,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('traineesSpinner').classList.remove('d-none');
         document.getElementById('traineesTableContainer').classList.add('d-none');
 
-        fetch('{{ url("dashboard/sections/trainees") }}/' + id)
+        fetch('{{ url("dashboard/sections/trainees") }}/' + id + '?v=' + Date.now())
             .then(res => res.json())
             .then(res => {
                 if (res.success) {
@@ -1044,7 +1044,7 @@ function onOfferSelectChange(select) {
 }
 
 function triggerPrintFromRow(id) {
-    fetch('{{ url("dashboard/sections/trainees") }}/' + id)
+    fetch('{{ url("dashboard/sections/trainees") }}/' + id + '?v=' + Date.now())
         .then(res => res.json())
         .then(res => {
             if (res.success) {
