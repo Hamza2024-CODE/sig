@@ -15,8 +15,8 @@ class SectionController extends Controller
     {
         $user   = session('user') ?? [];
         $role   = strtolower($user['role_code'] ?? '');
-        $etabId = (int)($user['etablissement_id'] ?? $user['IDEts_Form'] ?? 0);
-        $dfepId = (int)($user['iddfep'] ?? $user['IDDFEP'] ?? 0);
+        $etabId = (int)($user['etablissement_id'] ?? $user['IDEts_Form'] ?? $user['IDBureau'] ?? $user['IDetablissement'] ?? $user['id_etablissement'] ?? 0);
+        $dfepId = (int)($user['iddfep'] ?? $user['IDDFEP'] ?? $user['dfep_id'] ?? 0);
 
         // ── build filters ────────────────────────────────────────────
         $where  = [];
