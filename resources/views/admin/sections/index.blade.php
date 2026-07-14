@@ -878,7 +878,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         trainees.forEach(tr => {
             if (tr.sexe == 2 || tr.sexe == 'أنثى' || tr.sexe == 'F') females++;
-            if (tr.Nationalite != 0) foreigners++;
+            if (parseInt(tr.Nationalite) === 2) foreigners++;
             if (tr.endicape == 1) specialNeeds++;
         });
 
