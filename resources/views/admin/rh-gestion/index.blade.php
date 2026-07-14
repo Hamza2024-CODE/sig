@@ -1025,6 +1025,7 @@
 @endsection
 
 @section('scripts')
+<script>
 const BASE = '{{ asset("") }}';
 const CSRF = '{{ csrf_token() }}';
 const MEDIA_ACTIONS_ENABLED = {{ \App\Helpers\SovereignLicensingHelper::getSetting('patrimoine_media_actions_enabled', '1') === '1' ? 'true' : 'false' }};
@@ -1318,9 +1319,9 @@ function printCompetanceTable() {
         <body>
             <h2>دليل المكونين والأساتذة - قطاع التكوين والتعليم المهنيين</h2>
             \${tableHtml}
-            <script>
+            \x3cscript>
                 window.onload = function() { window.print(); window.close(); }
-            <\/script>
+            \x3c/script>
         </body>
         </html>
     `);
