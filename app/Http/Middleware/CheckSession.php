@@ -57,38 +57,24 @@ class CheckSession
                     ->first();
 
                 if ($activeSession && $activeSession->session_id !== $currentSessionId) {
-                    // Check if the stored session file actually exists on disk (not stale/expired)
-                    $sessionPath = storage_path('framework/sessions/' . $activeSession->session_id);
-                    $storedSessionExists = file_exists($sessionPath);
-
-                    if ($storedSessionExists) {
-                        // A real concurrent session — log out current request
-                        session()->flush();
-                        if (session_status() === PHP_SESSION_ACTIVE) {
-                            $_SESSION = [];
-                        }
-
-                        try {
-                            \App\Core\AuditLogger::logWarning("[SECURITY] Concurrent session blocked for: {$userKey}");
-                        } catch (\Exception $e) {}
-
-                        if ($request->expectsJson()) {
-                            return response()->json([
-                                'error' => 'Session terminated',
-                                'message' => 'تم تسجيل خروجك بسبب تسجيل دخول للحساب من متصفح أو جهاز آخر.'
-                            ], 401);
-                        }
-
-                        return redirect()->route('login')->with('error', 'تم تسجيل خروجك تلقائياً لأن حسابك فُتح في متصفح أو جهاز آخر.');
-                    } else {
-                        // Stale session in registry — update with current valid session
-                        \Illuminate\Support\Facades\DB::table('active_sessions')
-                            ->where('user_key', $userKey)
-                            ->update([
-                                'session_id' => $currentSessionId,
-                                'updated_at' => now()
-                            ]);
+                    // A real concurrent session — log out current request
+                    session()->flush();
+                    if (session_status() === PHP_SESSION_ACTIVE) {
+                        $_SESSION = [];
                     }
+
+                    try {
+                        \App\Core\AuditLogger::logWarning("[SECURITY] Concurrent session blocked for: {$userKey}");
+                    } catch (\Exception $e) {}
+
+                    if ($request->expectsJson()) {
+                        return response()->json([
+                            'error' => 'Session terminated',
+                            'message' => 'تم تسجيل خروجك بسبب تسجيل دخول للحساب من متصفح أو جهاز آخر.'
+                        ], 401);
+                    }
+
+                    return redirect()->route('login')->with('error', 'تم تسجيل خروجك تلقائياً لأن حسابك فُتح في متصفح أو جهاز آخر.');
                 } elseif (!$activeSession) {
                     // Register current session
                     \Illuminate\Support\Facades\DB::table('active_sessions')->insert([
