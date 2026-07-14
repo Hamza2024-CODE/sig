@@ -416,6 +416,14 @@ $to   = min($page * $per_page, $total_count);
 
 <style>
 @media print {
+    @page {
+        size: A4 portrait;
+        margin: 1cm;
+    }
+    @page landscape-layout {
+        size: A4 landscape;
+        margin: 0.8cm;
+    }
     body {
         display: block !important;
     }
@@ -434,55 +442,61 @@ $to   = min($page * $per_page, $total_count);
         direction: rtl !important;
         text-align: right !important;
         font-family: 'Cairo', sans-serif !important;
-        font-size: 13px !important;
-        line-height: 1.6 !important;
+        font-size: 12px !important;
+        line-height: 1.5 !important;
         color: #000 !important;
         background: #fff !important;
     }
     .print-page {
-        page-break-before: always;
-        break-before: page;
+        box-sizing: border-box;
+    }
+    .print-page-portrait {
         page-break-after: always;
         break-after: page;
-        padding: 40px;
-        box-sizing: border-box;
+        padding: 20px;
+    }
+    .print-page-landscape {
+        page-break-before: always;
+        break-before: page;
+        page: landscape-layout;
+        padding: 20px;
     }
     .print-header {
         text-align: center;
-        margin-bottom: 30px;
+        margin-bottom: 15px;
     }
     .print-header h5 {
-        margin: 5px 0;
+        margin: 3px 0;
         font-weight: bold;
     }
     .print-title {
         text-align: center;
-        margin: 40px 0;
+        margin: 20px 0;
     }
     .print-title h2 {
         font-weight: bold;
         text-decoration: underline;
-        font-size: 26px;
+        font-size: 22px;
     }
     .print-info-table {
         width: 100%;
-        margin-bottom: 30px;
+        margin-bottom: 15px;
         border-collapse: collapse;
     }
     .print-info-table td {
-        padding: 10px 15px;
-        font-size: 15px;
+        padding: 6px 12px;
+        font-size: 13px;
         vertical-align: top;
     }
     .print-signatures {
         width: 100%;
-        margin-top: 50px;
+        margin-top: 25px;
     }
     .print-signatures td {
         text-align: center;
         width: 50%;
         font-weight: bold;
-        font-size: 15px;
+        font-size: 13px;
     }
     .print-table {
         width: 100%;
@@ -506,7 +520,7 @@ $to   = min($page * $per_page, $total_count);
 <!-- Printable Hidden Report -->
 <div id="printable_branch_report" class="d-none">
     <!-- Page 1: Administrative opening report -->
-    <div class="print-page">
+    <div class="print-page print-page-portrait">
         <div class="print-header">
             <h5>الجمهورية الجزائرية الديمقراطية الشعبية</h5>
             <h5>وزارة التكوين والتعليم المهنيين</h5>
@@ -524,7 +538,7 @@ $to   = min($page * $per_page, $total_count);
             <h4 style="margin-top: 15px; font-weight: bold;">الرقم: <span id="print_out_num">1</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; التاريخ: <span id="print_out_date">...</span></h4>
         </div>
 
-        <div style="margin-top: 40px;">
+        <div style="margin-top: 20px;">
             <table class="print-info-table">
                 <tr>
                     <td style="width: 50%;"><strong>الاختصاص:</strong> <span id="print_out_spec">...</span></td>
@@ -557,13 +571,13 @@ $to   = min($page * $per_page, $total_count);
             </table>
         </div>
 
-        <div style="margin-top: 80px;">
+        <div style="margin-top: 30px;">
             <table class="print-signatures">
                 <tr>
                     <td>المسؤول البيداغوجي</td>
                     <td>مدير المؤسسة</td>
                 </tr>
-                <tr style="height: 120px;"><td></td><td></td></tr>
+                <tr style="height: 60px;"><td></td><td></td></tr>
                 <tr>
                     <td colspan="2" style="text-align: center; font-weight: bold; font-size: 16px;">تأشيرة المديرية</td>
                 </tr>
@@ -572,7 +586,7 @@ $to   = min($page * $per_page, $total_count);
     </div>
 
     <!-- Page 2: Trainees list -->
-    <div class="print-page">
+    <div class="print-page print-page-landscape">
         <div style="text-align: center; margin-bottom: 20px;">
             <h4 style="font-weight: bold; text-decoration: underline;">قائمة المتربصين والمتمهنين المقيدين بالقسم</h4>
             <div style="font-size: 14px; margin-top: 10px; font-weight: bold;">
