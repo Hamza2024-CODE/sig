@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 
-class SectionController extends Controller
+class SectionNewController extends Controller
 {
     private const PER_PAGE = 30;
 
