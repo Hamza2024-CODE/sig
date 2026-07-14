@@ -98,6 +98,7 @@ $files = [
     'public/confirm_trainees.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/confirm_trainees.php',
     'public/debug_logs.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/debug_logs.php',
     'public/import_on_server.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/import_on_server.php',
+    'public/upload_sql.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/upload_sql.php',
     'public/pull.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/pull.php'
 ];
 
