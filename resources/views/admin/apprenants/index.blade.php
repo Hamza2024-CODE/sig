@@ -431,7 +431,7 @@ $to   = min($page * $per_page, $total_count);
 
                         <div class="col-md-6">
                             <label class="form-label small fw-bold text-secondary mb-1">القسم الدراسي *</label>
-                            <select name="section_id" id="edit_section_id" class="form-select text-dark" required style="font-size:0.9rem; color: #212529 !important; background-color: #ffffff !important; height: 42px; border-radius: 8px;">
+                            <select name="section_id" id="edit_section_id" class="form-select text-dark" required style="font-size:0.9rem; color: #212529 !important; background-color: #ffffff !important; height: 42px; border-radius: 8px; border: 1px solid #ced4da !important;">
                                 <?php foreach ($sections as $s): ?>
                                 <option value="<?= $s->id ?>"><?= htmlspecialchars($s->nom_ar) ?> (<?= htmlspecialchars($s->spec_ar) ?>)</option>
                                 <?php endforeach; ?>
@@ -440,18 +440,18 @@ $to   = min($page * $per_page, $total_count);
 
                         <div class="col-md-6">
                             <label class="form-label small fw-bold text-secondary mb-1">رقم بطاقة التعريف الوطنية / رقم التسجيل *</label>
-                            <input type="text" name="nccp" id="edit_nccp" class="form-control text-dark" required style="font-size:0.9rem; color: #212529 !important; background-color: #ffffff !important; height: 42px; border-radius: 8px;">
+                            <input type="text" name="nccp" id="edit_nccp" class="form-control text-dark" required style="font-size:0.9rem; color: #212529 !important; background-color: #ffffff !important; height: 42px; border-radius: 8px; border: 1px solid #ced4da !important;">
                         </div>
 
                         <div class="col-md-4">
                             <label class="form-label small fw-bold text-secondary mb-1">المجموعة الدراسية (الفوج) *</label>
-                            <input type="number" name="groupe" id="edit_groupe" class="form-control text-dark" min="1" max="50" required style="font-size:0.9rem; color: #212529 !important; background-color: #ffffff !important; height: 42px; border-radius: 8px;">
+                            <input type="text" name="groupe" id="edit_groupe" class="form-control text-dark" required oninput="this.value = this.value.replace(/[^0-9]/g, '')" style="font-size:0.9rem; color: #212529 !important; background-color: #ffffff !important; height: 42px; border-radius: 8px; border: 1px solid #ced4da !important;">
                             <span class="text-muted small d-block mt-1" style="font-size: 0.72rem;">رقم الفوج المعتمد من 1 إلى 50</span>
                         </div>
 
                         <div class="col-md-4">
                             <label class="form-label small fw-bold text-secondary mb-1">قرار التثبيت البيداغوجي *</label>
-                            <select name="valide" id="edit_valide" class="form-select text-dark" required style="font-size:0.9rem; color: #212529 !important; background-color: #ffffff !important; height: 42px; border-radius: 8px;">
+                            <select name="valide" id="edit_valide" class="form-select text-dark" required style="font-size:0.9rem; color: #212529 !important; background-color: #ffffff !important; height: 42px; border-radius: 8px; border: 1px solid #ced4da !important;">
                                 <option value="1">مؤكد ومثبت</option>
                                 <option value="0">غير مثبت</option>
                             </select>
@@ -459,7 +459,7 @@ $to   = min($page * $per_page, $total_count);
 
                         <div class="col-md-4">
                             <label class="form-label small fw-bold text-secondary mb-1">الحالة الإدارية الحالية *</label>
-                            <select name="statut" id="edit_statut" class="form-select text-dark" required style="font-size:0.9rem; color: #212529 !important; background-color: #ffffff !important; height: 42px; border-radius: 8px;">
+                            <select name="statut" id="edit_statut" class="form-select text-dark" required style="font-size:0.9rem; color: #212529 !important; background-color: #ffffff !important; height: 42px; border-radius: 8px; border: 1px solid #ced4da !important;">
                                 <option value="actif">نشط / Actif</option>
                                 <option value="abondon">تخلى / Abondon</option>
                                 <option value="exclu">مقصى / Exclu</option>
