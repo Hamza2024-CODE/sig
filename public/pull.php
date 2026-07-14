@@ -90,6 +90,10 @@ foreach ($files as $localPath => $remoteUrl) {
     $content = @file_get_contents($remoteUrl . '?v=' . time());
     if ($content !== false) {
         file_put_contents($fullPath, $content);
+        clearstatcache(true, $fullPath);
+        if (function_exists('opcache_invalidate')) {
+            @opcache_invalidate($fullPath, true);
+        }
         echo "✓ Updated: $localPath (" . strlen($content) . " bytes)<br>";
     } else {
         echo "<span style='color:red;'>✗ Failed to download: $localPath</span><br>";
