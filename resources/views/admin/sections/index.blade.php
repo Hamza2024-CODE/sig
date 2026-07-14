@@ -416,6 +416,9 @@ $to   = min($page * $per_page, $total_count);
 
 <style>
 @media print {
+    body {
+        display: block !important;
+    }
     body * {
         visibility: hidden !important;
     }
