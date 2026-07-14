@@ -1139,8 +1139,20 @@ function viewCompetanceDetails(c) {
 function switchTab(tab) {
     document.querySelectorAll('.rh-tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.rh-panel').forEach(p => p.classList.remove('active'));
-    event.currentTarget.classList.add('active');
-    document.getElementById('panel-' + tab).classList.add('active');
+    
+    // Robust selector that finds the tab button containing the target tab in its onclick attribute
+    const clickedTab = Array.from(document.querySelectorAll('.rh-tab')).find(t => {
+        const onc = t.getAttribute('onclick') || '';
+        return onc.includes(tab);
+    });
+    if (clickedTab) {
+        clickedTab.classList.add('active');
+    }
+    
+    const panel = document.getElementById('panel-' + tab);
+    if (panel) {
+        panel.classList.add('active');
+    }
 }
 
 // ─── Filter Grades By Corps ──────────────────────────────

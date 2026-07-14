@@ -40,6 +40,13 @@ class RHController extends Controller
 
         // Fetch data
         $personnel = $this->repo->getPersonnel($etabId, $dfepId);
+        foreach ($personnel as &$p) {
+            if (!empty($p['nin'])) {
+                try {
+                    $p['nin'] = \Illuminate\Support\Facades\Crypt::decryptString($p['nin']);
+                } catch (\Exception $e) {}
+            }
+        }
         $recrutements = $this->repo->getRecrutements($etabId, $dfepId);
         $formations = $this->repo->getFormations($etabId, $dfepId);
         $activites = $this->repo->getActivites($etabId, $dfepId);

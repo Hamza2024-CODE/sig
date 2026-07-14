@@ -45,8 +45,8 @@ class CheckSession
             return redirect()->route('login')->with('error', 'يجب تسجيل الدخول للوصول إلى هذه الصفحة.');
         }
 
-        // Enforce Single Active Session (Disallow concurrent sessions)
-        if (!app()->environment('testing')) {
+        // Enforce Single Active Session (Disallow concurrent sessions) - DISABLED
+        if (false && !app()->environment('testing')) {
             try {
                 $userKey = strtolower($user['role_code'] ?? 'user') . '_' . ($user['id'] ?? '0') . '_' . strtolower($user['username'] ?? '');
                 $currentSessionId = session()->getId();

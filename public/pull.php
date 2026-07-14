@@ -85,6 +85,9 @@ $files = [
     'resources/views/admin/modules/repas.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/modules/repas.blade.php',
     'app/Http/Controllers/Admin/EspaceEmployeController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/EspaceEmployeController.php',
     'app/Http/Controllers/Admin/DiplomeController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/DiplomeController.php',
+    'app/Http/Controllers/Admin/RHController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/RHController.php',
+    'app/Http/Middleware/CheckSession.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Middleware/CheckSession.php',
+    'resources/views/admin/rh-gestion/index.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/rh-gestion/index.blade.php',
     'public/pull.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/pull.php'
 ];
 
