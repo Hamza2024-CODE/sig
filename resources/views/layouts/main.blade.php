@@ -2336,14 +2336,22 @@ if ('serviceWorker' in navigator) {
     (function() {
         const checkUrl = window.location.pathname.includes('/sig') ? '{{ url("/sig/session/check-active") }}' : '{{ url("/session/check-active") }}';
         setInterval(() => {
-            fetch(checkUrl)
-                .then(res => res.json())
-                .then(data => {
-                    if (data && data.active === false) {
-                        window.location.href = window.location.pathname.includes('/sig') ? '{{ route("login") }}?error=' + encodeURIComponent('تم تسجيل خروجك تلقائياً لأن حسابك فُتح في متصفح أو جهاز آخر.') : '{{ route("login") }}?error=' + encodeURIComponent('تم تسجيل خروجك تلقائياً لأن حسابك فُتح في متصفح أو جهاز آخر.');
-                    }
-                })
-                .catch(() => {});
+            fetch(checkUrl, {
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(res => {
+                if (res.status === 401 || res.redirected) {
+                    window.location.reload();
+                    return;
+                }
+                return res.json();
+            })
+            .then(data => {
+                if (data && data.active === false) {
+                    window.location.reload();
+                }
+            })
+            .catch(() => {});
         }, 10000); // Check every 10 seconds
     })();
 })();
