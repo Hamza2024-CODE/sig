@@ -2331,6 +2331,21 @@ if ('serviceWorker' in navigator) {
             subtree: true
         });
     });
+
+    // Concurrent session real-time background check
+    (function() {
+        const checkUrl = window.location.pathname.includes('/sig') ? '{{ url("/sig/session/check-active") }}' : '{{ url("/session/check-active") }}';
+        setInterval(() => {
+            fetch(checkUrl)
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.active === false) {
+                        window.location.href = window.location.pathname.includes('/sig') ? '{{ route("login") }}?error=' + encodeURIComponent('تم تسجيل خروجك تلقائياً لأن حسابك فُتح في متصفح أو جهاز آخر.') : '{{ route("login") }}?error=' + encodeURIComponent('تم تسجيل خروجك تلقائياً لأن حسابك فُتح في متصفح أو جهاز آخر.');
+                    }
+                })
+                .catch(() => {});
+        }, 10000); // Check every 10 seconds
+    })();
 })();
 </script>
 

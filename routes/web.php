@@ -129,6 +129,7 @@ Route::prefix('sig')->group(function () {
 // ═══════════════════════════════════════════════════════════════════════════
 
 Route::middleware('check.session')->group(function () {
+    Route::get('/session/check-active', [\App\Http\Controllers\Auth\LoginController::class, 'checkActiveSession'])->name('session.check-active');
 
     // ── Licensing Shield Page (accessible when logged in, but not activated) ──
     Route::get('/activate', [\App\Http\Controllers\Auth\ActivationController::class, 'showShield'])->name('activation.shield');
@@ -717,6 +718,7 @@ Route::middleware('check.session')->group(function () {
 // ═══════════════════════════════════════════════════════════════════════════
 
 Route::prefix('sig')->middleware('check.session')->group(function () {
+    Route::get('/session/check-active', [\App\Http\Controllers\Auth\LoginController::class, 'checkActiveSession'])->name('session.check-active.sig');
 
     // ── Licensing Shield Page (accessible when logged in, but not activated) ──
     Route::get('/activate', [\App\Http\Controllers\Auth\ActivationController::class, 'showShield'])->name('activation.shield.sig');

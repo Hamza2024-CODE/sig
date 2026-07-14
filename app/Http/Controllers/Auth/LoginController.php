@@ -1586,4 +1586,22 @@ class LoginController extends Controller
 
         return null;
     }
+
+    /**
+     * AJAX endpoint to check if the current session ID matches the active session stored in DB
+     */
+    public function checkActiveSession()
+    {
+        $user = session('user');
+        if (!$user) {
+            return response()->json(['active' => false]);
+        }
+        
+        $userKey = strtolower($user['role_code'] ?? 'user') . '_' . ($user['id'] ?? '0') . '_' . strtolower($user['username'] ?? '');
+        $active = \Illuminate\Support\Facades\DB::table('active_sessions')->where('user_key', $userKey)->first();
+        
+        return response()->json([
+            'active' => $active ? ($active->session_id === session()->getId()) : true
+        ]);
+    }
 }
