@@ -157,7 +157,8 @@
                 <table class="table table-hover align-middle mb-0" id="inscriptionsTable">
                     <thead class="bg-light text-muted small fw-bold">
                         <tr>
-                            <th class="ps-4">المترشح (NIN)</th>
+                            <th class="ps-4" style="width: 45px;"><input type="checkbox" id="select_all_candidates" class="form-check-input"></th>
+                            <th>المترشح (NIN)</th>
                             <th>المؤسسة المعنية</th>
                             <th>التخصص المرغوب</th>
                             <th class="text-center">تاريخ الطلب</th>
@@ -168,12 +169,15 @@
                     <tbody>
                         <?php if (empty($list)): ?>
                             <tr>
-                                <td colspan="6" class="text-center py-4 text-muted">لا توجد طلبات تسجيل مقيدة حالياً.</td>
+                                <td colspan="7" class="text-center py-4 text-muted">لا توجد طلبات تسجيل مقيدة حالياً.</td>
                             </tr>
                         <?php else: ?>
                             <?php foreach ($list as $item): ?>
                                 <tr>
                                     <td class="ps-4">
+                                        <input type="checkbox" class="form-check-input candidate-select" value="<?= $item['id'] ?>" data-offre-id="<?= $item['IDOffre'] ?>">
+                                    </td>
+                                    <td>
                                         <div class="fw-bold text-dark"><?= htmlspecialchars($item['nom_ar'] . ' ' . $item['prenom_ar']) ?></div>
                                         <div class="text-muted small" style="font-family:'Outfit';"><?= htmlspecialchars($item['nin'] ?? '173204928104829104') ?></div>
                                     </td>
@@ -201,7 +205,8 @@
                                                 data-decision="<?= htmlspecialchars($item['decision'] ?? 'قيد الدراسة') ?>"
                                                 data-validation="<?= (int)$item['validation_code'] ?>"
                                                 data-status="<?= htmlspecialchars($item['statut_dossier'] ?? 'en_attente') ?>"
-                                                data-offre-id="<?= $item['IDOffre'] ?>">
+                                                data-offre-id="<?= $item['IDOffre'] ?>"
+                                                data-section-id="<?= $item['IDSection'] ?? '' ?>">
                                             <i class="fa-solid fa-arrows-turn-to-dots me-1"></i> توجيه ومعالجة
                                         </button>
                                     </td>
@@ -262,6 +267,30 @@ function buildPageUrl(int $p, int $lim, $etabId = null): string {
 }
 ?>
 
+<style>
+@keyframes slideUp {
+    from { transform: translate(-50%, 100px); opacity: 0; }
+    to { transform: translate(-50%, 0); opacity: 1; }
+}
+</style>
+
+<!-- Bulk Actions Floating Bar -->
+<div id="bulk_actions_bar" class="card border-0 shadow-lg rounded-4 p-3 bg-white no-print position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none" style="z-index: 1050; width: 90%; max-width: 600px; border: 1px solid #e2e8f0 !important; animation: slideUp 0.3s ease;">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <span class="fw-bold text-dark"><i class="fa-solid fa-circle-check text-success me-1"></i> تم تحديد <span id="selected_count_badge" class="badge bg-primary rounded-pill">0</span> مترشحين</span>
+        </div>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-primary btn-sm rounded-pill px-3 fw-bold shadow-sm" id="trigger_bulk_modal">
+                <i class="fa-solid fa-arrows-turn-to-dots me-1"></i> توجيه جماعي
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3" id="clear_selection">
+                إلغاء التحديد
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Orienter Modal -->
 <div class="modal fade" id="orienterModal" tabindex="-1" aria-labelledby="orienterModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -284,6 +313,12 @@ function buildPageUrl(int $p, int $lim, $etabId = null): string {
                             <?php foreach ($offers as $of): ?>
                                 <option value="<?= $of['id'] ?>"><?= htmlspecialchars($of['spec_ar'] . ' (' . $of['etab_ar'] . ')') ?></option>
                             <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="orient_section_id" class="form-label small fw-bold text-muted">القسم الموجه إليه *</label>
+                        <select class="form-select rounded-pill border-light-subtle shadow-sm px-3" id="orient_section_id" name="section_id" required>
+                            <option value="">-- اختر القسم البيداغوجي --</option>
                         </select>
                     </div>
                     <div class="mb-3">
@@ -311,6 +346,58 @@ function buildPageUrl(int $p, int $lim, $etabId = null): string {
         </div>
     </div>
 </div>
+
+<!-- Bulk Orienter Modal -->
+<div class="modal fade" id="bulkOrienterModal" tabindex="-1" aria-labelledby="bulkOrienterModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-0 pb-0 pt-4 px-4">
+                <h5 class="modal-title fw-bold" id="bulkOrienterModalLabel"><i class="fa-solid fa-users-gear text-primary me-2"></i> معالجة وتوجيه جماعي للمترشحين</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="/dashboard/inscriptions/orienter-bulk" method="POST">
+                <input type="hidden" name="csrf_token" value="<?= csrf_token() ?? '' ?>">
+                <input type="hidden" id="bulk_candidate_ids" name="candidate_ids">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">عدد المترشحين المحددين</label>
+                        <input type="text" class="form-control rounded-pill border-0 bg-light px-3 fw-bold text-primary" id="bulk_candidates_count" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="bulk_section_id" class="form-label small fw-bold text-muted">القسم البيداغوجي الموجه إليه (الفرع) *</label>
+                        <select class="form-select rounded-pill border-light-subtle shadow-sm px-3" id="bulk_section_id" name="bulk_section_id" required>
+                            <option value="" disabled selected>-- اختر القسم والفرع المستهدف --</option>
+                            <?php foreach ($sections as $sec): ?>
+                                <option value="<?= $sec['id'] ?>"><?= htmlspecialchars($sec['spec_ar'] . ' - ' . $sec['nom_ar']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="bulk_validation" class="form-label small fw-bold text-muted">قرار التوجيه والالتحاق الجماعي</label>
+                        <select class="form-select rounded-pill border-light-subtle shadow-sm px-3" id="bulk_validation" name="bulk_validation" required>
+                            <option value="1" selected>مقبول وموجه رسمياً (Admis)</option>
+                            <option value="0">قيد الدراسة والتحكيم</option>
+                            <option value="2">مرفوض لعدم مطابقة الملف (Rejeté)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="bulk_statut_dossier" class="form-label small fw-bold text-muted">حالة دراسة الملف الإداري</label>
+                        <select class="form-select rounded-pill border-light-subtle shadow-sm px-3" id="bulk_statut_dossier" name="bulk_statut_dossier" required>
+                            <option value="valide" selected>ملف مقبول ومصادق عليه (Validé)</option>
+                            <option value="en_attente">قيد الانتظار والدراسة (En attente)</option>
+                            <option value="rejete">ملف ناقص أو ملغى (Rejeté)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 p-4 pt-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-success rounded-pill px-4 fw-bold" style="background: linear-gradient(135deg, #0f7a55 0%, #17a773 100%); border: none;">حفظ وتوجيه الكل دفعة واحدة</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 
 <script>
 function filterWilaya(val) {
@@ -346,7 +433,48 @@ function changePerPage(val) {
 document.addEventListener('DOMContentLoaded', function() {
     const orientButtons = document.querySelectorAll('.orient-btn');
     const modalEl = document.getElementById('orienterModal');
+    const bulkModalEl = document.getElementById('bulkOrienterModal');
 
+    const selectAllCheckbox = document.getElementById('select_all_candidates');
+    const candidateSelects = document.querySelectorAll('.candidate-select');
+    const bulkActionsBar = document.getElementById('bulk_actions_bar');
+    const selectedCountBadge = document.getElementById('selected_count_badge');
+
+    const orientOffreSelect = document.getElementById('orient_offre_id');
+    const orientSectionSelect = document.getElementById('orient_section_id');
+
+    // Dynamic section loading
+    function loadSectionsForOffer(offreId, selectedSectionId = null) {
+        if (!offreId) return;
+        orientSectionSelect.innerHTML = '<option value="" disabled selected>جاري التحميل...</option>';
+        fetch('/dashboard/inscriptions/ajax/sections-by-offre/' + offreId)
+            .then(res => res.json())
+            .then(sections => {
+                orientSectionSelect.innerHTML = '';
+                if (sections.length === 0) {
+                    orientSectionSelect.innerHTML = '<option value="" disabled>لا توجد أقسام متوفرة لهذا العرض</option>';
+                    return;
+                }
+                sections.forEach(sec => {
+                    const opt = document.createElement('option');
+                    opt.value = sec.id;
+                    opt.textContent = sec.nom_ar;
+                    if (selectedSectionId && sec.id == selectedSectionId) {
+                        opt.selected = true;
+                    }
+                    orientSectionSelect.appendChild(opt);
+                });
+            })
+            .catch(err => {
+                orientSectionSelect.innerHTML = '<option value="" disabled>خطأ في جلب الأقسام</option>';
+            });
+    }
+
+    orientOffreSelect.addEventListener('change', function() {
+        loadSectionsForOffer(this.value);
+    });
+
+    // Single Orientation Button Handler
     orientButtons.forEach(btn => {
         btn.addEventListener('click', function() {
             const id         = this.getAttribute('data-id');
@@ -354,6 +482,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const validation = this.getAttribute('data-validation');
             const status     = this.getAttribute('data-status');
             const offreId    = this.getAttribute('data-offre-id');
+            const sectionId  = this.getAttribute('data-section-id');
 
             document.getElementById('orient_id').value        = id;
             document.getElementById('orient_name').value      = name;
@@ -361,7 +490,8 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('statut_dossier').value   = status;
             document.getElementById('orient_offre_id').value  = offreId;
 
-            // Dispose any existing instance to prevent backdrop stacking / frozen UI
+            loadSectionsForOffer(offreId, sectionId);
+
             const existing = bootstrap.Modal.getInstance(modalEl);
             if (existing) {
                 existing.dispose();
@@ -372,12 +502,71 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Ensure backdrop is fully removed when modal closes
+    // Bulk selection logic
+    function updateBulkActionsBar() {
+        const checked = document.querySelectorAll('.candidate-select:checked');
+        if (checked.length > 0) {
+            selectedCountBadge.textContent = checked.length;
+            bulkActionsBar.classList.remove('d-none');
+        } else {
+            bulkActionsBar.classList.add('d-none');
+        }
+    }
+
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            candidateSelects.forEach(cb => {
+                cb.checked = selectAllCheckbox.checked;
+            });
+            updateBulkActionsBar();
+        });
+    }
+
+    candidateSelects.forEach(cb => {
+        cb.addEventListener('change', function() {
+            updateBulkActionsBar();
+            if (!this.checked) {
+                if (selectAllCheckbox) selectAllCheckbox.checked = false;
+            } else {
+                const totalChecked = document.querySelectorAll('.candidate-select:checked').length;
+                if (totalChecked === candidateSelects.length && selectAllCheckbox) {
+                    selectAllCheckbox.checked = true;
+                }
+            }
+        });
+    });
+
+    document.getElementById('clear_selection').addEventListener('click', function() {
+        candidateSelects.forEach(cb => cb.checked = false);
+        if (selectAllCheckbox) selectAllCheckbox.checked = false;
+        updateBulkActionsBar();
+    });
+
+    // Bulk Modal Trigger
+    document.getElementById('trigger_bulk_modal').addEventListener('click', function() {
+        const checked = document.querySelectorAll('.candidate-select:checked');
+        const ids = Array.from(checked).map(cb => cb.value);
+        
+        document.getElementById('bulk_candidate_ids').value = ids.join(',');
+        document.getElementById('bulk_candidates_count').value = checked.length + ' مترشح(ين)';
+        
+        const existing = bootstrap.Modal.getInstance(bulkModalEl);
+        if (existing) {
+            existing.dispose();
+        }
+
+        const bulkModal = new bootstrap.Modal(bulkModalEl, { backdrop: true, keyboard: true });
+        bulkModal.show();
+    });
+
+    // Cleanup backdrops
     modalEl.addEventListener('hidden.bs.modal', function () {
         document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
         document.body.classList.remove('modal-open');
-        document.body.style.overflow = '';
-        document.body.style.paddingRight = '';
+    });
+    bulkModalEl.addEventListener('hidden.bs.modal', function () {
+        document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+        document.body.classList.remove('modal-open');
     });
 });
 </script>

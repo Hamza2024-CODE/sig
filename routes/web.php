@@ -466,6 +466,8 @@ Route::middleware('check.session')->group(function () {
     // ── Modules / New Modules ─────────────────────────────────────────────
     Route::get('/dashboard/inscriptions', [\App\Http\Controllers\Admin\ModulesController::class, 'inscriptions'])->name('modules.inscriptions');
     Route::post('/dashboard/inscriptions/orienter', [\App\Http\Controllers\Admin\ModulesController::class, 'orienterCandidate'])->name('modules.orienter');
+    Route::post('/dashboard/inscriptions/orienter-bulk', [\App\Http\Controllers\Admin\ModulesController::class, 'orienterBulkCandidates'])->name('modules.orienter-bulk');
+    Route::get('/dashboard/inscriptions/ajax/sections-by-offre/{offre_id}', [\App\Http\Controllers\Admin\ModulesController::class, 'ajaxGetSectionsByOffre']);
     Route::get('/dashboard/integration', [\App\Http\Controllers\Admin\ModulesController::class, 'integration'])->name('modules.integration');
     Route::post('/dashboard/integration/store', [\App\Http\Controllers\Admin\ModulesController::class, 'storeAgreement'])->name('modules.integration.store');
     Route::post('/dashboard/integration/delete/{id}', [\App\Http\Controllers\Admin\ModulesController::class, 'deleteAgreement'])->name('modules.integration.delete');

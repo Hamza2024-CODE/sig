@@ -247,7 +247,8 @@ class ModulesController extends Controller {
                      LEFT JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
                      LEFT JOIN etablissement ef ON o.IDEts_Form = ef.IDetablissement
                      LEFT JOIN session sess ON o.IDSession = sess.IDSession
-                     LEFT JOIN semestre_formation sf ON sess.IDSemestre_formation = sf.IDSemestre_formation";
+                     LEFT JOIN semestre_formation sf ON sess.IDSemestre_formation = sf.IDSemestre_formation
+                     LEFT JOIN apprenant a ON c.IDCandidat = a.IDCandidat";
 
         try {
             $countJoin = "FROM candidat c
@@ -286,6 +287,7 @@ class ModulesController extends Controller {
 
             $sql = "SELECT c.IDCandidat as id,
                            c.IDOffre,
+                           a.IDSection,
                            c.Nom as nom_ar, c.NomFr as nom_fr,
                            c.Prenom as prenom_ar, c.PrenomFr as prenom_fr,
                            CASE WHEN c.Civ IN ('M', 'ذكر', '1') THEN 'ذكر' WHEN c.Civ IN ('F', 'أنثى', 'انثى', '2') THEN 'أنثى' ELSE '-' END as sexe,
@@ -391,7 +393,34 @@ class ModulesController extends Controller {
             $offers = $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (\Exception $e) {}
 
+        $sections = [];
+        try {
+            $secSql = "
+                SELECT s.IDSection as id, s.Nom as nom_ar, sp.Nom as spec_ar 
+                FROM section s
+                JOIN offre o ON s.IDOffre = o.IDOffre
+                JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
+            ";
+            $secCond = [];
+            $secParams = [];
+            if ($isRestrictedRole) {
+                $secCond[] = "o.IDEts_Form = ?";
+                $secParams[] = (int)$scope['etabId'];
+            } elseif ($etabFilterId !== '') {
+                $secCond[] = "o.IDEts_Form = ?";
+                $secParams[] = (int)$etabFilterId;
+            }
+            if (!empty($secCond)) {
+                $secSql .= " WHERE " . implode(" AND ", $secCond);
+            }
+            $secSql .= " ORDER BY sp.Nom ASC, s.Nom ASC";
+            $stmt = $this->db->prepare($secSql);
+            $stmt->execute($secParams);
+            $sections = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (\Exception $e) {}
+
         return $this->render('admin/modules/inscriptions', [
+            'sections'       => $sections,
             'title'          => 'منظومة التسجيل والتوجيه البيداغوجي',
             'stats'          => $stats,
             'list'           => $list,
@@ -424,37 +453,130 @@ class ModulesController extends Controller {
             $id = (int)request()->all()['id'];
             $validation = (int)request()->all()['validation'];
             $offreId = (int)(request()->all()['offre_id'] ?? 0);
+            $sectionId = (int)(request()->all()['section_id'] ?? 0);
+            $statutDossier = trim(request()->all()['statut_dossier'] ?? 'en_attente');
+
             try {
                 if ($offreId > 0) {
                     $this->db->prepare("UPDATE candidat SET IDOffre=? WHERE IDCandidat=?")->execute([$offreId, $id]);
                 }
-                $this->db->prepare("UPDATE candidat SET Validation=? WHERE IDCandidat=?")->execute([$validation, $id]);
-                // Create apprenant record if accepted
+                $this->db->prepare("UPDATE candidat SET Validation=?, StatutDossier=? WHERE IDCandidat=?")
+                    ->execute([$validation, $statutDossier, $id]);
+
+                // Create or update apprenant record if accepted
                 if ($validation === 1) {
-                    $chk = $this->db->prepare("SELECT COUNT(*) FROM apprenant WHERE IDCandidat=?");
+                    $chk = $this->db->prepare("SELECT IDapprenant FROM apprenant WHERE IDCandidat=?");
                     $chk->execute([$id]);
-                    if ($chk->fetchColumn() == 0) {
-                        $cRow = $this->db->prepare("SELECT IDOffre FROM candidat WHERE IDCandidat=?");
-                        $cRow->execute([$id]);
-                        $cand = $cRow->fetch(PDO::FETCH_ASSOC);
-                        if ($cand) {
+                    $apprenantId = $chk->fetchColumn();
+
+                    $cRow = $this->db->prepare("SELECT IDOffre FROM candidat WHERE IDCandidat=?");
+                    $cRow->execute([$id]);
+                    $cand = $cRow->fetch(PDO::FETCH_ASSOC);
+
+                    if ($cand) {
+                        $secId = $sectionId;
+                        if ($secId <= 0) {
                             $secRow = $this->db->prepare("SELECT IDSection FROM section WHERE IDOffre=? LIMIT 1");
                             $secRow->execute([$cand['IDOffre']]);
-                            $secId = $secRow->fetchColumn();
-                            if ($secId) {
+                            $secId = (int)$secRow->fetchColumn();
+                        }
+
+                        if ($secId > 0) {
+                            if (!$apprenantId) {
                                 $nccp = 'APP-' . date('Y') . '-' . sprintf('%05d', $id);
-                                // توليد PK يدوياً — جدول apprenant لا يحتوي على AUTO_INCREMENT
+                                // Generate manual ID for apprenant
                                 $maxApp = (int)$this->db->query("SELECT COALESCE(MAX(IDapprenant), 0) FROM apprenant")->fetchColumn();
                                 $newAppId = $maxApp + 1;
-                                $this->db->prepare("INSERT INTO apprenant (IDapprenant, IDCandidat, IDSection, Nccp, statut) VALUES (?,?,?,?,'actif')")->execute([$newAppId, $id, $secId, $nccp]);
+                                $this->db->prepare("INSERT INTO apprenant (IDapprenant, IDCandidat, IDSection, Nccp, statut) VALUES (?,?,?,?,'actif')")
+                                    ->execute([$newAppId, $id, $secId, $nccp]);
+                            } else {
+                                $this->db->prepare("UPDATE apprenant SET IDSection=?, statut='actif' WHERE IDapprenant=?")
+                                    ->execute([$secId, $apprenantId]);
                             }
                         }
                     }
+                } else {
+                    // Delete apprenant record if candidate is no longer validated as Accepted
+                    $this->db->prepare("DELETE FROM apprenant WHERE IDCandidat=?")->execute([$id]);
                 }
-                session(['flash_success' => 'تم تحديث وضعية المترشح بنجاح!']);
-            } catch (\Exception $e) { session(['flash_error' => 'خطأ: '.$e->getMessage()]); }
+
+                session(['flash_success' => 'تم تحديث وضعية وتوجيه المترشح بنجاح!']);
+            } catch (\Exception $e) { 
+                session(['flash_error' => 'خطأ: '.$e->getMessage()]); 
+            }
         }
         return $this->redirect('/dashboard/inscriptions');
+    }
+
+    public function orienterBulkCandidates() {
+        if (request()->isMethod('post')) {
+            $csrfToken = request()->all()['csrf_token'] ?? '';
+            if (empty($csrfToken) || $csrfToken !== (csrf_token() ?? '')) {
+                session(['flash_error' => 'رمز التحقق من الأمن غير صالح.']);
+                return $this->redirect('/dashboard/inscriptions');
+            }
+
+            $candidateIds = request()->all()['candidate_ids'] ?? '';
+            $ids = array_filter(array_map('intval', explode(',', $candidateIds)));
+            $sectionId = (int)(request()->all()['bulk_section_id'] ?? 0);
+            $validation = (int)(request()->all()['bulk_validation'] ?? 1);
+            $statutDossier = trim(request()->all()['bulk_statut_dossier'] ?? 'valide');
+
+            if (empty($ids) || $sectionId <= 0) {
+                session(['flash_error' => 'يرجى تحديد المترشحين واختيار القسم البيداغوجي المستهدف.']);
+                return $this->redirect('/dashboard/inscriptions');
+            }
+
+            try {
+                // Get the IDOffre for this section to ensure candidates are aligned
+                $secRow = $this->db->prepare("SELECT IDOffre FROM section WHERE IDSection = ?");
+                $secRow->execute([$sectionId]);
+                $targetOffreId = (int)$secRow->fetchColumn();
+
+                if ($targetOffreId <= 0) {
+                    session(['flash_error' => 'القسم البيداغوجي المختار غير مرتبط بأي عرض تكوين صالح.']);
+                    return $this->redirect('/dashboard/inscriptions');
+                }
+
+                $count = 0;
+                foreach ($ids as $id) {
+                    // Update candidate's offer to match the target section's offer, and set validation/status
+                    $this->db->prepare("UPDATE candidat SET IDOffre=?, Validation=?, StatutDossier=? WHERE IDCandidat=?")
+                        ->execute([$targetOffreId, $validation, $statutDossier, $id]);
+
+                    if ($validation === 1) {
+                        $chk = $this->db->prepare("SELECT IDapprenant FROM apprenant WHERE IDCandidat=?");
+                        $chk->execute([$id]);
+                        $apprenantId = $chk->fetchColumn();
+
+                        if (!$apprenantId) {
+                            $nccp = 'APP-' . date('Y') . '-' . sprintf('%05d', $id);
+                            $maxApp = (int)$this->db->query("SELECT COALESCE(MAX(IDapprenant), 0) FROM apprenant")->fetchColumn();
+                            $newAppId = $maxApp + 1;
+                            $this->db->prepare("INSERT INTO apprenant (IDapprenant, IDCandidat, IDSection, Nccp, statut) VALUES (?,?,?,?,'actif')")
+                                ->execute([$newAppId, $id, $sectionId, $nccp]);
+                        } else {
+                            $this->db->prepare("UPDATE apprenant SET IDSection=?, statut='actif' WHERE IDapprenant=?")
+                                ->execute([$sectionId, $apprenantId]);
+                        }
+                    } else {
+                        $this->db->prepare("DELETE FROM apprenant WHERE IDCandidat=?")->execute([$id]);
+                    }
+                    $count++;
+                }
+
+                session(['flash_success' => "تم توجيه ومعالجة {$count} مترشحين بنجاح وتعيينهم في القسم المختار!"]);
+            } catch (\Exception $e) {
+                session(['flash_error' => 'خطأ: ' . $e->getMessage()]);
+            }
+        }
+        return $this->redirect('/dashboard/inscriptions');
+    }
+
+    public function ajaxGetSectionsByOffre($offreId)
+    {
+        $sections = \Illuminate\Support\Facades\DB::select("SELECT IDSection as id, Nom as nom_ar FROM section WHERE IDOffre = ? ORDER BY Nom ASC", [(int)$offreId]);
+        return response()->json($sections);
     }
 
     // ================================================================
