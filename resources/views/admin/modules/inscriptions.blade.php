@@ -200,7 +200,8 @@
                                                 data-name="<?= htmlspecialchars($item['nom_ar'] . ' ' . $item['prenom_ar']) ?>"
                                                 data-decision="<?= htmlspecialchars($item['decision'] ?? 'قيد الدراسة') ?>"
                                                 data-validation="<?= (int)$item['validation_code'] ?>"
-                                                data-status="<?= htmlspecialchars($item['statut_dossier'] ?? 'en_attente') ?>">
+                                                data-status="<?= htmlspecialchars($item['statut_dossier'] ?? 'en_attente') ?>"
+                                                data-offre-id="<?= $item['IDOffre'] ?>">
                                             <i class="fa-solid fa-arrows-turn-to-dots me-1"></i> توجيه ومعالجة
                                         </button>
                                     </td>
@@ -278,6 +279,14 @@ function buildPageUrl(int $p, int $lim, $etabId = null): string {
                         <input type="text" class="form-control rounded-pill border-0 bg-light px-3 fw-bold text-dark" id="orient_name" readonly>
                     </div>
                     <div class="mb-3">
+                        <label for="orient_offre_id" class="form-label small fw-bold text-muted">التخصص وعرض التكوين الموجه إليه</label>
+                        <select class="form-select rounded-pill border-light-subtle shadow-sm px-3" id="orient_offre_id" name="offre_id" required>
+                            <?php foreach ($offers as $of): ?>
+                                <option value="<?= $of['id'] ?>"><?= htmlspecialchars($of['spec_ar'] . ' (' . $of['etab_ar'] . ')') ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="mb-3">
                         <label for="decision" class="form-label small fw-bold text-muted">قرار التوجيه والالتحاق</label>
                         <select class="form-select rounded-pill border-light-subtle shadow-sm px-3" id="decision" name="validation" required>
                             <option value="0">قيد الدراسة والتحكيم</option>
@@ -344,11 +353,13 @@ document.addEventListener('DOMContentLoaded', function() {
             const name       = this.getAttribute('data-name');
             const validation = this.getAttribute('data-validation');
             const status     = this.getAttribute('data-status');
+            const offreId    = this.getAttribute('data-offre-id');
 
             document.getElementById('orient_id').value        = id;
             document.getElementById('orient_name').value      = name;
             document.getElementById('decision').value         = validation;
             document.getElementById('statut_dossier').value   = status;
+            document.getElementById('orient_offre_id').value  = offreId;
 
             // Dispose any existing instance to prevent backdrop stacking / frozen UI
             const existing = bootstrap.Modal.getInstance(modalEl);

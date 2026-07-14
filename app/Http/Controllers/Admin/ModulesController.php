@@ -285,6 +285,7 @@ class ModulesController extends Controller {
             $offset = ($page - 1) * $limit;
 
             $sql = "SELECT c.IDCandidat as id,
+                           c.IDOffre,
                            c.Nom as nom_ar, c.NomFr as nom_fr,
                            c.Prenom as prenom_ar, c.PrenomFr as prenom_fr,
                            CASE WHEN c.Civ IN ('M', 'ذكر', '1') THEN 'ذكر' WHEN c.Civ IN ('F', 'أنثى', 'انثى', '2') THEN 'أنثى' ELSE '-' END as sexe,
@@ -422,7 +423,11 @@ class ModulesController extends Controller {
 
             $id = (int)request()->all()['id'];
             $validation = (int)request()->all()['validation'];
+            $offreId = (int)(request()->all()['offre_id'] ?? 0);
             try {
+                if ($offreId > 0) {
+                    $this->db->prepare("UPDATE candidat SET IDOffre=? WHERE IDCandidat=?")->execute([$offreId, $id]);
+                }
                 $this->db->prepare("UPDATE candidat SET Validation=? WHERE IDCandidat=?")->execute([$validation, $id]);
                 // Create apprenant record if accepted
                 if ($validation === 1) {
