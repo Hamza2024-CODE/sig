@@ -273,6 +273,8 @@ $to   = min($page * $per_page, $total_count);
                                 <option value="" disabled selected>-- حدد عرض تكوين --</option>
                                 <?php foreach ($offers as $off): ?>
                                 <option value="<?= $off->id ?>"
+                                        data-spec-ar="<?= htmlspecialchars($off->spec_ar) ?>"
+                                        data-spec-fr="<?= htmlspecialchars($off->spec_fr ?? '') ?>"
                                         data-date-debut="<?= !empty($off->date_debut) ? substr($off->date_debut, 0, 10) : '' ?>"
                                         data-date-fin="<?= !empty($off->date_fin) ? substr($off->date_fin, 0, 10) : '' ?>">
                                     OFF-<?= $off->id ?> | <?= htmlspecialchars($off->spec_ar) ?> | <?= htmlspecialchars($off->etab_ar) ?>
@@ -284,12 +286,12 @@ $to   = min($page * $per_page, $total_count);
 
                         <div class="col-md-6">
                             <label class="form-label small fw-bold">اسم القسم بالعربية *</label>
-                            <input type="text" name="nom_ar" class="form-control" placeholder="مثال: قسم صيانة السيارات 1" required style="font-size:0.9rem;">
+                            <input type="text" name="nom_ar" id="add_nom_ar" class="form-control" placeholder="مثال: قسم صيانة السيارات 1" required style="font-size:0.9rem;">
                         </div>
 
                         <div class="col-md-6">
                             <label class="form-label small fw-bold">اسم القسم بالفرنسية *</label>
-                            <input type="text" name="nom_fr" class="form-control" placeholder="Mecanique Auto Section 1" required style="font-size:0.9rem;">
+                            <input type="text" name="nom_fr" id="add_nom_fr" class="form-control" placeholder="Mecanique Auto Section 1" required style="font-size:0.9rem;">
                         </div>
 
                         <div class="col-md-6">
@@ -309,12 +311,8 @@ $to   = min($page * $per_page, $total_count);
 
                         <div class="col-md-4">
                             <label class="form-label small fw-bold">عدد المجموعات / الأفواج الإجمالية *</label>
-                            <select name="groupe" class="form-select" required style="font-size:0.9rem;">
-                                <option value="1">مجموعة واحدة (1)</option>
-                                <option value="2">مجموعتان (2)</option>
-                                <option value="3">3 مجموعات</option>
-                                <option value="4">4 مجموعات</option>
-                            </select>
+                            <input type="number" name="groupe" id="add_groupe" class="form-control" min="1" max="50" value="1" required style="font-size:0.9rem;">
+                            <span class="text-muted small d-block mt-1">القيمة المتاحة من 1 إلى 50 فوج</span>
                         </div>
 
                         <div class="col-md-4">
@@ -386,12 +384,8 @@ $to   = min($page * $per_page, $total_count);
 
                         <div class="col-md-4">
                             <label class="form-label small fw-bold">عدد المجموعات *</label>
-                            <select name="groupe" id="edit_groupe" class="form-select" required style="font-size:0.9rem;">
-                                <option value="1">مجموعة واحدة (1)</option>
-                                <option value="2">مجموعتان (2)</option>
-                                <option value="3">3 مجموعات</option>
-                                <option value="4">4 مجموعات</option>
-                            </select>
+                            <input type="number" name="groupe" id="edit_groupe" class="form-control" min="1" max="50" required style="font-size:0.9rem;">
+                            <span class="text-muted small d-block mt-1">القيمة المتاحة من 1 إلى 50 فوج</span>
                         </div>
 
                         <div class="col-md-4">
@@ -477,9 +471,17 @@ function filterOffersList(query) {
 
 function onOfferSelectChange(select) {
     const selectedOption = select.options[select.selectedIndex];
+    const specAr = selectedOption.getAttribute('data-spec-ar');
+    const specFr = selectedOption.getAttribute('data-spec-fr');
     const dateDebut = selectedOption.getAttribute('data-date-debut');
     const dateFin = selectedOption.getAttribute('data-date-fin');
     
+    if (specAr) {
+        document.getElementById('add_nom_ar').value = specAr;
+    }
+    if (specFr) {
+        document.getElementById('add_nom_fr').value = specFr.toUpperCase();
+    }
     if (dateDebut) {
         document.getElementById('add_date_debut').value = dateDebut;
     }

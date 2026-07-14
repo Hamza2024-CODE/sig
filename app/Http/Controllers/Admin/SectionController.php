@@ -130,7 +130,7 @@ class SectionController extends Controller
         $offersQuery = DB::table('offre')
             ->join('specialite', 'offre.IDSpecialite', '=', 'specialite.IDSpecialite')
             ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDetablissement')
-            ->select('offre.IDOffre as id', 'specialite.Nom as spec_ar', 'etablissement.Nom as etab_ar', 'offre.IDSession as session_id', 'offre.DateD as date_debut', 'offre.DateF as date_fin');
+            ->select('offre.IDOffre as id', 'specialite.Nom as spec_ar', 'specialite.NomFr as spec_fr', 'etablissement.Nom as etab_ar', 'offre.IDSession as session_id', 'offre.DateD as date_debut', 'offre.DateF as date_fin');
 
         if ($dfepId > 0) {
             $offersQuery->whereIn('offre.IDEts_Form', function($q) use ($dfepId) {
