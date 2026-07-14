@@ -331,7 +331,7 @@ $to   = min($page * $per_page, $total_count);
                     <div class="row g-3">
                         <div class="col-12">
                             <label class="form-label small fw-bold">اختر المترشح المقبول للتسجيل *</label>
-                            <select name="candidat_id" id="add_candidat_id" class="form-select select2" required style="font-size:0.9rem;" onchange="onAddCandidateChange(this)">
+                            <select name="candidat_id" id="add_candidat_id" class="form-select select2" required style="font-size:0.9rem; color: #212529 !important; background-color: #ffffff !important;" onchange="onAddCandidateChange(this)">
                                 <option value="" disabled selected>-- حدد مترشحاً مقبولاً (تمت مراجعته) --</option>
                                 <?php foreach ($availableCandidates as $cand): ?>
                                 <option value="<?= $cand->id ?>"
@@ -346,7 +346,7 @@ $to   = min($page * $per_page, $total_count);
 
                         <div class="col-md-6">
                             <label class="form-label small fw-bold">القسم الدراسي الفعلي *</label>
-                            <select name="section_id" class="form-select" required style="font-size:0.9rem;">
+                            <select name="section_id" class="form-select" required style="font-size:0.9rem; color: #212529 !important; background-color: #ffffff !important;">
                                 <option value="" disabled selected>-- اختر القسم --</option>
                                 <?php foreach ($sections as $s): ?>
                                 <option value="<?= $s->id ?>"><?= htmlspecialchars($s->nom_ar) ?> (<?= htmlspecialchars($s->spec_ar) ?>)</option>
@@ -356,18 +356,18 @@ $to   = min($page * $per_page, $total_count);
 
                         <div class="col-md-6">
                             <label class="form-label small fw-bold">رقم بطاقة التعريف الوطنية / رقم التسجيل *</label>
-                            <input type="text" name="nccp" id="add_nccp" class="form-control" placeholder="M2026/0001" required style="font-size:0.9rem;">
+                            <input type="text" name="nccp" id="add_nccp" class="form-control" placeholder="M2026/0001" required style="font-size:0.9rem; color: #212529 !important; background-color: #ffffff !important;">
                         </div>
 
                         <div class="col-md-4">
                             <label class="form-label small fw-bold">المجموعة الدراسية *</label>
-                            <input type="number" name="groupe" id="add_groupe_trainee" class="form-control" min="1" max="50" value="1" required style="font-size:0.9rem;">
+                            <input type="number" name="groupe" id="add_groupe_trainee" class="form-control" min="1" max="50" value="1" required style="font-size:0.9rem; color: #212529 !important; background-color: #ffffff !important;">
                             <span class="text-muted small d-block mt-1">رقم الفوج من 1 إلى 50</span>
                         </div>
 
                         <div class="col-md-4">
                             <label class="form-label small fw-bold">قرار التثبيت الفني *</label>
-                            <select name="valide" class="form-select" required style="font-size:0.9rem;">
+                            <select name="valide" class="form-select" required style="font-size:0.9rem; color: #212529 !important; background-color: #ffffff !important;">
                                 <option value="1">مؤكد ومثبت</option>
                                 <option value="0">غير مثبت بعد</option>
                             </select>
@@ -375,7 +375,7 @@ $to   = min($page * $per_page, $total_count);
 
                         <div class="col-md-4">
                             <label class="form-label small fw-bold">الحالة الإدارية للطالب *</label>
-                            <select name="statut" class="form-select" required style="font-size:0.9rem;">
+                            <select name="statut" class="form-select" required style="font-size:0.9rem; color: #212529 !important; background-color: #ffffff !important;">
                                 <option value="actif">نشط / Actif</option>
                                 <option value="abondon">تخلى / Abondon</option>
                                 <option value="exclu">مقصى / Exclu</option>
@@ -397,7 +397,7 @@ $to   = min($page * $per_page, $total_count);
 <div class="modal fade" id="editStudentModal" tabindex="-1" aria-labelledby="editStudentModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content" style="border-radius:18px; border:none; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
-            <div class="modal-header bg-dark text-white" style="border-top-left-radius:18px; border-top-right-radius:18px;">
+            <div class="modal-header bg-primary text-white" style="border-top-left-radius:18px; border-top-right-radius:18px;">
                 <h5 class="modal-title fw-bold" id="editStudentModalLabel"><i class="fa-solid fa-pen-to-square me-2"></i> تعديل معلومات الطالب</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -416,14 +416,14 @@ $to   = min($page * $per_page, $total_count);
                     {{-- Form Fields (Hidden by default, shown when loaded) --}}
                     <div class="row g-3 d-none" id="editFormFields">
                         <div class="col-12 mb-2">
-                            <div class="card border-0 shadow-sm overflow-hidden" style="border-radius:12px; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);">
-                                <div class="card-body p-4 text-white d-flex align-items-center gap-3">
-                                    <div class="rounded-circle d-flex align-items-center justify-content-center text-white" style="width:50px; height:50px; font-size:1.5rem; background:rgba(255,255,255,0.1);">
+                            <div class="card border-0 overflow-hidden" style="border-radius:12px; background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border: 1px solid #bfdbfe !important;">
+                                <div class="card-body p-3 text-dark d-flex align-items-center gap-3">
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width:48px; height:48px; font-size:1.4rem; background:rgba(59,130,246,0.15); color: #2563eb;">
                                         <i class="fa-solid fa-user-graduate"></i>
                                     </div>
                                     <div>
-                                        <span class="text-white-50 d-block small mb-1" style="font-size:0.8rem;">اسم المترشح المقيد بالنظام</span>
-                                        <strong class="fs-4" id="edit_student_name" style="font-family:'Cairo';"></strong>
+                                        <span class="d-block small mb-1" style="font-size:0.8rem; color: #1e40af; font-weight: 500;">اسم المترشح المقيد بالنظام</span>
+                                        <strong class="fs-5" id="edit_student_name" style="font-family:'Cairo'; color: #1e3a8a !important;"></strong>
                                     </div>
                                 </div>
                             </div>
@@ -433,7 +433,7 @@ $to   = min($page * $per_page, $total_count);
                             <label class="form-label small fw-bold text-secondary mb-2"><i class="fa-solid fa-users-rectangle me-1 text-primary"></i> القسم الدراسي *</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-white border-end-0 text-muted" style="border-radius:0 8px 8px 0;"><i class="fa-solid fa-sitemap"></i></span>
-                                <select name="section_id" id="edit_section_id" class="form-select border-start-0 ps-0" required style="font-size:0.9rem; border-radius:8px 0 0 8px; height: 42px;">
+                                <select name="section_id" id="edit_section_id" class="form-select border-start-0 ps-0" required style="font-size:0.9rem; border-radius:8px 0 0 8px; height: 42px; color: #212529 !important; background-color: #ffffff !important;">
                                     <?php foreach ($sections as $s): ?>
                                     <option value="<?= $s->id ?>"><?= htmlspecialchars($s->nom_ar) ?> (<?= htmlspecialchars($s->spec_ar) ?>)</option>
                                     <?php endforeach; ?>
@@ -445,7 +445,7 @@ $to   = min($page * $per_page, $total_count);
                             <label class="form-label small fw-bold text-secondary mb-2"><i class="fa-solid fa-id-card me-1 text-primary"></i> رقم بطاقة التعريف الوطنية / رقم التسجيل *</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-white border-end-0 text-muted" style="border-radius:0 8px 8px 0;"><i class="fa-solid fa-barcode"></i></span>
-                                <input type="text" name="nccp" id="edit_nccp" class="form-control border-start-0 ps-0" required style="font-size:0.9rem; border-radius:8px 0 0 8px; height: 42px;">
+                                <input type="text" name="nccp" id="edit_nccp" class="form-control border-start-0 ps-0" required style="font-size:0.9rem; border-radius:8px 0 0 8px; height: 42px; color: #212529 !important; background-color: #ffffff !important;">
                             </div>
                         </div>
 
@@ -453,7 +453,7 @@ $to   = min($page * $per_page, $total_count);
                             <label class="form-label small fw-bold text-secondary mb-2"><i class="fa-solid fa-users me-1 text-primary"></i> المجموعة الدراسية (الفوج) *</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-white border-end-0 text-muted" style="border-radius:0 8px 8px 0;"><i class="fa-solid fa-arrow-up-9-1"></i></span>
-                                <input type="number" name="groupe" id="edit_groupe" class="form-control border-start-0 ps-0" min="1" max="50" required style="font-size:0.9rem; border-radius:8px 0 0 8px; height: 42px;">
+                                <input type="number" name="groupe" id="edit_groupe" class="form-control border-start-0 ps-0" min="1" max="50" required style="font-size:0.9rem; border-radius:8px 0 0 8px; height: 42px; color: #212529 !important; background-color: #ffffff !important;">
                             </div>
                             <span class="text-muted small d-block mt-1">رقم الفوج المعتمد من 1 إلى 50</span>
                         </div>
@@ -462,7 +462,7 @@ $to   = min($page * $per_page, $total_count);
                             <label class="form-label small fw-bold text-secondary mb-2"><i class="fa-solid fa-circle-check me-1 text-primary"></i> قرار التثبيت البيداغوجي *</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-white border-end-0 text-muted" style="border-radius:0 8px 8px 0;"><i class="fa-solid fa-toggle-on"></i></span>
-                                <select name="valide" id="edit_valide" class="form-select border-start-0 ps-0" required style="font-size:0.9rem; border-radius:8px 0 0 8px; height: 42px;">
+                                <select name="valide" id="edit_valide" class="form-select border-start-0 ps-0" required style="font-size:0.9rem; border-radius:8px 0 0 8px; height: 42px; color: #212529 !important; background-color: #ffffff !important;">
                                     <option value="1">مؤكد ومثبت</option>
                                     <option value="0">غير مثبت</option>
                                 </select>
@@ -473,7 +473,7 @@ $to   = min($page * $per_page, $total_count);
                             <label class="form-label small fw-bold text-secondary mb-2"><i class="fa-solid fa-user-clock me-1 text-primary"></i> الحالة الإدارية الحالية *</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-white border-end-0 text-muted" style="border-radius:0 8px 8px 0;"><i class="fa-solid fa-user-gear"></i></span>
-                                <select name="statut" id="edit_statut" class="form-select border-start-0 ps-0" required style="font-size:0.9rem; border-radius:8px 0 0 8px; height: 42px;">
+                                <select name="statut" id="edit_statut" class="form-select border-start-0 ps-0" required style="font-size:0.9rem; border-radius:8px 0 0 8px; height: 42px; color: #212529 !important; background-color: #ffffff !important;">
                                     <option value="actif">نشط / Actif</option>
                                     <option value="abondon">تخلى / Abondon</option>
                                     <option value="exclu">مقصى / Exclu</option>
