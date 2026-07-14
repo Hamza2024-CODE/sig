@@ -114,42 +114,79 @@ if (isset($_GET['action'])) {
             exit;
         }
 
-        // تحديد مسار mysql CLI المتاح على السيرفر
-        $mysqlCmd = 'mysql';
-        // محاولة البحث عن مسار mysql في توزيعات لينكس الشائعة
-        $paths = ['/usr/bin/mysql', '/usr/local/bin/mysql', '/www/server/mysql/bin/mysql'];
-        foreach ($paths as $p) {
-            if (file_exists($p)) {
-                $mysqlCmd = $p;
-                break;
+        $filePath = realpath($targetFilePath);
+        $startTime = microtime(true);
+        $cliSuccess = false;
+        $duration = 0;
+        $output = [];
+
+        // Check if exec() is enabled and try CLI (fastest)
+        if (function_exists('exec')) {
+            $mysqlCmd = 'mysql';
+            $paths = ['/usr/bin/mysql', '/usr/local/bin/mysql', '/www/server/mysql/bin/mysql'];
+            foreach ($paths as $p) {
+                if (file_exists($p)) {
+                    $mysqlCmd = $p;
+                    break;
+                }
+            }
+
+            $passOpt = !empty($reqDbPass) ? "-p" . escapeshellarg($reqDbPass) : "";
+            $portOpt = !empty($port) ? "-P " . escapeshellarg($port) : "";
+            $command = escapeshellcmd($mysqlCmd) . " -h " . escapeshellarg($host) . " $portOpt -u " . escapeshellarg($reqDbUser) . " $passOpt " . escapeshellarg($reqDbName) . " < " . escapeshellarg($filePath) . " 2>&1";
+
+            $returnVar = 0;
+            exec($command, $output, $returnVar);
+            if ($returnVar === 0) {
+                $cliSuccess = true;
+                $duration = round(microtime(true) - $startTime, 2);
+                echo json_encode(['success' => true, 'duration' => $duration, 'method' => 'CLI']);
+                exit;
             }
         }
 
-        $filePath = realpath($targetFilePath);
-        $passOpt = !empty($reqDbPass) ? "-p" . escapeshellarg($reqDbPass) : "";
-        $portOpt = !empty($port) ? "-P " . escapeshellarg($port) : "";
-        $command = escapeshellcmd($mysqlCmd) . " -h " . escapeshellarg($host) . " $portOpt -u " . escapeshellarg($reqDbUser) . " $passOpt " . escapeshellarg($reqDbName) . " < " . escapeshellarg($filePath) . " 2>&1";
-
-        $startTime = microtime(true);
-        $output = [];
-        $returnVar = 0;
-        exec($command, $output, $returnVar);
-        $duration = round(microtime(true) - $startTime, 2);
-
-        if ($returnVar === 0) {
-            echo json_encode(['success' => true, 'duration' => $duration]);
-        } else {
-            // إذا فشل الاستيراد عبر CLI، نحاول الاستيراد عبر PDO سطر بسطر (خيار احتياطي بطيء ولكن آمن)
-            try {
-                $sql = file_get_contents($filePath);
-                $pdo->exec($sql);
-                echo json_encode(['success' => true, 'duration' => $duration, 'fallback' => true]);
-            } catch (Exception $e) {
-                echo json_encode([
-                    'success' => false, 
-                    'message' => 'فشل الاستيراد. تفاصيل خطأ النظام: ' . implode("\n", $output) . "\nخطأ الاحتياطي: " . $e->getMessage()
-                ]);
+        // Fallback: Read line-by-line and execute in a transaction (Memory-safe and Fast)
+        try {
+            $fp = fopen($filePath, 'r');
+            if (!$fp) {
+                throw new Exception("فشل في فتح ملف SQL للقراءة.");
             }
+
+            $pdo->beginTransaction();
+            $pdo->exec("SET FOREIGN_KEY_CHECKS = 0");
+
+            $sqlBuffer = '';
+            while (($line = fgets($fp)) !== false) {
+                $lineTrim = trim($line);
+                if (empty($lineTrim) || str_starts_with($lineTrim, '--') || str_starts_with($lineTrim, '/*') || str_starts_with($lineTrim, '#')) {
+                    continue;
+                }
+                
+                $sqlBuffer .= $line;
+                if (str_ends_with($lineTrim, ';')) {
+                    $pdo->exec($sqlBuffer);
+                    $sqlBuffer = '';
+                }
+            }
+            
+            if (!empty(trim($sqlBuffer))) {
+                $pdo->exec($sqlBuffer);
+            }
+
+            $pdo->exec("SET FOREIGN_KEY_CHECKS = 1");
+            $pdo->commit();
+            fclose($fp);
+
+            $duration = round(microtime(true) - $startTime, 2);
+            echo json_encode(['success' => true, 'duration' => $duration, 'method' => 'PDO_LineByLine']);
+        } catch (Exception $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            echo json_encode([
+                'success' => false, 
+                'message' => 'فشل الاستيراد. خطأ: ' . $e->getMessage() . (isset($returnVar) ? "\nتفاصيل خطأ النظام (CLI): " . implode("\n", $output) : "")
+            ]);
         }
         exit;
     }
