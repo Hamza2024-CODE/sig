@@ -127,6 +127,56 @@ try {
     echo "<span style='color:red;'>Error clearing cache: " . $e->getMessage() . "</span><br>";
 }
 
+echo "<h2>Running Global Terminology Replacements on Server...</h2>";
+try {
+    $targetDirs = [
+        __DIR__ . '/../resources/views',
+        __DIR__ . '/../app/Http/Controllers'
+    ];
+
+    $replacements = [
+        '/(?<!\\p{L})الطلاب(?!\\p{L})/u' => 'المتربصين',
+        '/(?<!\\p{L})الطلبة(?!\\p{L})/u' => 'المتربصين',
+        '/(?<!\\p{L})طلاب(?!\\p{L})/u' => 'متربصين',
+        '/(?<!\\p{L})طالبي التكوين(?!\\p{L})/u' => 'متربصي التكوين',
+        '/(?<!\\p{L})طالبي(?!\\p{L})/u' => 'متربصي',
+        '/(?<!\\p{L})طالبين(?!\\p{L})/u' => 'متربصين',
+        '/(?<!\\p{L})طالبان(?!\\p{L})/u' => 'متربصان',
+        '/(?<!\\p{L})طالبون(?!\\p{L})/u' => 'متربصون',
+        '/(?<!\\p{L})طالباً(?!\\p{L})/u' => 'متربصاً',
+        '/(?<!\\p{L})الطالبات(?!\\p{L})/u' => 'المتربصات',
+        '/(?<!\\p{L})طالبة(?!\\p{L})/u' => 'متربصة',
+        '/(?<!\\p{L})طالب(?!\\p{L})/u' => 'متربص'
+    ];
+
+    $modifiedCount = 0;
+    foreach ($targetDirs as $dir) {
+        if (!is_dir($dir)) continue;
+        $it = new RecursiveDirectoryIterator($dir);
+        $display = new RecursiveIteratorIterator($it);
+        foreach ($display as $file) {
+            if ($file->isFile()) {
+                $ext = pathinfo($file->getPathname(), PATHINFO_EXTENSION);
+                if (in_array($ext, ['php', 'html'])) {
+                    $filePath = $file->getPathname();
+                    $content = file_get_contents($filePath);
+                    $original = $content;
+                    foreach ($replacements as $pattern => $replacement) {
+                        $content = preg_replace($pattern, $replacement, $content);
+                    }
+                    if ($content !== $original) {
+                        file_put_contents($filePath, $content);
+                        $modifiedCount++;
+                    }
+                }
+            }
+        }
+    }
+    echo "✓ Global Terminology Update: modified $modifiedCount files.<br>";
+} catch (\Throwable $e) {
+    echo "<span style='color:red;'>Error running terminology replacement: " . $e->getMessage() . "</span><br>";
+}
+
 // Clean up temporary check_index.php if it exists
 $checkIndexPath = __DIR__ . '/check_index.php';
 if (file_exists($checkIndexPath)) {
