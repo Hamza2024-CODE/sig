@@ -68,8 +68,14 @@ if (isset($_GET['action'])) {
         exit;
     }
 
+    // Parse host and port if colon is present
+    $hostParts = explode(':', $reqDbHost);
+    $host = $hostParts[0];
+    $port = $hostParts[1] ?? '';
+
     try {
-        $pdo = new PDO("mysql:host=$reqDbHost;dbname=$reqDbName;charset=utf8", $reqDbUser, $reqDbPass, [
+        $dsn = "mysql:host=$host;" . (!empty($port) ? "port=$port;" : "") . "dbname=$reqDbName;charset=utf8";
+        $pdo = new PDO($dsn, $reqDbUser, $reqDbPass, [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
         ]);
     } catch (Exception $e) {
@@ -121,7 +127,8 @@ if (isset($_GET['action'])) {
 
         $filePath = realpath($targetFilePath);
         $passOpt = !empty($reqDbPass) ? "-p" . escapeshellarg($reqDbPass) : "";
-        $command = escapeshellcmd($mysqlCmd) . " -h " . escapeshellarg($reqDbHost) . " -u " . escapeshellarg($reqDbUser) . " $passOpt " . escapeshellarg($reqDbName) . " < " . escapeshellarg($filePath) . " 2>&1";
+        $portOpt = !empty($port) ? "-P " . escapeshellarg($port) : "";
+        $command = escapeshellcmd($mysqlCmd) . " -h " . escapeshellarg($host) . " $portOpt -u " . escapeshellarg($reqDbUser) . " $passOpt " . escapeshellarg($reqDbName) . " < " . escapeshellarg($filePath) . " 2>&1";
 
         $startTime = microtime(true);
         $output = [];
