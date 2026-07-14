@@ -149,7 +149,7 @@ $to   = min($page * $per_page, $total_count);
                         <th>رقم التسجيل / الدخول</th>
                         <th>القسم / التخصص</th>
                         <th>المؤسسة التكوينية</th>
-                        <th class="text-center">الدفعة / المجموعة</th>
+                        <th class="text-center">الدفعة / الفرع</th>
                         <th class="text-center">الحالة</th>
                         <th class="text-center no-print">الإجراءات</th>
                     </tr>
@@ -209,7 +209,7 @@ $to   = min($page * $per_page, $total_count);
                         <td class="text-muted"><?= htmlspecialchars($s['etab_ar'] ?? '—') ?></td>
                         <td class="text-center" style="font-size: 0.85rem;">
                             <div class="fw-bold text-dark"><?= htmlspecialchars($s['session_nom'] ?? '—') ?></div>
-                            <div class="text-muted small">المجموعة <?= $s['groupe'] ?? '1' ?></div>
+                            <div class="text-muted small">الفرع: <?= htmlspecialchars($s['section_nom'] ?? 'غير محدد') ?></div>
                         </td>
                         <td class="text-center">
                             <span class="badge rounded-pill px-2.5 py-1.5 <?= $statusClass ?>" style="font-size:0.7rem; font-family:'Cairo';">
