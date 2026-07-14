@@ -64,7 +64,7 @@ class DiplomeController extends Controller
     // ─────────────────────────────────────────────────────────────
     private const BASE_SELECT = "
         SELECT STRAIGHT_JOIN
-               a.IDapprenant as id, a.Nccp as numero_matricule, a.statut,
+               a.IDapprenant as id, c.NumIns as numero_matricule, a.statut,
                c.Nom as nom_ar, c.Prenom as prenom_ar,
                c.NomFr as nom_fr, c.PrenomFr as prenom_fr,
                sp.Nom as spec_ar, sp.NomFr as spec_fr,
@@ -830,7 +830,7 @@ class DiplomeController extends Controller
         }
 
         $d = DB::selectOne("
-            SELECT a.IDapprenant as stagiaire_id, a.Nccp as numero_matricule,
+            SELECT a.IDapprenant as stagiaire_id, c.NumIns as numero_matricule,
                    c.Nom as nom_ar, c.Prenom as prenom_ar, c.NomFr as nom_fr, c.PrenomFr as prenom_fr,
                    DATE_FORMAT(c.DateNais, '%d/%m/%Y') as date_naissance,
                    c.LieuNais as lieu_naissance, c.LieuNaisFr as lieu_naissance_fr,
@@ -1088,7 +1088,7 @@ class DiplomeController extends Controller
         }
 
         $rows = DB::select("
-            SELECT a.IDapprenant as stagiaire_id, a.Nccp as numero_matricule,
+            SELECT a.IDapprenant as stagiaire_id, c.NumIns as numero_matricule,
                    c.Nom as nom_ar, c.Prenom as prenom_ar, c.NomFr as nom_fr, c.PrenomFr as prenom_fr,
                    DATE_FORMAT(c.DateNais, '%d/%m/%Y') as date_naissance,
                    c.LieuNais as lieu_naissance, c.LieuNaisFr as lieu_naissance_fr,
@@ -1472,7 +1472,7 @@ class DiplomeController extends Controller
         }
 
         $d = DB::selectOne("
-            SELECT a.IDapprenant as stagiaire_id, a.Nccp as numero_matricule,
+            SELECT a.IDapprenant as stagiaire_id, c.NumIns as numero_matricule,
                    c.Nom as nom_ar, c.Prenom as prenom_ar, c.NomFr as nom_fr, c.PrenomFr as prenom_fr,
                    DATE_FORMAT(c.DateNais, '%d/%m/%Y') as date_naissance,
                    c.LieuNais as lieu_naissance, c.LieuNaisFr as lieu_naissance_fr,
@@ -1651,7 +1651,7 @@ class DiplomeController extends Controller
         }
 
         $rows = DB::select("
-            SELECT a.IDapprenant as stagiaire_id, a.Nccp as numero_matricule,
+            SELECT a.IDapprenant as stagiaire_id, c.NumIns as numero_matricule,
                    c.Nom as nom_ar, c.Prenom as prenom_ar, c.NomFr as nom_fr, c.PrenomFr as prenom_fr,
                    DATE_FORMAT(c.DateNais, '%d/%m/%Y') as date_naissance,
                    c.LieuNais as lieu_naissance, c.LieuNaisFr as lieu_naissance_fr,
