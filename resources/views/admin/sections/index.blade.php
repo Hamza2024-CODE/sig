@@ -926,6 +926,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const traineesModalInstance = bootstrap.Modal.getInstance(viewTraineesModalEl);
         if (traineesModalInstance) traineesModalInstance.hide();
 
+        // Move printable report directly to body to bypass any parent flex/grid layout restrictions
+        const reportEl = document.getElementById('printable_branch_report');
+        if (reportEl) {
+            document.body.appendChild(reportEl);
+        }
+
         // Print!
         setTimeout(() => {
             window.print();
