@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Cache;
 $role = session('user')['role_code'] ?? 'user';
 $dfepId = (int)(session('user')['iddfep'] ?? session('user')['IDDFEP'] ?? 0);
 $etabId = (int)(session('user')['etablissement_id'] ?? 0);
+$userSession = session('user') ?? [];
+$isDepUser = (strtolower($userSession['role_code'] ?? '') === 'central' && (strtoupper($userSession['direction_code'] ?? $userSession['username'] ?? '') === 'DEP'));
 
 $selWilaya = $_GET['filter_wilaya'] ?? null;
 $selEtab   = $_GET['filter_etablissement'] ?? null;
@@ -121,12 +123,14 @@ if (empty($branchesList)) {
     <!-- Standardized Central Directorate Header Controls -->
     <div class="d-flex justify-content-between align-items-center mb-4 p-3 rounded-4 shadow-sm border" style="background: var(--card-bg); border-color: var(--card-border) !important;">
         <h4 class="fw-bold m-0 text-primary" style="font-family: 'Cairo', sans-serif;">
-            <i class="fa-solid fa-graduation-cap me-2"></i> لوحة تحكم مديرية تنظيم التكوين والتعليم المهنيين
+            <i class="fa-solid fa-graduation-cap me-2"></i> {{ $isDepUser ? 'لوحة تحكم مديرية التعليم المهني' : 'لوحة تحكم مديرية تنظيم التكوين والتعليم المهنيين' }}
         </h4>
         <div class="d-flex gap-2">
+            @if(!$isDepUser)
             <a href="/sig/dashboard/encadrement" class="btn btn-outline-secondary btn-sm rounded-pill px-3 fw-bold">
                 <i class="fa-solid fa-users-line me-1"></i> سجل الموظفين
             </a>
+            @endif
             <button onclick="window.print()" class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-bold">
                 <i class="fa-solid fa-print me-1"></i> طباعة الصفحة
             </button>
@@ -167,7 +171,7 @@ if (empty($branchesList)) {
                         <i class="fa-solid fa-user-tie" style="font-size: 1.15rem;"></i>
                     </div>
                 </div>
-                <h2 class="fw-bold mb-1 text-primary" style="font-size: 1.8rem; font-family:'Inter';"><?= number_format($studentsCount) ?> طالب</h2>
+                <h2 class="fw-bold mb-1 text-primary" style="font-size: 1.8rem; font-family:'Inter';"><?= number_format($studentsCount) ?> متربص</h2>
                 <span class="text-muted small"><i class="fa-solid fa-check"></i> في مسارات التعليم المهني الأكاديمي</span>
             </div>
         </div>

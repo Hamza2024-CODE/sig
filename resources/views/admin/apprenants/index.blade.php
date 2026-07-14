@@ -242,7 +242,7 @@ $to   = min($page * $per_page, $total_count);
              style="border-color:var(--card-border)!important;">
             <small class="text-muted">
                 عرض <strong><?= $from ?></strong>–<strong><?= $to ?></strong>
-                من <strong><?= number_format($total_count) ?></strong> طالب
+                من <strong><?= number_format($total_count) ?></strong> متربص
                 (صفحة <?= $page ?> / <?= $total_pages ?>)
             </small>
             <nav>
@@ -303,7 +303,7 @@ $to   = min($page * $per_page, $total_count);
         <div class="modal-content border-0 shadow-lg" style="border-radius:18px; font-family:'Cairo';">
             <div class="modal-header bg-primary text-white" style="border-top-left-radius:18px; border-top-right-radius:18px;">
                 <h5 class="modal-title fw-bold" id="studentDetailsModalLabel">
-                    <i class="fa-solid fa-user-graduate me-2"></i> تفاصيل الطالب / المتكون الكاملة
+                    <i class="fa-solid fa-user-graduate me-2"></i> تفاصيل المتربص / المتكون الكاملة
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -322,7 +322,7 @@ $to   = min($page * $per_page, $total_count);
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content" style="border-radius:18px; border:none; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
             <div class="modal-header bg-primary text-white" style="border-top-left-radius:18px; border-top-right-radius:18px;">
-                <h5 class="modal-title fw-bold" id="addStudentModalLabel"><i class="fa-solid fa-user-plus me-2"></i> تسجيل طالب / متكون جديد في النظام</h5>
+                <h5 class="modal-title fw-bold" id="addStudentModalLabel"><i class="fa-solid fa-user-plus me-2"></i> تسجيل متربص / متكون جديد في النظام</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form action="{{ url('dashboard/apprenants/store') }}" method="POST">
@@ -374,7 +374,7 @@ $to   = min($page * $per_page, $total_count);
                         </div>
 
                         <div class="col-md-4">
-                            <label class="form-label small fw-bold">الحالة الإدارية للطالب *</label>
+                            <label class="form-label small fw-bold">الحالة الإدارية للمتربص *</label>
                             <select name="statut" class="form-select" required style="font-size:0.9rem; color: #212529 !important; background-color: #ffffff !important;">
                                 <option value="actif">نشط / Actif</option>
                                 <option value="abondon">تخلى / Abondon</option>

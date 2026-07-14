@@ -63,9 +63,9 @@ $category = $category ?? 'all';
 
                             <!-- Stagiaire select -->
                             <div class="col-md-4 d-none" id="stagiaire_group">
-                                <label for="user_id_stag" class="form-label fw-bold text-secondary small">اختر الطالب المتربص</label>
+                                <label for="user_id_stag" class="form-label fw-bold text-secondary small">اختر المتربص</label>
                                 <select class="form-select rounded-3 border-light bg-light" id="user_id_stag" name="user_id_stag">
-                                    <option value="" disabled selected>-- اختر طالب --</option>
+                                    <option value="" disabled selected>-- اختر متربص --</option>
                                     <?php foreach ($stagiaires as $st): ?>
                                         <option value="<?= $st['id'] ?>"><?= htmlspecialchars($st['nom_ar'] . ' ' . $st['prenom_ar'] . ' (رقم: ' . $st['numero_matricule'] . ')') ?></option>
                                     <?php endforeach; ?>

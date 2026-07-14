@@ -345,7 +345,7 @@
                 <input type="hidden" name="csrf_token" value="<?= csrf_token() ?? '' ?>">
                 <div class="modal-body p-4">
                     <div class="mb-3">
-                        <label for="stagiaire_id" class="form-label small fw-bold text-dark">الطالب المستفيد (اختياري، يترك فارغاً للاتفاقيات العامة)</label>
+                        <label for="stagiaire_id" class="form-label small fw-bold text-dark">المتربص المستفيد (اختياري، يترك فارغاً للاتفاقيات العامة)</label>
                         <select class="form-select form-control-premium" id="stagiaire_id" name="stagiaire_id">
                             <option value="">-- اتفاقية إطار مؤسساتية عامة --</option>
                             <?php foreach ($stagiaires as $s): ?>
@@ -421,7 +421,7 @@
         
         // Validation: If it's an employment contract (cdd/cdi/apprentissage), require a student to be selected
         if (['cdd', 'cdi', 'apprentissage'].includes(typeSelect.value) && studentSelect.value === '') {
-            alert('يرجى تحديد الطالب المستفيد من عقد العمل أو التمهين. لا يمكن تركه فارغاً إلا في حال كانت اتفاقية إطار عامة.');
+            alert('يرجى تحديد المتربص المستفيد من عقد العمل أو التمهين. لا يمكن تركه فارغاً إلا في حال كانت اتفاقية إطار عامة.');
             return false;
         }
         return true;

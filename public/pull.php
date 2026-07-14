@@ -78,6 +78,11 @@ $files = [
     'routes/web.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/routes/web.php',
     'resources/views/layouts/public.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/layouts/public.blade.php',
     'resources/views/layouts/apprenant.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/layouts/apprenant.blade.php',
+    'resources/views/dashboard/departments/edu.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/dashboard/departments/edu.blade.php',
+    'resources/views/admin/modules/documents.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/modules/documents.blade.php',
+    'resources/views/admin/modules/effectifs.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/modules/effectifs.blade.php',
+    'resources/views/admin/modules/integration.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/modules/integration.blade.php',
+    'resources/views/admin/modules/repas.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/modules/repas.blade.php',
     'public/pull.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/pull.php'
 ];
 

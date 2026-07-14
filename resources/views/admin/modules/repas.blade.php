@@ -126,7 +126,7 @@
                         <table class="table table-hover align-middle mb-0" id="mealsTable">
                             <thead class="bg-light text-muted small fw-bold">
                                 <tr>
-                                    <th class="ps-4">الطالب المتربص</th>
+                                    <th class="ps-4">المتربص</th>
                                     <th>الوجبة / الطبق</th>
                                     <th class="text-center">تاريخ الاستهلاك</th>
                                     <th class="text-center">رمز الاستجابة (QR)</th>
@@ -185,14 +185,14 @@
                 <form action="/dashboard/repas/reserver" method="POST">
                     <input type="hidden" name="csrf_token" value="<?= csrf_token() ?? '' ?>">
                     <div class="modal-header border-0 pt-4 px-4 pb-0">
-                        <h5 class="modal-title fw-bold text-dark" id="reserveMealModalLabel"><i class="fa-solid fa-ticket text-primary me-2"></i> حجز وجبة جديدة للطالب</h5>
+                        <h5 class="modal-title fw-bold text-dark" id="reserveMealModalLabel"><i class="fa-solid fa-ticket text-primary me-2"></i> حجز وجبة جديدة للمتربص</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body px-4 py-3">
                         <div class="mb-3">
-                            <label for="stagiaire_id" class="form-label fw-bold text-muted small">اختر الطالب المتربص</label>
+                            <label for="stagiaire_id" class="form-label fw-bold text-muted small">اختر المتربص</label>
                             <select class="form-select rounded-3 border-light bg-light" id="stagiaire_id" name="stagiaire_id" required>
-                                <option value="" disabled selected>-- اختر طالب من القائمة --</option>
+                                <option value="" disabled selected>-- اختر متربص من القائمة --</option>
                                 <?php foreach ($stagiaires as $st): ?>
                                     <option value="<?= $st['id'] ?>"><?= htmlspecialchars($st['nom_ar'] . ' ' . $st['prenom_ar'] . ' (رقم: ' . $st['numero_matricule'] . ')') ?></option>
                                 <?php endforeach; ?>

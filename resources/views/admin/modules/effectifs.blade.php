@@ -161,7 +161,7 @@
                         <table class="table table-hover align-middle mb-0" id="militaryTable">
                             <thead class="bg-light text-muted small fw-bold">
                                 <tr>
-                                    <th class="ps-4">المتكون / الطالب</th>
+                                    <th class="ps-4">المتكون / المتربص</th>
                                     <th class="text-center">تاريخ الميلاد</th>
                                     <th class="text-center">المؤسسة التكوينية</th>
                                     <th class="text-center">التخصص</th>
