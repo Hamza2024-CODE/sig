@@ -427,11 +427,8 @@ $to   = min($page * $per_page, $total_count);
     body {
         display: block !important;
     }
-    body * {
-        visibility: hidden !important;
-    }
-    #printable_branch_report, #printable_branch_report * {
-        visibility: visible !important;
+    body > *:not(#printable_branch_report) {
+        display: none !important;
     }
     #printable_branch_report {
         display: block !important;
