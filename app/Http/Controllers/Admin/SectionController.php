@@ -130,7 +130,7 @@ class SectionController extends Controller
         $offersQuery = DB::table('offre')
             ->join('specialite', 'offre.IDSpecialite', '=', 'specialite.IDSpecialite')
             ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDetablissement')
-            ->select('offre.IDOffre as id', 'specialite.Nom as spec_ar', 'etablissement.Nom as etab_ar', 'offre.IDSession as session_id');
+            ->select('offre.IDOffre as id', 'specialite.Nom as spec_ar', 'etablissement.Nom as etab_ar', 'offre.IDSession as session_id', 'offre.DateD as date_debut', 'offre.DateF as date_fin');
 
         if ($dfepId > 0) {
             $offersQuery->whereIn('offre.IDEts_Form', function($q) use ($dfepId) {
@@ -239,6 +239,10 @@ class SectionController extends Controller
                     'visadfep' => 0,
                     'visadir' => 0,
                 ]);
+
+                DB::table('offre')
+                    ->where('IDOffre', $offre->IDOffre)
+                    ->update(['nbrGroupe' => $validated['groupe']]);
             });
 
             session(['flash_success' => 'تم إضافة القسم بنجاح / Section ajoutée avec succès']);
@@ -266,17 +270,26 @@ class SectionController extends Controller
         ]);
 
         try {
-            DB::table('section')
-                ->where('IDSection', $validated['id'])
-                ->update([
-                    'Nom' => $validated['nom_ar'],
-                    'NomFr' => $validated['nom_fr'],
-                    'DateDF' => $validated['date_debut'],
-                    'DateFF' => $validated['date_fin'],
-                    'Duree' => $validated['duree'],
-                    'Groupe' => $validated['groupe'],
-                    'IDEncadrement' => $validated['encadrement_id'] ?: 0,
-                ]);
+            DB::transaction(function () use ($validated) {
+                $section = DB::table('section')->where('IDSection', $validated['id'])->first();
+                if ($section) {
+                    DB::table('offre')
+                        ->where('IDOffre', $section->IDOffre)
+                        ->update(['nbrGroupe' => $validated['groupe']]);
+                }
+
+                DB::table('section')
+                    ->where('IDSection', $validated['id'])
+                    ->update([
+                        'Nom' => $validated['nom_ar'],
+                        'NomFr' => $validated['nom_fr'],
+                        'DateDF' => $validated['date_debut'],
+                        'DateFF' => $validated['date_fin'],
+                        'Duree' => $validated['duree'],
+                        'Groupe' => $validated['groupe'],
+                        'IDEncadrement' => $validated['encadrement_id'] ?: 0,
+                    ]);
+            });
 
             session(['flash_success' => 'تم تحديث القسم بنجاح / Section modifiée avec succès']);
         } catch (\Exception $e) {

@@ -268,11 +268,14 @@ $to   = min($page * $per_page, $total_count);
                     <div class="row g-3">
                         <div class="col-12">
                             <label class="form-label small fw-bold">اربط القسم بعرض تكوين نشط ومعتمد *</label>
-                            <select name="offre_id" class="form-select select2" required style="font-size:0.9rem;">
+                            <input type="text" id="offerSearchInput" class="form-control mb-2 rounded-pill px-3 shadow-sm" placeholder="🔍 ابحث برمز العرض (رمز التكوين) أو اسم التخصص..." onkeyup="filterOffersList(this.value)" style="font-size:0.85rem;">
+                            <select name="offre_id" class="form-select" required style="font-size:0.9rem;" onchange="onOfferSelectChange(this)">
                                 <option value="" disabled selected>-- حدد عرض تكوين --</option>
                                 <?php foreach ($offers as $off): ?>
-                                <option value="<?= $off->id ?>">
-                                    <?= htmlspecialchars($off->spec_ar) ?> | <?= htmlspecialchars($off->etab_ar) ?>
+                                <option value="<?= $off->id ?>"
+                                        data-date-debut="<?= !empty($off->date_debut) ? substr($off->date_debut, 0, 10) : '' ?>"
+                                        data-date-fin="<?= !empty($off->date_fin) ? substr($off->date_fin, 0, 10) : '' ?>">
+                                    OFF-<?= $off->id ?> | <?= htmlspecialchars($off->spec_ar) ?> | <?= htmlspecialchars($off->etab_ar) ?>
                                 </option>
                                 <?php endforeach; ?>
                             </select>
@@ -291,12 +294,12 @@ $to   = min($page * $per_page, $total_count);
 
                         <div class="col-md-6">
                             <label class="form-label small fw-bold">تاريخ انطلاق الدراسة للقسم *</label>
-                            <input type="date" name="date_debut" class="form-control" required style="font-size:0.9rem;">
+                            <input type="date" name="date_debut" id="add_date_debut" class="form-control" required style="font-size:0.9rem;">
                         </div>
 
                         <div class="col-md-6">
                             <label class="form-label small fw-bold">تاريخ انتهاء الدراسة والتخرج المتوقع *</label>
-                            <input type="date" name="date_fin" class="form-control" required style="font-size:0.9rem;">
+                            <input type="date" name="date_fin" id="add_date_fin" class="form-control" required style="font-size:0.9rem;">
                         </div>
 
                         <div class="col-md-4">
@@ -453,6 +456,35 @@ function confirmDelete(id, name) {
         var form = document.getElementById('deleteForm');
         form.action = '{{ url("dashboard/sections/delete") }}/' + id;
         form.submit();
+    }
+}
+
+function filterOffersList(query) {
+    query = query.toLowerCase();
+    const select = document.querySelector('select[name="offre_id"]');
+    const options = select.options;
+    for (let i = 0; i < options.length; i++) {
+        const option = options[i];
+        if (option.value === "") continue;
+        const text = option.text.toLowerCase();
+        if (text.includes(query)) {
+            option.style.display = "";
+        } else {
+            option.style.display = "none";
+        }
+    }
+}
+
+function onOfferSelectChange(select) {
+    const selectedOption = select.options[select.selectedIndex];
+    const dateDebut = selectedOption.getAttribute('data-date-debut');
+    const dateFin = selectedOption.getAttribute('data-date-fin');
+    
+    if (dateDebut) {
+        document.getElementById('add_date_debut').value = dateDebut;
+    }
+    if (dateFin) {
+        document.getElementById('add_date_fin').value = dateFin;
     }
 }
 </script>
