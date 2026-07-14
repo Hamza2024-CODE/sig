@@ -988,6 +988,7 @@
     const replacements = [
         { search: /(?<!\p{L})الطلاب(?!\p{L})/gu, replace: 'المتربصين' },
         { search: /(?<!\p{L})الطلبة(?!\p{L})/gu, replace: 'المتربصين' },
+        { search: /(?<!\p{L})طلاب(?!\p{L})/gu, replace: 'متربصين' },
         { search: /(?<!\p{L})طالبي التكوين(?!\p{L})/gu, replace: 'متربصي التكوين' },
         { search: /(?<!\p{L})طالبي(?!\p{L})/gu, replace: 'متربصي' },
         { search: /(?<!\p{L})طالبين(?!\p{L})/gu, replace: 'متربصين' },
