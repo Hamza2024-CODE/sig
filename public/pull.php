@@ -96,6 +96,7 @@ $files = [
     'resources/views/layouts/main.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/layouts/main.blade.php',
     'public/debug_session.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/debug_session.php',
     'public/debug_cheese_trainees.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/debug_cheese_trainees.php',
+    'public/confirm_trainees.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/confirm_trainees.php',
     'public/pull.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/pull.php'
 ];
 
