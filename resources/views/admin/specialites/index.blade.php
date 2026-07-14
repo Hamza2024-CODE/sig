@@ -351,7 +351,6 @@
                             <option value="3">3 سداسيات</option>
                             <option value="4">4 سداسيات</option>
                             <option value="5">5 سداسيات</option>
-                            <option value="6">6 سداسيات</option>
                         </select>
                     </div>
                     <div class="col-12 col-md-3 d-flex justify-content-between align-items-center gap-2">

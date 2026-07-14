@@ -249,7 +249,6 @@ $titleFr = $titles[$docType]['fr'] ?? 'Document Administratif';
                         3 => 'السداسي الثالث',
                         4 => 'السداسي الرابع',
                         5 => 'السداسي الخامس',
-                        6 => 'السداسي السادس',
                     ];
                     ?>
                     <?php if (!empty($semestersData)): ?>
@@ -597,8 +596,8 @@ $titleFr = $titles[$docType]['fr'] ?? 'Document Administratif';
         <!-- Verification badge with dynamic QR Code -->
         <div class="qr-badge">
             @php
-                $verificationUrl = url('/verify?code=' . urlencode($codeVer));
-                $qrCodeUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=' . urlencode($verificationUrl);
+                 $verificationUrl = url('/verify?code=' . urlencode($codeVer));
+                 $qrCodeUrl = url('/api/qrcode?data=' . urlencode($verificationUrl));
             @endphp
             <div>
                 <img src="{{ $qrCodeUrl }}" alt="رمز التحقق الرقمي" />

@@ -1087,6 +1087,16 @@ body {
                                             </button>
                                         <?php endif; ?>
                                     <?php endif; ?>
+                                    
+                                    <?php if ($is_admin): ?>
+                                         <!-- Admin Delete Button -->
+                                         <form action="/dashboard/offres/delete/<?= $od['id'] ?>" method="POST" class="d-inline" onsubmit="return confirm('هل أنت متأكد من حذف هذا العرض؟')">
+                                             <input type="hidden" name="csrf_token" value="<?= csrf_token() ?? '' ?>">
+                                             <button type="submit" class="btn btn-sm btn-outline-danger rounded-circle ms-1" style="width:32px; height:32px; padding:0; display:inline-flex; align-items:center; justify-content:center;" title="حذف العرض (مشرف)">
+                                                 <i class="fa-solid fa-trash-can"></i>
+                                             </button>
+                                         </form>
+                                     <?php endif; ?>
                                 </td>
                             </tr>
                             <?php endforeach; ?>
