@@ -1095,11 +1095,9 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
                             @endif
                         @endif
                         @if (in_array($dept, ['general', 'diplomes']))
-                            @if ($roleCode !== 'etablissement' && $roleCode !== 'directeur')
-                                <a href="{{ url('dashboard/diplomes') }}" class="sidebar-subitem {{ ($isActive('/dashboard/diplomes') && !$isActive('/dashboard/diplomes/liste-2021-present')) ? 'active' : '' }}" title="الشهادات"><i class="fa-solid fa-award"></i> <span>الشهادات</span></a>
-                                @if (in_array($roleCode, ['admin', 'dfep', 'central', 'high_admin', 'secretaire_general', 'ministre']))
-                                    <a href="{{ url('dashboard/diplomes/statistiques') }}" class="sidebar-subitem {{ $isActive('/dashboard/diplomes/statistiques') }}" title="إحصائيات الخريجين"><i class="fa-solid fa-chart-pie"></i> <span>إحصائيات الخريجين</span></a>
-                                @endif
+                            <a href="{{ url('dashboard/diplomes') }}" class="sidebar-subitem {{ ($isActive('/dashboard/diplomes') && !$isActive('/dashboard/diplomes/liste-2021-present')) ? 'active' : '' }}" title="الشهادات"><i class="fa-solid fa-award"></i> <span>الشهادات</span></a>
+                            @if (in_array($roleCode, ['admin', 'dfep', 'central', 'high_admin', 'secretaire_general', 'ministre']))
+                                <a href="{{ url('dashboard/diplomes/statistiques') }}" class="sidebar-subitem {{ $isActive('/dashboard/diplomes/statistiques') }}" title="إحصائيات الخريجين"><i class="fa-solid fa-chart-pie"></i> <span>إحصائيات الخريجين</span></a>
                             @endif
                         @endif
                     </div>

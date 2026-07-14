@@ -388,7 +388,7 @@ class EspaceEmployeController extends Controller
 
         } else {
             if ($scope['role'] === 'admin') {
-                $clauses = ['a.IDSection != 0', 's.IDSession IN (31, 32, 33, 34, 35)'];
+                $clauses = ['a.IDSection != 0', 's.IDSession >= 20'];
                 $params = [];
 
                 // Search text
@@ -492,9 +492,9 @@ class EspaceEmployeController extends Controller
                 $params1 = [];
                 $params2 = [];
 
-                // Apply 2024-2026 session constraint globally to prevent timeouts and match requirements
-                $clauses1[] = "s.DateDF >= '2024-02-01'";
-                $clauses2[] = "o_cand.DateD >= '2024-02-01'";
+                // Apply 2021-2026 session constraint globally to prevent timeouts and match requirements
+                $clauses1[] = "s.IDSession >= 20";
+                $clauses2[] = "o_cand.IDSession >= 20";
 
                 // Role scoping
                 if ($scope['role'] === 'dfep' && $scope['iddfep']) {
