@@ -194,6 +194,7 @@ if (isset($_GET['action'])) {
 
 // قائمة الملفات المطلوب استيرادها بالترتيب
 $filesToImport = [
+    'missing_hrt_specialty.sql',
     'missing_etablissement_all.sql',
     'missing_specialite_all.sql',
     'missing_offre_all.sql',
