@@ -2218,13 +2218,13 @@ if ('serviceWorker' in navigator) {
 <script>
 (function() {
     const replacements = [
-        { search: /(?<!\p{L})الطلاب(?!\p{L})/gu, replace: 'المتربصين / المتمهنين' },
-        { search: /(?<!\p{L})الطلبة(?!\p{L})/gu, replace: 'المتربصين / المتمهنين' },
-        { search: /(?<!\p{L})طالبي التكوين(?!\p{L})/gu, replace: 'متربصي / متمهني التكوين' },
-        { search: /(?<!\p{L})طالبي(?!\p{L})/gu, replace: 'متربصي / متمهني' },
-        { search: /(?<!\p{L})الطالبات(?!\p{L})/gu, replace: 'المتربصات / المتمهنات' },
-        { search: /(?<!\p{L})طالبة(?!\p{L})/gu, replace: 'متربصة / متمهنة' },
-        { search: /(?<!\p{L})طالب(?!\p{L})/gu, replace: 'متربص / متمهن' }
+        { search: /(?<!\p{L})الطلاب(?!\p{L})/gu, replace: 'المتربصين' },
+        { search: /(?<!\p{L})الطلبة(?!\p{L})/gu, replace: 'المتربصين' },
+        { search: /(?<!\p{L})طالبي التكوين(?!\p{L})/gu, replace: 'متربصي التكوين' },
+        { search: /(?<!\p{L})طالبي(?!\p{L})/gu, replace: 'متربصي' },
+        { search: /(?<!\p{L})الطالبات(?!\p{L})/gu, replace: 'المتربصات' },
+        { search: /(?<!\p{L})طالبة(?!\p{L})/gu, replace: 'متربصة' },
+        { search: /(?<!\p{L})طالب(?!\p{L})/gu, replace: 'متربص' }
     ];
 
     function replaceTextInNode(node) {
