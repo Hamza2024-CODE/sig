@@ -531,7 +531,13 @@ foreach ($filesToImport as $file) {
                         method: 'POST',
                         body: fd
                     });
-                    const data = await res.json();
+                    const resText = await res.text();
+                    let data;
+                    try {
+                        data = JSON.parse(resText);
+                    } catch (jsonErr) {
+                        throw new Error("استجابة غير صالحة من السيرفر: " + resText.substring(0, 300));
+                    }
 
                     if (data.success) {
                         badge.className = 'status-badge success';
@@ -545,7 +551,7 @@ foreach ($filesToImport as $file) {
                 } catch (e) {
                     badge.className = 'status-badge error';
                     badge.innerText = 'خطأ اتصال';
-                    log(`✗ خطأ أثناء الاتصال بالخادم لاستيراد ${file.name}`, 'error');
+                    log(`✗ خطأ: ${e.message || e}`, 'error');
                 }
             }
 
