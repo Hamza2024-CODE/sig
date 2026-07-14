@@ -334,7 +334,7 @@ class SectionController extends Controller
                        sec.Groupe as groupe,
                        sp.Nom as spec_ar,
                        sp.CodeSpec as spec_code,
-                       sp.NiveauQualif as niveau_qualif,
+                       nv.Nom as niveau_qualif,
                        et.Nom as etab_nom,
                        df.Nom as dfep_nom,
                        w.Nom as wilaya_nom,
@@ -344,6 +344,7 @@ class SectionController extends Controller
                 LEFT JOIN dfep df ON et.IDDFEP = df.IDDFEP
                 LEFT JOIN wilaya w ON df.IDWilayaa = w.IDWilaya
                 LEFT JOIN specialite sp ON sec.IDSpecialite = sp.IDSpecialite
+                LEFT JOIN niveau_fp nv ON sp.IDNiveau_Fp = nv.IDNiveau_Fp
                 LEFT JOIN encadrement enc ON sec.IDEncadrement = enc.IDEncadrement
                 WHERE sec.IDSection = ?
             ", [(int)$id]);
