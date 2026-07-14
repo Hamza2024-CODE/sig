@@ -853,7 +853,7 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
                         <div class="sidebar-submenu {{ ($isActive('/dashboard/offres') || $isActive('/dashboard/inscriptions') || $isActive('/dashboard/apprenants') || $isActive('/dashboard/sections') || $isActive('/dashboard/specialites') || $isActive('/dashboard/sessions') || $isActive('/dashboard/effectifs')) ? 'open' : '' }}">
                             <a href="{{ url('dashboard/offres') }}" class="sidebar-subitem {{ $isActive('/dashboard/offres', true) }}" title="العروض"><i class="fa-solid fa-briefcase text-primary"></i> <span>العروض</span></a>
                             <a href="{{ url('dashboard/inscriptions') }}" class="sidebar-subitem {{ $isActive('/dashboard/inscriptions') }}" title="التسجيل والتوجيه"><i class="fa-solid fa-user-plus text-primary"></i> <span>التسجيل والتوجيه</span></a>
-                            <a href="{{ url('dashboard/apprenants') }}" class="sidebar-subitem {{ $isActive('/dashboard/apprenants') }}" title="المتربصين والطلاب"><i class="fa-solid fa-user-graduate text-primary"></i> <span>المتربصين والطلاب</span></a>
+                            <a href="{{ url('dashboard/apprenants') }}" class="sidebar-subitem {{ $isActive('/dashboard/apprenants') }}" title="المتربصين"><i class="fa-solid fa-user-graduate text-primary"></i> <span>المتربصين</span></a>
                             <a href="{{ url('dashboard/sections') }}" class="sidebar-subitem {{ $isActive('/dashboard/sections') }}" title="الأقسام التكوينية"><i class="fa-solid fa-users-rectangle text-primary"></i> <span>الأقسام التكوينية</span></a>
                             <a href="{{ url('dashboard/specialites') }}" class="sidebar-subitem {{ $isActive('/dashboard/specialites') }}" title="تنظيم الفروع"><i class="fa-solid fa-sitemap text-primary"></i> <span>تنظيم الفروع</span></a>
                             <a href="{{ url('dashboard/sessions') }}" class="sidebar-subitem {{ $isActive('/dashboard/sessions') }}" title="تخطيط الدورات"><i class="fa-solid fa-calendar-alt text-primary"></i> <span>تخطيط الدورات</span></a>
@@ -916,6 +916,25 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
                 <i class="fa-solid fa-chart-line"></i>
                 <span>لوحة التحكم</span>
             </a>
+<!-- Category: Digital Cards (بطاقات التكوين المهني) -->
+            @if (in_array($roleCode, ['admin', 'dfep', 'central', 'etablissement', 'directeur']) && (int)(session('user.IDMode_formation') ?? 0) !== 10 && $dept !== 'diplomes' && !$isDfmUser && !$isDrhUser && !$isDepUser && !$isDeohUser && !$isDosfpUser && !$isDfcriUser)
+                <div class="sidebar-dropdown">
+                    <button type="button" class="sidebar-item {{ $isActive('/dashboard/digital-cards') ? 'active' : '' }}" onclick="toggleSidebarDropdown(this)" title="بطاقات التكوين المهني">
+                        <i class="fa-solid fa-id-card-clip text-primary"></i>
+                        <span>بطاقات التكوين المهني</span>
+                        <i class="fa-solid fa-chevron-down ms-auto dropdown-chevron" style="font-size: 0.7rem;"></i>
+                    </button>
+                    <div class="sidebar-submenu {{ $isActive('/dashboard/digital-cards') ? 'open' : '' }}">
+                        <a href="{{ request()->is('sig/*') ? url('sig/dashboard/digital-cards?type=employee') : url('dashboard/digital-cards?type=employee') }}" class="sidebar-subitem {{ ($isActive('/dashboard/digital-cards') && request('type', 'employee') === 'employee') ? 'active' : '' }}" title="بطاقات الموظفين">
+                            <i class="fa-solid fa-user-tie"></i> <span>بطاقات الموظفين</span>
+                        </a>
+                        <a href="{{ request()->is('sig/*') ? url('sig/dashboard/digital-cards?type=trainee') : url('dashboard/digital-cards?type=trainee') }}" class="sidebar-subitem {{ ($isActive('/dashboard/digital-cards') && request('type') === 'trainee') ? 'active' : '' }}" title="بطاقات المتربصين">
+                            <i class="fa-solid fa-user-graduate"></i> <span>بطاقات المتربصين</span>
+                        </a>
+                    </div>
+                </div>
+            @endif
+
 
             <!-- محرك سير العمل -->
             @if(!in_array($roleCode, ['employee', 'formateur', 'dfep', 'central', 'etablissement', 'directeur']) && $dept === 'general')
@@ -941,14 +960,6 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
                 <i class="fa-solid fa-chart-bar text-info"></i>
                 <span>التقارير</span>
             </a>
-            @endif
-
-            <!-- Employee Space Link -->
-            @if (in_array($roleCode, ['admin', 'dfep', 'central', 'etablissement', 'directeur', 'high_admin', 'secretaire_general', 'ministre']) && $dept !== 'diplomes' && !$isDosfpUser && !$isDepUser && !$isDeohUser)
-                <a href="{{ url('dashboard/espace-employe') }}" class="sidebar-item {{ $isActive('/dashboard/espace-employe') }}" title="فضاء الموظف">
-                    <i class="fa-solid fa-briefcase text-success"></i>
-                    <span>فضاء الموظف</span>
-                </a>
             @endif
 
             <!-- Etablissement Profile Link -->
@@ -987,28 +998,6 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
                 </a>
             @endif
 
-
-
-
-            <!-- Category: Digital Cards (بطاقات التكوين المهني) -->
-            @if (in_array($roleCode, ['admin', 'dfep', 'central', 'etablissement', 'directeur']) && (int)(session('user.IDMode_formation') ?? 0) !== 10 && $dept !== 'diplomes' && !$isDfmUser && !$isDrhUser && !$isDepUser && !$isDeohUser && !$isDosfpUser && !$isDfcriUser)
-                <div class="sidebar-dropdown">
-                    <button type="button" class="sidebar-item {{ $isActive('/dashboard/digital-cards') ? 'active' : '' }}" onclick="toggleSidebarDropdown(this)" title="بطاقات التكوين المهني">
-                        <i class="fa-solid fa-id-card-clip text-primary"></i>
-                        <span>بطاقات التكوين المهني</span>
-                        <i class="fa-solid fa-chevron-down ms-auto dropdown-chevron" style="font-size: 0.7rem;"></i>
-                    </button>
-                    <div class="sidebar-submenu {{ $isActive('/dashboard/digital-cards') ? 'open' : '' }}">
-                        <a href="{{ request()->is('sig/*') ? url('sig/dashboard/digital-cards?type=employee') : url('dashboard/digital-cards?type=employee') }}" class="sidebar-subitem {{ ($isActive('/dashboard/digital-cards') && request('type', 'employee') === 'employee') ? 'active' : '' }}" title="بطاقات الموظفين">
-                            <i class="fa-solid fa-user-tie"></i> <span>بطاقات الموظفين</span>
-                        </a>
-                        <a href="{{ request()->is('sig/*') ? url('sig/dashboard/digital-cards?type=trainee') : url('dashboard/digital-cards?type=trainee') }}" class="sidebar-subitem {{ ($isActive('/dashboard/digital-cards') && request('type') === 'trainee') ? 'active' : '' }}" title="بطاقات المتربصين">
-                            <i class="fa-solid fa-user-graduate"></i> <span>بطاقات المتربصين</span>
-                        </a>
-                    </div>
-                </div>
-            @endif
-
             <!-- ══ Category: إعدادات المستخدم ══ -->
             @if (in_array($roleCode, ['admin', 'dfep', 'central', 'etablissement', 'directeur', 'high_admin']) && !$isDfmUser && !$isDrhUser)
                 <a href="{{ request()->is('sig/*') ? url('sig/dashboard/preferences') : url('dashboard/preferences') }}" class="sidebar-item {{ $isActive('/dashboard/preferences') }}" title="إعدادات المظهر والتفضيلات">
@@ -1023,7 +1012,6 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
                 <span>المصادقة الثنائية (MFA)</span>
             </a>
 
-
             <!-- ══ Section 2: الشؤون البيداغوجية والتعليم ══ -->
             @if (in_array($dept, ['general', 'pedagogie', 'orientation', 'diplomes', 'apprentissage']) && !$isDfmUser && !$isDrhUser)
             <div class="sidebar-section-line"></div>
@@ -1032,48 +1020,49 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
             <!-- Category: Training (التكوين والتعليم) -->
             @if (($hasPerm('offres') || $hasPerm('inscriptions') || in_array($roleCode, ['dfep', 'admin', 'central', 'etablissement', 'directeur', 'employee'])) && in_array($dept, ['general', 'pedagogie', 'orientation', 'apprentissage']))
                 <div class="sidebar-dropdown">
-                    <button type="button" class="sidebar-item {{ ($isActive('/dashboard/offres') || $isActive('/dashboard/inscriptions') || $isActive('/dashboard/preinscrits') || $isActive('/dashboard/specialites') || $isActive('/dashboard/integration') || $isActive('/dashboard/sessions') || $isActive('/dashboard/schedule') || $isActive('/dashboard/effectifs') || $isActive('/dashboard/apprenants') || $isActive('/dashboard/sections')) ? 'active' : '' }}" onclick="toggleSidebarDropdown(this)" title="التكوين والتعليم">
+                    <button type="button" class="sidebar-item {{ ($isActive('/dashboard/offres') || $isActive('/dashboard/inscriptions') || $isActive('/dashboard/preinscrits') || $isActive('/dashboard/specialites') || $isActive('/dashboard/sessions') || $isActive('/dashboard/effectifs') || $isActive('/dashboard/apprenants') || $isActive('/dashboard/sections') || $isActive('/dashboard/reconduits') || $isActive('/dashboard/reconduits/transfers') || $isActive('/dashboard/diplomes/liste-2021-present') || $isActive('/dashboard/schedule')) ? 'active' : '' }}" onclick="toggleSidebarDropdown(this)" title="التكوين والتعليم">
                         <i class="fa-solid fa-graduation-cap"></i>
                         <span>التكوين والتعليم</span>
                         <i class="fa-solid fa-chevron-down ms-auto dropdown-chevron" style="font-size: 0.7rem;"></i>
                     </button>
-                    <div class="sidebar-submenu {{ ($isActive('/dashboard/offres') || $isActive('/dashboard/inscriptions') || $isActive('/dashboard/preinscrits') || $isActive('/dashboard/specialites') || $isActive('/dashboard/integration') || $isActive('/dashboard/sessions') || $isActive('/dashboard/schedule') || $isActive('/dashboard/effectifs') || $isActive('/dashboard/apprenants') || $isActive('/dashboard/sections')) ? 'open' : '' }}">
+                    <div class="sidebar-submenu {{ ($isActive('/dashboard/offres') || $isActive('/dashboard/inscriptions') || $isActive('/dashboard/preinscrits') || $isActive('/dashboard/specialites') || $isActive('/dashboard/sessions') || $isActive('/dashboard/effectifs') || $isActive('/dashboard/apprenants') || $isActive('/dashboard/sections') || $isActive('/dashboard/reconduits') || $isActive('/dashboard/reconduits/transfers') || $isActive('/dashboard/diplomes/liste-2021-present') || $isActive('/dashboard/schedule')) ? 'open' : '' }}">
                         @if(!$isDeohUser && !$isDecUser && !$isDfcriUser)
                             @if (in_array($dept, ['general', 'pedagogie', 'apprentissage']))
-                            <a href="{{ url('dashboard/offres') }}" class="sidebar-subitem {{ $isActive('/dashboard/offres', true) }}" title="العروض"><i class="fa-solid fa-briefcase"></i> <span>العروض</span></a>
-                            @endif
-                            @if (in_array($roleCode, ['admin', 'dfep', 'central']) && $dept === 'general')
-                                <a href="{{ url('dashboard/offres/validation') }}" class="sidebar-subitem {{ $isActive('/dashboard/offres/validation') }}" title="المصادقة على العروض"><i class="fa-solid fa-stamp"></i> <span>المصادقة على العروض</span></a>
+                                <a href="{{ url('dashboard/offres') }}" class="sidebar-subitem {{ $isActive('/dashboard/offres', true) }}" title="العروض"><i class="fa-solid fa-briefcase"></i> <span>العروض</span></a>
+                                @if (in_array($roleCode, ['admin', 'dfep', 'central']) && $dept === 'general')
+                                    <a href="{{ url('dashboard/offres/validation') }}" class="sidebar-subitem {{ $isActive('/dashboard/offres/validation') }}" title="المصادقة على العروض"><i class="fa-solid fa-stamp"></i> <span>المصادقة على العروض</span></a>
+                                @endif
                             @endif
                         @endif
                         @if(!$isDosfpUser)
                             @if(!$isDecUser && !$isDfcriUser)
-                                @if (in_array($dept, ['general', 'pedagogie', 'orientation']))
-                                <a href="{{ url('dashboard/preinscrits') }}" class="sidebar-subitem {{ $isActive('/dashboard/preinscrits') }}" title="التسجيلات الأولية عبر الإنترنت"><i class="fa-solid fa-laptop-file text-warning"></i> <span>التسجيلات الأولية عبر الإنترنت</span></a>
-                                <a href="{{ url('dashboard/inscriptions') }}" class="sidebar-subitem {{ $isActive('/dashboard/inscriptions') }}" title="التسجيل والتوجيه"><i class="fa-solid fa-user-plus"></i> <span>التسجيل والتوجيه</span></a>
+                                @if (in_array($dept, ['general', 'pedagogie', 'apprentissage']))
+                                    @if(!$isDeohUser)
+                                        <a href="{{ url('dashboard/sections') }}" class="sidebar-subitem {{ $isActive('/dashboard/sections') }}" title="الأقسام التكوينية (الفروع)"><i class="fa-solid fa-users-rectangle"></i> <span>الأقسام التكوينية (الفروع)</span></a>
+                                    @endif
+                                @endif
+                                @if(!$isDeohUser && in_array($dept, ['general', 'pedagogie', 'orientation']))
+                                    <a href="{{ url('dashboard/specialites') }}" class="sidebar-subitem {{ $isActive('/dashboard/specialites') }}" title="تنظيم الفروع"><i class="fa-solid fa-sitemap"></i> <span>تنظيم الفروع</span></a>
+                                    <a href="{{ url('dashboard/preinscrits') }}" class="sidebar-subitem {{ $isActive('/dashboard/preinscrits') }}" title="التسجيلات الأولية عبر الإنترنت"><i class="fa-solid fa-laptop-file text-warning"></i> <span>التسجيلات الأولية عبر الإنترنت</span></a>
+                                    <a href="{{ url('dashboard/inscriptions') }}" class="sidebar-subitem {{ $isActive('/dashboard/inscriptions') }}" title="التسجيل والتوجيه"><i class="fa-solid fa-user-plus"></i> <span>التسجيل والتوجيه</span></a>
                                 @endif
                                 @if (in_array($dept, ['general', 'pedagogie', 'apprentissage']))
-                                <a href="{{ url('dashboard/apprenants') }}" class="sidebar-subitem {{ $isActive('/dashboard/apprenants') }}" title="المتربصين والطلاب"><i class="fa-solid fa-user-graduate"></i> <span>المتربصين والطلاب</span></a>
-                                    @if(!$isDeohUser)
-                                    <a href="{{ url('dashboard/sections') }}" class="sidebar-subitem {{ $isActive('/dashboard/sections') }}" title="الأقسام التكوينية"><i class="fa-solid fa-users-rectangle"></i> <span>الأقسام التكوينية</span></a>
-                                    @endif
+                                    <a href="{{ url('dashboard/apprenants') }}" class="sidebar-subitem {{ $isActive('/dashboard/apprenants') }}" title="المتربصين"><i class="fa-solid fa-user-graduate"></i> <span>المتربصين</span></a>
+                                    <a href="{{ url('dashboard/reconduits') }}" class="sidebar-subitem {{ $isActive('/dashboard/reconduits') }}" title="المتربصين المستمرين"><i class="fa-solid fa-users-viewfinder"></i> <span>المتربصين المستمرين</span></a>
+                                    <a href="{{ url('dashboard/reconduits/transfers') }}" class="sidebar-subitem {{ $isActive('/dashboard/reconduits/transfers') }}" title="طلبات تحويل المتربصين"><i class="fa-solid fa-arrows-spin text-warning"></i> <span>طلبات تحويل المتربصين</span></a>
                                 @endif
-                            @endif
-                            @if(!$isDeohUser)
-                                @if(!$isDecUser && !$isDfcriUser)
-                                    @if (in_array($dept, ['general', 'pedagogie', 'orientation']))
-                                    <a href="{{ url('dashboard/specialites') }}" class="sidebar-subitem {{ $isActive('/dashboard/specialites') }}" title="تنظيم الفروع"><i class="fa-solid fa-sitemap"></i> <span>تنظيم الفروع</span></a>
-                                    @endif
+                                @if (in_array($dept, ['general', 'diplomes', 'pedagogie']) && in_array($roleCode, ['admin', 'dfep', 'central', 'high_admin', 'secretaire_general', 'ministre']))
+                                    <a href="{{ url('dashboard/diplomes/liste-2021-present') }}" class="sidebar-subitem {{ $isActive('/dashboard/diplomes/liste-2021-present') }}" title="جميع المتربصين (من 2021)"><i class="fa-solid fa-user-graduate text-warning"></i> <span>جميع المتربصين (من 2021)</span></a>
                                 @endif
-                                @if (in_array($dept, ['general', 'pedagogie']) && (int)(session('user.IDMode_formation') ?? 0) !== 10)
-                                <a href="{{ url('dashboard/integration') }}" class="sidebar-subitem {{ $isActive('/dashboard/integration') }}" title="الادماج"><i class="fa-solid fa-handshake"></i> <span>الادماج</span></a>
-                                @endif
-                                @if(!$isDecUser && !$isDfcriUser)
-                                    @if (in_array($dept, ['general', 'pedagogie', 'orientation']))
-                                    <a href="{{ url('dashboard/sessions') }}" class="sidebar-subitem {{ $isActive('/dashboard/sessions') }}" title="تخطيط الدورات"><i class="fa-solid fa-calendar-alt"></i> <span>تخطيط الدورات</span></a>
-                                    @endif
+                                @if(!$isDeohUser)
                                     @if (in_array($dept, ['general', 'pedagogie']))
-                                    <a href="{{ url('dashboard/effectifs') }}" class="sidebar-subitem {{ $isActive('/dashboard/effectifs') }}" title="تسيير التعداد"><i class="fa-solid fa-users"></i> <span>تسيير التعداد</span></a>
+                                        <a href="{{ url('dashboard/effectifs') }}" class="sidebar-subitem {{ $isActive('/dashboard/effectifs') }}" title="تسيير التعداد"><i class="fa-solid fa-users"></i> <span>تسيير التعداد</span></a>
+                                    @endif
+                                    @if (in_array($dept, ['general', 'pedagogie', 'apprentissage']))
+                                        <a href="{{ url('dashboard/schedule') }}" class="sidebar-subitem {{ $isActive('/dashboard/schedule') }}" title="استعمال الزمن"><i class="fa-solid fa-calendar-days text-primary"></i> <span>استعمال الزمن</span></a>
+                                    @endif
+                                    @if (in_array($roleCode, ['admin', 'high_admin']))
+                                        <a href="{{ url('dashboard/sessions') }}" class="sidebar-subitem {{ $isActive('/dashboard/sessions') }}" title="تخطيط الدورات"><i class="fa-solid fa-calendar-alt"></i> <span>تخطيط الدورات</span></a>
                                     @endif
                                 @endif
                             @endif
@@ -1102,14 +1091,17 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
             <!-- Category: Apprenticeship -->
             @if ((in_array($roleCode, ['admin','dfep','etablissement','directeur']) || $isDecUser || $isDfcriUser) && in_array($dept, ['general', 'apprentissage']))
                 <div class="sidebar-dropdown">
-                    <button type="button" class="sidebar-item {{ ($isActive('/dashboard/partenaires') || $isActive('/dashboard/maitres-apprentissage')) ? 'active' : '' }}" onclick="toggleSidebarDropdown(this)" title="التمهين والمؤسسات">
+                    <button type="button" class="sidebar-item {{ ($isActive('/dashboard/partenaires') || $isActive('/dashboard/maitres-apprentissage') || $isActive('/dashboard/integration')) ? 'active' : '' }}" onclick="toggleSidebarDropdown(this)" title="التمهين والمؤسسات">
                         <i class="fa-solid fa-industry"></i>
                         <span>التمهين والمؤسسات</span>
                         <i class="fa-solid fa-chevron-down ms-auto dropdown-chevron" style="font-size: 0.7rem;"></i>
                     </button>
-                    <div class="sidebar-submenu {{ ($isActive('/dashboard/partenaires') || $isActive('/dashboard/maitres-apprentissage')) ? 'open' : '' }}">
+                    <div class="sidebar-submenu {{ ($isActive('/dashboard/partenaires') || $isActive('/dashboard/maitres-apprentissage') || $isActive('/dashboard/integration')) ? 'open' : '' }}">
                         <a href="{{ url('dashboard/partenaires') }}" class="sidebar-subitem {{ $isActive('/dashboard/partenaires') }}" title="المؤسسات الاقتصادية"><i class="fa-solid fa-building"></i> <span>المؤسسات الاقتصادية</span></a>
                         <a href="{{ url('dashboard/maitres-apprentissage') }}" class="sidebar-subitem {{ $isActive('/dashboard/maitres-apprentissage') }}" title="معلمو التمهين"><i class="fa-solid fa-person-chalkboard"></i> <span>معلمو التمهين</span></a>
+                        @if (in_array($dept, ['general', 'pedagogie', 'apprentissage']) && (int)(session('user.IDMode_formation') ?? 0) !== 10)
+                            <a href="{{ url('dashboard/integration') }}" class="sidebar-subitem {{ $isActive('/dashboard/integration') }}" title="الادماج"><i class="fa-solid fa-handshake"></i> <span>الادماج</span></a>
+                        @endif
                     </div>
                 </div>
             @endif
@@ -1117,89 +1109,30 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
             <!-- Category: Evaluations & Exams -->
             @if (($hasPerm('grades') || in_array($roleCode, ['admin','dfep','etablissement','directeur'])) && in_array($dept, ['general', 'pedagogie', 'diplomes', 'apprentissage']) && !$isDosfpUser && !$isDepUser)
                 <div class="sidebar-dropdown">
-                    <button type="button" class="sidebar-item {{ ($isActive('/resultats') || $isActive('/dashboard/formateurs') || $isActive('/dashboard/formateurs/age-distribution') || $isActive('/dashboard/evaluation-stagiaires') || $isActive('/dashboard/reconduits') || $isActive('/dashboard/reconduits/transfers') || $isActive('/dashboard/schedule') || $isActive('/dashboard/examens') || $isActive('/dashboard/gestion-evaluations') || $isActive('/dashboard/evaluation-finale') || $isActive('/dashboard/diplomes') || $isActive('/dashboard/grades/reconduits') || $isActive('/dashboard/grades')) ? 'active' : '' }}" onclick="toggleSidebarDropdown(this)" title="التقييمات والشهادات">
+                    <button type="button" class="sidebar-item {{ ($isActive('/resultats') || $isActive('/dashboard/evaluation-stagiaires') || $isActive('/dashboard/examens') || $isActive('/dashboard/evaluation-finale') || $isActive('/dashboard/diplomes') || $isActive('/dashboard/diplomes/statistiques') || $isActive('/dashboard/grades/progress') || $isActive('/dashboard/grades')) ? 'active' : '' }}" onclick="toggleSidebarDropdown(this)" title="التقييمات والشهادات">
                         <i class="fa-solid fa-list-check"></i>
                         <span>التقييمات والشهادات</span>
                         <i class="fa-solid fa-chevron-down ms-auto dropdown-chevron" style="font-size: 0.7rem;"></i>
                     </button>
-                    <div class="sidebar-submenu {{ ($isActive('/resultats') || $isActive('/dashboard/formateurs') || $isActive('/dashboard/formateurs/age-distribution') || $isActive('/dashboard/evaluation-stagiaires') || $isActive('/dashboard/reconduits') || $isActive('/dashboard/reconduits/transfers') || $isActive('/dashboard/schedule') || $isActive('/dashboard/examens') || $isActive('/dashboard/gestion-evaluations') || $isActive('/dashboard/evaluation-finale') || $isActive('/dashboard/diplomes') || $isActive('/dashboard/grades/reconduits') || $isActive('/dashboard/grades')) ? 'open' : '' }}">
+                    <div class="sidebar-submenu {{ ($isActive('/resultats') || $isActive('/dashboard/evaluation-stagiaires') || $isActive('/dashboard/examens') || $isActive('/dashboard/evaluation-finale') || $isActive('/dashboard/diplomes') || $isActive('/dashboard/diplomes/statistiques') || $isActive('/dashboard/grades/progress') || $isActive('/dashboard/grades')) ? 'open' : '' }}">
                         @if (in_array($dept, ['general', 'pedagogie', 'apprentissage']))
                             <a href="{{ url('dashboard/grades') }}" class="sidebar-subitem {{ $isActive('/dashboard/grades') }}" title="دفتر العلامات والمداولات"><i class="fa-solid fa-graduation-cap"></i> <span>دفتر العلامات والمداولات</span></a>
                             @if (in_array($roleCode, ['admin','dfep','etablissement','directeur']))
                                 <a href="{{ url('dashboard/grades/progress') }}" class="sidebar-subitem {{ $isActive('/dashboard/grades/progress') }}" title="متابعة تقدم الرصد"><i class="fa-solid fa-chart-line"></i> <span>متابعة تقدم الرصد</span></a>
                             @endif
-                            <a href="{{ url('resultats') }}" class="sidebar-subitem" title="التقييم سداسي"><i class="fa-solid fa-star-half-stroke"></i> <span>التقييم سداسي</span></a>
-                            @if(!$isDeohUser)
-                            <a href="{{ url('dashboard/formateurs') }}" class="sidebar-subitem {{ $isActive('/dashboard/formateurs') }}" title="التقييم - المكونين"><i class="fa-solid fa-user-tie"></i> <span>التقييم - المكونين</span></a>
-                            <a href="{{ url('dashboard/formateurs/age-distribution') }}" class="sidebar-subitem {{ $isActive('/dashboard/formateurs/age-distribution') }}" title="إحصائيات الأساتذة والسن"><i class="fa-solid fa-chart-line"></i> <span>إحصائيات الأساتذة والسن</span></a>
-                            @endif
-                            <a href="{{ url('dashboard/evaluation-stagiaires') }}" class="sidebar-subitem {{ $isActive('/dashboard/evaluation-stagiaires') }}" title="التقييم - المتكونين"><i class="fa-solid fa-user-graduate"></i> <span>التقييم - المتكونين</span></a>
-                            <a href="{{ url('dashboard/reconduits') }}" class="sidebar-subitem {{ $isActive('/dashboard/reconduits') }}" title="المتربصين المستمرين"><i class="fa-solid fa-users-viewfinder"></i> <span>المتربصين المستمرين</span></a>
-                            <a href="{{ url('dashboard/reconduits/transfers') }}" class="sidebar-subitem {{ $isActive('/dashboard/reconduits/transfers') }}" title="طلبات تحويل المتربصين"><i class="fa-solid fa-arrows-spin text-warning"></i> <span>طلبات تحويل المتربصين</span></a>
-                            @if(!$isDeohUser)
-                            <a href="{{ url('dashboard/schedule') }}" class="sidebar-subitem {{ $isActive('/dashboard/schedule') }}" title="استعمال الزمن"><i class="fa-solid fa-calendar-days text-primary"></i> <span>استعمال الزمن</span></a>
-                            @endif
                             <a href="{{ url('dashboard/examens') }}" class="sidebar-subitem {{ $isActive('/dashboard/examens') }}" title="الامتحانات التقييمية"><i class="fa-solid fa-file-signature"></i> <span>الامتحانات التقييمية</span></a>
-                            <a href="{{ url('dashboard/gestion-evaluations') }}" class="sidebar-subitem {{ $isActive('/dashboard/gestion-evaluations') }}" title="تسيير التقييمات"><i class="fa-solid fa-list-check"></i> <span>تسيير التقييمات</span></a>
                             <a href="{{ url('dashboard/evaluation-finale') }}" class="sidebar-subitem {{ $isActive('/dashboard/evaluation-finale') }}" title="التقييم نهائي"><i class="fa-solid fa-flag-checkered"></i> <span>التقييم نهائي</span></a>
+                            @if (in_array($roleCode, ['admin', 'dfep', 'central', 'high_admin']))
+                                <a href="{{ url('dashboard/evaluation-stagiaires') }}" class="sidebar-subitem {{ $isActive('/dashboard/evaluation-stagiaires') }}" title="التقييم - المتكونين"><i class="fa-solid fa-user-graduate"></i> <span>التقييم - المتكونين</span></a>
+                            @endif
                         @endif
                         @if (in_array($dept, ['general', 'diplomes']))
-                            <a href="{{ url('dashboard/diplomes') }}" class="sidebar-subitem {{ ($isActive('/dashboard/diplomes') && !$isActive('/dashboard/diplomes/liste-2021-present')) ? 'active' : '' }}" title="الشهادات"><i class="fa-solid fa-award"></i> <span>الشهادات</span></a>
-                            @if (in_array($roleCode, ['admin', 'dfep', 'central', 'high_admin', 'secretaire_general', 'ministre']))
-                                <a href="{{ url('dashboard/diplomes/liste-2021-present') }}" class="sidebar-subitem {{ $isActive('/dashboard/diplomes/liste-2021-present') }}" title="قائمة الخريجين (منذ 2021)"><i class="fa-solid fa-user-graduate text-warning"></i> <span>الخريجين (منذ 2021)</span></a>
-                                <a href="{{ url('dashboard/diplomes/statistiques') }}" class="sidebar-subitem {{ $isActive('/dashboard/diplomes/statistiques') }}" title="إحصائيات الخريجين"><i class="fa-solid fa-chart-pie"></i> <span>إحصائيات الخريجين</span></a>
+                            @if ($roleCode !== 'etablissement' && $roleCode !== 'directeur')
+                                <a href="{{ url('dashboard/diplomes') }}" class="sidebar-subitem {{ ($isActive('/dashboard/diplomes') && !$isActive('/dashboard/diplomes/liste-2021-present')) ? 'active' : '' }}" title="الشهادات"><i class="fa-solid fa-award"></i> <span>الشهادات</span></a>
+                                @if (in_array($roleCode, ['admin', 'dfep', 'central', 'high_admin', 'secretaire_general', 'ministre']))
+                                    <a href="{{ url('dashboard/diplomes/statistiques') }}" class="sidebar-subitem {{ $isActive('/dashboard/diplomes/statistiques') }}" title="إحصائيات الخريجين"><i class="fa-solid fa-chart-pie"></i> <span>إحصائيات الخريجين</span></a>
+                                @endif
                             @endif
-                        @endif
-                    </div>
-                </div>
-            @endif
-            @endif
-
-
-            <!-- ══ Section 3: التسيير المالي والإداري ══ -->
-            @if (in_array($dept, ['general', 'administration']))
-            <div class="sidebar-section-line"></div>
-            <div class="sidebar-section-label"><span>التسيير المالي والإداري</span></div>
-
-            <!-- ══ Category: التسيير المالي والإداري ══ -->
-            @if (in_array($roleCode, ['admin', 'dfep', 'central', 'etablissement', 'directeur', 'high_admin', 'secretaire_general', 'ministre']) && !$isDosfpUser && !$isDepUser && !$isDeohUser)
-                <div class="sidebar-dropdown">
-                    <button type="button" class="sidebar-item {{ ($isActive('/dashboard/finances') || $isActive('/dashboard/patrimoine') || $isActive('/dashboard/rh-gestion') || $isActive('/dashboard/identities')) ? 'active' : '' }}" onclick="toggleSidebarDropdown(this)" title="التسيير المالي والإداري">
-                        <i class="fa-solid fa-coins text-warning"></i>
-                        <span>التسيير المالي والإداري</span>
-                        <i class="fa-solid fa-chevron-down ms-auto dropdown-chevron" style="font-size: 0.7rem;"></i>
-                    </button>
-                    <div class="sidebar-submenu {{ ($isActive('/dashboard/finances') || $isActive('/dashboard/patrimoine') || $isActive('/dashboard/rh-gestion') || $isActive('/dashboard/identities')) ? 'open' : '' }}">
-                        <a href="{{ url('dashboard/finances') }}" class="sidebar-subitem {{ ($isActive('/dashboard/finances') && !request('tab')) ? 'active' : '' }}" title="المناصب المالية والميزانية">
-                            <i class="fa-solid fa-money-bill-wave text-success"></i> <span>المناصب المالية والميزانية</span>
-                        </a>
-                        @if($isDfmUser)
-                            <a href="{{ url('dashboard/documents') }}" class="sidebar-subitem {{ $isActive('/dashboard/documents') }}" title="الوثائق الرسمية">
-                                <i class="fa-solid fa-file-shield text-warning"></i> <span>الوثائق الرسمية</span>
-                            </a>
-                        @endif
-                        @if(!$isDrhUser)
-                            <a href="{{ url('dashboard/finances?tab=grants_dashboard') }}" class="sidebar-subitem {{ ($isActive('/dashboard/finances') && request('tab')==='grants_dashboard') ? 'active' : '' }}" title="لوحة إحصائيات المنح">
-                                <i class="fa-solid fa-chart-pie text-warning"></i> <span>لوحة إحصائيات المنح</span>
-                            </a>
-                            <a href="{{ url('dashboard/finances?tab=employees_dashboard') }}" class="sidebar-subitem {{ ($isActive('/dashboard/finances') && request('tab')==='employees_dashboard') ? 'active' : '' }}" title="لوحة إحصائيات الموظفين">
-                                <i class="fa-solid fa-users-gear text-warning"></i> <span>لوحة إحصائيات الموظفين</span>
-                            </a>
-                            <a href="{{ url('dashboard/finances?tab=programmes') }}" class="sidebar-subitem {{ ($isActive('/dashboard/finances') && request('tab')==='programmes') ? 'active' : '' }}" title="البرامج والبرامج الفرعية">
-                                <i class="fa-solid fa-layer-group"></i> <span>البرامج والبرامج الفرعية</span>
-                            </a>
-                            <a href="{{ url('dashboard/finances?tab=fournisseurs') }}" class="sidebar-subitem {{ ($isActive('/dashboard/finances') && request('tab')==='fournisseurs') ? 'active' : '' }}" title="تسيير الموردين">
-                                <i class="fa-solid fa-truck"></i> <span>تسيير الموردين</span>
-                            </a>
-                            <a href="{{ url('dashboard/patrimoine') }}" class="sidebar-subitem {{ $isActive('/dashboard/patrimoine') }}" title="تسيير الوسائل والممتلكات">
-                                <i class="fa-solid fa-building text-info"></i> <span>تسيير الوسائل والممتلكات</span>
-                            </a>
-                            <a href="{{ url('dashboard/rh-gestion') }}" class="sidebar-subitem {{ $isActive('/dashboard/rh-gestion') }}" title="الموارد البشرية والإدارية">
-                                <i class="fa-solid fa-users-gear text-primary"></i> <span>الموارد البشرية والإدارية</span>
-                            </a>
-                            <a href="{{ url('dashboard/identities') }}" class="sidebar-subitem {{ $isActive('/dashboard/identities') }}" title="سجل التحقق من الهوية الوطنية">
-                                <i class="fa-solid fa-id-card text-danger"></i> <span>سجل التحقق من الهوية الوطنية</span>
-                            </a>
                         @endif
                     </div>
                 </div>
@@ -1208,26 +1141,25 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
             <!-- Category: Discipline & Physical Services -->
             @if (($hasPerm('discipline') || $hasPerm('repas') || $hasPerm('documents') || $roleCode === 'dfep') && !$isDfmUser && !$isDrhUser && !$isDepUser && !$isDeohUser)
                 <div class="sidebar-dropdown">
-                    <button type="button" class="sidebar-item {{ ($isActive('/dashboard/absences') || $isActive('/dashboard/discipline') || $isActive('/dashboard/repas') || $isActive('/dashboard/documents')) ? 'active' : '' }}" onclick="toggleSidebarDropdown(this)" title="تسيير التكوين والخدمات">
+                    <button type="button" class="sidebar-item {{ ($isActive('/dashboard/absences') || $isActive('/dashboard/discipline') || $isActive('/dashboard/repas') || $isActive('/dashboard/documents') || $isActive('/dashboard/distribution-globale') || $isActive('/dashboard/distribution-detaillee') || $isActive('/dashboard/formation')) ? 'active' : '' }}" onclick="toggleSidebarDropdown(this)" title="تسيير التكوين والخدمات">
                         <i class="fa-solid fa-clipboard-user"></i>
                         <span>تسيير التكوين والخدمات</span>
                         <i class="fa-solid fa-chevron-down ms-auto dropdown-chevron" style="font-size: 0.7rem;"></i>
                     </button>
-                    <div class="sidebar-submenu {{ ($isActive('/dashboard/absences') || $isActive('/dashboard/discipline') || $isActive('/dashboard/repas') || $isActive('/dashboard/documents')) ? 'open' : '' }}">
+                    <div class="sidebar-submenu {{ ($isActive('/dashboard/absences') || $isActive('/dashboard/discipline') || $isActive('/dashboard/repas') || $isActive('/dashboard/documents') || $isActive('/dashboard/distribution-globale') || $isActive('/dashboard/distribution-detaillee') || $isActive('/dashboard/formation')) ? 'open' : '' }}">
                         @if (($hasPerm('discipline') || $roleCode === 'dfep') && !$isDosfpUser && !$isDfcriUser)
                             <a href="{{ url('dashboard/absences') }}" class="sidebar-subitem {{ $isActive('/dashboard/absences') }}" title="المتابعة، الانضباط"><i class="fa-solid fa-user-check"></i> <span>المتابعة، الانضباط</span></a>
                         @endif
                         @if ($hasPerm('inscriptions') || $roleCode === 'dfep')
                             <a href="{{ url('dashboard/distribution-globale') }}" class="sidebar-subitem {{ $isActive('/dashboard/distribution-globale') }}" title="التوزيع العام"><i class="fa-solid fa-chart-pie"></i> <span>التوزيع العام</span></a>
-                            <a href="{{ url('dashboard/distribution-detaillee') }}" class="sidebar-subitem {{ $isActive('/dashboard/distribution-detaillee') }}" title="التوزيع المفصل"><i class="fa-solid fa-chart-bar"></i> <span>التوزيع المفصل</span></a>
+                            @if (in_array($roleCode, ['admin', 'dfep', 'central', 'high_admin']))
+                                <a href="{{ url('dashboard/distribution-detaillee') }}" class="sidebar-subitem {{ $isActive('/dashboard/distribution-detaillee') }}" title="التوزيع المفصل"><i class="fa-solid fa-chart-bar"></i> <span>التوزيع المفصل</span></a>
+                            @endif
                         @endif
                         @if ($hasPerm('offres') || $roleCode === 'dfep')
                             <a href="{{ url('dashboard/formation') }}" class="sidebar-subitem {{ $isActive('/dashboard/formation') }}" title="تسيير التكوين"><i class="fa-solid fa-chalkboard-user"></i> <span>تسيير التكوين</span></a>
                         @endif
-                        @if (false && ($hasPerm('repas') || $roleCode === 'dfep'))
-                            <a href="{{ url('dashboard/repas') }}" class="sidebar-subitem {{ $isActive('/dashboard/repas') }}" title="الخدمات المادية"><i class="fa-solid fa-utensils"></i> <span>الخدمات المادية</span></a>
-                        @endif
-                        @if (($hasPerm('documents') || $roleCode === 'dfep') && !$isDosfpUser && !$isDfcriUser)
+                        @if (($hasPerm('documents') || $roleCode === 'dfep') && !$isDosfpUser && !$isDfcriUser && $roleCode !== 'etablissement' && $roleCode !== 'directeur')
                             <a href="{{ url('dashboard/documents') }}" class="sidebar-subitem {{ $isActive('/dashboard/documents') }}" title="الشهادات والمطبوعات"><i class="fa-solid fa-print"></i> <span>الشهادات والمطبوعات</span></a>
                         @endif
                     </div>
@@ -1235,7 +1167,7 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
             @endif
 
             <!-- Category: Instant Official Documents & Biometrics -->
-            @if (($hasPerm('documents') || $roleCode === 'dfep' || in_array($roleCode, ['admin', 'central', 'etablissement', 'directeur'])) && !$isDfmUser && !$isDrhUser && !$isDepUser && !$isDeohUser && !$isDosfpUser && !$isDfcriUser)
+            @if (($hasPerm('documents') || $roleCode === 'dfep' || in_array($roleCode, ['admin', 'central', 'etablissement', 'directeur'])) && !$isDfmUser && !$isDrhUser && !$isDepUser && !$isDeohUser && !$isDosfpUser && !$isDfcriUser && $roleCode !== 'etablissement' && $roleCode !== 'directeur')
                 <div class="sidebar-dropdown">
                     <button type="button" class="sidebar-item {{ ($isActive('/dashboard/documents') && !str_contains(request()->fullUrl(), 'tab=')) ? 'active' : '' }}" onclick="toggleSidebarDropdown(this)" title="الوثائق الرسمية الفورية">
                         <i class="fa-solid fa-file-shield text-warning"></i>
@@ -1252,6 +1184,25 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
                         <a href="{{ url('dashboard/documents?focus=basma') }}" class="sidebar-subitem {{ (request('focus') === 'basma') ? 'active' : '' }}" title="البصمة الرقمية الموحدة">
                             <i class="fa-solid fa-fingerprint text-info"></i> <span>البصمة الرقمية الموحدة</span>
                         </a>
+                    </div>
+                </div>
+            @endif
+
+            <!-- Category: Employee (قسم الموظف) -->
+            @if (in_array($roleCode, ['admin', 'dfep', 'central', 'etablissement', 'directeur', 'high_admin', 'secretaire_general', 'ministre']) && !$isDfmUser && !$isDrhUser && !$isDosfpUser && !$isDepUser && !$isDeohUser && !$isDfcriUser)
+                <div class="sidebar-dropdown">
+                    <button type="button" class="sidebar-item {{ ($isActive('/dashboard/espace-employe') || $isActive('/dashboard/formateurs/age-distribution') || $isActive('/dashboard/formateurs') || $isActive('/dashboard/gestion-evaluations')) ? 'active' : '' }}" onclick="toggleSidebarDropdown(this)" title="قسم الموظف">
+                        <i class="fa-solid fa-users-gear text-success"></i>
+                        <span>قسم الموظف</span>
+                        <i class="fa-solid fa-chevron-down ms-auto dropdown-chevron" style="font-size: 0.7rem;"></i>
+                    </button>
+                    <div class="sidebar-submenu {{ ($isActive('/dashboard/espace-employe') || $isActive('/dashboard/formateurs/age-distribution') || $isActive('/dashboard/formateurs') || $isActive('/dashboard/gestion-evaluations')) ? 'open' : '' }}">
+                        <a href="{{ url('dashboard/espace-employe') }}" class="sidebar-subitem {{ $isActive('/dashboard/espace-employe') }}" title="فضاء الموظف">
+                            <i class="fa-solid fa-briefcase"></i> <span>فضاء الموظف</span>
+                        </a>
+                        <a href="{{ url('dashboard/formateurs/age-distribution') }}" class="sidebar-subitem {{ $isActive('/dashboard/formateurs/age-distribution') }}" title="إحصائيات الأساتذة"><i class="fa-solid fa-chart-line"></i> <span>إحصائيات الأساتذة</span></a>
+                        <a href="{{ url('dashboard/formateurs') }}" class="sidebar-subitem {{ $isActive('/dashboard/formateurs') }}" title="التقييم - المكونين (الأساتذة)"><i class="fa-solid fa-user-tie"></i> <span>التقييم - المكونين (الأساتذة)</span></a>
+                        <a href="{{ url('dashboard/gestion-evaluations') }}" class="sidebar-subitem {{ $isActive('/dashboard/gestion-evaluations') }}" title="تسيير لجان التقييم"><i class="fa-solid fa-list-check"></i> <span>تسيير لجان التقييم</span></a>
                     </div>
                 </div>
             @endif
@@ -2218,18 +2169,21 @@ if ('serviceWorker' in navigator) {
 <script>
 (function() {
     const replacements = [
-        { search: /(?<!\p{L})الطلاب(?!\p{L})/gu, replace: 'المتربصين' },
-        { search: /(?<!\p{L})الطلبة(?!\p{L})/gu, replace: 'المتربصين' },
-        { search: /(?<!\p{L})طلاب(?!\p{L})/gu, replace: 'متربصين' },
-        { search: /(?<!\p{L})طالبي التكوين(?!\p{L})/gu, replace: 'متربصي التكوين' },
-        { search: /(?<!\p{L})طالبي(?!\p{L})/gu, replace: 'متربصي' },
-        { search: /(?<!\p{L})طالبين(?!\p{L})/gu, replace: 'متربصين' },
-        { search: /(?<!\p{L})طالبان(?!\p{L})/gu, replace: 'متربصان' },
-        { search: /(?<!\p{L})طالبون(?!\p{L})/gu, replace: 'متربصون' },
-        { search: /(?<!\p{L})طالباً(?!\p{L})/gu, replace: 'متربصاً' },
-        { search: /(?<!\p{L})الطالبات(?!\p{L})/gu, replace: 'المتربصات' },
-        { search: /(?<!\p{L})طالبة(?!\p{L})/gu, replace: 'متربصة' },
-        { search: /(?<!\p{L})طالب(?!\p{L})/gu, replace: 'متربص' }
+        { search: /(?<!\p{L})المتربصين وال[ط]لاب(?!\p{L})/gu, replace: 'المتربصين' },
+        { search: /(?<!\p{L})إحصائيات المتربصين وال[ط]لاب(?!\p{L})/gu, replace: 'إحصائيات المتربصين' },
+        { search: /(?<!\p{L})تقرير المتربصين وال[ط]لاب(?!\p{L})/gu, replace: 'تقرير المتربصين' },
+        { search: /(?<!\p{L})ال[ط]لاب(?!\p{L})/gu, replace: 'المتربصين' },
+        { search: /(?<!\p{L})ال[ط]لبة(?!\p{L})/gu, replace: 'المتربصين' },
+        { search: /(?<!\p{L})[ط]لاب(?!\p{L})/gu, replace: 'متربصين' },
+        { search: /(?<!\p{L})[ط]البي التكوين(?!\p{L})/gu, replace: 'متربصي التكوين' },
+        { search: /(?<!\p{L})[ط]البي(?!\p{L})/gu, replace: 'متربصي' },
+        { search: /(?<!\p{L})[ط]البين(?!\p{L})/gu, replace: 'متربصين' },
+        { search: /(?<!\p{L})[ط]البان(?!\p{L})/gu, replace: 'متربصان' },
+        { search: /(?<!\p{L})[ط]البون(?!\p{L})/gu, replace: 'متربصون' },
+        { search: /(?<!\p{L})[ط]الباً(?!\p{L})/gu, replace: 'متربصاً' },
+        { search: /(?<!\p{L})ال[ط]البات(?!\p{L})/gu, replace: 'المتربصات' },
+        { search: /(?<!\p{L})[ط]البة(?!\p{L})/gu, replace: 'متربصة' },
+        { search: /(?<!\p{L})[ط]الب(?!\p{L})/gu, replace: 'متربص' }
     ];
 
     function replaceAttributes(node) {

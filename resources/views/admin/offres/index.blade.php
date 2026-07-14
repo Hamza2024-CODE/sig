@@ -303,7 +303,7 @@ body {
                                 </div>
                                 <span class="badge rounded-pill" style="background:#e6f4ea; color:#137333; font-size:.6rem;">لم يتخرجوا بعد</span>
                             </div>
-                            <h6 class="text-muted fw-bold mb-1" style="font-size:.8rem;">الطلاب النشطون</h6>
+                            <h6 class="text-muted fw-bold mb-1" style="font-size:.8rem;">المتربصين النشطون</h6>
                             <h3 class="fw-bold mb-0 text-dark" dir="ltr"><?= number_format($stats['total_actifs'] ?? $stats['total_diplomes'] ?? 0, 0, ',', ' ') ?></h3>
                             <small class="text-success fw-bold mb-2">منهم <span dir="ltr"><?= number_format($stats['actifs_femmes'] ?? $stats['diplomes_femmes'] ?? 0, 0, ',', ' ') ?></span> إناث</small>
                             <div class="mt-auto pt-2 border-top" style="font-size:.65rem; color:#6c757d; line-height:1.4;">
@@ -350,7 +350,7 @@ body {
                             </div>
                             <h6 class="text-muted fw-bold mb-1" style="font-size:.8rem;">نسبة النشاط</h6>
                             <h3 class="fw-bold mb-0 text-dark"><?= $stats['taux_actifs_prevu'] ?? $stats['taux_diplomes_prevu'] ?>%</h3>
-                            <small class="fw-bold mb-2" style="color:#8b5cf6;">معدل الطلاب النشطين / المقاعد</small>
+                            <small class="fw-bold mb-2" style="color:#8b5cf6;">معدل المتربصين النشطين / المقاعد</small>
                             <div class="progress mb-1" style="height:4px;">
                                 <div class="progress-bar" style="width:<?= min(100, $stats['taux_actifs_prevu'] ?? $stats['taux_diplomes_prevu'] ?? 0) ?>%; background:#8b5cf6;"></div>
                             </div>
@@ -483,7 +483,7 @@ body {
         <div class="card-header bg-white border-0 pt-4 pb-3 px-4 d-flex justify-content-between align-items-center">
             <h5 class="fw-bold mb-0 text-dark">
                 <i class="fa-solid fa-users-line text-primary me-2"></i>
-                إحصائيات المتربصين والطلاب
+                إحصائيات المتربصين
                 <span class="badge bg-primary-subtle text-primary rounded-pill ms-2 fw-normal" style="font-size:.75rem;">بيانات حية</span>
             </h5>
             <button class="btn btn-sm btn-link text-muted p-0" onclick="document.getElementById('traineeStatsBody').classList.toggle('d-none')" title="إخفاء / إظهار">
@@ -504,7 +504,7 @@ body {
                         </div>
                         <div>
                             <div class="fw-bold mb-0" style="font-size:1.5rem; letter-spacing:-.5px;"><?= number_format($ts['total_actifs'] ?? 0) ?></div>
-                            <div class="small opacity-75">الطلاب النشطين</div>
+                            <div class="small opacity-75">المتربصين النشطين</div>
                             <div class="small mt-1 opacity-85">
                                 <i class="fa-solid fa-venus me-1"></i>
                                 <?= number_format($ts['actifs_femmes'] ?? 0) ?> إناث
@@ -627,7 +627,7 @@ body {
                     </div>
                     <div class="text-center">
                         <div class="fw-bold text-info" style="font-size:1.1rem;"><?= number_format($ts['total_filles'] ?? 0) ?></div>
-                        <div class="small text-muted">الطالبات — إناث</div>
+                        <div class="small text-muted">المتربصات — إناث</div>
                         <?php if (($ts['total_actifs'] ?? 0) > 0): ?>
                         <div class="small text-muted opacity-75"><?= round(($ts['total_filles'] / $ts['total_actifs']) * 100) ?>% نسبة تمثيل الإناث</div>
                         <?php endif; ?>

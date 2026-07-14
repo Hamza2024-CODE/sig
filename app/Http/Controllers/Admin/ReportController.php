@@ -54,7 +54,7 @@ class ReportController extends Controller
         $reportTypes = [
             [
                 'key'         => 'apprenants',
-                'title'       => 'تقرير المتربصين والطلاب',
+                'title'       => 'تقرير المتربصين',
                 'description' => 'قائمة شاملة بالمتربصين النشطين مع بياناتهم الأساسية والتخصصات (أول ' . number_format(self::MAX_ROWS) . ' سجل)',
                 'icon'        => 'fa-user-graduate',
                 'color'       => '#6366f1',

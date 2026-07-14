@@ -986,20 +986,22 @@
 <script>
 (function() {
     const replacements = [
-        { search: /(?<!\p{L})الطلاب(?!\p{L})/gu, replace: 'المتربصين' },
-        { search: /(?<!\p{L})الطلبة(?!\p{L})/gu, replace: 'المتربصين' },
-        { search: /(?<!\p{L})طلاب(?!\p{L})/gu, replace: 'متربصين' },
-        { search: /(?<!\p{L})طالبي التكوين(?!\p{L})/gu, replace: 'متربصي التكوين' },
-        { search: /(?<!\p{L})طالبي(?!\p{L})/gu, replace: 'متربصي' },
-        { search: /(?<!\p{L})طالبين(?!\p{L})/gu, replace: 'متربصين' },
-        { search: /(?<!\p{L})طالبان(?!\p{L})/gu, replace: 'متربصان' },
-        { search: /(?<!\p{L})طالبون(?!\p{L})/gu, replace: 'متربصون' },
-        { search: /(?<!\p{L})طالباً(?!\p{L})/gu, replace: 'متربصاً' },
-        { search: /(?<!\p{L})الطالبات(?!\p{L})/gu, replace: 'المتربصات' },
-        { search: /(?<!\p{L})طالبة(?!\p{L})/gu, replace: 'متربصة' },
-        { search: /(?<!\p{L})طالب(?!\p{L})/gu, replace: 'متربص' }
+        { search: /(?<!\p{L})المتربصين وال[ط]لاب(?!\p{L})/gu, replace: 'المتربصين' },
+        { search: /(?<!\p{L})إحصائيات المتربصين وال[ط]لاب(?!\p{L})/gu, replace: 'إحصائيات المتربصين' },
+        { search: /(?<!\p{L})تقرير المتربصين وال[ط]لاب(?!\p{L})/gu, replace: 'تقرير المتربصين' },
+        { search: /(?<!\p{L})ال[ط]لاب(?!\p{L})/gu, replace: 'المتربصين' },
+        { search: /(?<!\p{L})ال[ط]لبة(?!\p{L})/gu, replace: 'المتربصين' },
+        { search: /(?<!\p{L})[ط]لاب(?!\p{L})/gu, replace: 'متربصين' },
+        { search: /(?<!\p{L})[ط]البي التكوين(?!\p{L})/gu, replace: 'متربصي التكوين' },
+        { search: /(?<!\p{L})[ط]البي(?!\p{L})/gu, replace: 'متربصي' },
+        { search: /(?<!\p{L})[ط]البين(?!\p{L})/gu, replace: 'متربصين' },
+        { search: /(?<!\p{L})[ط]البان(?!\p{L})/gu, replace: 'متربصان' },
+        { search: /(?<!\p{L})[ط]البون(?!\p{L})/gu, replace: 'متربصون' },
+        { search: /(?<!\p{L})[ط]الباً(?!\p{L})/gu, replace: 'متربصاً' },
+        { search: /(?<!\p{L})ال[ط]البات(?!\p{L})/gu, replace: 'المتربصات' },
+        { search: /(?<!\p{L})[ط]البة(?!\p{L})/gu, replace: 'متربصة' },
+        { search: /(?<!\p{L})[ط]الب(?!\p{L})/gu, replace: 'متربص' }
     ];
-
     function replaceAttributes(node) {
         if (node.nodeType === Node.ELEMENT_NODE) {
             const placeholder = node.getAttribute('placeholder');
