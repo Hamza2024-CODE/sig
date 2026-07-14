@@ -427,7 +427,7 @@ $to   = min($page * $per_page, $total_count);
     }
     #printable_branch_report {
         display: block !important;
-        position: absolute;
+        position: relative !important;
         left: 0;
         top: 0;
         width: 100%;
@@ -440,7 +440,10 @@ $to   = min($page * $per_page, $total_count);
         background: #fff !important;
     }
     .print-page {
+        page-break-before: always;
+        break-before: page;
         page-break-after: always;
+        break-after: page;
         padding: 40px;
         box-sizing: border-box;
     }
