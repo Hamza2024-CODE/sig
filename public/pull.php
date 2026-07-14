@@ -76,7 +76,8 @@ $files = [
     'app/Http/Controllers/Admin/ApprenantController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/ApprenantController.php',
     'resources/views/admin/apprenants/index.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/apprenants/index.blade.php',
     'routes/web.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/routes/web.php',
-    'public/pull.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/pull.php'
+    'public/pull.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/pull.php',
+    'public/check_index.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/check_index.php'
 ];
 
 foreach ($files as $localPath => $remoteUrl) {
