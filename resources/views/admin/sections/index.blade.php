@@ -276,7 +276,8 @@ $to   = min($page * $per_page, $total_count);
                                         data-spec-ar="<?= htmlspecialchars($off->spec_ar) ?>"
                                         data-spec-fr="<?= htmlspecialchars($off->spec_fr ?? '') ?>"
                                         data-date-debut="<?= !empty($off->date_debut) ? substr($off->date_debut, 0, 10) : '' ?>"
-                                        data-date-fin="<?= !empty($off->date_fin) ? substr($off->date_fin, 0, 10) : '' ?>">
+                                        data-date-fin="<?= !empty($off->date_fin) ? substr($off->date_fin, 0, 10) : '' ?>"
+                                        data-duree="<?= (int)($off->duree ?? 24) ?>">
                                     OFF-<?= $off->id ?> | <?= htmlspecialchars($off->spec_ar) ?> | <?= htmlspecialchars($off->etab_ar) ?>
                                 </option>
                                 <?php endforeach; ?>
@@ -306,7 +307,7 @@ $to   = min($page * $per_page, $total_count);
 
                         <div class="col-md-4">
                             <label class="form-label small fw-bold">مدة التكوين بالقسم (أشهر) *</label>
-                            <input type="number" name="duree" class="form-control" placeholder="24" required style="font-size:0.9rem;" step="0.5">
+                            <input type="number" name="duree" id="add_duree" class="form-control" placeholder="24" required style="font-size:0.9rem;" step="0.5">
                         </div>
 
                         <div class="col-md-4">
@@ -475,6 +476,7 @@ function onOfferSelectChange(select) {
     const specFr = selectedOption.getAttribute('data-spec-fr');
     const dateDebut = selectedOption.getAttribute('data-date-debut');
     const dateFin = selectedOption.getAttribute('data-date-fin');
+    const duree = selectedOption.getAttribute('data-duree');
     
     if (specAr) {
         document.getElementById('add_nom_ar').value = specAr;
@@ -487,6 +489,9 @@ function onOfferSelectChange(select) {
     }
     if (dateFin) {
         document.getElementById('add_date_fin').value = dateFin;
+    }
+    if (duree) {
+        document.getElementById('add_duree').value = duree;
     }
 }
 </script>
