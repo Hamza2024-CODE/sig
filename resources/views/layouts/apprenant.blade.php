@@ -352,6 +352,65 @@ document.addEventListener('DOMContentLoaded', () => {
     if (saved) document.documentElement.setAttribute('data-theme', saved);
 });
 </script>
+<script>
+(function() {
+    const replacements = [
+        { search: /(?<!\p{L})الطلاب(?!\p{L})/gu, replace: 'المتربصين' },
+        { search: /(?<!\p{L})الطلبة(?!\p{L})/gu, replace: 'المتربصين' },
+        { search: /(?<!\p{L})طالبي التكوين(?!\p{L})/gu, replace: 'متربصي التكوين' },
+        { search: /(?<!\p{L})طالبي(?!\p{L})/gu, replace: 'متربصي' },
+        { search: /(?<!\p{L})الطالبات(?!\p{L})/gu, replace: 'المتربصات' },
+        { search: /(?<!\p{L})طالبة(?!\p{L})/gu, replace: 'متربصة' },
+        { search: /(?<!\p{L})طالب(?!\p{L})/gu, replace: 'متربص' }
+    ];
+
+    function replaceTextInNode(node) {
+        if (node.nodeType === Node.TEXT_NODE) {
+            let text = node.nodeValue;
+            let changed = false;
+            
+            const parent = node.parentNode;
+            if (parent && (parent.tagName === 'SCRIPT' || parent.tagName === 'STYLE' || parent.tagName === 'TEXTAREA' || parent.tagName === 'INPUT')) {
+                return;
+            }
+
+            replacements.forEach(r => {
+                r.search.lastIndex = 0;
+                if (r.search.test(text)) {
+                    text = text.replace(r.search, r.replace);
+                    changed = true;
+                }
+            });
+
+            if (changed) {
+                node.nodeValue = text;
+            }
+        } else {
+            for (let child of node.childNodes) {
+                replaceTextInNode(child);
+            }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        replaceTextInNode(document.body);
+
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach(mutation => {
+                mutation.addedNodes.forEach(node => {
+                    replaceTextInNode(node);
+                });
+            });
+        });
+
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+    });
+})();
+</script>
+
 @yield('scripts')
 </body>
 </html>

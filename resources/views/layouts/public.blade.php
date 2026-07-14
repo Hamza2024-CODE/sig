@@ -133,6 +133,17 @@
         })();
     </script>
     
+    <!-- Preconnect to CDNs & Google Fonts to speed up LCP -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+
+    <!-- Preload Critical Stylesheets & Images -->
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css" as="style">
+    <link rel="preload" href="{{ asset('assets/css/design-system.css?v=2.1') }}" as="style">
+    <link rel="preload" href="{{ asset('assets/images/logo.png') }}" as="image" fetchpriority="high">
+    
     <!-- Modern Premium Typography: Plus Jakarta Sans, Inter, Geist, & Cairo (Arabic) -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
@@ -152,12 +163,31 @@
     <!-- Sovereign Design System — loads LAST to override all legacy styles -->
     <link rel="stylesheet" href="{{ asset('assets/css/design-system.css?v=2.1') }}">
     
-    <!-- PWA Manifest -->
+    <!-- PWA + TWA Ready -->
     <link rel="manifest" href="{{ asset('manifest.json') }}">
+    <meta name="theme-color" content="#003870">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="منصة تسيير">
     <link rel="apple-touch-icon" href="{{ asset('assets/icons/icon-192x192.png') }}">
+    <link rel="apple-touch-icon" sizes="152x152" href="{{ asset('assets/icons/icon-192x192.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('assets/icons/icon-192x192.png') }}">
+    <link rel="apple-touch-startup-image" href="{{ asset('assets/icons/icon-512x512.png') }}">
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                    .then(function(reg) {
+                        console.log('[SGFEP] Service Worker registered. Scope:', reg.scope);
+                    })
+                    .catch(function(err) {
+                        console.warn('[SGFEP] Service Worker registration failed:', err);
+                    });
+            });
+        }
+    </script>
     
     <style>
         :root {
@@ -682,9 +712,8 @@
 
                     <!-- Controls -->
                     <div class="d-flex align-items-center gap-3">
-                        <a href="{{ url('login') }}" class="btn btn-nav-login d-flex align-items-center gap-2">
-                            <i class="fa-solid fa-user-shield"></i>
-                            <span>فضاء الموظف</span>
+                        <a href="{{ url('login') }}" class="btn btn-nav-login d-flex align-items-center justify-content-center" title="فضاء الموظف" style="width: 42px; height: 42px; padding: 0 !important; border-radius: 12px;">
+                            <i class="fa-solid fa-user-shield" style="font-size: 1.1rem;"></i>
                         </a>
                     </div>
                 </div>
@@ -748,7 +777,10 @@
                     <ul class="list-unstyled text-secondary small" style="line-height: 2;">
                         <li><i class="fa-solid fa-map-marker-alt text-primary me-2"></i> وزارة التكوين والتعليم المهنيين، الجزائر العاصمة</li>
                         <li><i class="fa-solid fa-envelope text-primary me-2"></i> contact@mfep.gov.dz</li>
-                        <li><i class="fa-solid fa-globe text-primary me-2"></i> www.mfep.gov.dz</li>
+                        <li>
+                            <i class="fa-solid fa-globe text-primary me-2"></i> 
+                            <span onclick="triggerSpecialLogin(event)" style="cursor: pointer; user-select: none;">www.mfep.gov.dz</span>
+                        </li>
                     </ul>
                 </div>
 
@@ -861,7 +893,12 @@
     });
 
     // 1. Focus & Page Visibility Monitors (Android/iOS safe)
-    window.addEventListener('blur', showShield);
+    window.addEventListener('blur', function() {
+        if (document.activeElement && document.activeElement.tagName === 'IFRAME') {
+            return;
+        }
+        showShield();
+    });
     window.addEventListener('focus', function() {
         setTimeout(hideShield, 1500);
     });
@@ -930,6 +967,81 @@
 })();
 </script>
 @endif
+<script>
+    function triggerSpecialLogin(e) {
+        e.preventDefault();
+        if (typeof switchLoginType === 'function') {
+            switchLoginType('special');
+            const container = document.querySelector('.split-login-container');
+            if (container) {
+                container.scrollIntoView({ behavior: 'smooth' });
+            } else {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        } else {
+            window.location.href = "{{ url('login?type=special') }}";
+        }
+    }
+</script>
+<script>
+(function() {
+    const replacements = [
+        { search: /(?<!\p{L})الطلاب(?!\p{L})/gu, replace: 'المتربصين' },
+        { search: /(?<!\p{L})الطلبة(?!\p{L})/gu, replace: 'المتربصين' },
+        { search: /(?<!\p{L})طالبي التكوين(?!\p{L})/gu, replace: 'متربصي التكوين' },
+        { search: /(?<!\p{L})طالبي(?!\p{L})/gu, replace: 'متربصي' },
+        { search: /(?<!\p{L})الطالبات(?!\p{L})/gu, replace: 'المتربصات' },
+        { search: /(?<!\p{L})طالبة(?!\p{L})/gu, replace: 'متربصة' },
+        { search: /(?<!\p{L})طالب(?!\p{L})/gu, replace: 'متربص' }
+    ];
+
+    function replaceTextInNode(node) {
+        if (node.nodeType === Node.TEXT_NODE) {
+            let text = node.nodeValue;
+            let changed = false;
+            
+            const parent = node.parentNode;
+            if (parent && (parent.tagName === 'SCRIPT' || parent.tagName === 'STYLE' || parent.tagName === 'TEXTAREA' || parent.tagName === 'INPUT')) {
+                return;
+            }
+
+            replacements.forEach(r => {
+                r.search.lastIndex = 0;
+                if (r.search.test(text)) {
+                    text = text.replace(r.search, r.replace);
+                    changed = true;
+                }
+            });
+
+            if (changed) {
+                node.nodeValue = text;
+            }
+        } else {
+            for (let child of node.childNodes) {
+                replaceTextInNode(child);
+            }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        replaceTextInNode(document.body);
+
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach(mutation => {
+                mutation.addedNodes.forEach(node => {
+                    replaceTextInNode(node);
+                });
+            });
+        });
+
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+    });
+})();
+</script>
+
     @yield('scripts')
 </body>
 </html>
