@@ -331,10 +331,12 @@ $to   = min($page * $per_page, $total_count);
                     <div class="row g-3">
                         <div class="col-12">
                             <label class="form-label small fw-bold">اختر المترشح المقبول للتسجيل *</label>
-                            <select name="candidat_id" class="form-select select2" required style="font-size:0.9rem;">
+                            <select name="candidat_id" id="add_candidat_id" class="form-select select2" required style="font-size:0.9rem;" onchange="onAddCandidateChange(this)">
                                 <option value="" disabled selected>-- حدد مترشحاً مقبولاً (تمت مراجعته) --</option>
                                 <?php foreach ($availableCandidates as $cand): ?>
-                                <option value="<?= $cand->id ?>">
+                                <option value="<?= $cand->id ?>"
+                                        data-nin="<?= htmlspecialchars($cand->nin ?? '') ?>"
+                                        data-numins="<?= htmlspecialchars($cand->num_ins ?? '') ?>">
                                     <?= htmlspecialchars($cand->nom_ar . ' ' . $cand->prenom_ar) ?> (<?= htmlspecialchars($cand->nom_fr . ' ' . $cand->prenom_fr) ?>)
                                 </option>
                                 <?php endforeach; ?>
@@ -347,24 +349,20 @@ $to   = min($page * $per_page, $total_count);
                             <select name="section_id" class="form-select" required style="font-size:0.9rem;">
                                 <option value="" disabled selected>-- اختر القسم --</option>
                                 <?php foreach ($sections as $s): ?>
-                                <option value="<?= $s->id ?>"><?= htmlspecialchars($s->nom_ar) ?></option>
+                                <option value="<?= $s->id ?>"><?= htmlspecialchars($s->nom_ar) ?> (<?= htmlspecialchars($s->spec_ar) ?>)</option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
 
                         <div class="col-md-6">
                             <label class="form-label small fw-bold">رقم بطاقة التعريف الوطنية / رقم التسجيل *</label>
-                            <input type="text" name="nccp" class="form-control" placeholder="M2026/0001" required style="font-size:0.9rem;">
+                            <input type="text" name="nccp" id="add_nccp" class="form-control" placeholder="M2026/0001" required style="font-size:0.9rem;">
                         </div>
 
                         <div class="col-md-4">
                             <label class="form-label small fw-bold">المجموعة الدراسية *</label>
-                            <select name="groupe" class="form-select" required style="font-size:0.9rem;">
-                                <option value="1">المجموعة 1</option>
-                                <option value="2">المجموعة 2</option>
-                                <option value="3">المجموعة 3</option>
-                                <option value="4">المجموعة 4</option>
-                            </select>
+                            <input type="number" name="groupe" id="add_groupe_trainee" class="form-control" min="1" max="50" value="1" required style="font-size:0.9rem;">
+                            <span class="text-muted small d-block mt-1">رقم الفوج من 1 إلى 50</span>
                         </div>
 
                         <div class="col-md-4">
@@ -417,51 +415,71 @@ $to   = min($page * $per_page, $total_count);
 
                     {{-- Form Fields (Hidden by default, shown when loaded) --}}
                     <div class="row g-3 d-none" id="editFormFields">
-                        <div class="col-12 bg-light p-3 rounded mb-2">
-                            <span class="text-muted d-block small">اسم المترشح المقيد:</span>
-                            <strong class="text-dark d-block fs-5" id="edit_student_name"></strong>
+                        <div class="col-12 mb-2">
+                            <div class="card border-0 shadow-sm overflow-hidden" style="border-radius:12px; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);">
+                                <div class="card-body p-4 text-white d-flex align-items-center gap-3">
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center text-white" style="width:50px; height:50px; font-size:1.5rem; background:rgba(255,255,255,0.1);">
+                                        <i class="fa-solid fa-user-graduate"></i>
+                                    </div>
+                                    <div>
+                                        <span class="text-white-50 d-block small mb-1" style="font-size:0.8rem;">اسم المترشح المقيد بالنظام</span>
+                                        <strong class="fs-4" id="edit_student_name" style="font-family:'Cairo';"></strong>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label small fw-bold">القسم الدراسي *</label>
-                            <select name="section_id" id="edit_section_id" class="form-select" required style="font-size:0.9rem;">
-                                <?php foreach ($sections as $s): ?>
-                                <option value="<?= $s->id ?>"><?= htmlspecialchars($s->nom_ar) ?></option>
-                                <?php endforeach; ?>
-                            </select>
+                            <label class="form-label small fw-bold text-secondary mb-2"><i class="fa-solid fa-users-rectangle me-1 text-primary"></i> القسم الدراسي *</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0 text-muted" style="border-radius:0 8px 8px 0;"><i class="fa-solid fa-sitemap"></i></span>
+                                <select name="section_id" id="edit_section_id" class="form-select border-start-0 ps-0" required style="font-size:0.9rem; border-radius:8px 0 0 8px; height: 42px;">
+                                    <?php foreach ($sections as $s): ?>
+                                    <option value="<?= $s->id ?>"><?= htmlspecialchars($s->nom_ar) ?> (<?= htmlspecialchars($s->spec_ar) ?>)</option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label small fw-bold">رقم بطاقة التعريف الوطنية / رقم التسجيل *</label>
-                            <input type="text" name="nccp" id="edit_nccp" class="form-control" required style="font-size:0.9rem;">
+                            <label class="form-label small fw-bold text-secondary mb-2"><i class="fa-solid fa-id-card me-1 text-primary"></i> رقم بطاقة التعريف الوطنية / رقم التسجيل *</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0 text-muted" style="border-radius:0 8px 8px 0;"><i class="fa-solid fa-barcode"></i></span>
+                                <input type="text" name="nccp" id="edit_nccp" class="form-control border-start-0 ps-0" required style="font-size:0.9rem; border-radius:8px 0 0 8px; height: 42px;">
+                            </div>
                         </div>
 
                         <div class="col-md-4">
-                            <label class="form-label small fw-bold">المجموعة الدراسية *</label>
-                            <select name="groupe" id="edit_groupe" class="form-select" required style="font-size:0.9rem;">
-                                <option value="1">المجموعة 1</option>
-                                <option value="2">المجموعة 2</option>
-                                <option value="3">المجموعة 3</option>
-                                <option value="4">المجموعة 4</option>
-                            </select>
+                            <label class="form-label small fw-bold text-secondary mb-2"><i class="fa-solid fa-users me-1 text-primary"></i> المجموعة الدراسية (الفوج) *</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0 text-muted" style="border-radius:0 8px 8px 0;"><i class="fa-solid fa-arrow-up-9-1"></i></span>
+                                <input type="number" name="groupe" id="edit_groupe" class="form-control border-start-0 ps-0" min="1" max="50" required style="font-size:0.9rem; border-radius:8px 0 0 8px; height: 42px;">
+                            </div>
+                            <span class="text-muted small d-block mt-1">رقم الفوج المعتمد من 1 إلى 50</span>
                         </div>
 
                         <div class="col-md-4">
-                            <label class="form-label small fw-bold">قرار التثبيت *</label>
-                            <select name="valide" id="edit_valide" class="form-select" required style="font-size:0.9rem;">
-                                <option value="1">مؤكد ومثبت</option>
-                                <option value="0">غير مثبت</option>
-                            </select>
+                            <label class="form-label small fw-bold text-secondary mb-2"><i class="fa-solid fa-circle-check me-1 text-primary"></i> قرار التثبيت البيداغوجي *</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0 text-muted" style="border-radius:0 8px 8px 0;"><i class="fa-solid fa-toggle-on"></i></span>
+                                <select name="valide" id="edit_valide" class="form-select border-start-0 ps-0" required style="font-size:0.9rem; border-radius:8px 0 0 8px; height: 42px;">
+                                    <option value="1">مؤكد ومثبت</option>
+                                    <option value="0">غير مثبت</option>
+                                </select>
+                            </div>
                         </div>
 
                         <div class="col-md-4">
-                            <label class="form-label small fw-bold">الحالة الإدارية *</label>
-                            <select name="statut" id="edit_statut" class="form-select" required style="font-size:0.9rem;">
-                                <option value="actif">نشط / Actif</option>
-                                <option value="abondon">تخلى / Abondon</option>
-                                <option value="exclu">مقصى / Exclu</option>
-                                <option value="diplome">متخرج / Diplômé</option>
-                            </select>
+                            <label class="form-label small fw-bold text-secondary mb-2"><i class="fa-solid fa-user-clock me-1 text-primary"></i> الحالة الإدارية الحالية *</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0 text-muted" style="border-radius:0 8px 8px 0;"><i class="fa-solid fa-user-gear"></i></span>
+                                <select name="statut" id="edit_statut" class="form-select border-start-0 ps-0" required style="font-size:0.9rem; border-radius:8px 0 0 8px; height: 42px;">
+                                    <option value="actif">نشط / Actif</option>
+                                    <option value="abondon">تخلى / Abondon</option>
+                                    <option value="exclu">مقصى / Exclu</option>
+                                    <option value="diplome">متخرج / Diplômé</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -480,6 +498,15 @@ $to   = min($page * $per_page, $total_count);
 </form>
 
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Move all modals to document.body to prevent backdrop layering bugs
+    document.querySelectorAll('.modal').forEach(function(modal) {
+        if (modal.parentNode !== document.body) {
+            document.body.appendChild(modal);
+        }
+    });
+});
+
 const BASE = '{{ asset("") }}';
 const CSRF = '{{ csrf_token() }}';
 const MEDIA_ACTIONS_ENABLED = {{ \App\Helpers\SovereignLicensingHelper::getSetting('patrimoine_media_actions_enabled', '1') === '1' ? 'true' : 'false' }};
@@ -513,13 +540,13 @@ function openEditModal(id) {
                 if (!optionExists && res.data.IDSection) {
                     const opt = document.createElement('option');
                     opt.value = res.data.IDSection;
-                    opt.text = res.data.section_nom || ('قسم معرف بـ: ' + res.data.IDSection);
+                    opt.text = (res.data.section_nom || ('قسم معرف بـ: ' + res.data.IDSection)) + (res.data.spec_ar ? ' (' + res.data.spec_ar + ')' : '');
                     selectEl.add(opt);
                 }
                 selectEl.value = res.data.IDSection;
                 
-                document.getElementById('edit_nccp').value = res.data.Nccp;
-                document.getElementById('edit_groupe').value = res.data.Groupe;
+                document.getElementById('edit_nccp').value = res.data.Nccp || res.data.nin || '';
+                document.getElementById('edit_groupe').value = res.data.Groupe ?? 1;
                 document.getElementById('edit_valide').value = res.data.Valide;
                 document.getElementById('edit_statut').value = res.data.statut;
 
@@ -533,6 +560,14 @@ function openEditModal(id) {
         .catch(err => {
             alert('حدث خطأ غير متوقع أثناء الاتصال بالخادم.');
         });
+}
+
+function onAddCandidateChange(select) {
+    const selectedOption = select.options[select.selectedIndex];
+    const nin = selectedOption.getAttribute('data-nin');
+    const numins = selectedOption.getAttribute('data-numins');
+    
+    document.getElementById('add_nccp').value = numins || nin || '';
 }
 
 function viewStudentDetails(id) {
@@ -557,49 +592,81 @@ function viewStudentDetails(id) {
 
             const data = response.data;
             
-            // Helper to get image path or pdf preview
+            // Dynamic modal preview helper
+            if (!window.previewDocumentModal) {
+                window.previewDocumentModal = function(url, title) {
+                    let modalEl = document.getElementById('documentPreviewModal');
+                    if (!modalEl) {
+                        modalEl = document.createElement('div');
+                        modalEl.id = 'documentPreviewModal';
+                        modalEl.className = 'modal fade';
+                        modalEl.setAttribute('tabindex', '-1');
+                        modalEl.setAttribute('aria-hidden', 'true');
+                        modalEl.style.zIndex = '10000';
+                        modalEl.innerHTML = `
+                            <div class="modal-dialog modal-lg modal-dialog-centered">
+                                <div class="modal-content" style="border-radius:15px; border:none; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+                                    <div class="modal-header bg-light border-0 py-3" style="border-top-left-radius:15px; border-top-right-radius:15px;">
+                                        <h5 class="modal-title fw-bold text-dark m-0" id="documentPreviewModalTitle" style="font-family:'Cairo'; font-size:1.05rem;"></h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body p-0" id="documentPreviewModalBody" style="height:600px; background:#f8fafc;">
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        document.body.appendChild(modalEl);
+                    }
+                    
+                    document.getElementById('documentPreviewModalTitle').innerText = title;
+                    const body = document.getElementById('documentPreviewModalBody');
+                    const lower = url.toLowerCase();
+                    const isImage = lower.endsWith('.png') || lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.gif') || lower.endsWith('.svg') || lower.endsWith('.webp');
+                    
+                    if (isImage) {
+                        body.innerHTML = `<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; padding:20px; box-sizing:border-box;">
+                            <img src="${url}" style="max-width:100%; max-height:100%; object-fit:contain; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+                        </div>`;
+                    } else {
+                        body.innerHTML = `<iframe src="${url}" style="width:100%; height:100%; border:none;" allow="autoplay"></iframe>`;
+                    }
+                    
+                    const m = new bootstrap.Modal(modalEl);
+                    m.show();
+                };
+            }
+
             function getMediaHtml(path, label) {
-                if (!path) return `<div><span class="profile-field-label text-muted d-block mb-1 fw-bold">${label}:</span><span class="text-muted small">لا توجد وثيقة مرفوعة</span></div>`;
+                if (!path || path.trim() === '' || path.trim().toLowerCase() === 'empty') {
+                    return `<div><span class="profile-field-label text-muted d-block mb-1 fw-bold">${label}:</span><span class="text-muted small">لا توجد وثيقة مرفوعة</span></div>`;
+                }
                 const lower = path.toLowerCase();
-                const isImage = lower.endsWith('.png') || lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.gif') || lower.endsWith('.svg') || lower.endsWith('.webp');
-                const isPdf = lower.endsWith('.pdf');
                 
+                let base = (window.laravel_url || '').replace(/\/$/, '');
                 let resolved = path;
                 if (lower.startsWith('/uploads/')) {
-                    resolved = `/sig${path}`;
+                    resolved = `${base}${path}`;
                 } else if (!lower.startsWith('http://') && !lower.startsWith('https://') && !lower.startsWith('/') && !lower.startsWith('data:')) {
-                    resolved = `/sig/${path}`;
-                }
-                
-                if (isImage) {
-                    return `<div>
-                        <span class="profile-field-label text-muted d-block mb-1 fw-bold">${label}:</span>
-                        <img src="${resolved}" class="img-thumbnail img-fluid rounded" style="max-height:180px; cursor:pointer;" onclick="window.open('${resolved}')">
-                    </div>`;
-                }
-                if (isPdf) {
-                    return `<div>
-                        <span class="profile-field-label text-muted d-block mb-1 fw-bold">${label}:</span>
-                        <iframe src="${resolved}" style="width:100%; height:250px;" border="0"></iframe>
-                    </div>`;
+                    resolved = `${base}/${path}`;
                 }
                 
                 return `<div>
                     <span class="profile-field-label text-muted d-block mb-1 fw-bold">${label}:</span>
-                    <a href="${resolved}" target="_blank" class="btn btn-sm btn-outline-primary py-1 px-2 text-start rounded" style="font-size:0.75rem;">
-                        <i class="fa-solid fa-download me-1"></i> تحميل/معاينة الملف
-                    </a>
+                    <button type="button" class="btn btn-sm btn-outline-primary py-1 px-3 rounded-pill fw-bold text-start" onclick="previewDocumentModal('${resolved}', '${label}')" style="font-size:0.75rem;">
+                        <i class="fa-solid fa-eye me-1"></i> معاينة المستند المرفق
+                    </button>
                 </div>`;
             }
 
             // Photo resolver
-            let photoUrl = '/sig/assets/images/default-avatar.png'; // default fallback
+            let base = (window.laravel_url || '').replace(/\/$/, '');
+            let photoUrl = base + '/assets/images/default-avatar.png'; // default fallback
             if (data.photo_path) {
                 let p = data.photo_path;
-                photoUrl = p.startsWith('/uploads/') ? `/sig${p}` : (p.startsWith('/') ? p : `/sig/${p}`);
+                photoUrl = p.startsWith('/uploads/') ? `${base}${p}` : (p.startsWith('/') ? p : `${base}/${p}`);
             } else if (data.pre_photo_path) {
                 let p = data.pre_photo_path;
-                photoUrl = p.startsWith('/uploads/') ? `/sig${p}` : (p.startsWith('/') ? p : `/sig/${p}`);
+                photoUrl = p.startsWith('/uploads/') ? `${base}${p}` : (p.startsWith('/') ? p : `${base}/${p}`);
             }
 
             const genderText = parseInt(data.civ) === 2 ? 'أنثى' : 'ذكر';
@@ -673,19 +740,23 @@ function viewStudentDetails(id) {
                             </div>
                         </div>
 
+                        @php
+                        // No changes to server-side code, we are updating the JS block.
+                        @endphp
+                        
                         <h6 class="fw-bold border-bottom pb-2 mt-4 mb-3 text-dark"><i class="fa-solid fa-folder-open me-1 text-warning"></i> وثائق الملف المرفوعة (معاينة مباشرة)</h6>
                         <div class="row g-3">
                             <div class="col-md-6 border-end">
-                                ${getMediaHtml(data.relevedenotes_url || data.certscol_path, 'الشهادة المدرسية / كشف النقاط')}
+                                ${getMediaHtml((data.relevedenotes_url && data.relevedenotes_url.trim().toLowerCase() !== 'empty') ? data.relevedenotes_url : (data.certscol_path && data.certscol_path.trim().toLowerCase() !== 'empty' ? data.certscol_path : null), 'الشهادة المدرسية / كشف النقاط')}
                             </div>
                             <div class="col-md-6">
-                                ${getMediaHtml(data.actn_url || data.actnaispdf_path, 'عقد الميلاد / Acte de Naissance')}
+                                ${getMediaHtml((data.actn_url && data.actn_url.trim().toLowerCase() !== 'empty') ? data.actn_url : (data.actnaispdf_path && data.actnaispdf_path.trim().toLowerCase() !== 'empty' ? data.actnaispdf_path : null), 'عقد الميلاد / Acte de Naissance')}
                             </div>
                             <div class="col-md-6 border-end mt-3">
-                                ${getMediaHtml(data.exdiplome_url || data.diplomecert_path, 'شهادة المؤهل / Diplôme')}
+                                ${getMediaHtml((data.exdiplome_url && data.exdiplome_url.trim().toLowerCase() !== 'empty') ? data.exdiplome_url : (data.diplomecert_path && data.diplomecert_path.trim().toLowerCase() !== 'empty' ? data.diplomecert_path : null), 'شهادة المؤهل / Diplôme')}
                             </div>
                             <div class="col-md-6 mt-3">
-                                ${getMediaHtml(data.enneexperience_url || data.contratpdf_path, 'شهادة العمل والخبرة / عقد التمهين')}
+                                ${getMediaHtml((data.enneexperience_url && data.enneexperience_url.trim().toLowerCase() !== 'empty') ? data.enneexperience_url : (data.contratpdf_path && data.contratpdf_path.trim().toLowerCase() !== 'empty' ? data.contratpdf_path : null), 'شهادة العمل والخبرة / عقد التمهين')}
                             </div>
                         </div>
                     </div>

@@ -201,7 +201,7 @@ class ApprenantController extends Controller
         $candQuery = DB::table('candidat')
             ->leftJoin('apprenant', 'candidat.IDCandidat', '=', 'apprenant.IDCandidat')
             ->whereNull('apprenant.IDCandidat')
-            ->select('candidat.IDCandidat as id', 'candidat.Nom as nom_ar', 'candidat.Prenom as prenom_ar', 'candidat.NomFr as nom_fr', 'candidat.PrenomFr as prenom_fr');
+            ->select('candidat.IDCandidat as id', 'candidat.Nom as nom_ar', 'candidat.Prenom as prenom_ar', 'candidat.NomFr as nom_fr', 'candidat.PrenomFr as prenom_fr', 'candidat.Nin as nin', 'candidat.NumIns as num_ins');
             
         if ($dfepId > 0) {
             $candQuery->whereIn('candidat.IDOffre', function($q) use ($dfepId) {
