@@ -76,8 +76,7 @@ $files = [
     'app/Http/Controllers/Admin/ApprenantController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/ApprenantController.php',
     'resources/views/admin/apprenants/index.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/apprenants/index.blade.php',
     'routes/web.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/routes/web.php',
-    'public/pull.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/pull.php',
-    'public/check_index.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/check_index.php'
+    'public/pull.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/pull.php'
 ];
 
 foreach ($files as $localPath => $remoteUrl) {
@@ -119,6 +118,13 @@ try {
     }
 } catch (\Throwable $e) {
     echo "<span style='color:red;'>Error clearing cache: " . $e->getMessage() . "</span><br>";
+}
+
+// Clean up temporary check_index.php if it exists
+$checkIndexPath = __DIR__ . '/check_index.php';
+if (file_exists($checkIndexPath)) {
+    @unlink($checkIndexPath);
+    echo "✓ Diagnostic check_index.php cleaned up.<br>";
 }
 
 echo "<br><h3 style='color:green;'>All updates completed successfully!</h3>";
