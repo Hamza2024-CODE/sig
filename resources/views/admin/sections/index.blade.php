@@ -423,6 +423,7 @@ $to   = min($page * $per_page, $total_count);
         visibility: visible !important;
     }
     #printable_branch_report {
+        display: block !important;
         position: absolute;
         left: 0;
         top: 0;
