@@ -121,7 +121,7 @@ class OffresService
                 $whereConditions[] = "o.Obs_Central IS NOT NULL AND o.Obs_Central != '' AND o.ValideCentral = 0";
             }
         }
-        $whereConditions[] = "o.NbrInscr > 0";
+        $whereConditions[] = "(o.NbrInscr > 0 OR o.Valide = 0 OR o.ValidDfp = 0 OR o.ValideCentral = 0 OR o.IDSession IN (SELECT IDSession FROM session WHERE Encour = 1))";
         $scopeWhere = count($whereConditions) > 0 ? implode(' AND ', $whereConditions) : '1=1';
 
         // 3. Retrieve aggregates and breakdowns
