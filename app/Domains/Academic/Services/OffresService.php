@@ -463,18 +463,10 @@ class OffresService
         }
 
         $stats = [
-            'total_pending' => count($pending),
-            'total_approved' => 0,
-            'total_rejected' => 0
+            'total_pending' => $lists['total_pending'] ?? count($pending),
+            'total_approved' => $lists['total_approved'] ?? 0,
+            'total_rejected' => $lists['total_rejected'] ?? 0
         ];
-
-        foreach ($processed as $o) {
-            if ($o['statut_offre'] === 'مقبول مركزيا' || $o['statut_offre'] === 'مصادق عليه ولائيا') {
-                $stats['total_approved']++;
-            } elseif ($o['statut_offre'] === 'مرفوض ولائيا' || $o['statut_offre'] === 'مرفوض مركزيا') {
-                $stats['total_rejected']++;
-            }
-        }
 
         $sessions = $this->repository->getModalSessions();
         $etablissements = $this->repository->getModalEtablissements($roleCode, $etabId, $dfepId);

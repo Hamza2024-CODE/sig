@@ -452,6 +452,10 @@ class OffresRepository
             LEFT JOIN mode_formation mf ON o.IDMode_formation = mf.IDMode_formation
         ";
 
+        $pendingCount = 0;
+        $approvedCount = 0;
+        $rejectedCount = 0;
+
         if ($roleCode === 'dfep') {
             // Pending for DFP: submitted by establishment (Valide=1), not yet approved by DFP (ValidDfp=0), and no rejection reason
             $stmt1 = $this->db->prepare($baseQuery . "
@@ -468,6 +472,19 @@ class OffresRepository
             ");
             $stmt2->execute([$dfepId]);
             $processed = $stmt2->fetchAll(PDO::FETCH_ASSOC);
+
+            // Real counts (without limits)
+            $stmtPC = $this->db->prepare("SELECT COUNT(*) FROM offre o LEFT JOIN etablissement e ON o.IDEts_Form = e.IDetablissement WHERE e.IDDFEP = ? AND o.Valide = 1 AND o.ValidDfp = 0 AND (o.Obs_Dfep IS NULL OR o.Obs_Dfep = '')");
+            $stmtPC->execute([$dfepId]);
+            $pendingCount = (int)$stmtPC->fetchColumn();
+
+            $stmtAC = $this->db->prepare("SELECT COUNT(*) FROM offre o LEFT JOIN etablissement e ON o.IDEts_Form = e.IDetablissement WHERE e.IDDFEP = ? AND o.ValidDfp = 1");
+            $stmtAC->execute([$dfepId]);
+            $approvedCount = (int)$stmtAC->fetchColumn();
+
+            $stmtRC = $this->db->prepare("SELECT COUNT(*) FROM offre o LEFT JOIN etablissement e ON o.IDEts_Form = e.IDetablissement WHERE e.IDDFEP = ? AND o.Valide = 1 AND o.ValidDfp = 0 AND o.Obs_Dfep IS NOT NULL AND o.Obs_Dfep != ''");
+            $stmtRC->execute([$dfepId]);
+            $rejectedCount = (int)$stmtRC->fetchColumn();
         } else {
             // Central/Admin: All offers
             // Pending: Approved by DFP (ValidDfp=1), not yet approved by Central (ValideCentral=0), and no rejection reason
@@ -489,9 +506,28 @@ class OffresRepository
             ");
             $stmtProcessed->execute();
             $processed = $stmtProcessed->fetchAll(PDO::FETCH_ASSOC);
+
+            // Real counts (without limits)
+            $stmtPC = $this->db->prepare("SELECT COUNT(*) FROM offre o WHERE o.ValidDfp = 1 AND o.ValideCentral = 0 AND (o.Obs_Central IS NULL OR o.Obs_Central = '')");
+            $stmtPC->execute();
+            $pendingCount = (int)$stmtPC->fetchColumn();
+
+            $stmtAC = $this->db->prepare("SELECT COUNT(*) FROM offre o WHERE o.ValideCentral = 1");
+            $stmtAC->execute();
+            $approvedCount = (int)$stmtAC->fetchColumn();
+
+            $stmtRC = $this->db->prepare("SELECT COUNT(*) FROM offre o WHERE o.ValidDfp = 1 AND o.ValideCentral = 0 AND o.Obs_Central IS NOT NULL AND o.Obs_Central != ''");
+            $stmtRC->execute();
+            $rejectedCount = (int)$stmtRC->fetchColumn();
         }
 
-        return ['pending' => $pending, 'processed' => $processed];
+        return [
+            'pending' => $pending, 
+            'processed' => $processed,
+            'total_pending' => $pendingCount,
+            'total_approved' => $approvedCount,
+            'total_rejected' => $rejectedCount
+        ];
     }
 
     /**

@@ -207,12 +207,12 @@ body {
         <ul class="nav nav-pills gap-2" id="validationTab" role="tablist">
             <li class="nav-item" role="presentation">
                 <button class="nav-link active rounded-pill px-4 fw-bold shadow-sm" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending-panel" type="button" role="tab" aria-controls="pending-panel" aria-selected="true">
-                    <i class="fa-solid fa-clock me-2"></i> قيد الانتظار (<?= count($pending_offres) ?>)
+                    <i class="fa-solid fa-clock me-2"></i> قيد الانتظار (<?= $stats['total_pending'] ?>)
                 </button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link rounded-pill px-4 fw-bold shadow-sm" id="history-tab" data-bs-toggle="tab" data-bs-target="#history-panel" type="button" role="tab" aria-controls="history-panel" aria-selected="false">
-                    <i class="fa-solid fa-box-archive me-2"></i> أرشيف المصادقة (<?= count($processed_offres) ?>)
+                    <i class="fa-solid fa-box-archive me-2"></i> أرشيف المصادقة (<?= $stats['total_approved'] + $stats['total_rejected'] ?>)
                 </button>
             </li>
         </ul>
