@@ -323,11 +323,6 @@ function buildPageUrl(int $p, int $lim, $etabId = null): string {
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label for="orient_groupe" class="form-label small fw-bold text-muted">رقم القسم (الفوج) *</label>
-                        <input type="text" name="groupe" id="orient_groupe" class="form-control rounded-pill border-light-subtle shadow-sm px-3" required oninput="this.value = this.value.replace(/[^0-9]/g, '')" value="1">
-                        <span class="text-muted small d-block mt-1" style="font-size: 0.72rem; margin-right: 10px;">رقم الفوج المعتمد من 1 إلى 50</span>
-                    </div>
-                    <div class="mb-3">
                         <label for="decision" class="form-label small fw-bold text-muted">قرار التوجيه والالتحاق</label>
                         <select class="form-select rounded-pill border-light-subtle shadow-sm px-3" id="decision" name="validation" required>
                             <option value="0">قيد الدراسة والتحكيم</option>
@@ -377,11 +372,6 @@ function buildPageUrl(int $p, int $lim, $etabId = null): string {
                                 <option value="<?= $sec['id'] ?>"><?= htmlspecialchars($sec['spec_ar'] . ' - ' . $sec['nom_ar']) ?></option>
                             <?php endforeach; ?>
                         </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="bulk_groupe" class="form-label small fw-bold text-muted">رقم القسم (الفوج) *</label>
-                        <input type="text" name="bulk_groupe" id="bulk_groupe" class="form-control rounded-pill border-light-subtle shadow-sm px-3" required oninput="this.value = this.value.replace(/[^0-9]/g, '')" value="1">
-                        <span class="text-muted small d-block mt-1" style="font-size: 0.72rem; margin-right: 10px;">رقم الفوج المعتمد من 1 إلى 50</span>
                     </div>
                     <div class="mb-3">
                         <label for="bulk_validation" class="form-label small fw-bold text-muted">قرار التوجيه والالتحاق الجماعي</label>
@@ -494,14 +484,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const status     = this.getAttribute('data-status');
             const offreId    = this.getAttribute('data-offre-id');
             const sectionId  = this.getAttribute('data-section-id');
-            const groupe     = this.getAttribute('data-groupe') || '1';
 
             document.getElementById('orient_id').value        = id;
             document.getElementById('orient_name').value      = name;
             document.getElementById('decision').value         = validation;
             document.getElementById('statut_dossier').value   = status;
             document.getElementById('orient_offre_id').value  = offreId;
-            document.getElementById('orient_groupe').value    = groupe;
 
             loadSectionsForOffer(offreId, sectionId);
 

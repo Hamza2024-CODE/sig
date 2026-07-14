@@ -397,7 +397,7 @@ class ModulesController extends Controller {
         $sections = [];
         try {
             $secSql = "
-                SELECT s.IDSection as id, s.Nom as nom_ar, sp.Nom as spec_ar 
+                SELECT s.IDSection as id, s.Nom as nom_ar, sp.Nom as spec_ar, s.IDOffre
                 FROM section s
                 JOIN offre o ON s.IDOffre = o.IDOffre
                 JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
@@ -414,10 +414,24 @@ class ModulesController extends Controller {
             if (!empty($secCond)) {
                 $secSql .= " WHERE " . implode(" AND ", $secCond);
             }
-            $secSql .= " ORDER BY sp.Nom ASC, s.Nom ASC";
+            $secSql .= " ORDER BY s.IDOffre ASC, s.IDSection ASC";
             $stmt = $this->db->prepare($secSql);
             $stmt->execute($secParams);
-            $sections = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $rawSections = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            $offerCounts = [];
+            foreach ($rawSections as $sec) {
+                $offId = $sec['IDOffre'];
+                if (!isset($offerCounts[$offId])) {
+                    $offerCounts[$offId] = 0;
+                }
+                $offerCounts[$offId]++;
+                $sections[] = [
+                    'id' => $sec['id'],
+                    'nom_ar' => $sec['nom_ar'] . ' ' . $offerCounts[$offId],
+                    'spec_ar' => $sec['spec_ar']
+                ];
+            }
         } catch (\Exception $e) {}
 
         return $this->render('admin/modules/inscriptions', [
@@ -455,7 +469,6 @@ class ModulesController extends Controller {
             $validation = (int)request()->all()['validation'];
             $offreId = (int)(request()->all()['offre_id'] ?? 0);
             $sectionId = (int)(request()->all()['section_id'] ?? 0);
-            $groupe = (int)(request()->all()['groupe'] ?? 1);
             $statutDossier = trim(request()->all()['statut_dossier'] ?? 'en_attente');
 
             try {
@@ -484,6 +497,17 @@ class ModulesController extends Controller {
                         }
 
                         if ($secId > 0) {
+                            // Automatically compute the group index (1, 2, 3...)
+                            $idxRow = $this->db->prepare("
+                                SELECT COUNT(*) 
+                                FROM section 
+                                WHERE IDOffre = (SELECT IDOffre FROM section WHERE IDSection = ?) 
+                                  AND IDSection <= ?
+                            ");
+                            $idxRow->execute([$secId, $secId]);
+                            $groupe = (int)$idxRow->fetchColumn();
+                            if ($groupe <= 0) $groupe = 1;
+
                             if (!$apprenantId) {
                                 $nccp = 'APP-' . date('Y') . '-' . sprintf('%05d', $id);
                                 // Generate manual ID for apprenant
@@ -502,7 +526,7 @@ class ModulesController extends Controller {
                     $this->db->prepare("DELETE FROM apprenant WHERE IDCandidat=?")->execute([$id]);
                 }
 
-                session(['flash_success' => 'تم تحديث وضعية وتوجيه المترشح بنجاح!']);
+                session(['flash_success' => 'تم تحديث وضعية وتوجيه المتربص بنجاح!']);
             } catch (\Exception $e) { 
                 session(['flash_error' => 'خطأ: '.$e->getMessage()]); 
             }
@@ -521,12 +545,11 @@ class ModulesController extends Controller {
             $candidateIds = request()->all()['candidate_ids'] ?? '';
             $ids = array_filter(array_map('intval', explode(',', $candidateIds)));
             $sectionId = (int)(request()->all()['bulk_section_id'] ?? 0);
-            $groupe = (int)(request()->all()['bulk_groupe'] ?? 1);
             $validation = (int)(request()->all()['bulk_validation'] ?? 1);
             $statutDossier = trim(request()->all()['bulk_statut_dossier'] ?? 'valide');
 
             if (empty($ids) || $sectionId <= 0) {
-                session(['flash_error' => 'يرجى تحديد المترشحين واختيار القسم البيداغوجي المستهدف.']);
+                session(['flash_error' => 'يرجى تحديد المتربصين واختيار القسم البيداغوجي المستهدف.']);
                 return $this->redirect('/dashboard/inscriptions');
             }
 
@@ -540,6 +563,17 @@ class ModulesController extends Controller {
                     session(['flash_error' => 'القسم البيداغوجي المختار غير مرتبط بأي عرض تكوين صالح.']);
                     return $this->redirect('/dashboard/inscriptions');
                 }
+
+                // Automatically compute the group index (1, 2, 3...)
+                $idxRow = $this->db->prepare("
+                    SELECT COUNT(*) 
+                    FROM section 
+                    WHERE IDOffre = (SELECT IDOffre FROM section WHERE IDSection = ?) 
+                      AND IDSection <= ?
+                ");
+                $idxRow->execute([$sectionId, $sectionId]);
+                $groupe = (int)$idxRow->fetchColumn();
+                if ($groupe <= 0) $groupe = 1;
 
                 $count = 0;
                 foreach ($ids as $id) {
@@ -568,7 +602,7 @@ class ModulesController extends Controller {
                     $count++;
                 }
 
-                session(['flash_success' => "تم توجيه ومعالجة {$count} مترشحين بنجاح وتعيينهم في القسم المختار!"]);
+                session(['flash_success' => "تم توجيه ومعالجة {$count} متربصين بنجاح وتعيينهم في القسم المختار!"]);
             } catch (\Exception $e) {
                 session(['flash_error' => 'خطأ: ' . $e->getMessage()]);
             }
@@ -578,8 +612,17 @@ class ModulesController extends Controller {
 
     public function ajaxGetSectionsByOffre($offreId)
     {
-        $sections = \Illuminate\Support\Facades\DB::select("SELECT IDSection as id, Nom as nom_ar FROM section WHERE IDOffre = ? ORDER BY Nom ASC", [(int)$offreId]);
-        return response()->json($sections);
+        $sections = \Illuminate\Support\Facades\DB::select("SELECT IDSection as id, Nom as nom_ar FROM section WHERE IDOffre = ? ORDER BY IDSection ASC", [(int)$offreId]);
+        $formatted = [];
+        $i = 1;
+        foreach ($sections as $sec) {
+            $formatted[] = [
+                'id' => $sec->id,
+                'nom_ar' => $sec->nom_ar . ' ' . $i
+            ];
+            $i++;
+        }
+        return response()->json($formatted);
     }
 
     // ================================================================
