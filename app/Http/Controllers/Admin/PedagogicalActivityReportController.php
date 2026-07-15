@@ -66,11 +66,10 @@ class PedagogicalActivityReportController extends Controller
                     s.DateFF AS date_fin,
                     mf.Nom AS nom_mode_formation,
                     b.Nom AS nom_branche,
-                    -- Trainees stats:
-                    (SELECT COUNT(*) FROM apprenant a WHERE a.IDSection = s.IDSection) AS total_inscrits,
-                    (SELECT COUNT(*) FROM apprenant a JOIN candidat c ON a.IDCandidat = c.IDCandidat WHERE a.IDSection = s.IDSection AND (c.Civ IN ('أنثى', 'female', '2', 'أنثي', 'f', 'F'))) AS femmes_inscrits,
-                    (SELECT COUNT(*) FROM apprenant a WHERE a.IDSection = s.IDSection AND a.statut = 'actif') AS total_actifs,
-                    (SELECT COUNT(*) FROM apprenant a JOIN candidat c ON a.IDCandidat = c.IDCandidat WHERE a.IDSection = s.IDSection AND a.statut = 'actif' AND (c.Civ IN ('أنثى', 'female', '2', 'أنثي', 'f', 'F'))) AS femmes_actifs
+                    COALESCE(stats.total_inscrits, 0) AS total_inscrits,
+                    COALESCE(stats.femmes_inscrits, 0) AS femmes_inscrits,
+                    COALESCE(stats.total_actifs, 0) AS total_actifs,
+                    COALESCE(stats.femmes_actifs, 0) AS femmes_actifs
                 FROM section s
                 LEFT JOIN specialite sp ON s.IDSpecialite = sp.IDSpecialite
                 LEFT JOIN branche b ON sp.IDBranche = b.IDBranche
@@ -79,6 +78,17 @@ class PedagogicalActivityReportController extends Controller
                 LEFT JOIN section_semestre ss ON s.IDSection = ss.IDSection AND ss.IDSection_Semestre = (
                     SELECT MAX(ss2.IDSection_Semestre) FROM section_semestre ss2 WHERE ss2.IDSection = s.IDSection
                 )
+                LEFT JOIN (
+                    SELECT 
+                        a.IDSection,
+                        COUNT(*) AS total_inscrits,
+                        SUM(CASE WHEN c.Civ IN ('أنثى', 'female', '2', 'أنثي', 'f', 'F') THEN 1 ELSE 0 END) AS femmes_inscrits,
+                        SUM(CASE WHEN a.statut = 'actif' THEN 1 ELSE 0 END) AS total_actifs,
+                        SUM(CASE WHEN a.statut = 'actif' AND c.Civ IN ('أنثى', 'female', '2', 'أنثي', 'f', 'F') THEN 1 ELSE 0 END) AS femmes_actifs
+                    FROM apprenant a
+                    LEFT JOIN candidat c ON a.IDCandidat = c.IDCandidat
+                    GROUP BY a.IDSection
+                ) stats ON s.IDSection = stats.IDSection
                 WHERE 1=1
             ";
 
@@ -159,10 +169,10 @@ class PedagogicalActivityReportController extends Controller
                     s.DateFF AS date_fin,
                     mf.Nom AS nom_mode_formation,
                     b.Nom AS nom_branche,
-                    (SELECT COUNT(*) FROM apprenant a WHERE a.IDSection = s.IDSection) AS total_inscrits,
-                    (SELECT COUNT(*) FROM apprenant a JOIN candidat c ON a.IDCandidat = c.IDCandidat WHERE a.IDSection = s.IDSection AND (c.Civ IN ('أنثى', 'female', '2', 'أنثي', 'f', 'F'))) AS femmes_inscrits,
-                    (SELECT COUNT(*) FROM apprenant a WHERE a.IDSection = s.IDSection AND a.statut = 'actif') AS total_actifs,
-                    (SELECT COUNT(*) FROM apprenant a JOIN candidat c ON a.IDCandidat = c.IDCandidat WHERE a.IDSection = s.IDSection AND a.statut = 'actif' AND (c.Civ IN ('أنثى', 'female', '2', 'أنثي', 'f', 'F'))) AS femmes_actifs
+                    COALESCE(stats.total_inscrits, 0) AS total_inscrits,
+                    COALESCE(stats.femmes_inscrits, 0) AS femmes_inscrits,
+                    COALESCE(stats.total_actifs, 0) AS total_actifs,
+                    COALESCE(stats.femmes_actifs, 0) AS femmes_actifs
                 FROM section s
                 LEFT JOIN specialite sp ON s.IDSpecialite = sp.IDSpecialite
                 LEFT JOIN branche b ON sp.IDBranche = b.IDBranche
@@ -171,6 +181,17 @@ class PedagogicalActivityReportController extends Controller
                 LEFT JOIN section_semestre ss ON s.IDSection = ss.IDSection AND ss.IDSection_Semestre = (
                     SELECT MAX(ss2.IDSection_Semestre) FROM section_semestre ss2 WHERE ss2.IDSection = s.IDSection
                 )
+                LEFT JOIN (
+                    SELECT 
+                        a.IDSection,
+                        COUNT(*) AS total_inscrits,
+                        SUM(CASE WHEN c.Civ IN ('أنثى', 'female', '2', 'أنثي', 'f', 'F') THEN 1 ELSE 0 END) AS femmes_inscrits,
+                        SUM(CASE WHEN a.statut = 'actif' THEN 1 ELSE 0 END) AS total_actifs,
+                        SUM(CASE WHEN a.statut = 'actif' AND c.Civ IN ('أنثى', 'female', '2', 'أنثي', 'f', 'F') THEN 1 ELSE 0 END) AS femmes_actifs
+                    FROM apprenant a
+                    LEFT JOIN candidat c ON a.IDCandidat = c.IDCandidat
+                    GROUP BY a.IDSection
+                ) stats ON s.IDSection = stats.IDSection
                 WHERE 1=1
             ";
 
