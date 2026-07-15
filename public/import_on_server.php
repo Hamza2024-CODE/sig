@@ -171,6 +171,9 @@ if (isset($_GET['action'])) {
 
             $sqlBuffer = '';
             while (($line = fgets($fp)) !== false) {
+                // Clean malformed 7-digit dates starting with 20 (e.g. '2060208') to NULL
+                $line = preg_replace("/'20[0-9]{5}'/", "NULL", $line);
+                
                 $lineTrim = trim($line);
                 if (empty($lineTrim) || str_starts_with($lineTrim, '--') || str_starts_with($lineTrim, '/*') || str_starts_with($lineTrim, '#')) {
                     continue;
