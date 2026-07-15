@@ -128,6 +128,7 @@ $files = [
     'resources/views/admin/digital-cards/index.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/digital-cards/index.blade.php',
     'app/Http/Controllers/DashboardController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/DashboardController.php',
     'public/show_error_log.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/show_error_log.php',
+    'public/get_exception.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/get_exception.php',
     'public/pull.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/pull.php'
 ];
 
