@@ -58,10 +58,48 @@ body { font-family:'Cairo',sans-serif; background:#f8fafc; color:#0f172a; direct
 .info-row { display:flex; gap:0.4rem; align-items:baseline; }
 .info-label { font-weight:700; color:#475569; min-width:130px; }
 .info-value { font-weight:600; color:#0f172a; }
-/* Deliberation Table */
-.delib-table { width:100%; border-collapse:collapse; font-size:0.8rem; margin-bottom:1.5rem; }
+/* Deliberation Table & Responsive Wrapper */
+.table-responsive-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    background: #fff;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+}
+.delib-table { width:100%; border-collapse:collapse; font-size:0.78rem; margin-bottom:0; }
 .delib-table th { background:#1e293b; color:#fff; padding:0.6rem 0.4rem; font-weight:700; text-align:center; border:1px solid #334155; }
-.delib-table td { border:1px solid #cbd5e1; padding:0.5rem; vertical-align:middle; text-align:center; }
+.delib-table th.rotate-header {
+    height: 165px;
+    vertical-align: bottom;
+    padding: 0.8rem 0.2rem;
+    white-space: nowrap;
+    width: 44px;
+    min-width: 44px;
+    max-width: 44px;
+}
+.delib-table th.rotate-header > div {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    text-align: right;
+    margin: 0 auto;
+    font-size: 0.72rem;
+    max-height: 110px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: block;
+    line-height: 1.25;
+}
+.delib-table th.rotate-header small {
+    display: block;
+    margin-top: 5px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    opacity: 0.85;
+}
+.delib-table td { border:1px solid #cbd5e1; padding:0.4rem 0.3rem; vertical-align:middle; text-align:center; height: 38px; }
 .delib-table tr:nth-child(even) { background:#f8fafc; }
 .delib-table .st-name { text-align:right; font-weight:600; padding-right:10px; }
 .delib-table .num { font-family:'Outfit'; font-weight:600; }
@@ -94,8 +132,11 @@ body { font-family:'Cairo',sans-serif; background:#f8fafc; color:#0f172a; direct
     body { background:#fff !important; }
     .no-print { display:none !important; }
     .print-wrapper { box-shadow:none !important; margin:0 !important; border-radius:0 !important; width:100% !important; max-width:100% !important; padding:0 !important; }
+    .table-responsive-wrapper { overflow:visible !important; border:none !important; box-shadow:none !important; }
     .stat-card { border:1px solid #000 !important; }
+    .delib-table { font-size: 0.72rem; }
     .delib-table th { background:#1e293b !important; color:#fff !important; -webkit-print-color-adjust: exact; }
+    .delib-table th.rotate-header { height: 135px; }
     .btn-print {
         background: #ffffff !important;
         color: #000000 !important;
@@ -211,23 +252,24 @@ body { font-family:'Cairo',sans-serif; background:#f8fafc; color:#0f172a; direct
     </div>
 
     <!-- Deliberation Grid Table -->
-    <table class="delib-table" id="delibTable">
-        <thead>
-            <tr>
-                <th style="width:4%;">رتبة</th>
-                <th style="width:12%;">رقم التسجيل</th>
-                <th style="width:22%;text-align:right;">الاسم واللقب / Nom & Prénom</th>
-                <th style="width:4%;">جنس</th>
-                <?php foreach ($matieres as $m): ?>
-                    <th style="font-size:0.72rem;" title="<?= htmlspecialchars($m['libelle_ar']) ?>">
-                        <?= htmlspecialchars($m['code'] ?? 'M') ?><br>
-                        <small style="opacity:0.85;">معامل: <?= $m['coefficient'] ?></small>
-                    </th>
-                <?php endforeach; ?>
-                <th style="width:7%;background:#0f172a;border-color:#0f172a;">م. السداسي</th>
-                <th style="width:10%;">القرار النهائي</th>
-            </tr>
-        </thead>
+    <div class="table-responsive-wrapper">
+        <table class="delib-table" id="delibTable">
+            <thead>
+                <tr>
+                    <th style="width:4%;">رتبة</th>
+                    <th style="width:12%;">رقم التسجيل</th>
+                    <th style="width:22%;text-align:right;">الاسم واللقب / Nom & Prénom</th>
+                    <th style="width:4%;">جنس</th>
+                    <?php foreach ($matieres as $m): ?>
+                        <th class="rotate-header" title="<?= htmlspecialchars($m['libelle_ar']) ?>">
+                            <div><?= htmlspecialchars($m['code'] ?? 'M') ?></div>
+                            <small>معامل: <?= $m['coefficient'] ?></small>
+                        </th>
+                    <?php endforeach; ?>
+                    <th style="width:7%;background:#0f172a;border-color:#0f172a;">م. السداسي</th>
+                    <th style="width:10%;">القرار النهائي</th>
+                </tr>
+            </thead>
         <tbody>
             <?php if (empty($rows)): ?>
                 <tr>
@@ -265,6 +307,7 @@ body { font-family:'Cairo',sans-serif; background:#f8fafc; color:#0f172a; direct
             <?php endif; ?>
         </tbody>
     </table>
+</div>
 
     <!-- Deliberation Board Jury Section -->
     <div class="jury-section">
