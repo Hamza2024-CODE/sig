@@ -81,16 +81,29 @@ try {
     if ($rAnnex && (int)$rAnnex->c > 0) $annexCount = (int)$rAnnex->c;
 } catch (\Exception $ex) {}
 
-// Dropped/absent trainees
+// Dropped/absent trainees: Inactive and not in apprenant_fin
 $droppedTraineesCount = 0;
 try {
+    $whereDrop = ["a.statut != 'actif'", "af.IDapprenant IS NULL"];
+    $paramsDrop = [];
+    if (!empty($selWilaya)) {
+        $whereDrop[] = "o.IDEts_Form IN (SELECT IDetablissement FROM etablissement WHERE IDDFEP = ?)";
+        $paramsDrop[] = $selWilaya;
+    }
+    if (!empty($selEtab)) {
+        $whereDrop[] = "o.IDEts_Form = ?";
+        $paramsDrop[] = $selEtab;
+    }
+    $whereDropSQL = " WHERE " . implode(" AND ", $whereDrop);
+    
     $rDrop = DB::selectOne("
         SELECT COUNT(a.IDapprenant) as c
         FROM apprenant a
-        JOIN apprenant_fin af ON a.IDapprenant = af.IDapprenant
-        WHERE af.IDDecision_evalf IN (4, 5)
-           OR af.SituationFin IN (2, 3)
-    ");
+        JOIN section s ON a.IDSection = s.IDSection
+        JOIN offre o ON s.IDOffre = o.IDOffre
+        LEFT JOIN apprenant_fin af ON a.IDapprenant = af.IDapprenant
+        $whereDropSQL
+    ", $paramsDrop);
     if ($rDrop && (int)$rDrop->c > 0) $droppedTraineesCount = (int)$rDrop->c;
 } catch (\Exception $ex) {}
 
@@ -214,34 +227,71 @@ try {
 
 // Certificates & success rates
 $certsCount = 0;
+$certsQrCount = 0;
+$certsPendingCount = 0;
 try {
-    $r3 = DB::selectOne("SELECT COUNT(*) as c FROM Attestation_succ", []);
-    if ($r3 && (int)$r3->c > 0) $certsCount = (int)$r3->c;
+    $whereCerts = [];
+    $paramsCerts = [];
+    if (!empty($selWilaya)) {
+        $whereCerts[] = "o.IDEts_Form IN (SELECT IDetablissement FROM etablissement WHERE IDDFEP = ?)";
+        $paramsCerts[] = $selWilaya;
+    }
+    if (!empty($selEtab)) {
+        $whereCerts[] = "o.IDEts_Form = ?";
+        $paramsCerts[] = $selEtab;
+    }
+    $whereCertsSQL = !empty($whereCerts) ? " WHERE " . implode(" AND ", $whereCerts) : "";
+    
+    $rCerts = DB::selectOne("
+        SELECT 
+            COUNT(a.Num) as total,
+            SUM(CASE WHEN a.Valide = 1 THEN 1 ELSE 0 END) as qr_valid,
+            SUM(CASE WHEN a.Valide = 0 OR a.Valide IS NULL THEN 1 ELSE 0 END) as pending
+        FROM attestation_succ a
+        JOIN apprenant_fin af ON a.IDApprenant_Fin = af.IDApprenant_Fin
+        JOIN apprenant ap ON af.IDapprenant = ap.IDapprenant
+        JOIN section s ON ap.IDSection = s.IDSection
+        JOIN offre o ON s.IDOffre = o.IDOffre
+        $whereCertsSQL
+    ", $paramsCerts);
+    
+    if ($rCerts && (int)$rCerts->total > 0) {
+        $certsCount = (int)$rCerts->total;
+        $certsQrCount = (int)$rCerts->qr_valid;
+        $certsPendingCount = (int)$rCerts->pending;
+    }
 } catch (\Exception $ex) {}
 
 $successRate = 0;
+$passedGradsCount = 0;
 try {
     $whereSuccess = [];
     $paramsSuccess = [];
     if (!empty($selWilaya)) {
-        $whereSuccess[] = "o.IDEts_Form IN (SELECT IDetablissement FROM etablissement WHERE IDDFEP = ?)";
+        $whereSuccess[] = "e.IDDFEP = ?";
         $paramsSuccess[] = $selWilaya;
     }
     if (!empty($selEtab)) {
-        $whereSuccess[] = "o.IDEts_Form = ?";
+        $whereSuccess[] = "e.IDetablissement = ?";
         $paramsSuccess[] = $selEtab;
     }
     $whereSuccessSQL = !empty($whereSuccess) ? " WHERE " . implode(" AND ", $whereSuccess) : "";
+    
     $successData = DB::selectOne("
         SELECT 
-            COUNT(c.IDCandidat) as total,
-            SUM(CASE WHEN c.statut = 'admis' OR c.statut = '1' THEN 1 ELSE 0 END) as passed
-        FROM candidat c
-        INNER JOIN offre o ON c.IDOffre = o.IDOffre
+            COUNT(af.IDApprenant_Fin) as total,
+            SUM(CASE WHEN af.IDDecision_evalf IN (1, 2, 3) OR af.MoyGen >= 10 THEN 1 ELSE 0 END) as passed
+        FROM apprenant_fin af
+        JOIN apprenant ap ON af.IDapprenant = ap.IDapprenant
+        JOIN section s ON ap.IDSection = s.IDSection
+        JOIN offre o ON s.IDOffre = o.IDOffre
+        JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
         $whereSuccessSQL
     ", $paramsSuccess);
-    if ($successData && $successData->total > 0) {
-        $successRate = round(($successData->passed / $successData->total) * 100, 1);
+    
+    if ($successData && (int)$successData->total > 0) {
+        $passedGradsCount = (int)$successData->passed;
+        $successRate = round(($passedGradsCount * 100) / (int)$successData->total, 1);
     }
 } catch (\Exception $ex) {}
 
@@ -857,7 +907,7 @@ canvas {
             <div class="col-md-3 col-sm-6">
                 <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; background: #fff; border: 1px solid rgba(226,232,240,0.8) !important;">
                     <span class="text-muted fw-bold small d-block mb-1">المصادق عليها رقمياً (QR)</span>
-                    <h4 class="fw-bold mb-1 text-success counter-val" data-counter="<?= round($certsCount * 0.88) ?>" style="font-family:'Inter';">0</h4>
+                    <h4 class="fw-bold mb-1 text-success counter-val" data-counter="<?= $certsQrCount ?>" style="font-family:'Inter';">0</h4>
                     <span class="text-muted small" style="font-size:0.7rem;">مؤمنة برمز استجابة سريع</span>
                 </div>
             </div>
@@ -865,7 +915,7 @@ canvas {
             <div class="col-md-3 col-sm-6">
                 <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; background: #fff; border: 1px solid rgba(226,232,240,0.8) !important;">
                     <span class="text-muted fw-bold small d-block mb-1">قيد التدقيق البيداغوجي والمطابقة</span>
-                    <h4 class="fw-bold mb-1 text-warning counter-val" data-counter="<?= $certsCount - round($certsCount * 0.88) ?>" style="font-family:'Inter';">0</h4>
+                    <h4 class="fw-bold mb-1 text-warning counter-val" data-counter="<?= $certsPendingCount ?>" style="font-family:'Inter';">0</h4>
                     <span class="text-muted small" style="font-size:0.7rem;">مراجعة يدوية للمطابقة</span>
                 </div>
             </div>
@@ -913,12 +963,12 @@ canvas {
                             <div>
                                 <span class="d-inline-block rounded-circle bg-success me-1" style="width: 10px; height: 10px;"></span>
                                 <span class="text-muted small d-block">مصادق بـ QR</span>
-                                <h6 class="fw-bold mb-0 text-dark"><?= number_format(round($certsCount * 0.88)) ?></h6>
+                                <h6 class="fw-bold mb-0 text-dark"><?= number_format($certsQrCount) ?></h6>
                             </div>
                             <div>
                                 <span class="d-inline-block rounded-circle bg-warning me-1" style="width: 10px; height: 10px;"></span>
                                 <span class="text-muted small d-block">مراجعة يدوية</span>
-                                <h6 class="fw-bold mb-0 text-dark"><?= number_format($certsCount - round($certsCount * 0.88)) ?></h6>
+                                <h6 class="fw-bold mb-0 text-dark"><?= number_format($certsPendingCount) ?></h6>
                             </div>
                         </div>
                     </div>
@@ -938,7 +988,7 @@ canvas {
                     </div>
                     <div class="col-sm-6">
                         <span class="text-muted small d-block">إجمالي الناجحين المقبولين</span>
-                        <h3 class="fw-bold mb-1 text-success" style="font-family:'Inter';"><?= number_format(round($candidatesCount * ($successRate/100))) ?> ناجح</h3>
+                        <h3 class="fw-bold mb-1 text-success" style="font-family:'Inter';"><?= number_format($passedGradsCount) ?> ناجح</h3>
                         <p class="text-muted small mb-3">نسبة نجاح معالجة السجلات الحالية ومقارنتها بنسبة الرسوب والمؤجلين.</p>
                         <div class="row g-2">
                             <div class="col-6">
@@ -1170,8 +1220,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // 5. Certificate Verification Pie Chart
-    const qrValidated   = Math.round(<?= $certsCount ?> * 0.88);
-    const manualPending = <?= $certsCount ?> - qrValidated;
+    const qrValidated   = <?= $certsQrCount ?>;
+    const manualPending = <?= $certsPendingCount ?>;
     safeChart('chart-certs-verification', {
         type: 'pie',
         data: {
