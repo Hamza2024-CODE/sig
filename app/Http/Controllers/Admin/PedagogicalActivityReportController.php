@@ -61,7 +61,7 @@ class PedagogicalActivityReportController extends Controller
                     sp.NomFr AS nom_formation,
                     sp.NbrSem AS duree_semestres,
                     s.Nom AS section_nom,
-                    COALESCE(ss.NumSem, 1) AS numero_semestre,
+                    (SELECT COALESCE(MAX(ss.NumSem), 1) FROM section_semestre ss WHERE ss.IDSection = s.IDSection) AS numero_semestre,
                     s.DateDF AS date_debut,
                     s.DateFF AS date_fin,
                     mf.Nom AS nom_mode_formation,
@@ -71,9 +71,6 @@ class PedagogicalActivityReportController extends Controller
                 LEFT JOIN branche b ON sp.IDBranche = b.IDBranche
                 LEFT JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
                 LEFT JOIN mode_formation mf ON s.IDMode_formation = mf.IDMode_formation
-                LEFT JOIN section_semestre ss ON s.IDSection = ss.IDSection AND ss.IDSection_Semestre = (
-                    SELECT MAX(ss2.IDSection_Semestre) FROM section_semestre ss2 WHERE ss2.IDSection = s.IDSection
-                )
                 WHERE 1=1
             ";
 
@@ -82,12 +79,7 @@ class PedagogicalActivityReportController extends Controller
                 SELECT COUNT(*) AS total
                 FROM section s
                 LEFT JOIN specialite sp ON s.IDSpecialite = sp.IDSpecialite
-                LEFT JOIN branche b ON sp.IDBranche = b.IDBranche
                 LEFT JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
-                LEFT JOIN mode_formation mf ON s.IDMode_formation = mf.IDMode_formation
-                LEFT JOIN section_semestre ss ON s.IDSection = ss.IDSection AND ss.IDSection_Semestre = (
-                    SELECT MAX(ss2.IDSection_Semestre) FROM section_semestre ss2 WHERE ss2.IDSection = s.IDSection
-                )
                 WHERE 1=1
             ";
 
@@ -121,7 +113,7 @@ class PedagogicalActivityReportController extends Controller
                 $params[] = (int)$request->mode_id;
             }
             if ($request->filled('semester')) {
-                $filterSql .= " AND ss.NumSem = ? ";
+                $filterSql .= " AND EXISTS (SELECT 1 FROM section_semestre ss WHERE ss.IDSection = s.IDSection AND ss.NumSem = ?) ";
                 $params[] = (int)$request->semester;
             }
             if ($request->filled('search')) {
@@ -240,7 +232,7 @@ class PedagogicalActivityReportController extends Controller
                     sp.NomFr AS nom_formation,
                     sp.NbrSem AS duree_semestres,
                     s.Nom AS section_nom,
-                    COALESCE(ss.NumSem, 1) AS numero_semestre,
+                    (SELECT COALESCE(MAX(ss.NumSem), 1) FROM section_semestre ss WHERE ss.IDSection = s.IDSection) AS numero_semestre,
                     s.DateDF AS date_debut,
                     s.DateFF AS date_fin,
                     mf.Nom AS nom_mode_formation,
@@ -250,9 +242,6 @@ class PedagogicalActivityReportController extends Controller
                 LEFT JOIN branche b ON sp.IDBranche = b.IDBranche
                 LEFT JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
                 LEFT JOIN mode_formation mf ON s.IDMode_formation = mf.IDMode_formation
-                LEFT JOIN section_semestre ss ON s.IDSection = ss.IDSection AND ss.IDSection_Semestre = (
-                    SELECT MAX(ss2.IDSection_Semestre) FROM section_semestre ss2 WHERE ss2.IDSection = s.IDSection
-                )
                 WHERE 1=1
             ";
 
@@ -285,7 +274,7 @@ class PedagogicalActivityReportController extends Controller
                 $params[] = (int)$request->mode_id;
             }
             if ($request->filled('semester')) {
-                $query .= " AND ss.NumSem = ? ";
+                $query .= " AND EXISTS (SELECT 1 FROM section_semestre ss WHERE ss.IDSection = s.IDSection AND ss.NumSem = ?) ";
                 $params[] = (int)$request->semester;
             }
             if ($request->filled('search')) {
