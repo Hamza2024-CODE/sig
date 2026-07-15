@@ -269,4 +269,16 @@ if (file_exists($checkIndexPath)) {
     echo "✓ Diagnostic check_index.php cleaned up.<br>";
 }
 
+echo "<h2>Running View Compilation Diagnostics...</h2>";
+try {
+    // Attempt compile-rendering department views to check for syntax/variable errors
+    $html = view('dashboard.departments.exam')->render();
+    echo "✓ SUCCESS: Exam view compiled and rendered fine!<br>";
+} catch (\Throwable $e) {
+    echo "<span style='color:red;font-weight:bold;'>[DIAGNOSTICS EXCEPTION]: " . get_class($e) . "</span><br>";
+    echo "<span style='color:red;'>MESSAGE: " . $e->getMessage() . "</span><br>";
+    echo "<span style='color:red;'>FILE: " . $e->getFile() . "</span><br>";
+    echo "<span style='color:red;'>LINE: " . $e->getLine() . "</span><br>";
+}
+
 echo "<br><h3 style='color:green;'>All updates completed successfully!</h3>";
