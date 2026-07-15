@@ -88,7 +88,7 @@ class PedagogicalActivityReportController extends Controller
                         SUM(CASE WHEN a.statut = 'actif' THEN 1 ELSE 0 END) AS total_actifs,
                         SUM(CASE WHEN a.statut = 'actif' AND c.Civ IN ('أنثى', 'female', '2', 'أنثي', 'f', 'F') THEN 1 ELSE 0 END) AS femmes_actifs,
                         SUM(CASE WHEN c.Nationalite IS NOT NULL AND TRIM(c.Nationalite) != '' AND c.Nationalite NOT IN ('الجزائرية', 'جزائرية', 'algerienne', 'Algerian', 'dz', 'DZ', '1') THEN 1 ELSE 0 END) AS total_foreigners,
-                        SUM(CASE WHEN c.endicape = 1 OR c.endicape = '1' OR c.endicape = 'OUI' OR c.endicape = 'Oui' OR c.endicape = 'yes' OR c.endicape = 'Yes' THEN 1 ELSE 0 END) AS total_handicapes
+                        SUM(CASE WHEN c.endicape = 1 OR c.endicape = '1' THEN 1 ELSE 0 END) AS total_handicapes
                     FROM apprenant a
                     LEFT JOIN candidat c ON a.IDCandidat = c.IDCandidat
                     GROUP BY a.IDSection
@@ -237,7 +237,7 @@ class PedagogicalActivityReportController extends Controller
                         SUM(CASE WHEN a.statut = 'actif' THEN 1 ELSE 0 END) AS total_actifs,
                         SUM(CASE WHEN a.statut = 'actif' AND c.Civ IN ('أنثى', 'female', '2', 'أنثي', 'f', 'F') THEN 1 ELSE 0 END) AS femmes_actifs,
                         SUM(CASE WHEN c.Nationalite IS NOT NULL AND TRIM(c.Nationalite) != '' AND c.Nationalite NOT IN ('الجزائرية', 'جزائرية', 'algerienne', 'Algerian', 'dz', 'DZ', '1') THEN 1 ELSE 0 END) AS total_foreigners,
-                        SUM(CASE WHEN c.endicape = 1 OR c.endicape = '1' OR c.endicape = 'OUI' OR c.endicape = 'Oui' OR c.endicape = 'yes' OR c.endicape = 'Yes' THEN 1 ELSE 0 END) AS total_handicapes
+                        SUM(CASE WHEN c.endicape = 1 OR c.endicape = '1' THEN 1 ELSE 0 END) AS total_handicapes
                     FROM apprenant a
                     LEFT JOIN candidat c ON a.IDCandidat = c.IDCandidat
                     GROUP BY a.IDSection
