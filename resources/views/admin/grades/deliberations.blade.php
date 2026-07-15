@@ -295,12 +295,15 @@ body { font-family:'Cairo',sans-serif; background:#f8fafc; color:#0f172a; direct
                         <?php endforeach; ?>
                         <td class="num fw-bold" style="font-size:0.88rem;background:#f8fafc;"><?= number_format($row['average'], 2) ?></td>
                         <td>
-                            <select name="decisions[<?= $row['id'] ?>]" class="form-select form-select-sm rounded-pill fw-bold text-center print-select" style="font-size:0.75rem; padding: 2px 10px; min-width: 120px; border-color: #cbd5e1;">
-                                <option value="مقبول" <?= $row['decision'] === 'مقبول' ? 'selected' : '' ?> class="decision-admis fw-bold">مقبول / Admis</option>
-                                <option value="مؤجل" <?= $row['decision'] === 'مؤجل' ? 'selected' : '' ?> class="decision-ajourne fw-bold">مؤجل / Ajourné</option>
-                                <option value="مقصى" <?= $row['decision'] === 'مقصى' ? 'selected' : '' ?> class="decision-exclu fw-bold">مقصى / Exclu</option>
-                                <option value="تخلى" class="decision-abandon fw-bold">تخلى / Abandon</option>
+                            <select name="decisions[<?= $row['id'] ?>]" class="form-select form-select-sm rounded-pill fw-bold text-center print-select" onchange="toggleAbandonDate(this, <?= $row['id'] ?>)" style="font-size:0.75rem; padding: 2px 10px; min-width: 120px; border-color: #cbd5e1;">
+                                <option value="مقبول" <?= $row['decision'] === 'مقبول' ? 'selected' : '' ?> class="decision-admis fw-bold">ناجح / Admis</option>
+                                <option value="مؤجل" <?= $row['decision'] === 'مؤجل' ? 'selected' : '' ?> class="decision-ajourne fw-bold">راسب / Ajourné</option>
+                                <option value="مقصى" <?= $row['decision'] === 'مقصى' ? 'selected' : '' ?> class="decision-exclu fw-bold">مفصول / Exclu</option>
+                                <option value="تخلى" <?= $row['decision'] === 'تخلى' ? 'selected' : '' ?> class="decision-abandon fw-bold">تخلى / Abandon</option>
                             </select>
+                            <div id="abandon_date_container_<?= $row['id'] ?>" class="mt-1 <?= $row['decision'] === 'تخلى' ? '' : 'd-none' ?> no-print">
+                                <input type="date" name="abandon_dates[<?= $row['id'] ?>]" class="form-control form-control-sm text-center" style="font-size:0.7rem; padding: 2px 5px;" value="<?= $row['date_abandon'] ?? '' ?>">
+                            </div>
                         </td>
                     </tr>
                 <?php endforeach; ?>
@@ -314,7 +317,7 @@ body { font-family:'Cairo',sans-serif; background:#f8fafc; color:#0f172a; direct
         <h6 class="jury-title"><i class="fa-solid fa-stamp"></i> أعضاء لجنة المداولات البيداغوجية الرسمية للمجلس:</h6>
         <div class="jury-cols">
             <div>
-                <strong>الأساتذة المكوّنون (هيئة التدريس)</strong>
+                <strong>هيئة التكوين</strong>
                 <p style="color:#64748b;font-size:0.75rem;">Membres Enseignants / Formateurs</p>
                 <div class="jury-space"></div>
                 <small class="text-muted">(توقيع وتأشير)</small>
@@ -326,7 +329,7 @@ body { font-family:'Cairo',sans-serif; background:#f8fafc; color:#0f172a; direct
                 <small class="text-muted">(توقيع وتأشير)</small>
             </div>
             <div>
-                <strong>رئيس المجلس (مدير المؤسسة)</strong>
+                <strong>مدير المؤسسة</strong>
                 <p style="color:#64748b;font-size:0.75rem;">Président du Jury / Directeur</p>
                 <div class="jury-space"></div>
                 <small class="text-muted">(توقيع وختم بيداغوجي)</small>
@@ -339,6 +342,18 @@ body { font-family:'Cairo',sans-serif; background:#f8fafc; color:#0f172a; direct
         نظام تسيير وبوابة المداولات الإلكترونية الموحدة – SGFEP v2026 | رمز المداولة: PV-<?= strtoupper(substr(md5($offre['id'].$semestre), 0, 8)) ?> | تاريخ الانعقاد: <?= date('d/m/Y') ?>
     </div>
 </form>
+<script>
+function toggleAbandonDate(select, id) {
+    const container = document.getElementById('abandon_date_container_' + id);
+    if (container) {
+        if (select.value === 'تخلى') {
+            container.classList.remove('d-none');
+        } else {
+            container.classList.add('d-none');
+        }
+    }
+}
+</script>
 <script src="{{ asset('assets/js/app.js') }}"></script>
 </body>
 </html>

@@ -912,7 +912,8 @@ class GradesController extends Controller
                    COALESCE(ass.IDapprenant_Section_semstre, af.IDapprenant_Section_semstre) as ass_id,
                    COALESCE(ass.NoteStage, 0) as note_stage,
                    COALESCE(ass.NoteMemoire, 0) as note_memoire,
-                   COALESCE(ass.NoteSoutenance, 0) as note_soutenance
+                   COALESCE(ass.NoteSoutenance, 0) as note_soutenance,
+                   ass.DateAbdech as date_abandon
             FROM apprenant a
             LEFT JOIN candidat c ON a.IDCandidat = c.IDCandidat
             JOIN section s ON a.IDSection = s.IDSection
@@ -1486,6 +1487,7 @@ class GradesController extends Controller
         }
 
         $decisions = request()->all()['decisions'] ?? []; // Array of IDapprenant => Decision (مقبول, مؤجل, مقصى, تخلى)
+        $abandonDates = request()->all()['abandon_dates'] ?? []; // Array of IDapprenant => Date (YYYY-MM-DD)
         $nextSem = $semestre + 1;
 
         // Fetch maximum semesters of the specialty
@@ -1500,7 +1502,7 @@ class GradesController extends Controller
             $specMaxSem = (int)$specRow->NbrSem;
         }
 
-        DB::transaction(function() use ($offreId, $semestre, $nextSem, $specMaxSem, $decisions) {
+        DB::transaction(function() use ($offreId, $semestre, $nextSem, $specMaxSem, $decisions, $abandonDates) {
             // Always ensure next semester is ready if it doesn't exceed specialty limit
             if ($nextSem <= $specMaxSem) {
                 $this->service->ensureSectionSemestreModules($offreId, $nextSem);
@@ -1539,19 +1541,27 @@ class GradesController extends Controller
                     $obsText = 'متخلي';
                 }
 
+                $abandonDate = null;
+                if ($decision === 'تخلى') {
+                    $abandonDate = $abandonDates[$apprenantId] ?? null;
+                    if (empty($abandonDate)) {
+                        $abandonDate = null;
+                    }
+                }
+
                 if ($assRow) {
                     DB::update("
                         UPDATE apprenant_section_semstre 
-                        SET IDDecision_evals = ?, Obs = ? 
+                        SET IDDecision_evals = ?, Obs = ?, DateAbdech = ? 
                         WHERE IDapprenant_Section_semstre = ?
-                    ", [$decisionId, $obsText, $assRow->IDapprenant_Section_semstre]);
+                    ", [$decisionId, $obsText, $abandonDate, $assRow->IDapprenant_Section_semstre]);
                 } else {
                     $maxAssId = (int)DB::selectOne("SELECT COALESCE(MAX(IDapprenant_Section_semstre), 0) as max_id FROM apprenant_section_semstre")->max_id;
                     $newAssId = $maxAssId + 1;
                     DB::insert("
-                        INSERT INTO apprenant_section_semstre (IDapprenant_Section_semstre, IDapprenant, IDSection_Semestre, IDDecision_evals, Obs)
-                        VALUES (?, ?, ?, ?, ?)
-                    ", [$newAssId, $apprenantId, $currentSsId, $decisionId, $obsText]);
+                        INSERT INTO apprenant_section_semstre (IDapprenant_Section_semstre, IDapprenant, IDSection_Semestre, IDDecision_evals, Obs, DateAbdech)
+                        VALUES (?, ?, ?, ?, ?, ?)
+                    ", [$newAssId, $apprenantId, $currentSsId, $decisionId, $obsText, $abandonDate]);
                 }
 
                 // If abandoned (تخلى), update status in apprenant table
