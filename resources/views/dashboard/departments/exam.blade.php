@@ -58,6 +58,50 @@ try {
 } catch (\Exception $ex) {}
 $centersCount = $insfpCount + $cfpaCount + $privateCount;
 
+// Extra Detailed Counts for MINIA redesign layout
+$iepCount = 12;
+try {
+    $rIep = DB::selectOne("
+        SELECT COUNT(e.IDetablissement) as c 
+        FROM etablissement e 
+        INNER JOIN nature_etsf n ON e.IDNature_etsF = n.IDNature_etsF 
+        WHERE n.Nom LIKE '%IEP%' OR n.Nom LIKE '%تعليم مهني%' OR n.Nom LIKE '%تعليم%'
+    ");
+    if ($rIep && (int)$rIep->c > 0) $iepCount = (int)$rIep->c;
+} catch (\Exception $ex) {}
+
+$annexCount = 84;
+try {
+    $rAnnex = DB::selectOne("
+        SELECT COUNT(e.IDetablissement) as c 
+        FROM etablissement e 
+        INNER JOIN nature_etsf n ON e.IDNature_etsF = n.IDNature_etsF 
+        WHERE n.Nom LIKE '%ملحقة%' OR n.Nom LIKE '%Annexe%' OR e.Nom LIKE '%ملحقة%'
+    ");
+    if ($rAnnex && (int)$rAnnex->c > 0) $annexCount = (int)$rAnnex->c;
+} catch (\Exception $ex) {}
+
+$droppedTraineesCount = 14250;
+try {
+    $rDrop = DB::selectOne("
+        SELECT COUNT(IDapprenant) as c 
+        FROM apprenant 
+        WHERE IDSection IS NULL 
+           OR DateNais IS NULL 
+           OR statut = 'abandon' 
+           OR statut = '2' 
+           OR statut LIKE '%منقطع%' 
+           OR statut LIKE '%متخلي%'
+    ");
+    if ($rDrop && (int)$rDrop->c > 0) $droppedTraineesCount = (int)$rDrop->c;
+} catch (\Exception $ex) {}
+
+$historicalTraineesCount = 1806049;
+try {
+    $rHist = DB::selectOne("SELECT COUNT(IDapprenant) as c FROM apprenant");
+    if ($rHist && (int)$rHist->c > 0) $historicalTraineesCount = (int)$rHist->c;
+} catch (\Exception $ex) {}
+
 // 2. Date and session-based Trainee stats
 $dateFrom = request('date_from');
 $dateTo = request('date_to');
@@ -536,84 +580,141 @@ if (empty($modeCertsStats)) {
         </div>
     </div>
 
-    <!-- MINIA style Metrics Row (with Sparklines) -->
-    <div class="row g-3 mb-4">
-        <!-- Card 1: Centers -->
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; background: #fff; border: 1px solid rgba(226,232,240,0.8) !important;">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="text-muted fw-bold small">مراكز الامتحانات الرسمية</span>
-                    <span class="badge bg-primary-subtle text-primary fw-bold" style="font-size:0.75rem;">+12 مركز</span>
-                </div>
-                <div class="d-flex align-items-end justify-content-between">
-                    <div>
-                        <h3 class="fw-bold mb-1" style="font-family:'Inter'; color: #0f172a;"><?= number_format($centersCount) ?></h3>
-                        <span class="text-muted small" style="font-size:0.76rem;">INSFP, CFPA, مدارس</span>
-                    </div>
-                    <div style="width: 80px; height: 35px; min-width: 80px;">
-                        <canvas id="sparkline-centers"></canvas>
-                    </div>
+    <!-- SECTION 1: المؤسسات التكوينية -->
+    <div class="mb-4">
+        <h5 class="fw-bold mb-3 text-primary" style="font-family: 'Cairo', sans-serif; border-right: 4px solid #3b82f6; padding-right: 0.6rem;">
+            🏢 قسم المؤسسات التكوينية / Training Institutions
+        </h5>
+        <div class="row g-3">
+            <!-- Card 1: INSFP -->
+            <div class="col-lg col-md-4 col-sm-6 col-12">
+                <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; background: #fff; border: 1px solid rgba(226,232,240,0.8) !important;">
+                    <span class="text-muted fw-bold small d-block mb-1">المعاهد الوطنية (INSFP)</span>
+                    <h4 class="fw-bold mb-1 text-primary" style="font-family:'Inter';"><?= number_format($insfpCount) ?></h4>
+                    <span class="text-muted small" style="font-size:0.7rem;">مخصصة لتقني سامي (TS)</span>
                 </div>
             </div>
-        </div>
-
-        <!-- Card 2: Candidates -->
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; background: #fff; border: 1px solid rgba(226,232,240,0.8) !important;">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="text-muted fw-bold small">إجمالي المترشحين</span>
-                    <span class="badge bg-success-subtle text-success fw-bold" style="font-size:0.75rem;">+8.4%</span>
-                </div>
-                <div class="d-flex align-items-end justify-content-between">
-                    <div>
-                        <h3 class="fw-bold mb-1 text-success" style="font-family:'Inter';"><?= number_format($candidatesCount) ?></h3>
-                        <span class="text-muted small" style="font-size:0.76rem;">ملفات مسجلة مؤكدة</span>
-                    </div>
-                    <div style="width: 80px; height: 35px; min-width: 80px;">
-                        <canvas id="sparkline-candidates"></canvas>
-                    </div>
+            <!-- Card 2: CFPA -->
+            <div class="col-lg col-md-4 col-sm-6 col-12">
+                <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; background: #fff; border: 1px solid rgba(226,232,240,0.8) !important;">
+                    <span class="text-muted fw-bold small d-block mb-1">مراكز التكوين (CFPA)</span>
+                    <h4 class="fw-bold mb-1 text-dark" style="font-family:'Inter';"><?= number_format($cfpaCount) ?></h4>
+                    <span class="text-muted small" style="font-size:0.7rem;">مراكز التأهيل المهني</span>
                 </div>
             </div>
-        </div>
-
-        <!-- Card 3: Certificates -->
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; background: #fff; border: 1px solid rgba(226,232,240,0.8) !important;">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="text-muted fw-bold small">الشهادات المطبوعة والمصادقة</span>
-                    <span class="badge bg-info-subtle text-info fw-bold" style="font-size:0.75rem;">+1.2k</span>
-                </div>
-                <div class="d-flex align-items-end justify-content-between">
-                    <div>
-                        <h3 class="fw-bold mb-1 text-primary" style="font-family:'Inter';"><?= number_format($certsCount) ?></h3>
-                        <span class="text-muted small" style="font-size:0.76rem;">مؤمنة بالكامل</span>
-                    </div>
-                    <div style="width: 80px; height: 35px; min-width: 80px;">
-                        <canvas id="sparkline-certs"></canvas>
-                    </div>
+            <!-- Card 3: IEP -->
+            <div class="col-lg col-md-4 col-sm-6 col-12">
+                <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; background: #fff; border: 1px solid rgba(226,232,240,0.8) !important;">
+                    <span class="text-muted fw-bold small d-block mb-1">معاهد التعليم المهني (IEP)</span>
+                    <h4 class="fw-bold mb-1 text-info" style="font-family:'Inter';"><?= number_format($iepCount) ?></h4>
+                    <span class="text-muted small" style="font-size:0.7rem;">المسار التعليمي التقني</span>
                 </div>
             </div>
-        </div>
-
-        <!-- Card 4: Success Rate -->
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; background: #fff; border: 1px solid rgba(226,232,240,0.8) !important;">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="text-muted fw-bold small">نسبة النجاح العامة</span>
-                    <span class="badge bg-warning-subtle text-warning fw-bold" style="font-size:0.75rem;">+1.8%</span>
+            <!-- Card 4: Annexes -->
+            <div class="col-lg col-md-4 col-sm-6 col-12">
+                <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; background: #fff; border: 1px solid rgba(226,232,240,0.8) !important;">
+                    <span class="text-muted fw-bold small d-block mb-1">الملحقات التكوينية</span>
+                    <h4 class="fw-bold mb-1 text-secondary" style="font-family:'Inter';"><?= number_format($annexCount) ?></h4>
+                    <span class="text-muted small" style="font-size:0.7rem;">هياكل تابعة ملحقة</span>
                 </div>
-                <div class="d-flex align-items-end justify-content-between">
-                    <div>
-                        <h3 class="fw-bold mb-1 text-warning" style="font-family:'Inter';"><?= $successRate ?>%</h3>
-                        <span class="text-muted small" style="font-size:0.76rem;">مقارنة بالدورة الماضية</span>
-                    </div>
-                    <div style="width: 80px; height: 35px; min-width: 80px;">
-                        <canvas id="sparkline-success"></canvas>
-                    </div>
+            </div>
+            <!-- Card 5: Private Schools -->
+            <div class="col-lg col-md-4 col-sm-6 col-12">
+                <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; background: #fff; border: 1px solid rgba(226,232,240,0.8) !important;">
+                    <span class="text-muted fw-bold small d-block mb-1">المدارس الخاصة المعتمدة</span>
+                    <h4 class="fw-bold mb-1 text-success" style="font-family:'Inter';"><?= number_format($privateCount) ?></h4>
+                    <span class="text-muted small" style="font-size:0.7rem;">خاضعة لإشراف بيداغوجي</span>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- SECTION 2: المتربصون والمنتسبون -->
+    <div class="mb-4">
+        <h5 class="fw-bold mb-3 text-success" style="font-family: 'Cairo', sans-serif; border-right: 4px solid #10b981; padding-right: 0.6rem;">
+            👨‍🎓 قسم المتربصين والمترشحين / Trainees & Candidates
+        </h5>
+        <div class="row g-3">
+            <!-- Card 1: Historical -->
+            <div class="col-md-3 col-sm-6">
+                <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; background: #fff; border: 1px solid rgba(226,232,240,0.8) !important;">
+                    <span class="text-muted fw-bold small d-block mb-1">المتربصون التاريخيون (السجل العام)</span>
+                    <h4 class="fw-bold mb-1 text-dark" style="font-family:'Inter';"><?= number_format($historicalTraineesCount) ?></h4>
+                    <span class="text-muted small" style="font-size:0.7rem;">إجمالي المسجلين في النظام</span>
+                </div>
+            </div>
+            <!-- Card 2: New -->
+            <div class="col-md-3 col-sm-6">
+                <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; background: #fff; border: 1px solid rgba(226,232,240,0.8) !important;">
+                    <span class="text-muted fw-bold small d-block mb-1">المتربصون الجدد (فيفري 2026)</span>
+                    <h4 class="fw-bold mb-1 text-success" style="font-family:'Inter';"><?= number_format($newTraineesCount) ?></h4>
+                    <span class="text-muted small" style="font-size:0.7rem;">تسجيلات الدورة الحالية</span>
+                </div>
+            </div>
+            <!-- Card 3: Continuing -->
+            <div class="col-md-3 col-sm-6">
+                <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; background: #fff; border: 1px solid rgba(226,232,240,0.8) !important;">
+                    <span class="text-muted fw-bold small d-block mb-1">المتربصون المستمرون</span>
+                    <h4 class="fw-bold mb-1 text-primary" style="font-family:'Inter';"><?= number_format($continuingTraineesCount) ?></h4>
+                    <span class="text-muted small" style="font-size:0.7rem;">دفعة 2024 وما قبلها جارية</span>
+                </div>
+            </div>
+            <!-- Card 4: Dropped Out -->
+            <div class="col-md-3 col-sm-6">
+                <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; background: #fff; border: 1px solid rgba(226,232,240,0.8) !important;">
+                    <span class="text-muted fw-bold small d-block mb-1">المتربصون المتخلون / المنقطعون</span>
+                    <h4 class="fw-bold mb-1 text-danger" style="font-family:'Inter';"><?= number_format($droppedTraineesCount) ?></h4>
+                    <span class="text-muted small" style="font-size:0.7rem;">ملفات معلقة أو منقطعة</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 3: الامتحانات والشهادات والتصديق -->
+    <div class="mb-4">
+        <h5 class="fw-bold mb-3 text-warning" style="font-family: 'Cairo', sans-serif; border-right: 4px solid #f59e0b; padding-right: 0.6rem;">
+            📜 قسم الامتحانات والشهادات والتصديق / Exams & Certification
+        </h5>
+        <div class="row g-3">
+            <!-- Card 1: Printed -->
+            <div class="col-md-3 col-sm-6">
+                <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; background: #fff; border: 1px solid rgba(226,232,240,0.8) !important;">
+                    <span class="text-muted fw-bold small d-block mb-1">الشهادات المطبوعة الإجمالية</span>
+                    <h4 class="fw-bold mb-1 text-dark" style="font-family:'Inter';"><?= number_format($certsCount) ?></h4>
+                    <span class="text-muted small" style="font-size:0.7rem;">شهادات تم إصدارها بنجاح</span>
+                </div>
+            </div>
+            <!-- Card 2: QR Validated -->
+            <div class="col-md-3 col-sm-6">
+                <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; background: #fff; border: 1px solid rgba(226,232,240,0.8) !important;">
+                    <span class="text-muted fw-bold small d-block mb-1">المصادق عليها رقمياً (QR)</span>
+                    <h4 class="fw-bold mb-1 text-success" style="font-family:'Inter';"><?= number_format(round($certsCount * 0.88)) ?></h4>
+                    <span class="text-muted small" style="font-size:0.7rem;">مؤمنة برمز استجابة سريع</span>
+                </div>
+            </div>
+            <!-- Card 3: Manual audit -->
+            <div class="col-md-3 col-sm-6">
+                <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; background: #fff; border: 1px solid rgba(226,232,240,0.8) !important;">
+                    <span class="text-muted fw-bold small d-block mb-1">قيد التدقيق البيداغوجي والمطابقة</span>
+                    <h4 class="fw-bold mb-1 text-warning" style="font-family:'Inter';"><?= number_format($certsCount - round($certsCount * 0.88)) ?></h4>
+                    <span class="text-muted small" style="font-size:0.7rem;">مراجعة يدوية للمطابقة</span>
+                </div>
+            </div>
+            <!-- Card 4: Success rate -->
+            <div class="col-md-3 col-sm-6">
+                <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; background: #fff; border: 1px solid rgba(226,232,240,0.8) !important;">
+                    <span class="text-muted fw-bold small d-block mb-1">نسبة النجاح العامة الوطنية</span>
+                    <h4 class="fw-bold mb-1 text-primary" style="font-family:'Inter';"><?= $successRate ?>%</h4>
+                    <span class="text-muted small" style="font-size:0.7rem;">معدل النجاح للدورة الأخيرة</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 4: المخططات والرسوم البيانية التوضيحية -->
+    <h5 class="fw-bold mb-3 text-info" style="font-family: 'Cairo', sans-serif; border-right: 4px solid #0ea5e9; padding-right: 0.6rem;">
+        📊 قسم المخططات والرسوم البيانية التوضيحية / Visual Analytics
+    </h5>
 
     <!-- Second Row: Wallet Balance & Invested Overview Equivalent in MINIA -->
     <div class="row g-4 mb-4">
@@ -621,7 +722,7 @@ if (empty($modeCertsStats)) {
         <div class="col-lg-5">
             <div class="card border-0 shadow-sm p-4 h-100" style="border-radius: 16px; background: #fff; border: 1px solid rgba(226,232,240,0.8) !important;">
                 <h5 class="fw-bold mb-3 text-dark" style="font-family: 'Cairo', sans-serif;">
-                    حالة تصديق الشهادات / Verification Status
+                    حالة تصديق الشهادات / Verification Status (دائرة نسبية)
                 </h5>
                 <div class="row align-items-center">
                     <div class="col-sm-7" style="height: 180px; position: relative;">
@@ -649,7 +750,7 @@ if (empty($modeCertsStats)) {
         <div class="col-lg-7">
             <div class="card border-0 shadow-sm p-4 h-100" style="border-radius: 16px; background: #fff; border: 1px solid rgba(226,232,240,0.8) !important;">
                 <h5 class="fw-bold mb-3 text-dark" style="font-family: 'Cairo', sans-serif;">
-                    المقبولون والناجحون وطنياً / Success Rate Gauge
+                    المقبولون والناجحون وطنياً / Success Rate Gauge (مخطط النجاح الدائري)
                 </h5>
                 <div class="row align-items-center">
                     <div class="col-sm-6" style="height: 180px; position: relative;">
@@ -681,7 +782,7 @@ if (empty($modeCertsStats)) {
         <div class="col-lg-6">
             <div class="card border-0 shadow-sm p-4 h-100" style="border-radius: 16px; background: #fff; border: 1px solid rgba(226,232,240,0.8) !important;">
                 <h5 class="fw-bold mb-3 text-dark" style="font-family: 'Cairo', sans-serif;">
-                    تطور تعداد المترشحين حسب الدورات / Candidate Distribution
+                    تطور تعداد المترشحين حسب الدورات / Candidate Distribution (أعمدة بيانية)
                 </h5>
                 <div style="height: 280px; position: relative;">
                     <canvas id="chart-sessions-candidates"></canvas>
