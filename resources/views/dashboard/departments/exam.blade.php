@@ -594,9 +594,12 @@ canvas {
             <!-- Card 1: INSFP -->
             <div class="col-lg col-md-4 col-sm-6 col-12">
                 <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; background: #fff; border: 1px solid rgba(226,232,240,0.8) !important;">
-                    <span class="text-muted fw-bold small d-block mb-1">المعاهد الوطنية (INSFP)</span>
-                    <h4 class="fw-bold mb-1 text-primary counter-val" data-counter="<?= $insfpCount ?>" style="font-family:'Inter';">0</h4>
-                    <span class="text-muted small" style="font-size:0.7rem;">مخصصة لتقني سامي (TS)</span>
+                    <div class="d-flex justify-content-between align-items-start mb-1">
+                        <span class="text-muted fw-bold small">مراكز الامتحانات الرسمية</span>
+                        <div style="width:70px;height:28px;"><canvas id="sparkline-centers"></canvas></div>
+                    </div>
+                    <h4 class="fw-bold mb-0 text-primary counter-val" data-counter="<?= $centersCount ?>" style="font-family:'Inter';">0</h4>
+                    <span class="text-muted small" style="font-size:0.7rem;">INSFP <?= $insfpCount ?> + CFPA <?= $cfpaCount ?> + خاصة <?= $privateCount ?></span>
                 </div>
             </div>
             <!-- Card 2: CFPA -->
@@ -643,9 +646,12 @@ canvas {
             <!-- Card 1: Historical -->
             <div class="col-md-3 col-sm-6">
                 <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; background: #fff; border: 1px solid rgba(226,232,240,0.8) !important;">
-                    <span class="text-muted fw-bold small d-block mb-1">المتربصون التاريخيون (السجل العام)</span>
-                    <h4 class="fw-bold mb-1 text-dark counter-val" data-counter="<?= $historicalTraineesCount ?>" style="font-family:'Inter';">0</h4>
-                    <span class="text-muted small" style="font-size:0.7rem;">إجمالي المسجلين في النظام</span>
+                    <div class="d-flex justify-content-between align-items-start mb-1">
+                        <span class="text-muted fw-bold small">إجمالي المترشحين</span>
+                        <div style="width:70px;height:28px;"><canvas id="sparkline-candidates"></canvas></div>
+                    </div>
+                    <h4 class="fw-bold mb-0 text-success counter-val" data-counter="<?= $candidatesCount ?>" style="font-family:'Inter';">0</h4>
+                    <span class="text-muted small" style="font-size:0.7rem;">ملفات مسجلة مؤكدة</span>
                 </div>
             </div>
             <!-- Card 2: New -->
@@ -684,8 +690,11 @@ canvas {
             <!-- Card 1: Printed -->
             <div class="col-md-3 col-sm-6">
                 <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; background: #fff; border: 1px solid rgba(226,232,240,0.8) !important;">
-                    <span class="text-muted fw-bold small d-block mb-1">الشهادات المطبوعة الإجمالية</span>
-                    <h4 class="fw-bold mb-1 text-dark counter-val" data-counter="<?= $certsCount ?>" style="font-family:'Inter';">0</h4>
+                    <div class="d-flex justify-content-between align-items-start mb-1">
+                        <span class="text-muted fw-bold small">الشهادات المطبوعة</span>
+                        <div style="width:70px;height:28px;"><canvas id="sparkline-certs"></canvas></div>
+                    </div>
+                    <h4 class="fw-bold mb-0 text-dark counter-val" data-counter="<?= $certsCount ?>" style="font-family:'Inter';">0</h4>
                     <span class="text-muted small" style="font-size:0.7rem;">شهادات تم إصدارها بنجاح</span>
                 </div>
             </div>
@@ -708,8 +717,11 @@ canvas {
             <!-- Card 4: Success rate -->
             <div class="col-md-3 col-sm-6">
                 <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; background: #fff; border: 1px solid rgba(226,232,240,0.8) !important;">
-                    <span class="text-muted fw-bold small d-block mb-1">نسبة النجاح العامة الوطنية</span>
-                    <h4 class="fw-bold mb-1 text-primary" style="font-family:'Inter';"><?= $successRate ?>%</h4>
+                    <div class="d-flex justify-content-between align-items-start mb-1">
+                        <span class="text-muted fw-bold small">نسبة النجاح الوطنية</span>
+                        <div style="width:70px;height:28px;"><canvas id="sparkline-success"></canvas></div>
+                    </div>
+                    <h4 class="fw-bold mb-0 text-primary" style="font-family:'Inter';"><?= $successRate ?>%</h4>
                     <span class="text-muted small" style="font-size:0.7rem;">معدل النجاح للدورة الأخيرة</span>
                 </div>
             </div>
@@ -940,135 +952,101 @@ canvas {
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Sparkline configuration helper
-    const sparklineOptions = {
-        type: 'line',
-        options: {
-            plugins: { legend: { display: false }, tooltip: { enabled: false } },
-            scales: { x: { display: false }, y: { display: false } },
-            elements: {
-                point: { radius: 0 },
-                line: { tension: 0.4, borderWidth: 1.8 }
-            },
-            responsive: true,
-            maintainAspectRatio: false
+
+    function safeChart(id, config) {
+        try {
+            const el = document.getElementById(id);
+            if (!el) return null;
+            return new Chart(el.getContext('2d'), config);
+        } catch(e) {
+            console.warn('Chart init failed for #' + id, e);
+            return null;
         }
+    }
+
+    // Sparkline configuration helper
+    const sparklineOpts = {
+        plugins: { legend: { display: false }, tooltip: { enabled: false } },
+        scales: { x: { display: false }, y: { display: false } },
+        elements: { point: { radius: 0 }, line: { tension: 0.4, borderWidth: 1.8 } },
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 800 }
     };
 
     // 1. Centers Sparkline
-    new Chart(document.getElementById('sparkline-centers').getContext('2d'), {
-        ...sparklineOptions,
+    safeChart('sparkline-centers', {
+        type: 'line',
+        options: sparklineOpts,
         data: {
             labels: [1,2,3,4,5,6,7],
-            datasets: [{
-                data: [1800, 1850, 1900, 1950, 2000, 2020, <?= $centersCount ?>],
-                borderColor: '#3b82f6',
-                backgroundColor: 'transparent'
-            }]
+            datasets: [{ data: [1800,1850,1900,1950,2000,2020,<?= $centersCount ?>], borderColor:'#3b82f6', backgroundColor:'transparent' }]
         }
     });
 
     // 2. Candidates Sparkline
-    new Chart(document.getElementById('sparkline-candidates').getContext('2d'), {
-        ...sparklineOptions,
+    safeChart('sparkline-candidates', {
+        type: 'line',
+        options: sparklineOpts,
         data: {
             labels: [1,2,3,4,5,6,7],
-            datasets: [{
-                data: [2900000, 3000000, 3100000, 3150000, 3200000, 3250000, <?= $candidatesCount ?>],
-                borderColor: '#10b981',
-                backgroundColor: 'transparent'
-            }]
+            datasets: [{ data: [2900000,3000000,3100000,3150000,3200000,3250000,<?= $candidatesCount ?>], borderColor:'#10b981', backgroundColor:'transparent' }]
         }
     });
 
     // 3. Certificates Sparkline
-    new Chart(document.getElementById('sparkline-certs').getContext('2d'), {
-        ...sparklineOptions,
+    safeChart('sparkline-certs', {
+        type: 'line',
+        options: sparklineOpts,
         data: {
             labels: [1,2,3,4,5,6,7],
-            datasets: [{
-                data: [15000, 18000, 20000, 22000, 23000, 24000, <?= $certsCount ?>],
-                borderColor: '#0ea5e9',
-                backgroundColor: 'transparent'
-            }]
+            datasets: [{ data: [15000,18000,20000,22000,23000,24000,<?= $certsCount ?>], borderColor:'#0ea5e9', backgroundColor:'transparent' }]
         }
     });
 
     // 4. Success Rate Sparkline
-    new Chart(document.getElementById('sparkline-success').getContext('2d'), {
-        ...sparklineOptions,
+    safeChart('sparkline-success', {
+        type: 'line',
+        options: sparklineOpts,
         data: {
             labels: [1,2,3,4,5,6,7],
-            datasets: [{
-                data: [72, 74, 75, 73, 76, 75, <?= $successRate ?>],
-                borderColor: '#f59e0b',
-                backgroundColor: 'transparent'
-            }]
+            datasets: [{ data: [72,74,75,73,76,75,<?= $successRate ?>], borderColor:'#f59e0b', backgroundColor:'transparent' }]
         }
     });
 
     // 5. Certificate Verification Pie Chart
-    const ctxCert = document.getElementById('chart-certs-verification').getContext('2d');
-    const qrValidated = Math.round(<?= $certsCount ?> * 0.88);
+    const qrValidated   = Math.round(<?= $certsCount ?> * 0.88);
     const manualPending = <?= $certsCount ?> - qrValidated;
-
-    new Chart(ctxCert, {
+    safeChart('chart-certs-verification', {
         type: 'pie',
         data: {
             labels: ['مصادق بـ QR', 'مراجعة يدوية'],
-            datasets: [{
-                data: [qrValidated, manualPending],
-                backgroundColor: ['#10b981', '#f59e0b'],
-                borderWidth: 2,
-                borderColor: '#ffffff'
-            }]
+            datasets: [{ data:[qrValidated, manualPending], backgroundColor:['#10b981','#f59e0b'], borderWidth:2, borderColor:'#ffffff' }]
         },
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            return ' ' + context.raw.toLocaleString() + ' شهادة';
-                        }
-                    }
-                }
-            }
+            responsive:true, maintainAspectRatio:false,
+            plugins: { legend:{display:false}, tooltip:{ callbacks:{ label(ctx){ return ' '+ctx.raw.toLocaleString()+' شهادة'; } } } }
         }
     });
 
-    // 6. Success Gauge Chart
-    new Chart(document.getElementById('chart-success-gauge').getContext('2d'), {
+    // 6. Success Gauge (half-doughnut)
+    safeChart('chart-success-gauge', {
         type: 'doughnut',
         data: {
-            labels: ['ناجح بصفة مقبولة', 'مؤجل/راسب'],
-            datasets: [{
-                data: [<?= $successRate ?>, <?= round(100 - $successRate, 1) ?>],
-                backgroundColor: ['#10b981', '#cbd5e1'],
-                borderWidth: 0
-            }]
+            labels: ['ناجح', 'مؤجل/راسب'],
+            datasets: [{ data:[<?= $successRate ?>, <?= round(100-$successRate,1) ?>], backgroundColor:['#10b981','#e2e8f0'], borderWidth:0 }]
         },
         options: {
-            rotation: -90,
-            circumference: 180,
-            cutout: '75%',
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: { enabled: true }
-            }
+            rotation:-90, circumference:180, cutout:'75%',
+            responsive:true, maintainAspectRatio:false,
+            plugins:{ legend:{display:false}, tooltip:{enabled:true} }
         }
     });
 
     // 7. Candidates Count by Session Bar Chart
-    const ctxSess = document.getElementById('chart-sessions-candidates').getContext('2d');
-    const sessionLabels = <?= json_encode(array_map(fn($s) => mb_substr($s['name'], 0, 25) . (mb_strlen($s['name']) > 25 ? '...' : ''), $sessionsList)) ?>;
+    const sessionLabels     = <?= json_encode(array_map(fn($s) => mb_substr($s['name'], 0, 25) . (mb_strlen($s['name']) > 25 ? '...' : ''), $sessionsList)) ?>;
     const sessionCandidates = <?= json_encode(array_map(fn($s) => (int)$s['candidates'], $sessionsList)) ?>;
-
-    new Chart(ctxSess, {
+    safeChart('chart-sessions-candidates', {
         type: 'bar',
         data: {
             labels: sessionLabels,
@@ -1111,11 +1089,9 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // 8. Mode success doughnut chart
-    const ctxMode = document.getElementById('chart-modes-success').getContext('2d');
-    const modeLabels = <?= json_encode(array_map(fn($m) => $m->mode_nom, $modeCertsStats)) ?>;
+    const modeLabels     = <?= json_encode(array_map(fn($m) => $m->mode_nom, $modeCertsStats)) ?>;
     const modeCandidates = <?= json_encode(array_map(fn($m) => (int)$m->candidates_count, $modeCertsStats)) ?>;
-
-    new Chart(ctxMode, {
+    safeChart('chart-modes-success', {
         type: 'doughnut',
         data: {
             labels: modeLabels,
