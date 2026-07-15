@@ -34,6 +34,22 @@ class GradesController extends Controller
             abort(403, 'السداسي المحدد غير صالح لهذا التخصص.');
         }
 
+        // Check if previous semester is validated
+        if ($semestre > 1) {
+            $prevSem = $semestre - 1;
+            $isPrevVal = DB::selectOne("
+                SELECT 1 FROM section_semestre ss
+                JOIN section s ON ss.IDSection = s.IDSection
+                WHERE s.IDOffre = ? AND ss.NumSem = ?
+                  AND ((ss.NumPv IS NOT NULL AND ss.NumPv != '') OR ss.visaevaldir = 1 OR ss.visaevaldfep = 1)
+                LIMIT 1
+            ", [(int)$offre['id'], $prevSem]) !== null;
+
+            if (!$isPrevVal) {
+                abort(403, 'عذراً، لا يمكنك الانتقال لهذا السداسي قبل إتمام ومداولة السداسي السابق أولاً.');
+            }
+        }
+
         // 2. Role-based Scope Validation
         if (in_array($role, ['admin', 'central', 'high_admin', 'secretaire_general', 'ministre'])) {
             // Admins can access all
@@ -574,6 +590,18 @@ class GradesController extends Controller
 
         $filterOpts = $this->getFilterOptions($selectedWilaya);
 
+        $validatedSemestersRaw = DB::select("
+            SELECT s.IDOffre as id_offre, ss.NumSem as num_sem
+            FROM section_semestre ss
+            JOIN section s ON ss.IDSection = s.IDSection
+            WHERE (ss.NumPv IS NOT NULL AND ss.NumPv != '') OR ss.visaevaldir = 1 OR ss.visaevaldfep = 1
+        ");
+
+        $validatedSemesters = [];
+        foreach ($validatedSemestersRaw as $row) {
+            $validatedSemesters[(int)$row->id_offre][] = (int)$row->num_sem;
+        }
+
         return $this->render('admin/grades/index', [
             'title'  => 'نظام التنقيط - SGFEP / MFEP',
             'offres' => $offres,
@@ -585,6 +613,7 @@ class GradesController extends Controller
             'selected_etab' => $selectedEtab,
             'selected_year' => $selectedYear,
             'hasActiveWindow' => $hasActiveWindow,
+            'validatedSemesters' => $validatedSemesters,
         ]);
     }
 
