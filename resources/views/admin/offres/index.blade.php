@@ -185,8 +185,26 @@ body {
     <!-- Top Header -->
     <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-light">
         <div>
+            <?php
+            $currentSessionName = 'دورة فيفري 2026';
+            if (!empty($_GET['filter_session'])) {
+                foreach ($sessions as $s) {
+                    if ($s['id'] == $_GET['filter_session']) {
+                        $currentSessionName = $s['intitule_ar'];
+                        break;
+                    }
+                }
+            } else {
+                foreach ($sessions as $s) {
+                    if (!empty($s['Encour']) || !empty($s['encour'])) {
+                        $currentSessionName = $s['intitule_ar'];
+                        break;
+                    }
+                }
+            }
+            ?>
             <h3 class="fw-bold mb-1" style="color: #1e293b; font-family:'Cairo', sans-serif;"><i class="fa-solid fa-briefcase text-primary me-2"></i> عروض التكوين / Offres de Formation</h3>
-            <p class="text-muted mb-0 small">دورة فيفري 2026 - مديرية التكوين والتعليم المهنيين لولاية <?= htmlspecialchars($wilaya_name ?? 'سعيدة') ?></p>
+            <p class="text-muted mb-0 small"><?= htmlspecialchars($currentSessionName) ?> - مديرية التكوين والتعليم المهنيين لولاية <?= htmlspecialchars($wilaya_name ?? 'سعيدة') ?></p>
         </div>
         <div class="d-flex gap-2">
             <a href="/dashboard/offres/print" target="_blank" class="btn btn-outline-primary rounded-pill px-4 fw-bold shadow-sm"><i class="fa-solid fa-print me-2"></i> استخراج مخطط التكوين</a>
