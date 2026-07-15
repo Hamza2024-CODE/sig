@@ -380,6 +380,11 @@ if (empty($modeCertsStats)) {
     --glass-bg: rgba(255, 255, 255, 0.95);
 }
 
+canvas {
+    direction: ltr !important;
+    transform: none !important;
+}
+
 .vip-header {
     background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
     border-radius: 16px;
@@ -479,25 +484,25 @@ if (empty($modeCertsStats)) {
         <div class="row g-3">
             <div class="col-md-3">
                 <div class="p-3 rounded-3 h-100" style="background: rgba(14, 165, 233, 0.05); border-right: 4px solid #0ea5e9;">
-                    <h6 class="fw-bold text-dark mb-2">🏢 مراكز الامتحانات</h6>
+                    <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-school text-primary me-1"></i> مراكز الامتحانات</h6>
                     <p class="text-muted small mb-0">يعرض العدد الإجمالي لمراكز الإجراء الوطنية مفصلة إلى: معاهد وطنية متخصصة (INSFP)، ومراكز تكوين (CFPA)، ومدارس خاصة معتمدة تجرى فيها الامتحانات.</p>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="p-3 rounded-3 h-100" style="background: rgba(16, 185, 129, 0.05); border-right: 4px solid #10b981;">
-                    <h6 class="fw-bold text-dark mb-2">👨‍🎓 المترشحون والمسجلون</h6>
-                    <p class="text-muted small mb-0">يوضح إجمالي المترشحين، مع تقسيمهم إلى: المتربصين الجدد لدورة فيفري 2026 الحالية، والمتربصين المستمرين من دورة 2024 لضمان دقة الإحصائيات.</p>
+                    <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-user-graduate text-success me-1"></i> المترشحون والمسجلون</h6>
+                    <p class="text-muted small mb-0">يوضح إجمالي المترشحين، مع تقسيمهم إلى: المتربصين الجدد لدورة فيفري 2026 الحالية، والمتربصين المستمرين من دورة 2024 لضشان دقة الإحصائيات.</p>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="p-3 rounded-3 h-100" style="background: rgba(59, 130, 246, 0.05); border-right: 4px solid #3b82f6;">
-                    <h6 class="fw-bold text-dark mb-2">📜 الشهادات الصادرة</h6>
+                    <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-file-signature text-warning me-1"></i> الشهادات الصادرة</h6>
                     <p class="text-muted small mb-0">يعرض الشهادات المطبوعة والمصادق عليها، مع توضيح نسبة الشهادات المؤمنة رقمياً برمز الاستجابة السريع (QR Code) لمنع التزوير وتسهيل التحقق الفوري.</p>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="p-3 rounded-3 h-100" style="background: rgba(245, 158, 11, 0.05); border-right: 4px solid #f59e0b;">
-                    <h6 class="fw-bold text-dark mb-2">📈 نسبة النجاح الوطنية</h6>
+                    <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-chart-line text-info me-1"></i> نسبة النجاح الوطنية</h6>
                     <p class="text-muted small mb-0">تمثل نسبة النجاح العامة المحتسبة آلياً من قاعدة البيانات، مع مقارنتها بالدورة السابقة لتحديد مدى تحسن واستقرار مستوى الامتحانات الوطنية.</p>
                 </div>
             </div>
@@ -583,14 +588,14 @@ if (empty($modeCertsStats)) {
     <!-- SECTION 1: المؤسسات التكوينية -->
     <div class="mb-4">
         <h5 class="fw-bold mb-3 text-primary" style="font-family: 'Cairo', sans-serif; border-right: 4px solid #3b82f6; padding-right: 0.6rem;">
-            🏢 قسم المؤسسات التكوينية / Training Institutions
+            <i class="fa-solid fa-school text-primary me-2"></i> قسم المؤسسات التكوينية / Training Institutions
         </h5>
         <div class="row g-3">
             <!-- Card 1: INSFP -->
             <div class="col-lg col-md-4 col-sm-6 col-12">
                 <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; background: #fff; border: 1px solid rgba(226,232,240,0.8) !important;">
                     <span class="text-muted fw-bold small d-block mb-1">المعاهد الوطنية (INSFP)</span>
-                    <h4 class="fw-bold mb-1 text-primary" style="font-family:'Inter';"><?= number_format($insfpCount) ?></h4>
+                    <h4 class="fw-bold mb-1 text-primary counter-val" data-counter="<?= $insfpCount ?>" style="font-family:'Inter';">0</h4>
                     <span class="text-muted small" style="font-size:0.7rem;">مخصصة لتقني سامي (TS)</span>
                 </div>
             </div>
@@ -598,7 +603,7 @@ if (empty($modeCertsStats)) {
             <div class="col-lg col-md-4 col-sm-6 col-12">
                 <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; background: #fff; border: 1px solid rgba(226,232,240,0.8) !important;">
                     <span class="text-muted fw-bold small d-block mb-1">مراكز التكوين (CFPA)</span>
-                    <h4 class="fw-bold mb-1 text-dark" style="font-family:'Inter';"><?= number_format($cfpaCount) ?></h4>
+                    <h4 class="fw-bold mb-1 text-dark counter-val" data-counter="<?= $cfpaCount ?>" style="font-family:'Inter';">0</h4>
                     <span class="text-muted small" style="font-size:0.7rem;">مراكز التأهيل المهني</span>
                 </div>
             </div>
@@ -606,7 +611,7 @@ if (empty($modeCertsStats)) {
             <div class="col-lg col-md-4 col-sm-6 col-12">
                 <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; background: #fff; border: 1px solid rgba(226,232,240,0.8) !important;">
                     <span class="text-muted fw-bold small d-block mb-1">معاهد التعليم المهني (IEP)</span>
-                    <h4 class="fw-bold mb-1 text-info" style="font-family:'Inter';"><?= number_format($iepCount) ?></h4>
+                    <h4 class="fw-bold mb-1 text-info counter-val" data-counter="<?= $iepCount ?>" style="font-family:'Inter';">0</h4>
                     <span class="text-muted small" style="font-size:0.7rem;">المسار التعليمي التقني</span>
                 </div>
             </div>
@@ -614,7 +619,7 @@ if (empty($modeCertsStats)) {
             <div class="col-lg col-md-4 col-sm-6 col-12">
                 <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; background: #fff; border: 1px solid rgba(226,232,240,0.8) !important;">
                     <span class="text-muted fw-bold small d-block mb-1">الملحقات التكوينية</span>
-                    <h4 class="fw-bold mb-1 text-secondary" style="font-family:'Inter';"><?= number_format($annexCount) ?></h4>
+                    <h4 class="fw-bold mb-1 text-secondary counter-val" data-counter="<?= $annexCount ?>" style="font-family:'Inter';">0</h4>
                     <span class="text-muted small" style="font-size:0.7rem;">هياكل تابعة ملحقة</span>
                 </div>
             </div>
@@ -622,7 +627,7 @@ if (empty($modeCertsStats)) {
             <div class="col-lg col-md-4 col-sm-6 col-12">
                 <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; background: #fff; border: 1px solid rgba(226,232,240,0.8) !important;">
                     <span class="text-muted fw-bold small d-block mb-1">المدارس الخاصة المعتمدة</span>
-                    <h4 class="fw-bold mb-1 text-success" style="font-family:'Inter';"><?= number_format($privateCount) ?></h4>
+                    <h4 class="fw-bold mb-1 text-success counter-val" data-counter="<?= $privateCount ?>" style="font-family:'Inter';">0</h4>
                     <span class="text-muted small" style="font-size:0.7rem;">خاضعة لإشراف بيداغوجي</span>
                 </div>
             </div>
@@ -632,14 +637,14 @@ if (empty($modeCertsStats)) {
     <!-- SECTION 2: المتربصون والمنتسبون -->
     <div class="mb-4">
         <h5 class="fw-bold mb-3 text-success" style="font-family: 'Cairo', sans-serif; border-right: 4px solid #10b981; padding-right: 0.6rem;">
-            👨‍🎓 قسم المتربصين والمترشحين / Trainees & Candidates
+            <i class="fa-solid fa-user-graduate text-success me-2"></i> قسم المتربصين والمترشحين / Trainees & Candidates
         </h5>
         <div class="row g-3">
             <!-- Card 1: Historical -->
             <div class="col-md-3 col-sm-6">
                 <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; background: #fff; border: 1px solid rgba(226,232,240,0.8) !important;">
                     <span class="text-muted fw-bold small d-block mb-1">المتربصون التاريخيون (السجل العام)</span>
-                    <h4 class="fw-bold mb-1 text-dark" style="font-family:'Inter';"><?= number_format($historicalTraineesCount) ?></h4>
+                    <h4 class="fw-bold mb-1 text-dark counter-val" data-counter="<?= $historicalTraineesCount ?>" style="font-family:'Inter';">0</h4>
                     <span class="text-muted small" style="font-size:0.7rem;">إجمالي المسجلين في النظام</span>
                 </div>
             </div>
@@ -647,7 +652,7 @@ if (empty($modeCertsStats)) {
             <div class="col-md-3 col-sm-6">
                 <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; background: #fff; border: 1px solid rgba(226,232,240,0.8) !important;">
                     <span class="text-muted fw-bold small d-block mb-1">المتربصون الجدد (فيفري 2026)</span>
-                    <h4 class="fw-bold mb-1 text-success" style="font-family:'Inter';"><?= number_format($newTraineesCount) ?></h4>
+                    <h4 class="fw-bold mb-1 text-success counter-val" data-counter="<?= $newTraineesCount ?>" style="font-family:'Inter';">0</h4>
                     <span class="text-muted small" style="font-size:0.7rem;">تسجيلات الدورة الحالية</span>
                 </div>
             </div>
@@ -655,7 +660,7 @@ if (empty($modeCertsStats)) {
             <div class="col-md-3 col-sm-6">
                 <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; background: #fff; border: 1px solid rgba(226,232,240,0.8) !important;">
                     <span class="text-muted fw-bold small d-block mb-1">المتربصون المستمرون</span>
-                    <h4 class="fw-bold mb-1 text-primary" style="font-family:'Inter';"><?= number_format($continuingTraineesCount) ?></h4>
+                    <h4 class="fw-bold mb-1 text-primary counter-val" data-counter="<?= $continuingTraineesCount ?>" style="font-family:'Inter';">0</h4>
                     <span class="text-muted small" style="font-size:0.7rem;">دفعة 2024 وما قبلها جارية</span>
                 </div>
             </div>
@@ -663,7 +668,7 @@ if (empty($modeCertsStats)) {
             <div class="col-md-3 col-sm-6">
                 <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; background: #fff; border: 1px solid rgba(226,232,240,0.8) !important;">
                     <span class="text-muted fw-bold small d-block mb-1">المتربصون المتخلون / المنقطعون</span>
-                    <h4 class="fw-bold mb-1 text-danger" style="font-family:'Inter';"><?= number_format($droppedTraineesCount) ?></h4>
+                    <h4 class="fw-bold mb-1 text-danger counter-val" data-counter="<?= $droppedTraineesCount ?>" style="font-family:'Inter';">0</h4>
                     <span class="text-muted small" style="font-size:0.7rem;">ملفات معلقة أو منقطعة</span>
                 </div>
             </div>
@@ -673,14 +678,14 @@ if (empty($modeCertsStats)) {
     <!-- SECTION 3: الامتحانات والشهادات والتصديق -->
     <div class="mb-4">
         <h5 class="fw-bold mb-3 text-warning" style="font-family: 'Cairo', sans-serif; border-right: 4px solid #f59e0b; padding-right: 0.6rem;">
-            📜 قسم الامتحانات والشهادات والتصديق / Exams & Certification
+            <i class="fa-solid fa-file-signature text-warning me-2"></i> قسم الامتحانات والشهادات والتصديق / Exams & Certification
         </h5>
         <div class="row g-3">
             <!-- Card 1: Printed -->
             <div class="col-md-3 col-sm-6">
                 <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; background: #fff; border: 1px solid rgba(226,232,240,0.8) !important;">
                     <span class="text-muted fw-bold small d-block mb-1">الشهادات المطبوعة الإجمالية</span>
-                    <h4 class="fw-bold mb-1 text-dark" style="font-family:'Inter';"><?= number_format($certsCount) ?></h4>
+                    <h4 class="fw-bold mb-1 text-dark counter-val" data-counter="<?= $certsCount ?>" style="font-family:'Inter';">0</h4>
                     <span class="text-muted small" style="font-size:0.7rem;">شهادات تم إصدارها بنجاح</span>
                 </div>
             </div>
@@ -688,7 +693,7 @@ if (empty($modeCertsStats)) {
             <div class="col-md-3 col-sm-6">
                 <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; background: #fff; border: 1px solid rgba(226,232,240,0.8) !important;">
                     <span class="text-muted fw-bold small d-block mb-1">المصادق عليها رقمياً (QR)</span>
-                    <h4 class="fw-bold mb-1 text-success" style="font-family:'Inter';"><?= number_format(round($certsCount * 0.88)) ?></h4>
+                    <h4 class="fw-bold mb-1 text-success counter-val" data-counter="<?= round($certsCount * 0.88) ?>" style="font-family:'Inter';">0</h4>
                     <span class="text-muted small" style="font-size:0.7rem;">مؤمنة برمز استجابة سريع</span>
                 </div>
             </div>
@@ -696,7 +701,7 @@ if (empty($modeCertsStats)) {
             <div class="col-md-3 col-sm-6">
                 <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; background: #fff; border: 1px solid rgba(226,232,240,0.8) !important;">
                     <span class="text-muted fw-bold small d-block mb-1">قيد التدقيق البيداغوجي والمطابقة</span>
-                    <h4 class="fw-bold mb-1 text-warning" style="font-family:'Inter';"><?= number_format($certsCount - round($certsCount * 0.88)) ?></h4>
+                    <h4 class="fw-bold mb-1 text-warning counter-val" data-counter="<?= $certsCount - round($certsCount * 0.88) ?>" style="font-family:'Inter';">0</h4>
                     <span class="text-muted small" style="font-size:0.7rem;">مراجعة يدوية للمطابقة</span>
                 </div>
             </div>
@@ -713,7 +718,7 @@ if (empty($modeCertsStats)) {
 
     <!-- SECTION 4: المخططات والرسوم البيانية التوضيحية -->
     <h5 class="fw-bold mb-3 text-info" style="font-family: 'Cairo', sans-serif; border-right: 4px solid #0ea5e9; padding-right: 0.6rem;">
-        📊 قسم المخططات والرسوم البيانية التوضيحية / Visual Analytics
+        <i class="fa-solid fa-chart-line text-info me-2"></i> قسم المخططات والرسوم البيانية التوضيحية / Visual Analytics
     </h5>
 
     <!-- Second Row: Wallet Balance & Invested Overview Equivalent in MINIA -->
@@ -1197,6 +1202,46 @@ document.getElementById('addSessionForm').addEventListener('submit', function(e)
         alert('حدث خطأ غير متوقع');
     });
 });
+
+    // ── Animated Number Counters ──────────────────────────────────────────
+    function animateCounter(el) {
+        const target = parseInt(el.dataset.counter, 10);
+        if (isNaN(target)) return;
+        const duration = 1800;
+        const startTime = performance.now();
+        const isDecimal = el.dataset.counter.includes('.');
+
+        function easeOut(t) {
+            return 1 - Math.pow(1 - t, 3);
+        }
+
+        function step(now) {
+            const elapsed = now - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const current = Math.round(easeOut(progress) * target);
+            el.textContent = current.toLocaleString('ar-DZ');
+            if (progress < 1) {
+                requestAnimationFrame(step);
+            } else {
+                el.textContent = target.toLocaleString('ar-DZ');
+            }
+        }
+
+        requestAnimationFrame(step);
+    }
+
+    const counterObserver = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+            if (entry.isIntersecting && !entry.target.dataset.counted) {
+                entry.target.dataset.counted = '1';
+                animateCounter(entry.target);
+            }
+        });
+    }, { threshold: 0.2 });
+
+    document.querySelectorAll('.counter-val').forEach(function(el) {
+        counterObserver.observe(el);
+    });
 </script>
 @endsection
 
