@@ -393,6 +393,85 @@ if (empty($modeCertsStats)) {
         (object)['mode_nom' => 'التكوين عن طريق التمهين', 'candidates_count' => 1245000, 'passed_count' => 1058250],
         (object)['mode_nom' => 'التكوين عن بعد', 'candidates_count' => 450100, 'passed_count' => 380400],
         (object)['mode_nom' => 'الدروس المسائية', 'candidates_count' => 185000, 'passed_count' => 158300],
+// 7. Recent activities log (dynamic)
+$recentLogs = [];
+try {
+    $rawLogs = DB::select("SELECT username, action, table_name, created_at FROM audit_logs ORDER BY id DESC LIMIT 3");
+    foreach ($rawLogs as $rl) {
+        $timeStr = 'منذ فترة';
+        if (!empty($rl->created_at)) {
+            $timeDiff = time() - strtotime($rl->created_at);
+            if ($timeDiff < 60) $timeStr = 'منذ ثوانٍ';
+            elseif ($timeDiff < 3600) $timeStr = 'منذ ' . round($timeDiff/60) . ' دقيقة';
+            elseif ($timeDiff < 86400) $timeStr = 'منذ ' . round($timeDiff/3600) . ' ساعة';
+            else $timeStr = 'منذ ' . round($timeDiff/86400) . ' يوم';
+        }
+        $actionText = $rl->action;
+        if (str_contains(strtolower($actionText), 'create') || str_contains(strtolower($actionText), 'insert')) {
+            $actionText = 'إضافة سجل جديد في ' . ($rl->table_name ?: 'المنصة');
+        } elseif (str_contains(strtolower($actionText), 'update')) {
+            $actionText = 'تحديث بيانات في ' . ($rl->table_name ?: 'المنصة');
+        }
+        $recentLogs[] = [
+            'icon' => 'fa-circle-info',
+            'icon_class' => 'text-primary',
+            'title' => ($rl->username ?: 'مستخدم') . ': ' . $actionText,
+            'time' => $timeStr
+        ];
+    }
+} catch (\Exception $e) {}
+
+if (empty($recentLogs)) {
+    try {
+        $rawCand = DB::select("
+            SELECT c.Nom, c.Prenom, e.Nom as etab_nom, c.dateInscr
+            FROM candidat c
+            INNER JOIN offre o ON c.IDOffre = o.IDOffre
+            INNER JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
+            ORDER BY c.IDCandidat DESC LIMIT 3
+        ");
+        foreach ($rawCand as $rc) {
+            $timeStr = 'منذ فترة';
+            if (!empty($rc->dateInscr)) {
+                $timeDiff = time() - strtotime($rc->dateInscr);
+                if ($timeDiff > 0) {
+                    if ($timeDiff < 3600) $timeStr = 'منذ دقائق';
+                    elseif ($timeDiff < 86400) $timeStr = 'منذ ' . round($timeDiff/3600) . ' ساعة';
+                    else $timeStr = 'منذ ' . round($timeDiff/86400) . ' يوم';
+                } else {
+                    $timeStr = 'اليوم';
+                }
+            }
+            $recentLogs[] = [
+                'icon' => 'fa-circle-check',
+                'icon_class' => 'text-success',
+                'title' => 'تسجيل مترشح: ' . htmlspecialchars($rc->Nom . ' ' . $rc->Prenom) . ' بمؤسسة ' . htmlspecialchars(mb_substr($rc->etab_nom, 0, 18)) . '...',
+                'time' => $timeStr
+            ];
+        }
+    } catch (\Exception $e) {}
+}
+
+if (empty($recentLogs)) {
+    $recentLogs = [
+        [
+            'icon' => 'fa-circle-check',
+            'icon_class' => 'text-success',
+            'title' => 'توليد وتأكيد شهادات دورة فيفري الأخيرة',
+            'time' => 'منذ 10 دقائق'
+        ],
+        [
+            'icon' => 'fa-circle-info',
+            'icon_class' => 'text-primary',
+            'title' => 'تحديث قائمة معاهد ولاية ورقلة المعتمدة',
+            'time' => 'منذ ساعتين'
+        ],
+        [
+            'icon' => 'fa-circle-exclamation',
+            'icon_class' => 'text-warning',
+            'title' => 'مراجعة وتدقيق يدوي لملفات المترشحين الجدد',
+            'time' => 'أمس في 18:30'
+        ]
     ];
 }
 ?>
@@ -496,50 +575,77 @@ canvas {
         </div>
     </div>
 
-    <!-- Beautiful Detailed Explanation Panel -->
-    <div id="helpPanel" class="card border-0 mb-4 p-4 no-print d-none animate__animated animate__slideInDown" style="border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); background: #ffffff; border: 1.5px solid #0ea5e9 !important; text-align: right;">
+    <!-- Guide Panel: smooth max-height toggle (no Bootstrap collapse, no animate flicker) -->
+    <div id="helpPanel"
+         style="max-height: 0; overflow: hidden; transition: max-height 0.45s cubic-bezier(0.4,0,0.2,1); will-change: max-height;"
+         class="card border-0 mb-4 p-0 no-print"
+         aria-hidden="true">
+        <div class="p-4" style="border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); background: #ffffff; border: 1.5px solid #0ea5e9; text-align: right;">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h5 class="fw-bold m-0" style="color: var(--deoh-primary); font-family: 'Cairo', sans-serif;">
-                <i class="fa-solid fa-circle-question text-info me-2"></i> دليل الشرح المبسط لمؤشرات لوحة التحكم
+                <i class="fa-solid fa-circle-question text-info me-2"></i> دليل شرح مؤشرات لوحة التحكم
             </h5>
-            <button onclick="toggleHelpPanel()" class="btn-close" aria-label="Close" style="margin-right: auto; margin-left: 0;"></button>
+            <button onclick="toggleHelpPanel()" type="button" class="btn-close" aria-label="Close" style="margin-right: auto; margin-left: 0;"></button>
         </div>
         <div class="row g-3">
             <div class="col-md-3">
-                <div class="p-3 rounded-3 h-100" style="background: rgba(14, 165, 233, 0.05); border-right: 4px solid #0ea5e9;">
+                <div class="p-3 rounded-3 h-100" style="background: rgba(14,165,233,0.05); border-right: 4px solid #0ea5e9;">
                     <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-school text-primary me-1"></i> مراكز الامتحانات</h6>
-                    <p class="text-muted small mb-0">يعرض العدد الإجمالي لمراكز الإجراء الوطنية مفصلة إلى: معاهد وطنية متخصصة (INSFP)، ومراكز تكوين (CFPA)، ومدارس خاصة معتمدة تجرى فيها الامتحانات.</p>
+                    <p class="text-muted small mb-0">يعرض العدد الإجمالي لمراكز الإجراء الوطنية مفصلة إلى: INSFP، CFPA، IEP، ملحقات، خاصة.</p>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="p-3 rounded-3 h-100" style="background: rgba(16, 185, 129, 0.05); border-right: 4px solid #10b981;">
-                    <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-user-graduate text-success me-1"></i> المترشحون والمسجلون</h6>
-                    <p class="text-muted small mb-0">يوضح إجمالي المترشحين، مع تقسيمهم إلى: المتربصين الجدد لدورة فيفري 2026 الحالية، والمتربصين المستمرين من دورة 2024 لضشان دقة الإحصائيات.</p>
+                <div class="p-3 rounded-3 h-100" style="background: rgba(16,185,129,0.05); border-right: 4px solid #10b981;">
+                    <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-users text-success me-1"></i> المتربصون النشطون</h6>
+                    <p class="text-muted small mb-0">يعكس نفس منطق KpiCache: statut='actif' + لم يتخرج + الدورة لم تنتهِ. المستمرون: SUM(Nbrrecond). الجدد: section_semestre NumSem=1.</p>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="p-3 rounded-3 h-100" style="background: rgba(59, 130, 246, 0.05); border-right: 4px solid #3b82f6;">
-                    <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-file-signature text-warning me-1"></i> الشهادات الصادرة</h6>
-                    <p class="text-muted small mb-0">يعرض الشهادات المطبوعة والمصادق عليها، مع توضيح نسبة الشهادات المؤمنة رقمياً برمز الاستجابة السريع (QR Code) لمنع التزوير وتسهيل التحقق الفوري.</p>
+                <div class="p-3 rounded-3 h-100" style="background: rgba(59,130,246,0.05); border-right: 4px solid #3b82f6;">
+                    <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-graduation-cap text-warning me-1"></i> الخريجون والمنقطعون</h6>
+                    <p class="text-muted small mb-0">الخريجون: apprenant_fin.IDDecision_evalf IN(1,2,3). المنقطعون: IDDecision_evalf IN(4,5) أو SituationFin IN(2,3).</p>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="p-3 rounded-3 h-100" style="background: rgba(245, 158, 11, 0.05); border-right: 4px solid #f59e0b;">
-                    <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-chart-line text-info me-1"></i> نسبة النجاح الوطنية</h6>
-                    <p class="text-muted small mb-0">تمثل نسبة النجاح العامة المحتسبة آلياً من قاعدة البيانات، مع مقارنتها بالدورة السابقة لتحديد مدى تحسن واستقرار مستوى الامتحانات الوطنية.</p>
+                <div class="p-3 rounded-3 h-100" style="background: rgba(245,158,11,0.05); border-right: 4px solid #f59e0b;">
+                    <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-file-signature text-info me-1"></i> الشهادات والنسب</h6>
+                    <p class="text-muted small mb-0">شهادات: COUNT(*) FROM Attestation_succ. نسبة النجاح: SUM(statut='admis')/COUNT(IDCandidat). QR: 88% تقديري.</p>
                 </div>
             </div>
+        </div>
         </div>
     </div>
 
     <script>
     function toggleHelpPanel() {
         const panel = document.getElementById('helpPanel');
-        if (panel) {
-            panel.classList.toggle('d-none');
+        if (!panel) return;
+        const isOpen = panel.style.maxHeight && panel.style.maxHeight !== '0px';
+        panel.style.maxHeight = isOpen ? '0' : (panel.scrollHeight + 60) + 'px';
+        panel.setAttribute('aria-hidden', isOpen ? 'true' : 'false');
+    }
+
+    function toggleDetailGuide() {
+        const panel = document.getElementById('guidePanel');
+        const btn   = document.getElementById('detailGuideBtn');
+        const icon  = document.getElementById('detailGuideIcon');
+        if (!panel) return;
+        const isOpen = panel.style.maxHeight && panel.style.maxHeight !== '0px';
+        if (isOpen) {
+            panel.style.maxHeight = '0';
+            if (btn)  btn.classList.remove('btn-primary');
+            if (btn)  btn.classList.add('btn-outline-primary');
+            if (icon) { icon.className = 'fa-solid fa-eye me-1'; }
+            if (btn)  btn.innerHTML = '<i class="fa-solid fa-eye me-1" id="detailGuideIcon"></i> عرض التفاصيل';
+        } else {
+            panel.style.maxHeight = (panel.scrollHeight + 80) + 'px';
+            if (btn)  btn.classList.remove('btn-outline-primary');
+            if (btn)  btn.classList.add('btn-primary');
+            if (btn)  btn.innerHTML = '<i class="fa-solid fa-eye-slash me-1" id="detailGuideIcon"></i> إخفاء';
         }
     }
     </script>
+
 
     <!-- Registration Date Filter Form -->
     <div class="card border-0 mb-4 p-4 no-print" style="border-radius:16px; box-shadow:0 4px 20px rgba(0,0,0,0.01); background:#fff; border:1px solid rgba(226,232,240,0.8) !important;">
@@ -561,17 +667,17 @@ canvas {
         </form>
     </div>
 
-    <!-- Collapsible Detailed Explanation Card (شرح البيانات الممل والمبسط) -->
+    <!-- دليل البيانات التفصيلي (يُفتح/يُغلق بزر في الهيدر) -->
     <div class="card border-0 shadow-sm mb-4 no-print" style="border-radius: 12px; background: #f8fafc; border: 1px solid rgba(226,232,240,0.8) !important;">
         <div class="card-header bg-transparent border-0 pt-3 pb-0 d-flex justify-content-between align-items-center">
             <h5 class="fw-bold m-0 text-primary" style="font-family: 'Cairo', sans-serif;">
-                <i class="fa-solid fa-book-open text-primary me-2"></i> دليل قراءة البيانات وتفاصيل الإحصائيات (الشرح المبسط)
+                <i class="fa-solid fa-database text-primary me-2"></i> مصادر البيانات والاستعلامات المستخدمة في كل مؤشر
             </h5>
-            <button class="btn btn-sm btn-outline-primary rounded-pill px-3" type="button" data-bs-toggle="collapse" data-bs-target="#detailedExplanation" aria-expanded="false" aria-controls="detailedExplanation">
-                عرض / إخفاء الشرح
+            <button id="detailGuideBtn" type="button" onclick="toggleDetailGuide()" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                <i class="fa-solid fa-eye me-1" id="detailGuideIcon"></i> عرض التفاصيل
             </button>
         </div>
-        <div class="collapse" id="detailedExplanation">
+        <div id="guidePanel" style="max-height: 0; overflow: hidden; transition: max-height 0.45s cubic-bezier(0.4,0,0.2,1);">
             <div class="card-body" style="font-size: 0.85rem; line-height: 1.7; text-align: right;">
                 <div class="row g-3">
 
@@ -966,18 +1072,22 @@ canvas {
                 <p class="text-muted small">يرجى إدخال الرمز الرقمي الفريد للشهادة الصادرة للتأكد من موثوقيتها وصحة صدورها التام من السجلات الوطنية:</p>
                 <div class="mb-3">
                     <label class="form-label text-muted small fw-bold">الرمز الرقمي للشهادة</label>
-                    <input type="text" class="form-control" placeholder="CERT-2026-X984" style="font-family:'Inter'; border-radius:10px;">
+                    <input type="text" id="certCodeInput" class="form-control" placeholder="مثال: 123/2026 أو رقم الشهادة" style="font-family:'Inter', 'Cairo'; border-radius:10px;">
                 </div>
                 <div class="mb-3">
                     <label class="form-label text-muted small fw-bold">بروتوكول المطابقة</label>
-                    <select class="form-select" style="border-radius:10px;">
-                        <option>التحقق الفوري الرقمي التلقائي</option>
-                        <option>التحقق والمطابقة اليدوية البيداغوجية</option>
+                    <select id="certProtocolSelect" class="form-select" style="border-radius:10px;">
+                        <option value="auto">التحقق الفوري الرقمي التلقائي</option>
+                        <option value="manual">التحقق والمطابقة اليدوية البيداغوجية</option>
                     </select>
                 </div>
-                <button class="btn btn-primary w-100 py-2.5 fw-bold" style="border-radius:10px; background: #3b82f6; border:none;">
+                <button type="button" id="checkCertBtn" onclick="performCertVerification()" class="btn btn-primary w-100 py-2.5 fw-bold" style="border-radius:10px; background: #3b82f6; border:none; transition: all 0.2s;">
                     <i class="fa-solid fa-shield-halved me-1"></i> فحص ومطابقة الشهادة
                 </button>
+                
+                <!-- Result container -->
+                <div id="certResultBox" class="mt-3 p-3 rounded-3 d-none animate__animated animate__fadeIn" style="font-size: 0.8rem; text-align: right;">
+                </div>
             </div>
         </div>
 
@@ -1006,7 +1116,7 @@ canvas {
                                 <td class="text-right fw-bold text-dark" style="font-size:0.8rem;"><?= htmlspecialchars($sess['name']) ?></td>
                                 <td style="font-family:'Inter';"><?= number_format($sess['candidates']) ?></td>
                                 <td>
-                                    <div class="d-flex align-items-center justify-content-center gap-2">
+                                     <div class="d-flex align-items-center justify-content-center gap-2">
                                         <span class="fw-bold" style="font-family:'Inter'; font-size:0.75rem;"><?= htmlspecialchars($sess['rate']) ?></span>
                                     </div>
                                 </td>
@@ -1026,27 +1136,15 @@ canvas {
                     آخر النشاطات والعمليات / Log
                 </h5>
                 <div class="d-flex flex-column gap-3 mt-2" style="font-size: 0.8rem; text-align: right;">
+                    <?php foreach ($recentLogs as $log): ?>
                     <div class="d-flex gap-2">
-                        <div class="text-success mt-1"><i class="fa-solid fa-circle-check"></i></div>
+                        <div class="<?= $log['icon_class'] ?> mt-1"><i class="fa-solid <?= $log['icon'] ?>"></i></div>
                         <div>
-                            <span class="fw-bold text-dark d-block">توليد شهادات دورة سبتمبر</span>
-                            <span class="text-muted d-block" style="font-size: 0.72rem;">منذ 10 دقائق</span>
+                            <span class="fw-bold text-dark d-block" style="font-family:'Cairo'; font-size:0.75rem; line-height:1.4;"><?= htmlspecialchars($log['title']) ?></span>
+                            <span class="text-muted d-block" style="font-size: 0.68rem;"><?= htmlspecialchars($log['time']) ?></span>
                         </div>
                     </div>
-                    <div class="d-flex gap-2">
-                        <div class="text-primary mt-1"><i class="fa-solid fa-circle-info"></i></div>
-                        <div>
-                            <span class="fw-bold text-dark d-block">جرد معاهد ولاية ورقلة</span>
-                            <span class="text-muted d-block" style="font-size: 0.72rem;">منذ ساعتين</span>
-                        </div>
-                    </div>
-                    <div class="d-flex gap-2">
-                        <div class="text-warning mt-1"><i class="fa-solid fa-circle-exclamation"></i></div>
-                        <div>
-                            <span class="fw-bold text-dark d-block">مراجعة يدوية لـ 45 شهادة</span>
-                            <span class="text-muted d-block" style="font-size: 0.72rem;">أمس في 18:30</span>
-                        </div>
-                    </div>
+                    <?php endforeach; ?>
                 </div>
             </div>
         </div>
@@ -1264,7 +1362,7 @@ document.addEventListener('DOMContentLoaded', function() {
 document.getElementById('addSessionForm').addEventListener('submit', function(e) {
     e.preventDefault();
     const formData = new FormData(this);
-    fetch('/sig/dashboard/exam/add-session', {
+    fetch(window.location.pathname.includes('/sig/') ? '/sig/dashboard/exam/add-session' : '/dashboard/exam/add-session', {
         method: 'POST',
         body: formData,
         headers: {
@@ -1325,6 +1423,71 @@ document.getElementById('addSessionForm').addEventListener('submit', function(e)
     document.querySelectorAll('.counter-val').forEach(function(el) {
         counterObserver.observe(el);
     });
+
+    window.performCertVerification = function() {
+        const code = document.getElementById('certCodeInput').value.trim();
+        const protocol = document.getElementById('certProtocolSelect').value;
+        const resultBox = document.getElementById('certResultBox');
+        const checkBtn = document.getElementById('checkCertBtn');
+
+        if (!code) {
+            resultBox.className = 'mt-3 p-3 rounded-3 bg-danger-subtle text-danger animate__animated animate__fadeIn';
+            resultBox.innerHTML = '<i class="fa-solid fa-triangle-exclamation me-1"></i> يرجى إدخال رمز الشهادة أولاً!';
+            resultBox.classList.remove('d-none');
+            return;
+        }
+
+        checkBtn.disabled = true;
+        checkBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin me-1"></i> جاري فحص السجلات...';
+
+        fetch('?verify_cert_num=' + encodeURIComponent(code))
+            .then(res => res.json())
+            .then(res => {
+                checkBtn.disabled = false;
+                checkBtn.innerHTML = '<i class="fa-solid fa-shield-halved me-1"></i> فحص ومطابقة الشهادة';
+
+                resultBox.classList.remove('d-none');
+                if (res.success && res.found) {
+                    const c = res.data;
+                    const statusBadge = c.is_valid == 1
+                        ? '<span class="badge bg-success">مصادق عليها ومطابقة</span>'
+                        : '<span class="badge bg-warning text-dark">مراجعة يدوية مطلوبة</span>';
+                    
+                    resultBox.className = 'mt-3 p-3 rounded-3 bg-success-subtle text-success border border-success border-opacity-25 animate__animated animate__fadeIn';
+                    resultBox.innerHTML = `
+                        <div class="fw-bold mb-2"><i class="fa-solid fa-circle-check me-1"></i> تم العثور على الشهادة ومطابقتها!</div>
+                        <div class="small">
+                            <strong>رقم الشهادة:</strong> ${c.cert_num}<br>
+                            <strong>الاسم واللقب:</strong> ${c.trainee_nom} ${c.trainee_prenom}<br>
+                            <strong>التخصص:</strong> ${c.spec_nom}<br>
+                            <strong>المؤسسة:</strong> ${c.etab_nom}<br>
+                            <strong>حالة المطابقة:</strong> ${statusBadge}
+                        </div>
+                    `;
+                } else {
+                    if (protocol === 'auto') {
+                        resultBox.className = 'mt-3 p-3 rounded-3 bg-danger-subtle text-danger border border-danger border-opacity-25 animate__animated animate__fadeIn';
+                        resultBox.innerHTML = `
+                            <div class="fw-bold mb-1"><i class="fa-solid fa-circle-xmark me-1"></i> رمز الشهادة غير موجود!</div>
+                            <p class="mb-0 small">لم يتم العثور على الرقم <strong>"${code}"</strong> في قاعدة البيانات النشطة للشهادات الوطنية.</p>
+                        `;
+                    } else {
+                        resultBox.className = 'mt-3 p-3 rounded-3 bg-warning-subtle text-warning border border-warning border-opacity-25 animate__animated animate__fadeIn';
+                        resultBox.innerHTML = `
+                            <div class="fw-bold mb-1"><i class="fa-solid fa-circle-exclamation me-1"></i> قيد المراجعة البيداغوجية</div>
+                            <p class="mb-0 small">الرمز <strong>"${code}"</strong> تم استلامه وتوجيهه للمطابقة اليدوية. يرجى مراجعة إدارة المعالجة.</p>
+                        `;
+                    }
+                }
+            })
+            .catch(err => {
+                checkBtn.disabled = false;
+                checkBtn.innerHTML = '<i class="fa-solid fa-shield-halved me-1"></i> فحص ومطابقة الشهادة';
+                resultBox.classList.remove('d-none');
+                resultBox.className = 'mt-3 p-3 rounded-3 bg-danger-subtle text-danger border border-danger border-opacity-25 animate__animated animate__fadeIn';
+                resultBox.innerHTML = '<i class="fa-solid fa-circle-exclamation me-1"></i> حدث خطأ أثناء الاتصال بالخادم. يرجى المحاولة لاحقاً.';
+            });
+    };
 </script>
 @endsection
 

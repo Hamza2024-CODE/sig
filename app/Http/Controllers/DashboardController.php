@@ -58,8 +58,40 @@ class DashboardController extends Controller
                 ->orderBy('w.Nom')
                 ->orderBy('e.Nom')
                 ->get();
-            return response()->json($etabs);
+        if ($request->has('verify_cert_num')) {
+            $num = $request->query('verify_cert_num');
+            try {
+                $cert = DB::table('attestation_succ as a')
+                    ->join('apprenant_fin as af', 'a.IDApprenant_Fin', '=', 'af.IDApprenant_Fin')
+                    ->join('apprenant as ap', 'af.IDapprenant', '=', 'ap.IDapprenant')
+                    ->join('section as s', 'ap.IDSection', '=', 's.IDSection')
+                    ->join('offre as o', 's.IDOffre', '=', 'o.IDOffre')
+                    ->join('specialite as sp', 'o.IDSpecialite', '=', 'sp.IDSpecialite')
+                    ->join('etablissement as e', 'o.IDEts_Form', '=', 'e.IDetablissement')
+                    ->where('a.Num', 'LIKE', '%' . $num . '%')
+                    ->select(
+                        'a.Num as cert_num',
+                        'a.Date as cert_date',
+                        'a.Valide as is_valid',
+                        'ap.Nom as trainee_nom',
+                        'ap.Prenom as trainee_prenom',
+                        'sp.Nom as spec_nom',
+                        'e.Nom as etab_nom'
+                    )
+                    ->first();
+                return response()->json([
+                    'success' => true,
+                    'found' => (bool)$cert,
+                    'data' => $cert
+                ]);
+            } catch (\Exception $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage()
+                ]);
+            }
         }
+
         $role = strtolower($user['role_code'] ?? 'user');
         if ($role === 'apprenant') {
             return request()->is('sig/*') || request()->is('sig')
@@ -1570,6 +1602,45 @@ class DashboardController extends Controller
     public function viewCoop(Request $request)    { return $this->renderDepartmentView('coop', $request); }
     public function viewIt(Request $request)      { return $this->renderDepartmentView('it', $request); }
     public function viewExam(Request $request)    { return $this->renderDepartmentView('exam', $request); }
+    public function addExamSession(Request $request)
+    {
+        $name = $request->input('name');
+        $code = $request->input('code') ?: ('EX-' . date('Y'));
+        $dateD = $request->input('date_d');
+
+        try {
+            DB::table('session')->insert([
+                'Nom' => $name,
+                'NomFr' => $code,
+                'DateD' => $dateD,
+                'Encour' => 1
+            ]);
+
+            try {
+                DB::table('audit_logs')->insert([
+                    'username' => session('user')['username'] ?? 'sys',
+                    'action' => 'Create Session: ' . $name,
+                    'table_name' => 'session',
+                    'created_at' => now()
+                ]);
+            } catch (\Exception $e) {}
+
+            // Clear sessions list cache
+            try {
+                \Illuminate\Support\Facades\Cache::flush();
+            } catch (\Exception $e) {}
+
+            return response()->json([
+                'success' => true,
+                'message' => 'تم فتح الدورة بنجاح ودخولها حيز التنفيذ'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'خطأ أثناء فتح الدورة: ' . $e->getMessage()
+            ]);
+        }
+    }
     public function viewTrak(Request $request)    { return $this->renderDepartmentView('trak', $request); }
     public function viewEdu(Request $request)     { return $this->renderDepartmentView('edu', $request); }
     public function viewDfcri(Request $request)   { return $this->renderDepartmentView('dfcri', $request); }

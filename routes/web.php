@@ -180,6 +180,7 @@ Route::middleware('check.session')->group(function () {
     Route::get('/dashboard/coop',    [DashboardController::class, 'viewCoop']);
     Route::get('/dashboard/it',      [DashboardController::class, 'viewIt']);
     Route::get('/dashboard/exam',    [DashboardController::class, 'viewExam']);
+    Route::post('/dashboard/exam/add-session', [DashboardController::class, 'addExamSession']);
     Route::get('/dashboard/trak',    [DashboardController::class, 'viewTrak']);
     Route::get('/dashboard/org',     [DashboardController::class, 'viewTrak']); // Map org to trak
     Route::get('/dashboard/edu',     [DashboardController::class, 'viewEdu']);
