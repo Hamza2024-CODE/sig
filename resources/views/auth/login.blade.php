@@ -232,7 +232,18 @@
                 </div>
 
                 <!-- iOS-Style Segmented Tab Controls -->
-                <div class="ios-segmented-control mb-4" style="grid-template-columns: repeat(4, 1fr); {{ $hideOtherLogins ? 'display: none !important;' : '' }}">
+                @if($hideOtherLogins)
+                <div class="ios-segmented-control mb-4" style="grid-template-columns: repeat(2, 1fr);">
+                    <div class="ios-slider-pill"></div>
+                    <button type="button" class="ios-tab-trigger active" id="btn-etablissement" onclick="switchLoginType('etablissement')">
+                        مؤسسة تكوينية
+                    </button>
+                    <button type="button" class="ios-tab-trigger" id="btn-special" onclick="switchLoginType('special')">
+                        حساب خاص
+                    </button>
+                </div>
+                @else
+                <div class="ios-segmented-control mb-4" style="grid-template-columns: repeat(4, 1fr);">
                     <div class="ios-slider-pill"></div>
                     <button type="button" class="ios-tab-trigger active" id="btn-employee" onclick="switchLoginType('employee')">
                         موظف / أستاذ
@@ -247,6 +258,7 @@
                         حساب خاص
                     </button>
                 </div>
+                @endif
 
                 <!-- Alerts -->
                 <?php if (isset($error) || session()->has('flash_error') || session()->has('error')): ?>
@@ -357,10 +369,10 @@
     function switchLoginType(type) {
         document.querySelectorAll('.ios-tab-trigger').forEach(btn => btn.classList.remove('active'));
         
-        const tabs     = ['employee', 'etablissement', 'apprenant', 'special'];
+        const tabs     = {!! json_encode($hideOtherLogins ? ['etablissement', 'special'] : ['employee', 'etablissement', 'apprenant', 'special']) !!};
         let index      = tabs.indexOf(type);
         if (index === -1) {
-            type = 'employee';
+            type = tabs[0];
             index = 0;
         }
 

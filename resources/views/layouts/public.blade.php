@@ -765,7 +765,6 @@
                 <div class="col-lg-3 col-md-6 ms-auto">
                     <h6 class="footer-sec-title">الخدمات السريعة</h6>
                     <ul class="list-unstyled text-secondary small" style="line-height: 2.2;">
-                        <li><a href="https://takwin.dz" target="_blank" rel="noopener" class="text-decoration-none text-secondary hover-accent"><i class="fa-solid fa-chevron-left me-1" style="font-size: 0.7rem;"></i> التسجيل عبر منصة تكوين</a></li>
                         <li><a href="{{ url('portal/features') }}" class="text-decoration-none text-secondary hover-accent"><i class="fa-solid fa-chevron-left me-1" style="font-size: 0.7rem;"></i> ميزات وخصائص المنصة</a></li>
                         <li><a href="{{ url('portal/about') }}" class="text-decoration-none text-secondary hover-accent"><i class="fa-solid fa-chevron-left me-1" style="font-size: 0.7rem;"></i> عن منصة تسيير الموحدة</a></li>
                     </ul>
@@ -793,7 +792,6 @@
                     <a href="{{ url('portal/features') }}">ميزات المنصة</a>
                     <a href="{{ url('portal/how-it-works') }}">كيفية عمل المنصة</a>
                     <a href="{{ url('portal/privacy') }}">سياسة خصوصية البيانات</a>
-                    <a href="https://takwin.dz" target="_blank" rel="noopener">منصة تكوين للتسجيل</a>
                 </div>
                 <p class="mb-0 text-secondary" style="font-size:0.78rem;">© 2026 وزارة التكوين والتعليم المهنيين - الجمهورية الجزائرية الديمقراطية الشعبية. جميع الحقوق محفوظة</p>
             </div>
