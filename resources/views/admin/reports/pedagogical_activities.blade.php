@@ -328,11 +328,39 @@
     cursor: pointer;
 }
 @media print {
-    body { background:#fff !important; }
-    .no-print { display:none !important; }
-    .table-responsive-wrapper { overflow:visible !important; border:none !important; box-shadow:none !important; }
-    .table { width: 100% !important; font-size: 0.65rem !important; }
-    .table th { background:#0f172a !important; color:#fff !important; -webkit-print-color-adjust: exact; }
+    /* Hide layout chrome elements */
+    .sidebar, .navbar, .main-header, .no-print, .dock-drawer, .sidebar-wrapper, .main-sidebar, .header-navbar, .dock-drawer-container {
+        display: none !important;
+    }
+    
+    /* Reset layout container style properties to allow multi-page document flow */
+    body, html, .wrapper, .main-panel, .content-wrapper, .content, .main-content {
+        position: static !important;
+        overflow: visible !important;
+        height: auto !important;
+        min-height: auto !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        background: #fff !important;
+    }
+    
+    .table-responsive-wrapper {
+        overflow: visible !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+    .table {
+        width: 100% !important;
+        font-size: 0.65rem !important;
+    }
+    .table th {
+        background-color: #0f172a !important;
+        color: #fff !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
 }
 </style>
 
@@ -471,17 +499,19 @@
                     const list = grouped[wilaya];
                     html += `
                         <div class="wilaya-group-header">
-                            <span>📍 ${wilaya}</span>
+                            <span><i class="fa-solid fa-location-dot text-primary me-2"></i> ${wilaya}</span>
                             <span class="badge bg-primary text-white rounded-pill px-2.5 py-1.2">${list.length} متربصين</span>
                         </div>
                         <div class="card border-0 shadow-sm" style="border-radius:12px;overflow:hidden;">
                             <table class="table align-middle m-0 text-right" style="font-size:0.8rem;">
                                 <thead style="background:#f1f5f9;color:#475569;">
                                     <tr>
-                                        <th class="py-2.5 px-3" style="width:25%;">رقم التسجيل</th>
+                                        <th class="py-2.5 px-3" style="width:20%;">رقم التسجيل</th>
                                         <th class="py-2.5 px-3">الاسم واللقب</th>
-                                        <th class="py-2.5 px-3 text-center" style="width:20%;">الجنس</th>
-                                        <th class="py-2.5 px-3 text-center" style="width:20%;">حالة الانتساب</th>
+                                        <th class="py-2.5 px-3 text-center" style="width:15%;">الجنس</th>
+                                        <th class="py-2.5 px-3 text-center" style="width:15%;">المعدل الفصلي</th>
+                                        <th class="py-2.5 px-3 text-center" style="width:15%;">النتيجة</th>
+                                        <th class="py-2.5 px-3 text-center" style="width:15%;">حالة الانتساب</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -491,8 +521,14 @@
                         html += `
                             <tr>
                                 <td class="px-3"><code>${t.matricule || '—'}</code></td>
-                                <td class="px-3 fw-bold text-dark">${t.nom} ${t.prenom}</td>
+                                <td class="px-3 fw-bold text-dark">${t.nom}</td>
                                 <td class="px-3 text-center"><span class="badge bg-light text-dark border px-2.5 py-1.5">${t.sexe}</span></td>
+                                <td class="px-3 text-center fw-bold text-primary">${t.average}</td>
+                                <td class="px-3 text-center">
+                                    <span class="badge rounded-pill px-2.5 py-1.5 ${t.decision === 'ناجح' ? 'bg-success-light text-success' : 'bg-danger-light text-danger'}" style="background:${t.decision === 'ناجح' ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.08)'};">
+                                        ${t.decision}
+                                    </span>
+                                </td>
                                 <td class="px-3 text-center">
                                     <span class="badge rounded-pill px-2.5 py-1.5 ${t.statut === 'نشط' ? 'bg-success-light text-success' : 'bg-danger-light text-danger'}" style="background:${t.statut === 'نشط' ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.08)'};">
                                         ${t.statut}

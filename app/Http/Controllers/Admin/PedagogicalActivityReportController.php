@@ -406,35 +406,133 @@ class PedagogicalActivityReportController extends Controller
                 return response()->json(['success' => false, 'message' => 'معرف القسم غير صحيح'], 400);
             }
 
-            // Fetch trainees of this section
-            $trainees = DB::select("
-                SELECT 
-                    a.IDapprenant AS id,
-                    COALESCE(c.Nom, '') AS nom,
-                    COALESCE(c.Prenom, '') AS prenom,
-                    COALESCE(c.NumIns, '') AS matricule,
-                    COALESCE(c.Civ, '') AS civ,
-                    a.statut,
-                    COALESCE(w.Nom, 'غير محدد') AS wilaya_nom
-                FROM apprenant a
-                JOIN candidat c ON a.IDCandidat = c.IDCandidat
-                LEFT JOIN wilaya w ON c.IDWilayaR = w.IDWilayaa
-                WHERE a.IDSection = ?
-                ORDER BY w.Nom ASC, c.Nom ASC, c.Prenom ASC
+            // Get section details (mode and latest semester)
+            $section = DB::selectOne("
+                SELECT s.IDMode_formation as mode_formation, s.IDSpecialite,
+                       COALESCE(MAX(ss.NumSem), 1) as num_sem
+                FROM section s
+                LEFT JOIN section_semestre ss ON s.IDSection = ss.IDSection
+                WHERE s.IDSection = ?
+                GROUP BY s.IDSection, s.IDMode_formation, s.IDSpecialite
             ", [$sectionId]);
 
-            // Map and format status / gender labels
+            if (!$section) {
+                return response()->json(['success' => false, 'message' => 'القسم غير موجود'], 404);
+            }
+
+            $mode = $section->mode_formation;
+            $semestre = $section->num_sem;
+
+            // Fetch modules for this section and semester
+            $matieres = array_map(fn($item) => (array)$item, DB::select("
+                SELECT DISTINCT 
+                    ssm.IDsection_semestre_Module as id,
+                    ssm.NomMdl as libelle_ar,
+                    ssm.NomFrMdl as libelle_fr,
+                    ssm.coef as coefficient
+                FROM section_semestre_module ssm
+                JOIN section_semestre ss ON ssm.IDSection_Semestre = ss.IDSection_Semestre
+                WHERE ss.IDSection = ? AND ss.NumSem = ?
+            ", [$sectionId, $semestre]));
+
+            // Fetch trainees of this section
+            $trainees = array_map(fn($item) => (array)$item, DB::select("
+                SELECT a.IDapprenant as id, a.Nccp as matricule, 
+                       c.Nom as nom_ar, c.Prenom as prenom_ar, c.Civ as sexe,
+                       COALESCE(ass.IDapprenant_Section_semstre, 0) as ass_id,
+                       COALESCE(ass.NoteStage, 0) as note_stage,
+                       COALESCE(ass.NoteMemoire, 0) as note_memoire,
+                       COALESCE(ass.NoteSoutenance, 0) as note_soutenance,
+                       COALESCE(w.Nom, 'غير محدد') as wilaya_nom,
+                       a.statut
+                FROM apprenant a
+                LEFT JOIN candidat c ON a.IDCandidat = c.IDCandidat
+                LEFT JOIN wilaya w ON c.IDWilayaR = w.IDWilayaa
+                LEFT JOIN section_semestre ss ON a.IDSection = ss.IDSection AND ss.NumSem = ?
+                LEFT JOIN apprenant_section_semstre ass ON a.IDapprenant = ass.IDapprenant AND ass.IDSection_Semestre = ss.IDSection_Semestre
+                WHERE a.IDSection = ? AND a.statut = 'actif'
+                ORDER BY w.Nom ASC, c.Nom ASC, c.Prenom ASC
+            ", [$semestre, $sectionId]));
+
+            $config = \App\Helpers\GradingConfigHelper::read();
+            $gradingService = new \App\Domains\Academic\Services\GradingSystemService();
+
             $formattedTrainees = [];
-            foreach ($trainees as $t) {
-                $civ = strtolower(trim($t->civ));
+
+            foreach ($trainees as $stg) {
+                $assId = (int)$stg['ass_id'];
+                $hasElimination = false;
+                $modulesForGpa = [];
+
+                if ($assId > 0 && !empty($matieres)) {
+                    $gradesList = array_map(fn($item) => (array)$item, DB::select("
+                        SELECT IDsection_semestre_Module as ssm_id, NoteC1 as cc1, NoteC2 as cc2, NoteCs as exam, NoteR as rattrapage
+                        FROM apprenant_section_semstre_module
+                        WHERE IDapprenant_Section_semstre = ?
+                    ", [$assId]));
+
+                    $gradesBySsm = [];
+                    foreach ($gradesList as $gl) {
+                        $gradesBySsm[$gl['ssm_id']] = $gl;
+                    }
+
+                    foreach ($matieres as $m) {
+                        $g = $gradesBySsm[$m['id']] ?? null;
+                        $typeM = (strpos(strtolower($m['libelle_ar']), 'stage') !== false || strpos(strtolower($m['libelle_fr']), 'stage') !== false) ? 'stage_pratique' :
+                                 ((strpos(strtolower($m['libelle_ar']), 'memoire') !== false || strpos(strtolower($m['libelle_fr']), 'memoire') !== false) ? 'memoire' : 'theorique');
+
+                        $calc = $gradingService->calculateModuleGrade([
+                            'type_matiere' => $typeM,
+                            'cc1' => $g['cc1'] ?? null,
+                            'cc2' => $g['cc2'] ?? null,
+                            'exam' => $g['exam'] ?? null,
+                            'rattrapage' => $g['rattrapage'] ?? null,
+                            'stage' => $stg['note_stage'] ?? null,
+                            'memoire' => $stg['note_memoire'] ?? null,
+                            'soutenance' => $stg['note_soutenance'] ?? null,
+                        ], $config, (int)$mode);
+
+                        if ($calc['is_eliminated']) {
+                            $hasElimination = true;
+                        }
+
+                        $modulesForGpa[] = [
+                            'coefficient' => $m['coefficient'],
+                            'note_avr' => $calc['moy_avr'],
+                            'note_apr' => $calc['moy_apr']
+                        ];
+                    }
+                }
+
+                $gpa = 0.0;
+                $isAdmis = false;
+
+                if (!empty($modulesForGpa)) {
+                    $semCalc = $gradingService->calculateSemesterGpa($modulesForGpa, $stg['note_stage'], $mode, $config);
+                    $gpa = $semCalc['gpa_apr'];
+                    $isAdmis = $semCalc['is_admis'] && !$hasElimination;
+                }
+
+                $decisionText = 'راسب';
+                if ($isAdmis) {
+                    $decisionText = 'ناجح';
+                }
+
+                $civ = strtolower(trim($stg['sexe'] ?? ''));
+                $fullName = trim(($stg['nom_ar'] ?? '') . ' ' . ($stg['prenom_ar'] ?? ''));
+                if (empty($fullName)) {
+                    $fullName = 'متربص #' . $stg['id'];
+                }
+
                 $formattedTrainees[] = [
-                    'id' => $t->id,
-                    'nom' => $t->nom,
-                    'prenom' => $t->prenom,
-                    'matricule' => $t->matricule,
-                    'sexe' => in_array($civ, ['m', 'ذكر', '1']) ? 'ذكر' : 'أنثى',
-                    'statut' => $t->statut === 'actif' ? 'نشط' : 'غير نشط',
-                    'wilaya_nom' => $t->wilaya_nom
+                    'id' => $stg['id'],
+                    'nom' => $fullName,
+                    'matricule' => $stg['matricule'],
+                    'sexe' => in_array($civ, ['m', 'checkmark', '1']) ? 'ذكر' : 'أنثى',
+                    'average' => number_format($gpa, 2),
+                    'decision' => $decisionText,
+                    'statut' => $stg['statut'] === 'actif' ? 'نشط' : 'غير نشط',
+                    'wilaya_nom' => $stg['wilaya_nom']
                 ];
             }
 
