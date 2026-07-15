@@ -65,13 +65,7 @@ class PedagogicalActivityReportController extends Controller
                     s.DateDF AS date_debut,
                     s.DateFF AS date_fin,
                     mf.Nom AS nom_mode_formation,
-                    b.Nom AS nom_branche,
-                    (SELECT COUNT(*) FROM apprenant a WHERE a.IDSection = s.IDSection) AS total_inscrits,
-                    (SELECT COUNT(*) FROM apprenant a JOIN candidat c ON a.IDCandidat = c.IDCandidat WHERE a.IDSection = s.IDSection AND c.Civ IN ('أنثى', 'female', '2', 'أنثي', 'f', 'F')) AS femmes_inscrits,
-                    (SELECT COUNT(*) FROM apprenant a WHERE a.IDSection = s.IDSection AND a.statut = 'actif') AS total_actifs,
-                    (SELECT COUNT(*) FROM apprenant a JOIN candidat c ON a.IDCandidat = c.IDCandidat WHERE a.IDSection = s.IDSection AND a.statut = 'actif' AND c.Civ IN ('أنثى', 'female', '2', 'أنثي', 'f', 'F')) AS femmes_actifs,
-                    (SELECT COUNT(*) FROM apprenant a JOIN candidat c ON a.IDCandidat = c.IDCandidat WHERE a.IDSection = s.IDSection AND c.Nationalite IS NOT NULL AND TRIM(c.Nationalite) != '' AND c.Nationalite NOT IN ('الجزائرية', 'جزائرية', 'algerienne', 'Algerian', 'dz', 'DZ', '1')) AS total_foreigners,
-                    (SELECT COUNT(*) FROM apprenant a JOIN candidat c ON a.IDCandidat = c.IDCandidat WHERE a.IDSection = s.IDSection AND (c.endicape = 1 OR c.endicape = '1')) AS total_handicapes
+                    b.Nom AS nom_branche
                 FROM section s
                 LEFT JOIN specialite sp ON s.IDSpecialite = sp.IDSpecialite
                 LEFT JOIN branche b ON sp.IDBranche = b.IDBranche
@@ -158,10 +152,54 @@ class PedagogicalActivityReportController extends Controller
 
             $rawData = DB::select($query, $queryParams);
             $dataList = [];
-            foreach ($rawData as $item) {
-                $arr = (array)$item;
-                $arr['section_formatted'] = $this->formatSectionName($arr['section_nom']);
-                $dataList[] = $arr;
+            
+            if (!empty($rawData)) {
+                $sectionIds = array_column($rawData, 'section_id');
+                
+                // Query stats ONLY for these paginated sections in a single fast query
+                $sectionIdsPlaceholder = implode(',', array_fill(0, count($sectionIds), '?'));
+                $statsRaw = DB::select("
+                    SELECT 
+                        a.IDSection as section_id,
+                        COUNT(*) AS total_inscrits,
+                        SUM(CASE WHEN c.Civ IN ('أنثى', 'female', '2', 'أنثي', 'f', 'F') THEN 1 ELSE 0 END) AS femmes_inscrits,
+                        SUM(CASE WHEN a.statut = 'actif' THEN 1 ELSE 0 END) AS total_actifs,
+                        SUM(CASE WHEN a.statut = 'actif' AND c.Civ IN ('أنثى', 'female', '2', 'أنثي', 'f', 'F') THEN 1 ELSE 0 END) AS femmes_actifs,
+                        SUM(CASE WHEN c.Nationalite IS NOT NULL AND TRIM(c.Nationalite) != '' AND c.Nationalite NOT IN ('الجزائرية', 'جزائرية', 'algerienne', 'Algerian', 'dz', 'DZ', '1') THEN 1 ELSE 0 END) AS total_foreigners,
+                        SUM(CASE WHEN c.endicape = 1 OR c.endicape = '1' THEN 1 ELSE 0 END) AS total_handicapes
+                    FROM apprenant a
+                    LEFT JOIN candidat c ON a.IDCandidat = c.IDCandidat
+                    WHERE a.IDSection IN ($sectionIdsPlaceholder)
+                    GROUP BY a.IDSection
+                ", $sectionIds);
+                
+                $statsMap = [];
+                foreach ($statsRaw as $s) {
+                    $statsMap[(int)$s->section_id] = (array)$s;
+                }
+                
+                foreach ($rawData as $item) {
+                    $arr = (array)$item;
+                    $sid = (int)$arr['section_id'];
+                    $sStats = $statsMap[$sid] ?? [
+                        'total_inscrits' => 0,
+                        'femmes_inscrits' => 0,
+                        'total_actifs' => 0,
+                        'femmes_actifs' => 0,
+                        'total_foreigners' => 0,
+                        'total_handicapes' => 0,
+                    ];
+                    
+                    $arr['total_inscrits'] = $sStats['total_inscrits'];
+                    $arr['femmes_inscrits'] = $sStats['femmes_inscrits'];
+                    $arr['total_actifs'] = $sStats['total_actifs'];
+                    $arr['femmes_actifs'] = $sStats['femmes_actifs'];
+                    $arr['total_foreigners'] = $sStats['total_foreigners'];
+                    $arr['total_handicapes'] = $sStats['total_handicapes'];
+                    $arr['section_formatted'] = $this->formatSectionName($arr['section_nom']);
+                    
+                    $dataList[] = $arr;
+                }
             }
 
             // Create LengthAwarePaginator
@@ -206,13 +244,7 @@ class PedagogicalActivityReportController extends Controller
                     s.DateDF AS date_debut,
                     s.DateFF AS date_fin,
                     mf.Nom AS nom_mode_formation,
-                    b.Nom AS nom_branche,
-                    (SELECT COUNT(*) FROM apprenant a WHERE a.IDSection = s.IDSection) AS total_inscrits,
-                    (SELECT COUNT(*) FROM apprenant a JOIN candidat c ON a.IDCandidat = c.IDCandidat WHERE a.IDSection = s.IDSection AND c.Civ IN ('أنثى', 'female', '2', 'أنثي', 'f', 'F')) AS femmes_inscrits,
-                    (SELECT COUNT(*) FROM apprenant a WHERE a.IDSection = s.IDSection AND a.statut = 'actif') AS total_actifs,
-                    (SELECT COUNT(*) FROM apprenant a JOIN candidat c ON a.IDCandidat = c.IDCandidat WHERE a.IDSection = s.IDSection AND a.statut = 'actif' AND c.Civ IN ('أنثى', 'female', '2', 'أنثي', 'f', 'F')) AS femmes_actifs,
-                    (SELECT COUNT(*) FROM apprenant a JOIN candidat c ON a.IDCandidat = c.IDCandidat WHERE a.IDSection = s.IDSection AND c.Nationalite IS NOT NULL AND TRIM(c.Nationalite) != '' AND c.Nationalite NOT IN ('الجزائرية', 'جزائرية', 'algerienne', 'Algerian', 'dz', 'DZ', '1')) AS total_foreigners,
-                    (SELECT COUNT(*) FROM apprenant a JOIN candidat c ON a.IDCandidat = c.IDCandidat WHERE a.IDSection = s.IDSection AND (c.endicape = 1 OR c.endicape = '1')) AS total_handicapes
+                    b.Nom AS nom_branche
                 FROM section s
                 LEFT JOIN specialite sp ON s.IDSpecialite = sp.IDSpecialite
                 LEFT JOIN branche b ON sp.IDBranche = b.IDBranche
@@ -268,10 +300,54 @@ class PedagogicalActivityReportController extends Controller
 
             $rawData = DB::select($query, $params);
             $data = [];
-            foreach ($rawData as $item) {
-                $arr = (array)$item;
-                $arr['section_formatted'] = $this->formatSectionName($arr['section_nom']);
-                $data[] = $arr;
+            
+            if (!empty($rawData)) {
+                $sectionIds = array_column($rawData, 'section_id');
+                
+                // Query stats ONLY for these sections in a single fast query
+                $sectionIdsPlaceholder = implode(',', array_fill(0, count($sectionIds), '?'));
+                $statsRaw = DB::select("
+                    SELECT 
+                        a.IDSection as section_id,
+                        COUNT(*) AS total_inscrits,
+                        SUM(CASE WHEN c.Civ IN ('أنثى', 'female', '2', 'أنثي', 'f', 'F') THEN 1 ELSE 0 END) AS femmes_inscrits,
+                        SUM(CASE WHEN a.statut = 'actif' THEN 1 ELSE 0 END) AS total_actifs,
+                        SUM(CASE WHEN a.statut = 'actif' AND c.Civ IN ('أنثى', 'female', '2', 'أنثي', 'f', 'F') THEN 1 ELSE 0 END) AS femmes_actifs,
+                        SUM(CASE WHEN c.Nationalite IS NOT NULL AND TRIM(c.Nationalite) != '' AND c.Nationalite NOT IN ('الجزائرية', 'جزائرية', 'algerienne', 'Algerian', 'dz', 'DZ', '1') THEN 1 ELSE 0 END) AS total_foreigners,
+                        SUM(CASE WHEN c.endicape = 1 OR c.endicape = '1' THEN 1 ELSE 0 END) AS total_handicapes
+                    FROM apprenant a
+                    LEFT JOIN candidat c ON a.IDCandidat = c.IDCandidat
+                    WHERE a.IDSection IN ($sectionIdsPlaceholder)
+                    GROUP BY a.IDSection
+                ", $sectionIds);
+                
+                $statsMap = [];
+                foreach ($statsRaw as $s) {
+                    $statsMap[(int)$s->section_id] = (array)$s;
+                }
+                
+                foreach ($rawData as $item) {
+                    $arr = (array)$item;
+                    $sid = (int)$arr['section_id'];
+                    $sStats = $statsMap[$sid] ?? [
+                        'total_inscrits' => 0,
+                        'femmes_inscrits' => 0,
+                        'total_actifs' => 0,
+                        'femmes_actifs' => 0,
+                        'total_foreigners' => 0,
+                        'total_handicapes' => 0,
+                    ];
+                    
+                    $arr['total_inscrits'] = $sStats['total_inscrits'];
+                    $arr['femmes_inscrits'] = $sStats['femmes_inscrits'];
+                    $arr['total_actifs'] = $sStats['total_actifs'];
+                    $arr['femmes_actifs'] = $sStats['femmes_actifs'];
+                    $arr['total_foreigners'] = $sStats['total_foreigners'];
+                    $arr['total_handicapes'] = $sStats['total_handicapes'];
+                    $arr['section_formatted'] = $this->formatSectionName($arr['section_nom']);
+                    
+                    $data[] = $arr;
+                }
             }
 
             // Create Spreadsheet
