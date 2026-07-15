@@ -1013,6 +1013,7 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
                                 @if(!$isDeohUser && in_array($dept, ['general', 'pedagogie', 'orientation']))
                                     <a href="{{ url('dashboard/specialites') }}" class="sidebar-subitem {{ $isActive('/dashboard/specialites') }}" title="تنظيم الفروع"><i class="fa-solid fa-sitemap"></i> <span>تنظيم الفروع</span></a>
                                     <a href="{{ url('dashboard/preinscrits') }}" class="sidebar-subitem {{ $isActive('/dashboard/preinscrits') }}" title="التسجيلات الأولية عبر الإنترنت"><i class="fa-solid fa-laptop-file text-warning"></i> <span>التسجيلات الأولية عبر الإنترنت</span></a>
+                                    <a href="{{ url('dashboard/candidates') }}" class="sidebar-subitem {{ $isActive('/dashboard/candidates') }}" title="دراسة ملفات المترشحين"><i class="fa-solid fa-user-check text-success"></i> <span>دراسة ملفات المترشحين</span></a>
                                     <a href="{{ url('dashboard/inscriptions') }}" class="sidebar-subitem {{ $isActive('/dashboard/inscriptions') }}" title="التسجيل والتوجيه"><i class="fa-solid fa-user-plus"></i> <span>التسجيل والتوجيه</span></a>
                                 @endif
                                 @if (in_array($dept, ['general', 'pedagogie', 'apprentissage']))
