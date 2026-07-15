@@ -224,14 +224,6 @@
         <h2 class="sec-heading text-center mb-5">كل ما تحتاجه في مكان واحد</h2>
 
         <div class="sstrip-grid">
-            <a href="https://takwin.dz" target="_blank" rel="noopener" class="sstrip-card">
-                <div class="sstrip-icon ss-blue"><i class="fa-solid fa-plug"></i></div>
-                <div class="sstrip-content">
-                    <div class="sstrip-title">التسجيل عبر منصة تكوين</div>
-                    <div class="sstrip-desc">تسجيل إلكتروني مركزي عبر takwin.dz</div>
-                </div>
-                <i class="fa-solid fa-arrow-up-right-from-square sstrip-arrow"></i>
-            </a>
             <a href="{{ url('portal/nomenclature') }}" class="sstrip-card">
                 <div class="sstrip-icon ss-green"><i class="fa-solid fa-book-open"></i></div>
                 <div class="sstrip-content">
