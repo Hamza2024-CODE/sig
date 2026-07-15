@@ -42,6 +42,7 @@ final class StatsService
     public const KEY_DIPLOMES       = 'global.total_diplomes';
     public const KEY_LAST_SYNC_TS   = 'global.last_sync_ts';
     public const KEY_RECONDUITS     = 'global.total_reconduits';
+    public const KEY_SECTIONS_S1    = 'global.total_sections_s1';
 
     // ════════════════════════════════════════════════════════════════════
     // §1 — القراءة (Read)
@@ -131,6 +132,7 @@ final class StatsService
             self::KEY_SPECIALITES,
             self::KEY_CANDIDATS,
             self::KEY_SECTIONS,
+            self::KEY_SECTIONS_S1,
             self::KEY_DIPLOMES,
             self::KEY_LAST_SYNC_TS,
             self::KEY_RECONDUITS,
@@ -310,6 +312,13 @@ final class StatsService
             FROM section s
             WHERE s.DateDF <= CURRENT_DATE()
               AND s.DateFF >= CURRENT_DATE()
+        ");
+
+        $results[self::KEY_SECTIONS_S1] = self::safeCount("
+            SELECT COUNT(*)
+            FROM section_semestre
+            WHERE NumSem = 1
+              AND Dernier = 1
         ");
 
         // §4.8 — تسجيل وقت آخر تحديث
