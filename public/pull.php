@@ -115,6 +115,9 @@ $files = [
     'app/Http/Controllers/Admin/GradesController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/GradesController.php',
     'resources/views/admin/grades/progress.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/grades/progress.blade.php',
     'resources/views/admin/grades/deliberations.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/grades/deliberations.blade.php',
+    'resources/views/admin/grades/input.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/grades/input.blade.php',
+    'resources/views/admin/grades/transcript.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/grades/transcript.blade.php',
+    'resources/views/admin/grades/grading_control.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/grades/grading_control.blade.php',
     'public/pull.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/pull.php'
 ];
 

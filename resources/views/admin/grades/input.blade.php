@@ -193,6 +193,31 @@ unset($_SESSION['success'], $_SESSION['error']);
         </div>
     </div>
 
+    <!-- ===== إشعار حالة فترة رصد النقاط ===== -->
+    <?php if (!empty($is_locked)): ?>
+        <div class="alert alert-danger border-0 rounded-4 mb-3 d-flex align-items-center gap-3"
+             style="background:#fef2f2; color:#991b1b; border: 1px solid rgba(220,38,38,0.2);">
+            <i class="fa-solid fa-lock fa-2x"></i>
+            <div>
+                <strong class="d-block mb-1">وضعية المعاينة فقط (رصد النقاط مغلق):</strong>
+                <?php if (!empty($windowAccess['next_window'])): ?>
+                    <span class="small">فترة الرصد مغلقة حالياً. من المقرر فتح فترة الرصد القادمة: <strong><?= htmlspecialchars($windowAccess['next_window']['label']) ?></strong> ابتداءً من <?= htmlspecialchars($windowAccess['next_window']['date_ouverture']) ?>.</span>
+                <?php else: ?>
+                    <span class="small">فترة الرصد مغلقة حالياً لعدم تفعيل نافذة رصد من قبل الإدارة العامة. يرجى الاتصال بالمسؤول لفتح الرصد.</span>
+                <?php endif; ?>
+            </div>
+        </div>
+    <?php else: ?>
+        <div class="alert alert-success border-0 rounded-4 mb-3 d-flex align-items-center gap-3"
+             style="background:#f0fdf4; color:#166534; border: 1px solid rgba(22,163,74,0.2);">
+            <i class="fa-solid fa-lock-open fa-2x text-success"></i>
+            <div>
+                <strong class="d-block mb-1">فترة الرصد نشطة ومفتوحة:</strong>
+                <span class="small">يمكنك الآن إدخال وتعديل علامات المتربصين بحرية. تنتهي هذه الفترة تلقائياً في <strong><?= htmlspecialchars($windowAccess['window']['date_cloture'] ?? '') ?></strong>.</span>
+            </div>
+        </div>
+    <?php endif; ?>
+
     <!-- ===== جدول إدخال النقاط ===== -->
     <div class="card border-0 shadow-sm rounded-4">
         <div class="card-header bg-white border-0 pt-4 pb-2 px-4">
@@ -237,9 +262,9 @@ unset($_SESSION['success'], $_SESSION['error']);
                                     <th>الفروض<br><small class="text-muted">/20</small></th>
                                     <th>الامتحان التجمعي<br><small class="text-muted">/20</small></th>
                                 <?php else: ?>
-                                    <th>الفرض 1<br><small class="text-muted">/20</small></th>
-                                    <th>الفرض 2<br><small class="text-muted">/20</small></th>
-                                    <th>الاختبار<br><small class="text-muted">/20</small></th>
+                                    <th>المراقبة 1<br><small class="text-muted">/20</small></th>
+                                    <th>المراقبة 2<br><small class="text-muted">/20</small></th>
+                                    <th>الامتحان الشامل<br><small class="text-muted">/20</small></th>
                                 <?php endif; ?>
                                 <th>استدراكي<br><small class="text-muted">/20</small></th>
                             <?php elseif ($matiere['type_matiere'] === 'stage_pratique'): ?>
@@ -275,54 +300,54 @@ unset($_SESSION['success'], $_SESSION['error']);
                             <?php if (in_array($matiere['type_matiere'], ['theorique','tp','oral'])): ?>
                                 <td>
                                     <input type="number" name="grades[<?= $sid ?>][cc1]"
-                                           value="<?= $st['note_cc1'] !== null ? $st['note_cc1'] : '' ?>"
+                                           value="<?= $st['note_cc1'] !== null ? $st['note_cc1'] : 0 ?>"
                                            class="form-control form-control-sm grade-input text-center fw-bold"
-                                           min="0" max="20" step="0.25" placeholder="—"
+                                           min="0" max="20" step="0.25" placeholder="0"
                                            data-student="<?= $sid ?>" data-type="cc1" <?= ($is_locked ?? false) ? 'disabled' : '' ?>>
                                 </td>
                                 <td>
                                     <input type="number" name="grades[<?= $sid ?>][cc2]"
-                                           value="<?= $st['note_cc2'] !== null ? $st['note_cc2'] : '' ?>"
+                                           value="<?= $st['note_cc2'] !== null ? $st['note_cc2'] : 0 ?>"
                                            class="form-control form-control-sm grade-input text-center fw-bold"
-                                           min="0" max="20" step="0.25" placeholder="—"
+                                           min="0" max="20" step="0.25" placeholder="0"
                                            data-student="<?= $sid ?>" data-type="cc2" <?= ($is_locked ?? false) ? 'disabled' : '' ?>>
                                 </td>
                                 <td>
                                     <input type="number" name="grades[<?= $sid ?>][exam]"
-                                           value="<?= $st['note_examen'] !== null ? $st['note_examen'] : '' ?>"
+                                           value="<?= $st['note_examen'] !== null ? $st['note_examen'] : 0 ?>"
                                            class="form-control form-control-sm grade-input text-center fw-bold"
-                                           min="0" max="20" step="0.25" placeholder="—"
+                                           min="0" max="20" step="0.25" placeholder="0"
                                            data-student="<?= $sid ?>" data-type="exam" <?= ($is_locked ?? false) ? 'disabled' : '' ?>>
                                 </td>
                                 <td>
                                     <input type="number" name="grades[<?= $sid ?>][rattrapage]"
-                                           value="<?= $st['note_rattrapage'] !== null ? $st['note_rattrapage'] : '' ?>"
+                                           value="<?= $st['note_rattrapage'] !== null ? $st['note_rattrapage'] : 0 ?>"
                                            class="form-control form-control-sm grade-input text-center"
-                                           min="0" max="20" step="0.25" placeholder="—"
+                                           min="0" max="20" step="0.25" placeholder="0"
                                            style="border-color:#f59e0b;"
                                            data-student="<?= $sid ?>" data-type="rattrapage" <?= ($is_locked ?? false) ? 'disabled' : '' ?>>
                                 </td>
                             <?php elseif ($matiere['type_matiere'] === 'stage_pratique'): ?>
                                 <td>
                                     <input type="number" name="grades[<?= $sid ?>][stage]"
-                                           value="<?= $st['note_stage'] !== null ? $st['note_stage'] : '' ?>"
+                                           value="<?= $st['note_stage'] !== null ? $st['note_stage'] : 0 ?>"
                                            class="form-control form-control-sm grade-input text-center fw-bold"
-                                           min="0" max="20" step="0.25" placeholder="—"
+                                           min="0" max="20" step="0.25" placeholder="0"
                                            data-student="<?= $sid ?>" data-type="stage" <?= ($is_locked ?? false) ? 'disabled' : '' ?>>
                                 </td>
                             <?php elseif ($matiere['type_matiere'] === 'memoire'): ?>
                                 <td>
                                     <input type="number" name="grades[<?= $sid ?>][memoire]"
-                                           value="<?= $st['note_memoire'] !== null ? $st['note_memoire'] : '' ?>"
+                                           value="<?= $st['note_memoire'] !== null ? $st['note_memoire'] : 0 ?>"
                                            class="form-control form-control-sm grade-input text-center fw-bold"
-                                           min="0" max="20" step="0.25" placeholder="—"
+                                           min="0" max="20" step="0.25" placeholder="0"
                                            data-student="<?= $sid ?>" data-type="memoire" <?= ($is_locked ?? false) ? 'disabled' : '' ?>>
                                 </td>
                                 <td>
                                     <input type="number" name="grades[<?= $sid ?>][soutenance]"
-                                           value="<?= $st['note_soutenance'] !== null ? $st['note_soutenance'] : '' ?>"
+                                           value="<?= $st['note_soutenance'] !== null ? $st['note_soutenance'] : 0 ?>"
                                            class="form-control form-control-sm grade-input text-center fw-bold"
-                                           min="0" max="20" step="0.25" placeholder="—"
+                                           min="0" max="20" step="0.25" placeholder="0"
                                            data-student="<?= $sid ?>" data-type="soutenance" <?= ($is_locked ?? false) ? 'disabled' : '' ?>>
                                 </td>
                             <?php endif; ?>
@@ -339,7 +364,7 @@ unset($_SESSION['success'], $_SESSION['error']);
                                 <span id="avg_<?= $sid ?>"
                                       class="fw-bold fs-6 <?= $st['note_finale'] >= 10 ? 'text-success' : ($st['note_finale'] > 0 ? 'text-danger' : 'text-muted') ?>"
                                       style="font-family:'Outfit';">
-                                    <?= $st['note_finale'] > 0 ? number_format($st['note_finale'], 2) : '—' ?>
+                                    <?= $st['note_finale'] > 0 ? number_format($st['note_finale'], 2) : '0.00' ?>
                                 </span>
                                 <?php if ($st['note_finale'] < 5 && $st['note_finale'] > 0): ?>
                                     <span class="d-block badge bg-danger-subtle text-danger small">إقصائية!</span>
@@ -413,7 +438,7 @@ function calcAvg(sid) {
     const el = document.getElementById(`avg_${sid}`);
     if (!el) return;
 
-    el.textContent = avg > 0 ? avg.toFixed(2) : '—';
+    el.textContent = avg.toFixed(2);
     el.className = avg >= 10 ? 'fw-bold fs-6 text-success' :
                    avg > 0 && avg < 10 ? 'fw-bold fs-6 text-danger' : 'fw-bold fs-6 text-muted';
 

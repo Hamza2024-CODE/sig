@@ -168,9 +168,9 @@ body { font-family:'Cairo',sans-serif; background:#f8fafc; color:#0f172a; direct
                 <th style="width:5%">رمز</th>
                 <th style="width:28%;text-align:right">المادة / Matière</th>
                 <th style="width:6%">المعامل</th>
-                <th style="width:7%">الفرض1</th>
-                <th style="width:7%">الفرض2</th>
-                <th style="width:7%">اختبار</th>
+                <th style="width:7%">المراقبة 1</th>
+                <th style="width:7%">المراقبة 2</th>
+                <th style="width:7%">امتحان شامل</th>
                 <th style="width:7%">استدراكي</th>
                 <th style="width:8%">معدل المادة</th>
                 <th style="width:9%">النقطة المرجحة</th>

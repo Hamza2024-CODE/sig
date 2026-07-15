@@ -145,7 +145,7 @@
                         <input type="number" step="0.05" min="0" max="1" name="continuous_assessment_weight" class="form-control border-0 bg-light py-2 fw-semibold" value="<?= (float)($config['modes'][$selectedModeId]['continuous_assessment_weight'] ?? $config['module_grade']['continuous_assessment_weight'] ?? 0.4) ?>">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small fw-semibold text-muted">وزن الفرض والمسابقات / Quiz (CC2)</label>
+                        <label class="form-label small fw-semibold text-muted">وزن المراقبة والمسابقات / Quiz (CC2)</label>
                         <input type="number" step="0.05" min="0" max="1" name="quiz_weight" class="form-control border-0 bg-light py-2 fw-semibold" value="<?= (float)($config['modes'][$selectedModeId]['quiz_weight'] ?? $config['module_grade']['quiz_weight'] ?? 0.4) ?>">
                     </div>
                     <div class="mb-3">
