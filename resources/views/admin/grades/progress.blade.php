@@ -60,7 +60,7 @@
         </div>
         <div class="col-md-3">
             <div class="card border-0 shadow-sm p-3 bg-white" style="border-radius:16px; border-right:4px solid var(--electric) !important;">
-                <span class="text-muted small fw-bold d-block mb-1">إجمالي علامات الطلبة المرصودة</span>
+                <span class="text-muted small fw-bold d-block mb-1">إجمالي علامات المتربصين المرصودة</span>
                 <h3 class="fw-bold text-primary mb-0" style="font-family:'Outfit';"><?= $totalGradedAcross ?> <span class="fs-6 text-muted">/ <?= $totalStudentsAcross ?></span></h3>
             </div>
         </div>
@@ -179,7 +179,8 @@
                         <th>السداسي</th>
                         <th>المادة / المقياس</th>
                         <th>الأستاذ المكون</th>
-                        <th>عدد الطلبة</th>
+                        <th>عدد المتربصين</th>
+                        <th>العلامات المرصودة</th>
                         <th>نسبة الرصد</th>
                         <th>خيارات</th>
                     </tr>
@@ -187,7 +188,7 @@
                 <tbody>
                     <?php if (empty($progressData)): ?>
                         <tr>
-                            <td colspan="9" class="text-center py-5 text-muted">
+                            <td colspan="10" class="text-center py-5 text-muted">
                                 <i class="fa-solid fa-folder-open fs-1 mb-3 d-block text-opacity-50"></i>
                                 لا توجد بيانات تقدم بيداغوجي مسجلة حالياً.
                             </td>
@@ -221,7 +222,8 @@
                                         <span class="text-muted small">غير مسند / Non affecté</span>
                                     <?php endif; ?>
                                 </td>
-                                <td class="fw-semibold" style="font-family:'Outfit';"><?= $graded ?> / <?= $total ?></td>
+                                <td class="fw-bold" style="font-family:'Outfit';"><?= $total ?></td>
+                                <td class="fw-semibold text-muted" style="font-family:'Outfit';"><?= $graded ?> / <?= $total ?></td>
                                 <td style="width:180px;">
                                     <div class="d-flex align-items-center gap-2">
                                         <div class="progress flex-grow-1" style="height:6px; border-radius:10px;">

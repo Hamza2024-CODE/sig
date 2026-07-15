@@ -95,7 +95,7 @@ class GradesController extends Controller
         }
 
         // We build the WHERE conditions and bindings for offres
-        $whereClauses = ["s.Nom != ''", "s.Nom IS NOT NULL", "s.NbrSem > 0"];
+        $whereClauses = ["s.Nom != ''", "s.Nom IS NOT NULL", "s.NbrSem > 0", "((s.NbrSem > 3 AND sess.DateD >= '2024-01-01') OR (s.NbrSem <= 3 AND sess.DateD >= '2025-01-01'))"];
         $bindings = [];
 
         if ($isMode10) {
@@ -192,12 +192,15 @@ class GradesController extends Controller
         $statsWhere = [];
         $statsParams = [];
 
+        // Always apply the dual session-year filter based on specialty length
+        $statsWhere[] = "((sp.NbrSem > 3 AND sess.DateD >= '2024-01-01') OR (sp.NbrSem <= 3 AND sess.DateD >= '2025-01-01'))";
+
         if ($selectedWilaya > 0) {
             $statsWhere[] = "e.IDDFEP = :wilayaId";
             $statsParams['wilayaId'] = $selectedWilaya;
         }
         if ($selectedEtab > 0) {
-            $statsWhere[] = "s.IDEts_Form = :etabId";
+            $statsWhere[] = "o.IDEts_Form = :etabId";
             $statsParams['etabId'] = $selectedEtab;
         }
         if ($selectedYear > 0) {
@@ -222,6 +225,7 @@ class GradesController extends Controller
                     FROM apprenant a
                     JOIN section s ON a.IDSection = s.IDSection
                     JOIN offre o ON s.IDOffre = o.IDOffre
+                    JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
                     JOIN session sess ON s.IDSession = sess.IDSession
                     JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
                     WHERE a.statut = 'actif' AND $statsFilter
@@ -234,6 +238,7 @@ class GradesController extends Controller
                     JOIN apprenant a ON ass.IDapprenant = a.IDapprenant
                     JOIN section s ON a.IDSection = s.IDSection
                     JOIN offre o ON s.IDOffre = o.IDOffre
+                    JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
                     JOIN session sess ON s.IDSession = sess.IDSession
                     JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
                     WHERE $statsFilter
@@ -246,6 +251,7 @@ class GradesController extends Controller
                     JOIN apprenant a ON af.IDapprenant = a.IDapprenant
                     JOIN section s ON a.IDSection = s.IDSection
                     JOIN offre o ON s.IDOffre = o.IDOffre
+                    JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
                     JOIN session sess ON s.IDSession = sess.IDSession
                     JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
                     WHERE $statsFilter
@@ -259,6 +265,7 @@ class GradesController extends Controller
                     JOIN apprenant a ON ass.IDapprenant = a.IDapprenant
                     JOIN section s ON a.IDSection = s.IDSection
                     JOIN offre o ON s.IDOffre = o.IDOffre
+                    JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
                     JOIN session sess ON s.IDSession = sess.IDSession
                     JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
                     WHERE (ass.MoyApr > 0 OR ass.MoyAvr > 0) AND $statsFilter
@@ -270,6 +277,7 @@ class GradesController extends Controller
                     JOIN apprenant a ON af.IDapprenant = a.IDapprenant
                     JOIN section s ON a.IDSection = s.IDSection
                     JOIN offre o ON s.IDOffre = o.IDOffre
+                    JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
                     JOIN session sess ON s.IDSession = sess.IDSession
                     JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
                     WHERE (af.MoyFinForm > 0 OR af.MoyGen > 0) AND $statsFilter
@@ -282,6 +290,7 @@ class GradesController extends Controller
                     FROM section_semestre ss
                     JOIN section s ON ss.IDSection = s.IDSection
                     JOIN offre o ON s.IDOffre = o.IDOffre
+                    JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
                     JOIN session sess ON s.IDSession = sess.IDSession
                     JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
                     WHERE (ss.NumPv IS NOT NULL AND ss.NumPv != '' OR ss.visaevaldir = 1 OR ss.visaevaldfep = 1) AND $statsFilter
@@ -545,6 +554,24 @@ class GradesController extends Controller
             }
         }
 
+        $now = date('Y-m-d H:i:s');
+        $hasActiveWindow = false;
+
+        if (in_array($role, ['admin', 'central', 'high_admin', 'secretaire_general', 'ministre'])) {
+            $hasActiveWindow = true;
+        } else {
+            $hasActiveWindow = DB::selectOne("
+                SELECT 1 FROM grade_windows 
+                WHERE ? BETWEEN date_ouverture AND date_cloture
+                  AND (
+                      scope_type = 'global'
+                      OR (scope_type = 'wilaya' AND scope_id = ?)
+                      OR (scope_type = 'etablissement' AND scope_id = ?)
+                  )
+                LIMIT 1
+            ", [$now, $dfepId, $etabId]) !== null;
+        }
+
         $filterOpts = $this->getFilterOptions($selectedWilaya);
 
         return $this->render('admin/grades/index', [
@@ -557,6 +584,7 @@ class GradesController extends Controller
             'selected_wilaya' => $selectedWilaya,
             'selected_etab' => $selectedEtab,
             'selected_year' => $selectedYear,
+            'hasActiveWindow' => $hasActiveWindow,
         ]);
     }
 
@@ -734,26 +762,9 @@ class GradesController extends Controller
         // Read dynamic configuration
         $config = \App\Helpers\GradingConfigHelper::read();
 
-        // Check if grade entry is locked (outside Time Window)
-        $is_locked = false;
-        if ($isTeacher) {
-            $now = date('Y-m-d');
-            $start = $config['workflow']['grading_start_date'] ?? '';
-            $end = $config['workflow']['grading_end_date'] ?? '';
-            $allowedEstabs = $config['workflow']['remedial_allowed_establishments'] ?? [];
-            $userEtab = (int)($user['etablissement_id'] ?? 0);
-
-            $isAllowed = false;
-            if ($start && $end && $now >= $start && $now <= $end) {
-                $isAllowed = true;
-            }
-            if (in_array($userEtab, $allowedEstabs)) {
-                $isAllowed = true;
-            }
-            if (!$isAllowed) {
-                $is_locked = true;
-            }
-        }
+        // Check if grade entry is locked using GradeWindowService
+        $windowAccess = \App\Domains\Academic\Services\GradeWindowService::checkAccess($user, $offreId, $semestre);
+        $is_locked = !$windowAccess['allow_edit'];
 
         return $this->render('admin/grades/input', [
             'title'    => 'رصد نقاط المتربصين - السداسي ' . $semestre,
@@ -764,6 +775,7 @@ class GradesController extends Controller
             'students' => $students,
             'semestre' => $semestre,
             'is_locked' => $is_locked,
+            'windowAccess' => $windowAccess,
             'employeurs' => $employeurs,
             'employeur_id' => $employeurId
         ]);
@@ -791,6 +803,15 @@ class GradesController extends Controller
         $rawSemestre = request()->all()['semestre'] ?? '';
         $semestre  = is_numeric($rawSemestre) ? (int)$rawSemestre : (\App\Helpers\SecureIdHelper::decrypt($rawSemestre) ?? 1);
         $grades    = request()->all()['grades'] ?? [];
+
+        // Strict verification of active grade entry window
+        $windowAccess = \App\Domains\Academic\Services\GradeWindowService::checkAccess(session('user'), $offreId, $semestre);
+        if (!$windowAccess['allow_edit']) {
+            session(['flash_error' => 'فترة رصد النقاط مغلقة حالياً. لا يمكنك حفظ البيانات.']);
+            $encOffreId = \App\Helpers\SecureIdHelper::encrypt($offreId);
+            $encSemestre = \App\Helpers\SecureIdHelper::encrypt($semestre);
+            return $this->redirect("/dashboard/grades/input?offre_id={$encOffreId}&semestre={$encSemestre}&matiere_id={$matiereId}");
+        }
 
         // Offre metadata
         $offre = (array) DB::selectOne("
@@ -1008,8 +1029,8 @@ class GradesController extends Controller
     {
         $user = session('user');
         $role = strtolower($user['role_code'] ?? '');
-        $etabId = $user['etablissement_id'] ?? null;
-        $dfepId = $user['iddfep'] ?? null;
+        $etabId = (int)($user['etablissement_id'] ?? $user['IDEts_Form'] ?? 0);
+        $dfepId = (int)($user['iddfep'] ?? $user['IDDFEP'] ?? 0);
 
         $selectedWilaya = null;
         $selectedEtab = null;
@@ -1358,6 +1379,96 @@ class GradesController extends Controller
         header('Content-Type: application/json');
         echo json_encode($employeurs);
         exit;
+    }
+
+    public function windows(): mixed
+    {
+        $user = session('user');
+        $role = strtolower($user['role_code'] ?? '');
+        if ($role !== 'admin') {
+            return $this->redirect('/dashboard/grades');
+        }
+
+        // Fetch all windows
+        $windows = array_map(fn($item) => (array)$item, DB::select("
+            SELECT w.*, u.Nom as creator_name
+            FROM grade_windows w
+            LEFT JOIN utilisateur u ON w.created_by = u.IDUtilisateur
+            ORDER BY w.date_ouverture DESC
+        "));
+
+        // Fetch wilayas and establishments for selection scope
+        $wilayas = array_map(fn($item) => (array)$item, DB::select("SELECT IDDFEP as id, Nom as nom FROM dfep ORDER BY Nom"));
+        $etablissements = array_map(fn($item) => (array)$item, DB::select("SELECT IDetablissement as id, Nom as nom FROM etablissement ORDER BY Nom"));
+
+        return $this->render('admin/grades/windows', [
+            'title' => 'إدارة فترات ونوافذ رصد النقاط',
+            'windows' => $windows,
+            'wilayas' => $wilayas,
+            'etablissements' => $etablissements
+        ]);
+    }
+
+    public function storeWindow(): mixed
+    {
+        $user = session('user');
+        $role = strtolower($user['role_code'] ?? '');
+        if ($role !== 'admin') {
+            return $this->redirect('/dashboard/grades');
+        }
+
+        $token = request()->all()['csrf_token'] ?? '';
+        if (empty($token) || $token !== (csrf_token() ?? '')) {
+            session(['flash_error' => 'رمز التحقق من الأمن غير صالح.']);
+            return $this->redirect('/dashboard/grades/windows');
+        }
+
+        $label = trim(request()->all()['label'] ?? '');
+        $semestre = request()->all()['semestre'] !== '' ? (int)request()->all()['semestre'] : null;
+        $scopeType = request()->all()['scope_type'] ?? 'global';
+        $scopeId = null;
+
+        if ($scopeType === 'wilaya') {
+            $scopeId = (int)(request()->all()['wilaya_id'] ?? 0);
+        } elseif ($scopeType === 'etablissement') {
+            $scopeId = (int)(request()->all()['etablissement_id'] ?? 0);
+        }
+
+        $dateOuv = request()->all()['date_ouverture'] ?? '';
+        $dateClo = request()->all()['date_cloture'] ?? '';
+
+        if (!$label || !$dateOuv || !$dateClo) {
+            session(['flash_error' => 'يرجى ملء جميع الحقول المطلوبة بشكل صحيح.']);
+            return $this->redirect('/dashboard/grades/windows');
+        }
+
+        // Format dates to standard format
+        $dateOuv = date('Y-m-d H:i:s', strtotime($dateOuv));
+        $dateClo = date('Y-m-d H:i:s', strtotime($dateClo));
+
+        DB::insert("
+            INSERT INTO grade_windows (label, semestre, scope_type, scope_id, date_ouverture, date_cloture, allow_edit, created_by, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, 1, ?, NOW(), NOW())
+        ", [$label, $semestre, $scopeType, $scopeId, $dateOuv, $dateClo, $user['id']]);
+
+        session(['flash_success' => 'تم إنشاء فترة رصد جديدة بنجاح.']);
+        return $this->redirect('/dashboard/grades/windows');
+    }
+
+    public function deleteWindow(): mixed
+    {
+        $user = session('user');
+        $role = strtolower($user['role_code'] ?? '');
+        if ($role !== 'admin') {
+            return $this->redirect('/dashboard/grades');
+        }
+
+        $id = request()->route('id') ?? (request()->all()['id'] ?? 0);
+
+        DB::delete("DELETE FROM grade_windows WHERE id = ?", [$id]);
+
+        session(['flash_success' => 'تم حذف فترة الرصد بنجاح.']);
+        return $this->redirect('/dashboard/grades/windows');
     }
 
     /**
