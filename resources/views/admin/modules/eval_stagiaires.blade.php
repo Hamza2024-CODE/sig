@@ -20,7 +20,7 @@
             <h3 class="fw-bold mb-1" style="color: #1e293b; font-family:'Cairo', sans-serif;">
                 <i class="fa-solid fa-user-graduate text-primary me-2"></i> تقييم المتكونين ومعدلات التحصيل البيداغوجي / Evaluation
             </h3>
-            <p class="text-muted mb-0 small">متابعة نتائج السداسيات، نسب ومعدلات الانتقال، والطلبة المتفوقين في الشعب</p>
+            <p class="text-muted mb-0 small">متابعة نتائج السداسيات، نسب ومعدلات الانتقال، والمتربصين المتفوقين في الشعب</p>
         </div>
         <div class="d-flex gap-2">
             <button class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" style="background: linear-gradient(135deg, #482b8f 0%, #643edb 100%); border: none;"><i class="fa-solid fa-star me-2"></i> رصد المتفوقين</button>

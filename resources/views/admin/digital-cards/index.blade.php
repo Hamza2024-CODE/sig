@@ -178,7 +178,7 @@
                     مركز بطاقات التكوين المهني الرقمية
                 </h4>
                 <p class="text-muted mb-0 small fw-bold">
-                    البوابة لإصدار وإدارة وتخصيص البطاقات الرقمية المهنية والطلابية.
+                    البوابة لإصدار وإدارة وتخصيص البطاقات الرقمية المهنية وللمتربصين.
                 </p>
             </div>
             
@@ -525,6 +525,19 @@
 <script src="{{ asset('js/html-to-image.min.js') }}"></script>
 <script src="{{ asset('js/jspdf.umd.min.js') }}"></script>
 <script>
+    let allEtabOptions = [];
+
+    function initEtabCache() {
+        const etabSelect = document.getElementById('filter-etablissement');
+        if (etabSelect && allEtabOptions.length === 0) {
+            allEtabOptions = Array.from(etabSelect.options).map(opt => ({
+                value: opt.value,
+                text: opt.textContent || opt.innerText,
+                wilaya: opt.getAttribute('data-wilaya')
+            }));
+        }
+    }
+
     function onWilayaChange() {
         const wilayaSelect = document.getElementById('filter-wilaya');
         if (!wilayaSelect) return;
@@ -532,24 +545,36 @@
         const etabSelect = document.getElementById('filter-etablissement');
         if (!etabSelect) return;
         
-        if (etabSelect.getAttribute('data-init') !== 'true') {
-            etabSelect.value = "";
-        } else {
+        initEtabCache();
+        
+        const currentSelectedVal = etabSelect.value;
+        const isInit = etabSelect.getAttribute('data-init') === 'true';
+        if (isInit) {
             etabSelect.removeAttribute('data-init');
         }
         
-        Array.from(etabSelect.options).forEach(opt => {
-            if (opt.value === "") {
-                opt.style.display = "";
-                return;
-            }
-            const optWilaya = opt.getAttribute('data-wilaya');
-            if (!wilayaVal || optWilaya === wilayaVal) {
-                opt.style.display = "";
-            } else {
-                opt.style.display = "none";
+        const fragment = document.createDocumentFragment();
+        allEtabOptions.forEach(opt => {
+            if (opt.value === "" || !wilayaVal || opt.wilaya === wilayaVal) {
+                const optionEl = document.createElement('option');
+                optionEl.value = opt.value;
+                optionEl.textContent = opt.text;
+                if (opt.wilaya) {
+                    optionEl.setAttribute('data-wilaya', opt.wilaya);
+                }
+                if (isInit && opt.value === currentSelectedVal) {
+                    optionEl.selected = true;
+                }
+                fragment.appendChild(optionEl);
             }
         });
+        
+        etabSelect.innerHTML = "";
+        etabSelect.appendChild(fragment);
+        
+        if (!isInit) {
+            etabSelect.value = "";
+        }
     }
 
     function drawBarcode(svgId, text) {

@@ -18,7 +18,7 @@ $category = $category ?? 'all';
         <div>
             <h3 class="fw-bold mb-1" style="color: #1e293b; font-family:'Cairo', sans-serif;">
                 <?php if ($category === 'stagiaire'): ?>
-                    <i class="fa-solid fa-user-graduate text-primary me-2"></i> بوابة استخراج وثائق المتربصين والطلبة
+                    <i class="fa-solid fa-user-graduate text-primary me-2"></i> بوابة استخراج وثائق المتربصين والمتمهنين
                 <?php elseif ($category === 'employe'): ?>
                     <i class="fa-solid fa-user-tie text-success me-2"></i> بوابة استخراج وثائق الموظفين والأساتذة
                 <?php else: ?>
@@ -415,7 +415,7 @@ $category = $category ?? 'all';
                 <table class="table table-hover align-middle mb-0" id="docsTable">
                     <thead class="bg-light text-muted small fw-bold">
                         <tr>
-                            <th class="ps-4">المستفيد / طالب الوثيقة</th>
+                            <th class="ps-4">المستفيد / متربص الوثيقة</th>
                             <th>نوع المطبوع الإداري</th>
                             <th class="text-center">رمز التحقق الرقمي</th>
                             <th class="text-center">تاريخ التوليد</th>
@@ -525,7 +525,7 @@ function toggleUserSelect(val) {
         fetch('{{ url("dashboard/documents/ajax/users") }}?wilaya_id=' + wilayaId + '&etab_id=' + etabId + '&mode_id=' + modeId + '&user_type=' + val)
             .then(res => res.json())
             .then(data => {
-                targetSelect.innerHTML = `<option value="" disabled selected>-- اختر ${val === 'stagiaire' ? 'طالب' : 'موظف'} --</option>`;
+                targetSelect.innerHTML = `<option value="" disabled selected>-- اختر ${val === 'stagiaire' ? 'متربص' : 'موظف'} --</option>`;
                 data.forEach(user => {
                     const opt = document.createElement('option');
                     opt.value = user.id;
