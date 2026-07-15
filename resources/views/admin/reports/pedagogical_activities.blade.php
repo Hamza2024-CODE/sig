@@ -192,7 +192,7 @@
 
     <!-- Data Table -->
     <div class="table-responsive-wrapper shadow-sm" style="border-radius: 16px; border: 1px solid #e2e8f0; background: #fff; overflow-x: auto;">
-        <table class="table table-hover align-middle m-0 text-right" style="font-size:0.82rem;font-family:'Cairo';">
+        <table class="table table-hover align-middle m-0 text-right" style="font-size:0.82rem;font-family:'Cairo'; min-width: 2400px;">
             <thead class="text-white" style="background:#0f172a;">
                 <tr>
                     <th class="col-id-offre py-3 px-3 text-center" style="width: 5%;">الرمز</th>
@@ -237,7 +237,7 @@
                         <td class="col-total-actifs text-center fw-bold text-success fs-6">{{ $item['total_actifs'] }}</td>
                         <td class="col-femmes-actifs text-center fw-bold text-secondary">{{ $item['femmes_actifs'] }}</td>
                         <td class="col-mode text-center fw-semibold">{{ $item['nom_mode_formation'] }}</td>
-                        <td class="col-etab text-muted fw-semibold" style="font-size:0.8rem;">{{ $item['nom_etablissement'] }}</td>
+                        <td class="col-etab text-muted fw-semibold" style="font-size:0.8rem;">{{ $item['nom_etablissement'] ?? 'غير محدد' }}</td>
                         <td class="col-branche"><span class="badge bg-secondary-light text-secondary rounded-pill px-2.5 py-1.5" style="background:rgba(71,85,105,0.08);">{{ $item['nom_branche'] }}</span></td>
                         <td class="text-center no-print">
                             <div class="dropdown">
