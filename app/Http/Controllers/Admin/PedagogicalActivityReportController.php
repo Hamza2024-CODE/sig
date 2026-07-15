@@ -184,7 +184,7 @@ class PedagogicalActivityReportController extends Controller
                     $arr['femmes_actifs'] = $sStats['femmes_actifs'];
                     $arr['total_foreigners'] = $sStats['total_foreigners'];
                     $arr['total_handicapes'] = $sStats['total_handicapes'];
-                    $arr['section_formatted'] = $this->formatSectionName($arr['section_nom']);
+                    $arr['section_formatted'] = $this->formatSectionName((string)($arr['section_nom'] ?? ''));
                     
                     $dataList[] = $arr;
                 }
@@ -329,7 +329,7 @@ class PedagogicalActivityReportController extends Controller
                     $arr['femmes_actifs'] = $sStats['femmes_actifs'];
                     $arr['total_foreigners'] = $sStats['total_foreigners'];
                     $arr['total_handicapes'] = $sStats['total_handicapes'];
-                    $arr['section_formatted'] = $this->formatSectionName($arr['section_nom']);
+                    $arr['section_formatted'] = $this->formatSectionName((string)($arr['section_nom'] ?? ''));
                     
                     $data[] = $arr;
                 }
@@ -618,7 +618,7 @@ class PedagogicalActivityReportController extends Controller
         }
     }
 
-    private function formatSectionName(?string $name): string
+    private function formatSectionName(string $name): string
     {
         if (empty($name)) {
             return '1';
