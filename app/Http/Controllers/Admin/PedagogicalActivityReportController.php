@@ -440,6 +440,8 @@ class PedagogicalActivityReportController extends Controller
                 SELECT a.IDapprenant as id, a.Nccp as matricule, 
                        c.Nom as nom_ar, c.Prenom as prenom_ar, c.Civ as sexe,
                        COALESCE(ass.IDapprenant_Section_semstre, 0) as ass_id,
+                       ass.MoyApr as official_average,
+                       ass.Obs as official_decision,
                        COALESCE(ass.NoteStage, 0) as note_stage,
                        COALESCE(ass.NoteMemoire, 0) as note_memoire,
                        COALESCE(ass.NoteSoutenance, 0) as note_soutenance,
@@ -461,10 +463,13 @@ class PedagogicalActivityReportController extends Controller
 
             foreach ($trainees as $stg) {
                 $assId = (int)$stg['ass_id'];
-                $hasElimination = false;
-                $modulesForGpa = [];
+                
+                // Use official deliberated data first
+                $gpa = $stg['official_average'];
+                $decisionText = $stg['official_decision'];
 
-                if ($assId > 0 && !empty($matieres)) {
+                // If not officially deliberated yet, fallback to dynamic calculation
+                if (($gpa === null || $gpa === '') && $assId > 0 && !empty($matieres)) {
                     $gradesList = array_map(fn($item) => (array)$item, DB::select("
                         SELECT IDsection_semestre_Module as ssm_id, NoteC1 as cc1, NoteC2 as cc2, NoteCs as exam, NoteR as rattrapage
                         FROM apprenant_section_semstre_module
@@ -475,6 +480,9 @@ class PedagogicalActivityReportController extends Controller
                     foreach ($gradesList as $gl) {
                         $gradesBySsm[$gl['ssm_id']] = $gl;
                     }
+
+                    $hasElimination = false;
+                    $modulesForGpa = [];
 
                     foreach ($matieres as $m) {
                         $g = $gradesBySsm[$m['id']] ?? null;
@@ -502,20 +510,24 @@ class PedagogicalActivityReportController extends Controller
                             'note_apr' => $calc['moy_apr']
                         ];
                     }
+
+                    if (!empty($modulesForGpa)) {
+                        $semCalc = $gradingService->calculateSemesterGpa($modulesForGpa, $stg['note_stage'], $mode, $config);
+                        $gpa = $semCalc['gpa_apr'];
+                        $isAdmis = $semCalc['is_admis'] && !$hasElimination;
+                        $decisionText = $isAdmis ? 'ناجح' : 'راسب';
+                    }
                 }
 
-                $gpa = 0.0;
-                $isAdmis = false;
-
-                if (!empty($modulesForGpa)) {
-                    $semCalc = $gradingService->calculateSemesterGpa($modulesForGpa, $stg['note_stage'], $mode, $config);
-                    $gpa = $semCalc['gpa_apr'];
-                    $isAdmis = $semCalc['is_admis'] && !$hasElimination;
+                // Final string formatting fallbacks
+                if ($gpa === null || $gpa === '') {
+                    $gpaStr = '—';
+                } else {
+                    $gpaStr = number_format((float)$gpa, 2);
                 }
 
-                $decisionText = 'راسب';
-                if ($isAdmis) {
-                    $decisionText = 'ناجح';
+                if (empty($decisionText) || $decisionText === '—') {
+                    $decisionText = 'غير مداول';
                 }
 
                 $civ = strtolower(trim($stg['sexe'] ?? ''));
@@ -528,8 +540,8 @@ class PedagogicalActivityReportController extends Controller
                     'id' => $stg['id'],
                     'nom' => $fullName,
                     'matricule' => $stg['matricule'],
-                    'sexe' => in_array($civ, ['m', 'checkmark', '1']) ? 'ذكر' : 'أنثى',
-                    'average' => number_format($gpa, 2),
+                    'sexe' => (in_array($civ, ['m', 'checkmark', '1', 'ذكر'])) ? 'ذكر' : 'أنثى',
+                    'average' => $gpaStr,
                     'decision' => $decisionText,
                     'statut' => $stg['statut'] === 'actif' ? 'نشط' : 'غير نشط',
                     'wilaya_nom' => $stg['wilaya_nom']
