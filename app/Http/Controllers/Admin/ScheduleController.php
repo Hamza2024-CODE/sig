@@ -27,7 +27,45 @@ class ScheduleController extends Controller
         $formateurs = [];
         $matieres = [];
 
+        $page = (int)(request()->query('page', 1));
+        $page = $page < 1 ? 1 : $page;
+        $limit = 100;
+        $offset = ($page - 1) * $limit;
+        $totalRows = 0;
+        $totalPages = 1;
+
         try {
+            // Count total schedules
+            $countQuery = "
+                SELECT COUNT(*) as total
+                FROM emploitemp et
+                LEFT JOIN section_semestre_module ssm ON et.IDsection_semestre_Module = ssm.IDsection_semestre_Module
+                LEFT JOIN section_semestre ss ON ssm.IDSection_Semestre = ss.IDSection_Semestre
+                LEFT JOIN section sec ON ss.IDSection = sec.IDSection
+            ";
+            $countWhere = [];
+            $countParams = [];
+            $dfepId = (int)($user['iddfep'] ?? $user['IDDFEP'] ?? 0);
+            $etabId = (int)($user['etablissement_id'] ?? $user['IDEts_Form'] ?? 0);
+
+            if ($role_code === 'formateur' || $role_code === 'employee') {
+                $countWhere[] = "ssm.IDEncadrement = ?";
+                $countParams[] = $user['id'];
+            } elseif ($role_code === 'dfep' && $dfepId > 0) {
+                $countWhere[] = "sec.IDEts_Form IN (SELECT IDetablissement FROM etablissement WHERE IDDFEP = ?)";
+                $countParams[] = $dfepId;
+            } elseif (in_array($role_code, ['etablissement', 'directeur']) && $etabId > 0) {
+                $countWhere[] = "sec.IDEts_Form = ?";
+                $countParams[] = $etabId;
+            }
+            if (!empty($countWhere)) {
+                $countQuery .= " WHERE " . implode(" AND ", $countWhere);
+            }
+            $stmtCount = $this->db->prepare($countQuery);
+            $stmtCount->execute($countParams);
+            $totalRows = (int)($stmtCount->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
+            $totalPages = max(1, ceil($totalRows / $limit));
+ 
             // 1. Fetch schedules from Windev emploitemp table
             $query = "
                 SELECT 
@@ -60,19 +98,21 @@ class ScheduleController extends Controller
                 LEFT JOIN offre o ON sec.IDOffre = o.IDOffre
                 LEFT JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
             ";
-
+ 
             $params = [];
             if ($role_code === 'formateur' || $role_code === 'employee') {
                 $query .= " WHERE ssm.IDEncadrement = ?";
                 $params[] = $user['id'];
-            } elseif ($role_code === 'dfep' && isset($user['iddfep']) && $user['iddfep'] > 0) {
-                $query .= " WHERE sec.IDDFEP = ?";
-                $params[] = $user['iddfep'];
-            } elseif (in_array($role_code, ['etablissement', 'directeur']) && isset($user['etablissement_id']) && $user['etablissement_id'] > 0) {
-                $query .= " WHERE sec.IDOffre IN (SELECT IDOffre FROM offre WHERE IDEts_Form = ?)";
-                $params[] = $user['etablissement_id'];
+            } elseif ($role_code === 'dfep' && $dfepId > 0) {
+                $query .= " WHERE sec.IDEts_Form IN (SELECT IDetablissement FROM etablissement WHERE IDDFEP = ?)";
+                $params[] = $dfepId;
+            } elseif (in_array($role_code, ['etablissement', 'directeur']) && $etabId > 0) {
+                $query .= " WHERE sec.IDEts_Form = ?";
+                $params[] = $etabId;
             }
             
+            $query .= " ORDER BY et.IDEmploiTemp DESC LIMIT $limit OFFSET $offset";
+
             $stmt = $this->db->prepare($query);
             $stmt->execute($params);
             $schedules = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -197,7 +237,10 @@ class ScheduleController extends Controller
             'schedules' => $schedules,
             'offres' => $offres,
             'formateurs' => $formateurs,
-            'matieres' => $matieres
+            'matieres' => $matieres,
+            'page' => $page,
+            'totalPages' => $totalPages,
+            'totalRows' => $totalRows,
         ]);
     }
 
