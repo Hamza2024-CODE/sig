@@ -167,6 +167,7 @@ if (isset($_GET['action'])) {
 
             $pdo->beginTransaction();
             $pdo->exec("SET FOREIGN_KEY_CHECKS = 0");
+            $pdo->exec("SET sql_mode = ''");
 
             $sqlBuffer = '';
             while (($line = fgets($fp)) !== false) {
