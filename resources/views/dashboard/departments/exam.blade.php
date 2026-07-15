@@ -108,21 +108,34 @@ try {
 } catch (\Exception $ex) {}
 
 // ─── Trainee KPIs — same logic as admin DashboardController + KpiCache ───────
-// Active trainees: statut='actif', not graduated, session not expired
+// Active trainees: statut='actif', not graduated, section training dates are current
 $historicalTraineesCount = 0;
 try {
+    $whereHist = [
+        "a.statut = 'actif'",
+        "af.IDapprenant IS NULL",
+        "s.DateDF <= CURRENT_DATE()",
+        "s.DateFF >= CURRENT_DATE()"
+    ];
+    $paramsHist = [];
+    if (!empty($selWilaya)) {
+        $whereHist[] = "o.IDEts_Form IN (SELECT IDetablissement FROM etablissement WHERE IDDFEP = ?)";
+        $paramsHist[] = $selWilaya;
+    }
+    if (!empty($selEtab)) {
+        $whereHist[] = "o.IDEts_Form = ?";
+        $paramsHist[] = $selEtab;
+    }
+    $whereHistSQL = " WHERE " . implode(" AND ", $whereHist);
+
     $rHist = DB::selectOne("
         SELECT COUNT(a.IDapprenant) as c
         FROM apprenant a
-        JOIN section s   ON a.IDSection = s.IDSection
-        JOIN offre o     ON s.IDOffre   = o.IDOffre
-        JOIN session sess ON o.IDSession = sess.IDSession
-        JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
+        JOIN section s ON a.IDSection = s.IDSection
+        JOIN offre o ON s.IDOffre = o.IDOffre
         LEFT JOIN apprenant_fin af ON a.IDapprenant = af.IDapprenant
-        WHERE a.statut = 'actif'
-          AND af.IDapprenant IS NULL
-          AND DATE_ADD(sess.DateD, INTERVAL COALESCE(NULLIF(sp.dureeM,0), sp.NbrSem * 6, 24) MONTH) >= CURRENT_DATE()
-    ");
+        $whereHistSQL
+    ", $paramsHist);
     if ($rHist && (int)$rHist->c > 0) $historicalTraineesCount = (int)$rHist->c;
 } catch (\Exception $ex) {}
 
@@ -184,16 +197,29 @@ try {
     if ($rNew && (int)$rNew->c > 0) $newTraineesCount = (int)$rNew->c;
 } catch (\Exception $ex) {}
 
-// Continuing trainees S2→S5 — SUM(Nbrrecond) from section (same as admin KpiCache)
+// Continuing trainees S2→S5 — SUM(Nbrrecond) from section
 $continuingTraineesCount = 0;
 try {
-    $sqlRecond = "SELECT COALESCE(SUM(s.Nbrrecond), 0) as c FROM section s";
+    $whereRecond = ["s.DateDF <= CURRENT_DATE()", "s.DateFF >= CURRENT_DATE()"];
     $paramsRecond = [];
-    if (!empty($selWilaya) || !empty($selEtab)) {
-        $sqlRecond .= " INNER JOIN offre o ON s.IDOffre = o.IDOffre INNER JOIN etablissement e ON o.IDEts_Form = e.IDetablissement WHERE 1=1";
-        if (!empty($selWilaya)) { $sqlRecond .= " AND e.IDDFEP = ?"; $paramsRecond[] = $selWilaya; }
-        if (!empty($selEtab))   { $sqlRecond .= " AND e.IDetablissement = ?"; $paramsRecond[] = $selEtab; }
+    if (!empty($selWilaya)) {
+        $whereRecond[] = "e.IDDFEP = ?";
+        $paramsRecond[] = $selWilaya;
     }
+    if (!empty($selEtab)) {
+        $whereRecond[] = "e.IDetablissement = ?";
+        $paramsRecond[] = $selEtab;
+    }
+    $whereRecondSQL = " WHERE " . implode(" AND ", $whereRecond);
+
+    $sqlRecond = "
+        SELECT COALESCE(SUM(s.Nbrrecond), 0) as c 
+        FROM section s
+        INNER JOIN offre o ON s.IDOffre = o.IDOffre 
+        INNER JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
+        $whereRecondSQL
+    ";
+    
     $rCont = DB::selectOne($sqlRecond, $paramsRecond);
     if ($rCont && (int)$rCont->c > 0) $continuingTraineesCount = (int)$rCont->c;
 } catch (\Exception $ex) {}
@@ -233,25 +259,26 @@ try {
     $whereCerts = [];
     $paramsCerts = [];
     if (!empty($selWilaya)) {
-        $whereCerts[] = "o.IDEts_Form IN (SELECT IDetablissement FROM etablissement WHERE IDDFEP = ?)";
+        $whereCerts[] = "e.IDDFEP = ?";
         $paramsCerts[] = $selWilaya;
     }
     if (!empty($selEtab)) {
-        $whereCerts[] = "o.IDEts_Form = ?";
+        $whereCerts[] = "e.IDetablissement = ?";
         $paramsCerts[] = $selEtab;
     }
     $whereCertsSQL = !empty($whereCerts) ? " WHERE " . implode(" AND ", $whereCerts) : "";
     
     $rCerts = DB::selectOne("
         SELECT 
-            COUNT(a.Num) as total,
+            COUNT(af.IDApprenant_Fin) as total,
             SUM(CASE WHEN a.Valide = 1 THEN 1 ELSE 0 END) as qr_valid,
             SUM(CASE WHEN a.Valide = 0 OR a.Valide IS NULL THEN 1 ELSE 0 END) as pending
-        FROM attestation_succ a
-        JOIN apprenant_fin af ON a.IDApprenant_Fin = af.IDApprenant_Fin
+        FROM apprenant_fin af
+        LEFT JOIN attestation_succ a ON af.IDApprenant_Fin = a.IDApprenant_Fin
         JOIN apprenant ap ON af.IDapprenant = ap.IDapprenant
         JOIN section s ON ap.IDSection = s.IDSection
         JOIN offre o ON s.IDOffre = o.IDOffre
+        JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
         $whereCertsSQL
     ", $paramsCerts);
     
@@ -660,11 +687,11 @@ canvas {
             <div class="col-md-3 col-sm-6">
                 <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; background: #fff; border: 1px solid rgba(226,232,240,0.8) !important;">
                     <div class="d-flex justify-content-between align-items-start mb-1">
-                        <span class="text-muted fw-bold small">إجمالي المترشحين</span>
+                        <span class="text-muted fw-bold small">إجمالي المتربصين النشطين</span>
                         <div style="width:70px;height:28px;"><canvas id="sparkline-candidates"></canvas></div>
                     </div>
                     <h4 class="fw-bold mb-0 text-success counter-val" data-counter="<?= $historicalTraineesCount ?>" style="font-family:'Inter';">0</h4>
-                    <span class="text-muted small" style="font-size:0.7rem;">ملفات مسجلة مؤكدة</span>
+                    <span class="text-muted small" style="font-size:0.7rem;">متربصون نشطون بالدراسة حالياً</span>
                 </div>
             </div>
             <!-- Card 2: New -->
