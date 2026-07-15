@@ -4,59 +4,25 @@ $app = require_once __DIR__.'/../bootstrap/app.php';
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
 
-use Illuminate\Support\Facades\DB;
+use App\Services\StatsService;
+use Illuminate\Support\Facades\Cache;
 
-header('Content-Type: text/plain; charset=utf-8');
+header('Content-Type: text/html; charset=utf-8');
 
-echo "=== DIAGNOSTIC START ===\n";
-
-try {
-    $activeCount = DB::selectOne("SELECT COUNT(*) as c FROM apprenant")->c;
-    echo "Total apprenants in DB: " . $activeCount . "\n";
-} catch (\Throwable $e) {
-    echo "Error querying apprenant: " . $e->getMessage() . "\n";
-}
+echo "<h1>Running Stats Service Refresh via Web PHP...</h1>";
 
 try {
-    $activeCount = DB::selectOne("SELECT COUNT(*) as c FROM section")->c;
-    echo "Total sections in DB: " . $activeCount . "\n";
-} catch (\Throwable $e) {
-    echo "Error querying section: " . $e->getMessage() . "\n";
-}
-
-try {
-    echo "Running Apprenants Query...\n";
-    $sql = "
-        SELECT COUNT(a.IDapprenant) as c
-        FROM apprenant a
-        JOIN section s ON a.IDSection = s.IDSection
-        LEFT JOIN apprenant_fin af ON a.IDapprenant = af.IDapprenant
-        WHERE a.statut = 'actif'
-          AND af.IDapprenant IS NULL
-          AND s.DateDF <= CURRENT_DATE()
-          AND s.DateFF >= CURRENT_DATE()
-    ";
-    $r = DB::selectOne($sql);
-    echo "Result: " . ($r ? $r->c : 'NULL') . "\n";
-} catch (\Throwable $e) {
-    echo "Error running Apprenants Query: " . $e->getMessage() . "\n";
-}
-
-try {
-    echo "Running simple count as backup check...\n";
-    $sql = "SELECT COUNT(*) as c FROM apprenant WHERE statut = 'actif'";
-    $r = DB::selectOne($sql);
-    echo "Simple active count: " . $r->c . "\n";
-} catch (\Throwable $e) {
-    echo "Error: " . $e->getMessage() . "\n";
-}
-
-try {
-    echo "Checking DateDF/DateFF range in section...\n";
-    $row = DB::selectOne("SELECT MIN(DateDF) as mind, MAX(DateFF) as maxd, COUNT(*) as cnt FROM section");
-    if ($row) {
-        echo "Min DateDF: " . $row->mind . ", Max DateFF: " . $row->maxd . ", Total rows: " . $row->cnt . "\n";
+    echo "<p>Computing stats...</p>";
+    $stats = StatsService::refreshAll();
+    
+    echo "<h2>Refresh Completed Successfully!</h2>";
+    echo "<table border='1' cellpadding='8' style='border-collapse:collapse;'>";
+    echo "tr><th>Stat Key</th><th>Computed Value</th></tr>";
+    foreach ($stats as $key => $val) {
+        echo "<tr><td><code>{$key}</code></td><td><strong>{$val}</strong></td></tr>";
     }
+    echo "</table>";
 } catch (\Throwable $e) {
-    echo "Error checking date range: " . $e->getMessage() . "\n";
+    echo "<h2 style='color:red;'>Error refreshing stats:</h2>";
+    echo "<pre>" . $e->getMessage() . "\n" . $e->getTraceAsString() . "</pre>";
 }
