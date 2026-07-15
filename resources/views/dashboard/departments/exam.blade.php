@@ -422,8 +422,8 @@ if (empty($modeCertsStats)) {
     <div class="vip-header mb-4">
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
             <div>
-                <div class="vip-badge mb-3">
-                    <i class="fa-solid fa-crown"></i> مركز الامتحانات والتصديق الوطني
+                <div class="vip-badge mb-3 cursor-pointer" onclick="toggleHelpPanel()" style="cursor: pointer;" title="اضغط لعرض الشرح المبسط للوحة التحكم">
+                    مركز الامتحانات والتصديق الوطني <i class="fa-solid fa-crown ms-1 text-warning"></i>
                 </div>
                 <h2 class="fw-bold mb-2" style="font-family:'Cairo';">لوحة تحكم مديرية التوجيه والامتحانات والتصديق</h2>
                 <p class="mb-0 text-white-50" style="font-size: 0.95rem;">
@@ -431,12 +431,60 @@ if (empty($modeCertsStats)) {
                 </p>
             </div>
             <div class="d-flex gap-2">
+                <button onclick="toggleHelpPanel()" class="btn btn-premium-help d-inline-flex align-items-center gap-2 px-3.5 py-2 fw-bold" style="background: rgba(195, 157, 82, 0.15); border: 1.5px solid var(--deoh-gold); border-radius: 30px; font-size: 0.85rem; color: var(--deoh-gold); transition: all 0.2s;">
+                    <i class="fa-solid fa-circle-info"></i> دليل الشرح المبسط
+                </button>
                 <button onclick="window.print()" class="btn btn-premium-print d-inline-flex align-items-center gap-2 px-3.5 py-2 fw-bold" style="background:#fff;border:1.5px solid #cbd5e1;border-radius:30px;font-size:0.85rem;color:#475569;transition:all 0.2s;">
                     <i class="fa-solid fa-print"></i> طباعة التقرير
                 </button>
             </div>
         </div>
     </div>
+
+    <!-- Beautiful Detailed Explanation Panel -->
+    <div id="helpPanel" class="card border-0 mb-4 p-4 no-print d-none animate__animated animate__slideInDown" style="border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); background: #ffffff; border: 1.5px solid var(--deoh-gold) !important; text-align: right;">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold m-0" style="color: var(--deoh-primary); font-family: 'Cairo', sans-serif;">
+                <i class="fa-solid fa-circle-question text-warning me-2"></i> دليل الشرح المبسط لمؤشرات لوحة التحكم
+            </h5>
+            <button onclick="toggleHelpPanel()" class="btn-close" aria-label="Close" style="margin-right: auto; margin-left: 0;"></button>
+        </div>
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="p-3 rounded-3 h-100" style="background: rgba(195, 157, 82, 0.05); border-right: 4px solid var(--deoh-gold);">
+                    <h6 class="fw-bold text-dark mb-2">🏢 مراكز الامتحانات</h6>
+                    <p class="text-muted small mb-0">يعرض العدد الإجمالي لمراكز الإجراء الوطنية مفصلة إلى: معاهد وطنية متخصصة (INSFP)، ومراكز تكوين (CFPA)، ومدارس خاصة معتمدة تجرى فيها الامتحانات.</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-3 rounded-3 h-100" style="background: rgba(16, 185, 129, 0.05); border-right: 4px solid #10b981;">
+                    <h6 class="fw-bold text-dark mb-2">👨‍🎓 المترشحون والمسجلون</h6>
+                    <p class="text-muted small mb-0">يوضح إجمالي المترشحين، مع تقسيمهم إلى: المتربصين الجدد لدورة فيفري 2026 الحالية، والمتربصين المستمرين من دورة 2024 لضمان دقة الإحصائيات.</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-3 rounded-3 h-100" style="background: rgba(59, 130, 246, 0.05); border-right: 4px solid #3b82f6;">
+                    <h6 class="fw-bold text-dark mb-2">📜 الشهادات الصادرة</h6>
+                    <p class="text-muted small mb-0">يعرض الشهادات المطبوعة والمصادق عليها، مع توضيح نسبة الشهادات المؤمنة رقمياً برمز الاستجابة السريع (QR Code) لمنع التزوير وتسهيل التحقق الفوري.</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-3 rounded-3 h-100" style="background: rgba(245, 158, 11, 0.05); border-right: 4px solid #f59e0b;">
+                    <h6 class="fw-bold text-dark mb-2">📈 نسبة النجاح الوطنية</h6>
+                    <p class="text-muted small mb-0">تمثل نسبة النجاح العامة المحتسبة آلياً من قاعدة البيانات، مع مقارنتها بالدورة السابقة لتحديد مدى تحسن واستقرار مستوى الامتحانات الوطنية.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    function toggleHelpPanel() {
+        const panel = document.getElementById('helpPanel');
+        if (panel) {
+            panel.classList.toggle('d-none');
+        }
+    }
+    </script>
 
     <!-- Registration Date Filter Form -->
     <div class="card border-0 mb-4 p-4 no-print" style="border-radius:16px; box-shadow:0 4px 20px rgba(0,0,0,0.01); background:#fff; border:1px solid rgba(226,232,240,0.8) !important;">
