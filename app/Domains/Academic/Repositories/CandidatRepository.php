@@ -57,7 +57,10 @@ class CandidatRepository
             FROM candidat c
             JOIN offre o ON c.IDOffre = o.IDOffre
             JOIN specialite s ON o.IDSpecialite = s.IDSpecialite
+            JOIN session sess ON o.IDSession = sess.IDSession
+            JOIN semestre_formation sf ON sess.IDSemestre_formation = sf.IDSemestre_formation
             WHERE 1=1
+              AND sf.IDAnnee_Formation >= 19
             {$extraWhere}
             {$statusWhere}
             ORDER BY c.IDCandidat DESC
@@ -108,7 +111,10 @@ class CandidatRepository
                 FROM candidat c
                 JOIN offre o ON c.IDOffre = o.IDOffre
                 JOIN specialite s ON o.IDSpecialite = s.IDSpecialite
+                JOIN session sess ON o.IDSession = sess.IDSession
+                JOIN semestre_formation sf ON sess.IDSemestre_formation = sf.IDSemestre_formation
                 WHERE 1=1
+                  AND sf.IDAnnee_Formation >= 19
                 {$extraWhere}
                 {$statusWhere}
                 ORDER BY c.IDCandidat DESC
