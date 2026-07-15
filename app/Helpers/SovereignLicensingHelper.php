@@ -115,7 +115,7 @@ class SovereignLicensingHelper
      */
     public static function isActivationRequired(): bool
     {
-        return self::getSetting('is_activation_required', '0') === '1';
+        return false; // Disabled globally to prevent blocking users
     }
 
     /**
@@ -123,6 +123,7 @@ class SovereignLicensingHelper
      */
     public static function isUserActivated(int $userId): bool
     {
+        return true; // Disabled globally to prevent blocking users
         return Cache::remember("sovereign:user_active:{$userId}", 300, function () use ($userId) {
             try {
                 // If master bypass is active globally in settings
