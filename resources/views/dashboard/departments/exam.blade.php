@@ -31,9 +31,9 @@ if ($role === 'dfep' && $dfepId > 0) {
 }
 
 // 1. Establishments counts breakdown by nature
-$insfpCount = 145;
-$cfpaCount = 1205;
-$privateCount = 685;
+$insfpCount = 0;
+$cfpaCount = 0;
+$privateCount = 0;
 try {
     $etsNatures = DB::select("
         SELECT n.Nom as nature_nom, COUNT(e.IDetablissement) as count
@@ -59,7 +59,7 @@ try {
 $centersCount = $insfpCount + $cfpaCount + $privateCount;
 
 // Extra Detailed Counts for MINIA redesign layout
-$iepCount = 12;
+$iepCount = 0;
 try {
     $rIep = DB::selectOne("
         SELECT COUNT(e.IDetablissement) as c 
@@ -70,7 +70,7 @@ try {
     if ($rIep && (int)$rIep->c > 0) $iepCount = (int)$rIep->c;
 } catch (\Exception $ex) {}
 
-$annexCount = 84;
+$annexCount = 0;
 try {
     $rAnnex = DB::selectOne("
         SELECT COUNT(e.IDetablissement) as c 
@@ -82,7 +82,7 @@ try {
 } catch (\Exception $ex) {}
 
 // Dropped/absent trainees
-$droppedTraineesCount = 14250;
+$droppedTraineesCount = 0;
 try {
     $rDrop = DB::selectOne("
         SELECT COUNT(a.IDapprenant) as c
@@ -96,7 +96,7 @@ try {
 
 // ─── Trainee KPIs — same logic as admin DashboardController + KpiCache ───────
 // Active trainees: statut='actif', not graduated, session not expired
-$historicalTraineesCount = 435422; // fallback = real admin value
+$historicalTraineesCount = 0;
 try {
     $rHist = DB::selectOne("
         SELECT COUNT(a.IDapprenant) as c
@@ -116,7 +116,7 @@ try {
 // 2. Date and session-based Trainee stats
 $dateFrom = request('date_from');
 $dateTo = request('date_to');
-$candidatesCount = 1806049;
+$candidatesCount = 0;
 try {
     $whereCand = [];
     $paramsCand = [];
@@ -154,7 +154,7 @@ try {
 } catch (\Exception $ex) {}
 
 // New trainees S1 — active sections in current session (NumSem=1, Dernier=1)
-$newTraineesCount = 4144; // fallback = real admin value
+$newTraineesCount = 0;
 try {
     $rNew = DB::selectOne("
         SELECT COUNT(ss.IDSection) as c
@@ -172,7 +172,7 @@ try {
 } catch (\Exception $ex) {}
 
 // Continuing trainees S2→S5 — SUM(Nbrrecond) from section (same as admin KpiCache)
-$continuingTraineesCount = 306227; // fallback = real admin value
+$continuingTraineesCount = 0;
 try {
     $sqlRecond = "SELECT COALESCE(SUM(s.Nbrrecond), 0) as c FROM section s";
     $paramsRecond = [];
@@ -186,7 +186,7 @@ try {
 } catch (\Exception $ex) {}
 
 // Female trainees (active, not graduated)
-$femaleTraineesCount = 131871; // fallback = real admin value
+$femaleTraineesCount = 0;
 try {
     $rFem = DB::selectOne("
         SELECT COUNT(a.IDapprenant) as c
@@ -206,20 +206,20 @@ try {
 } catch (\Exception $ex) {}
 
 // Total graduates (all time)
-$totalGraduates = 1221477; // fallback = real admin value
+$totalGraduates = 0;
 try {
     $rGrad = DB::selectOne("SELECT COUNT(*) as c FROM apprenant_fin WHERE IDDecision_evalf IN (1,2,3)");
     if ($rGrad && (int)$rGrad->c > 0) $totalGraduates = (int)$rGrad->c;
 } catch (\Exception $ex) {}
 
 // Certificates & success rates
-$certsCount = 12480;
+$certsCount = 0;
 try {
     $r3 = DB::selectOne("SELECT COUNT(*) as c FROM Attestation_succ", []);
     if ($r3 && (int)$r3->c > 0) $certsCount = (int)$r3->c;
 } catch (\Exception $ex) {}
 
-$successRate = 85.4;
+$successRate = 0;
 try {
     $whereSuccess = [];
     $paramsSuccess = [];
@@ -283,28 +283,7 @@ $sessionsList = Cache::remember($cacheKeySessions, 600, function() use ($selWila
 
 
 if (empty($sessionsList)) {
-    $sessionsList = [
-        [
-            'name' => 'امتحان شهادة تقني سامي - شعبة الرقمنة والذكاء الاصطناعي',
-            'level' => 'تقني سامي (TS)',
-            'candidates' => 420,
-            'rate' => '100%',
-            'rate_val' => 100,
-            'progress_class' => 'bg-success',
-            'status_text' => 'مكتملة وموزعة',
-            'status_class' => 'bg-success-subtle text-success'
-        ],
-        [
-            'name' => 'امتحان شهادة الكفاءة المهنية - تخصص ميكانيك السيارات',
-            'level' => 'كفاءة مهنية (CAP)',
-            'candidates' => 1240,
-            'rate' => '65%',
-            'rate_val' => 65,
-            'progress_class' => 'bg-warning',
-            'status_text' => 'قيد الطباعة والتصديق',
-            'status_class' => 'bg-warning-subtle text-warning'
-        ]
-    ];
+    $sessionsList = [];
 }
 
 // 5. Fetch Wilaya-level Exam Stats
@@ -343,14 +322,7 @@ $wilayaStats = Cache::remember($cacheKeyWilayaExamStats, 600, function() use ($s
 });
 
 if (empty($wilayaStats)) {
-    $wilayaStats = [
-        (object)['wilaya_nom' => 'الجزائر', 'centers_count' => 124, 'candidates_count' => 248250],
-        (object)['wilaya_nom' => 'وهران', 'centers_count' => 85, 'candidates_count' => 185120],
-        (object)['wilaya_nom' => 'قسنطينة', 'centers_count' => 62, 'candidates_count' => 142300],
-        (object)['wilaya_nom' => 'سطيف', 'centers_count' => 95, 'candidates_count' => 135400],
-        (object)['wilaya_nom' => 'باتنة', 'centers_count' => 78, 'candidates_count' => 120150],
-        (object)['wilaya_nom' => 'الشلف', 'centers_count' => 54, 'candidates_count' => 98400],
-    ];
+    $wilayaStats = [];
 }
 
 // 6. Fetch Mode-level success rates
@@ -453,26 +425,7 @@ if (empty($recentLogs)) {
 }
 
 if (empty($recentLogs)) {
-    $recentLogs = [
-        [
-            'icon' => 'fa-circle-check',
-            'icon_class' => 'text-success',
-            'title' => 'توليد وتأكيد شهادات دورة فيفري الأخيرة',
-            'time' => 'منذ 10 دقائق'
-        ],
-        [
-            'icon' => 'fa-circle-info',
-            'icon_class' => 'text-primary',
-            'title' => 'تحديث قائمة معاهد ولاية ورقلة المعتمدة',
-            'time' => 'منذ ساعتين'
-        ],
-        [
-            'icon' => 'fa-circle-exclamation',
-            'icon_class' => 'text-warning',
-            'title' => 'مراجعة وتدقيق يدوي لملفات المترشحين الجدد',
-            'time' => 'أمس في 18:30'
-        ]
-    ];
+    $recentLogs = [];
 }
 ?>
 <style>
