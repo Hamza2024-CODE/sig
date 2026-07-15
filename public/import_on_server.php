@@ -229,10 +229,17 @@ $filesToImport = [
 $availableFiles = [];
 foreach ($filesToImport as $file) {
     $targetFilePath = $sqlDir . '/' . $file;
+    $zipFilePath = substr($targetFilePath, 0, -4) . '.zip';
+    
     if (file_exists($targetFilePath)) {
         $availableFiles[] = [
             'name' => $file,
             'size' => round(filesize($targetFilePath) / (1024 * 1024), 2)
+        ];
+    } elseif (str_ends_with($file, '.sql') && file_exists($zipFilePath)) {
+        $availableFiles[] = [
+            'name' => $file,
+            'size' => round(filesize($zipFilePath) / (1024 * 1024), 2)
         ];
     }
 }
