@@ -61,7 +61,6 @@ $files = [
     'app/Services/KpiCache.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Services/KpiCache.php',
     'app/Services/StatsService.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Services/StatsService.php',
     'app/Helpers/SovereignLicensingHelper.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Helpers/SovereignLicensingHelper.php',
-    'public/test_stats.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/test_stats.php',
     'public/pull.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/pull.php'
 ];
 
