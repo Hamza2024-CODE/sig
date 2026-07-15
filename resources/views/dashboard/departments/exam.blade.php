@@ -81,27 +81,33 @@ try {
     if ($rAnnex && (int)$rAnnex->c > 0) $annexCount = (int)$rAnnex->c;
 } catch (\Exception $ex) {}
 
-// Dropped/absent trainees: Inactive and not in apprenant_fin
+// Dropped/abandoned trainees: Obs in apprenant_section_semstre or apprenant_section_semstre_module (with date filters for speed)
 $droppedTraineesCount = 0;
 try {
-    $whereDrop = ["a.statut != 'actif'", "af.IDapprenant IS NULL"];
+    $whereDrop = [
+        "s.DateDF <= CURRENT_DATE()",
+        "s.DateFF >= CURRENT_DATE()",
+        "(ass.Obs LIKE '%abandon%' OR ass.Obs LIKE '%exclus%' OR ass.Obs LIKE '%متخلي%' OR ass.Obs LIKE '%مقصى%' OR assm.Obs LIKE '%abandon%' OR assm.Obs LIKE '%exclus%' OR assm.Obs LIKE '%متخلي%' OR assm.Obs LIKE '%مقصى%')"
+    ];
     $paramsDrop = [];
     if (!empty($selWilaya)) {
-        $whereDrop[] = "o.IDEts_Form IN (SELECT IDetablissement FROM etablissement WHERE IDDFEP = ?)";
+        $whereDrop[] = "e.IDDFEP = ?";
         $paramsDrop[] = $selWilaya;
     }
     if (!empty($selEtab)) {
-        $whereDrop[] = "o.IDEts_Form = ?";
+        $whereDrop[] = "e.IDetablissement = ?";
         $paramsDrop[] = $selEtab;
     }
     $whereDropSQL = " WHERE " . implode(" AND ", $whereDrop);
-    
+
     $rDrop = DB::selectOne("
-        SELECT COUNT(a.IDapprenant) as c
+        SELECT COUNT(DISTINCT a.IDapprenant) as c
         FROM apprenant a
         JOIN section s ON a.IDSection = s.IDSection
         JOIN offre o ON s.IDOffre = o.IDOffre
-        LEFT JOIN apprenant_fin af ON a.IDapprenant = af.IDapprenant
+        JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
+        LEFT JOIN apprenant_section_semstre ass ON a.IDapprenant = ass.IDapprenant
+        LEFT JOIN apprenant_section_semstre_module assm ON ass.IDapprenant_Section_semstre = assm.IDapprenant_Section_semstre
         $whereDropSQL
     ", $paramsDrop);
     if ($rDrop && (int)$rDrop->c > 0) $droppedTraineesCount = (int)$rDrop->c;
