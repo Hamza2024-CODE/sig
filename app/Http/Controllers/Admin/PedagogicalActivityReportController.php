@@ -202,6 +202,7 @@ class PedagogicalActivityReportController extends Controller
 
             return view('admin.reports.pedagogical_activities', compact('data', 'branches', 'wilayas', 'etablissements', 'modes', 'user'));
         } catch (\Throwable $e) {
+            dd($e->getMessage(), $e->getTraceAsString());
             return back()->with('error', 'حدث خطأ أثناء تحميل الحصيلة البيداغوجية: ' . $e->getMessage());
         }
     }
