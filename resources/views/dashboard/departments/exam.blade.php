@@ -332,33 +332,19 @@ if (empty($modeCertsStats)) {
 <style>
 :root {
     --deoh-primary: #1e293b; /* Dark navy */
-    --deoh-gold: #c39d52; /* Elegant gold */
     --deoh-bg: #f8fafc;
     --glass-bg: rgba(255, 255, 255, 0.95);
 }
 
 .vip-header {
-    background: linear-gradient(135deg, var(--deoh-primary) 0%, #0f172a 100%);
+    background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
     border-radius: 16px;
     padding: 2rem 2.5rem;
     box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15);
     color: white;
     position: relative;
     overflow: hidden;
-    border: 1px solid rgba(195, 157, 82, 0.3);
-}
-
-.vip-badge {
-    background-color: rgba(195, 157, 82, 0.15);
-    color: var(--deoh-gold);
-    padding: 0.4rem 1.2rem;
-    border-radius: 50px;
-    font-weight: 700;
-    font-size: 0.82rem;
-    border: 1px solid rgba(195, 157, 82, 0.3);
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
+    border: 1px solid rgba(59, 130, 246, 0.25);
 }
 
 .kpi-vip-card {
@@ -366,14 +352,14 @@ if (empty($modeCertsStats)) {
     border-radius: 16px;
     padding: 1.5rem;
     box-shadow: 0 4px 15px rgba(0,0,0,0.02);
-    border: 1px solid rgba(195, 157, 82, 0.15);
+    border: 1px solid rgba(226, 232, 240, 0.8) !important;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     position: relative;
     overflow: hidden;
 }
 .kpi-vip-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 8px 25px rgba(195, 157, 82, 0.12);
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.12);
 }
 .kpi-vip-card::after {
     content: '';
@@ -383,7 +369,7 @@ if (empty($modeCertsStats)) {
     width: 4px;
     height: 100%;
 }
-.kpi-vip-card.card-centers::after { background: var(--deoh-gold); }
+.kpi-vip-card.card-centers::after { background: #3b82f6; }
 .kpi-vip-card.card-candidates::after { background: #10b981; }
 .kpi-vip-card.card-certs::after { background: #3b82f6; }
 .kpi-vip-card.card-success::after { background: #f59e0b; }
@@ -396,8 +382,8 @@ if (empty($modeCertsStats)) {
     align-items: center;
     justify-content: center;
     font-size: 1.3rem;
-    background: rgba(195, 157, 82, 0.1);
-    color: var(--deoh-gold);
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
 }
 
 .kpi-value {
@@ -422,16 +408,13 @@ if (empty($modeCertsStats)) {
     <div class="vip-header mb-4">
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
             <div>
-                <div class="vip-badge mb-3 cursor-pointer" onclick="toggleHelpPanel()" style="cursor: pointer;" title="اضغط لعرض الشرح المبسط للوحة التحكم">
-                    مركز الامتحانات والتصديق الوطني <i class="fa-solid fa-crown ms-1 text-warning"></i>
-                </div>
                 <h2 class="fw-bold mb-2" style="font-family:'Cairo';">لوحة تحكم مديرية التوجيه والامتحانات والتصديق</h2>
                 <p class="mb-0 text-white-50" style="font-size: 0.95rem;">
                     متابعة دورات الامتحانات الوطنية، إحصائيات المتربصين الجدد والمستمرين، والمصادقة الرقمية على الشهادات.
                 </p>
             </div>
             <div class="d-flex gap-2">
-                <button onclick="toggleHelpPanel()" class="btn btn-premium-help d-inline-flex align-items-center gap-2 px-3.5 py-2 fw-bold" style="background: rgba(195, 157, 82, 0.15); border: 1.5px solid var(--deoh-gold); border-radius: 30px; font-size: 0.85rem; color: var(--deoh-gold); transition: all 0.2s;">
+                <button onclick="toggleHelpPanel()" class="btn btn-premium-help d-inline-flex align-items-center gap-2 px-3.5 py-2 fw-bold" style="background: rgba(14, 165, 233, 0.15); border: 1.5px solid #0ea5e9; border-radius: 30px; font-size: 0.85rem; color: #0ea5e9; transition: all 0.2s;">
                     <i class="fa-solid fa-circle-info"></i> دليل الشرح المبسط
                 </button>
                 <button onclick="window.print()" class="btn btn-premium-print d-inline-flex align-items-center gap-2 px-3.5 py-2 fw-bold" style="background:#fff;border:1.5px solid #cbd5e1;border-radius:30px;font-size:0.85rem;color:#475569;transition:all 0.2s;">
@@ -442,16 +425,16 @@ if (empty($modeCertsStats)) {
     </div>
 
     <!-- Beautiful Detailed Explanation Panel -->
-    <div id="helpPanel" class="card border-0 mb-4 p-4 no-print d-none animate__animated animate__slideInDown" style="border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); background: #ffffff; border: 1.5px solid var(--deoh-gold) !important; text-align: right;">
+    <div id="helpPanel" class="card border-0 mb-4 p-4 no-print d-none animate__animated animate__slideInDown" style="border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); background: #ffffff; border: 1.5px solid #0ea5e9 !important; text-align: right;">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h5 class="fw-bold m-0" style="color: var(--deoh-primary); font-family: 'Cairo', sans-serif;">
-                <i class="fa-solid fa-circle-question text-warning me-2"></i> دليل الشرح المبسط لمؤشرات لوحة التحكم
+                <i class="fa-solid fa-circle-question text-info me-2"></i> دليل الشرح المبسط لمؤشرات لوحة التحكم
             </h5>
             <button onclick="toggleHelpPanel()" class="btn-close" aria-label="Close" style="margin-right: auto; margin-left: 0;"></button>
         </div>
         <div class="row g-3">
             <div class="col-md-3">
-                <div class="p-3 rounded-3 h-100" style="background: rgba(195, 157, 82, 0.05); border-right: 4px solid var(--deoh-gold);">
+                <div class="p-3 rounded-3 h-100" style="background: rgba(14, 165, 233, 0.05); border-right: 4px solid #0ea5e9;">
                     <h6 class="fw-bold text-dark mb-2">🏢 مراكز الامتحانات</h6>
                     <p class="text-muted small mb-0">يعرض العدد الإجمالي لمراكز الإجراء الوطنية مفصلة إلى: معاهد وطنية متخصصة (INSFP)، ومراكز تكوين (CFPA)، ومدارس خاصة معتمدة تجرى فيها الامتحانات.</p>
                 </div>
@@ -578,28 +561,52 @@ if (empty($modeCertsStats)) {
         </div>
     </div>
 
-    <!-- Interactive Charts Section (Pie & Bar) -->
+    <!-- Interactive Charts Section (Pie, Bar, Horizontal Bar & Doughnut) -->
     <div class="row g-4 mb-4">
         <!-- Chart 1: Certificate Verification Pie -->
-        <div class="col-lg-5">
+        <div class="col-lg-6">
             <div class="card border-0 shadow-sm p-4 h-100" style="border-radius: 20px; background: var(--card-bg); border: 1px solid var(--card-border) !important;">
                 <h5 class="fw-bold mb-3" style="border-right: 4px solid var(--primary-color); padding-right: 0.6rem; font-family: 'Cairo', sans-serif; color: var(--text-main);">
-                    <i class="fa-solid fa-chart-pie text-primary me-2"></i> حالة تصديق الشهادات / Certificate Verification
+                    <i class="fa-solid fa-chart-pie text-primary me-2"></i> حالة تصديق الشهادات / Certificate Verification (دائرة نسبية)
                 </h5>
-                <div style="height: 250px; position: relative;">
+                <div style="height: 280px; position: relative;">
                     <canvas id="chart-certs-verification"></canvas>
                 </div>
             </div>
         </div>
 
         <!-- Chart 2: Candidates Count by Session Bar Chart -->
-        <div class="col-lg-7">
+        <div class="col-lg-6">
             <div class="card border-0 shadow-sm p-4 h-100" style="border-radius: 20px; background: var(--card-bg); border: 1px solid var(--card-border) !important;">
                 <h5 class="fw-bold mb-3" style="border-right: 4px solid #10b981; padding-right: 0.6rem; font-family: 'Cairo', sans-serif; color: var(--text-main);">
-                    <i class="fa-solid fa-chart-bar text-success me-2"></i> تعداد المترشحين حسب دورة الامتحانات / Candidate Distribution
+                    <i class="fa-solid fa-chart-bar text-success me-2"></i> تعداد المترشحين حسب دورة الامتحانات / Candidate Distribution (أعمدة بيانية)
                 </h5>
-                <div style="height: 250px; position: relative;">
+                <div style="height: 280px; position: relative;">
                     <canvas id="chart-sessions-candidates"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart 3: Candidates Count by Wilaya (Horizontal Bar Chart) -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm p-4 h-100" style="border-radius: 20px; background: var(--card-bg); border: 1px solid var(--card-border) !important;">
+                <h5 class="fw-bold mb-3" style="border-right: 4px solid #3b82f6; padding-right: 0.6rem; font-family: 'Cairo', sans-serif; color: var(--text-main);">
+                    <i class="fa-solid fa-map-location-dot text-primary me-2"></i> تعداد المترشحين في الولايات العشر الأولى / Candidates by Top Wilayas (مخطط أفقي)
+                </h5>
+                <div style="height: 280px; position: relative;">
+                    <canvas id="chart-wilayas-candidates"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart 4: Success Rates by Training Mode (Doughnut Chart) -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm p-4 h-100" style="border-radius: 20px; background: var(--card-bg); border: 1px solid var(--card-border) !important;">
+                <h5 class="fw-bold mb-3" style="border-right: 4px solid #f59e0b; padding-right: 0.6rem; font-family: 'Cairo', sans-serif; color: var(--text-main);">
+                    <i class="fa-solid fa-chart-pie text-warning me-2"></i> نسب النجاح والمترشحين حسب نمط التكوين / Mode Success Rates (دائرة مجوفة)
+                </h5>
+                <div style="height: 280px; position: relative;">
+                    <canvas id="chart-modes-success"></canvas>
                 </div>
             </div>
         </div>
@@ -837,6 +844,100 @@ document.addEventListener('DOMContentLoaded', function() {
                 x: {
                     ticks: {
                         font: { family: 'Cairo', size: 10 }
+                    }
+                }
+            }
+        }
+    });
+
+    // 3. Wilaya Candidates horizontal bar chart
+    const ctxWilaya = document.getElementById('chart-wilayas-candidates').getContext('2d');
+    const wilayaLabels = <?= json_encode(array_map(fn($w) => $w->wilaya_nom, $wilayaStats)) ?>;
+    const wilayaCandidates = <?= json_encode(array_map(fn($w) => (int)$w->candidates_count, $wilayaStats)) ?>;
+    
+    new Chart(ctxWilaya, {
+        type: 'bar',
+        data: {
+            labels: wilayaLabels,
+            datasets: [{
+                label: 'تعداد المترشحين حسب الولاية',
+                data: wilayaCandidates,
+                backgroundColor: '#3b82f6',
+                borderRadius: 5
+            }]
+        },
+        options: {
+            indexAxis: 'y', // Makes it horizontal
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return ' ' + context.raw.toLocaleString() + ' مترشح';
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString();
+                        }
+                    }
+                },
+                y: {
+                    ticks: {
+                        font: { family: 'Cairo', size: 10 }
+                    }
+                }
+            }
+        }
+    });
+
+    // 4. Training Mode success rates doughnut chart
+    const ctxMode = document.getElementById('chart-modes-success').getContext('2d');
+    const modeLabels = <?= json_encode(array_map(fn($m) => $m->mode_nom, $modeCertsStats)) ?>;
+    const modeCandidates = <?= json_encode(array_map(fn($m) => (int)$m->candidates_count, $modeCertsStats)) ?>;
+    const modePassed = <?= json_encode(array_map(fn($m) => (int)$m->passed_count, $modeCertsStats)) ?>;
+
+    new Chart(ctxMode, {
+        type: 'doughnut',
+        data: {
+            labels: modeLabels,
+            datasets: [
+                {
+                    label: 'إجمالي المترشحين',
+                    data: modeCandidates,
+                    backgroundColor: ['#1e3a8a', '#10b981', '#3b82f6', '#f59e0b'],
+                    weight: 1
+                },
+                {
+                    label: 'الناجحون',
+                    data: modePassed,
+                    backgroundColor: ['#3b82f6', '#34d399', '#60a5fa', '#fbbf24'],
+                    weight: 0.8
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        font: { family: 'Cairo', size: 9 }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return ' ' + context.dataset.label + ': ' + context.raw.toLocaleString() + ' فرد';
+                        }
                     }
                 }
             }
