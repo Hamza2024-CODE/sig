@@ -258,15 +258,32 @@ final class StatsService
     {
         $results = [];
 
-        // §4.1 — المتربصون (من جدول apprenant إذا متاح، وإلا من offre)
-        $apprenants = self::safeCount("SELECT COUNT(*) FROM apprenant");
-        if ($apprenants === 0) {
-            $apprenants = self::safeCount("SELECT COALESCE(SUM(NbrInscr),0) FROM offre WHERE NbrInscr > 0");
-        }
+        // §4.1 — المتربصون النشطون (DEOH logic)
+        $apprenants = self::safeCount("
+            SELECT COUNT(a.IDapprenant)
+            FROM apprenant a
+            JOIN section s ON a.IDSection = s.IDSection
+            LEFT JOIN apprenant_fin af ON a.IDapprenant = af.IDapprenant
+            WHERE a.statut = 'actif'
+              AND af.IDapprenant IS NULL
+              AND s.DateDF <= CURRENT_DATE()
+              AND s.DateFF >= CURRENT_DATE()
+        ");
         $results[self::KEY_APPRENANTS] = $apprenants;
 
-        // §4.2 — الإناث والذكور
-        $filles = self::safeCount("SELECT COALESCE(SUM(NbrInscrf),0) FROM offre WHERE NbrInscrf > 0");
+        // §4.2 — الإناث والذكور (DEOH logic)
+        $filles = self::safeCount("
+            SELECT COUNT(a.IDapprenant)
+            FROM apprenant a
+            JOIN section s ON a.IDSection = s.IDSection
+            JOIN candidat c ON a.IDCandidat = c.IDCandidat
+            LEFT JOIN apprenant_fin af ON a.IDapprenant = af.IDapprenant
+            WHERE a.statut = 'actif'
+              AND c.Civ = 2
+              AND af.IDapprenant IS NULL
+              AND s.DateDF <= CURRENT_DATE()
+              AND s.DateFF >= CURRENT_DATE()
+        ");
         $results[self::KEY_FILLES]  = $filles;
         $results[self::KEY_GARCONS] = max(0, $apprenants - $filles);
 
@@ -287,8 +304,13 @@ final class StatsService
             "SELECT COUNT(*) FROM apprenant_fin WHERE Numdiplome IS NOT NULL AND Numdiplome != ''"
         );
 
-        // §4.7 — المتربصون المستمرون (Reconduits)
-        $results[self::KEY_RECONDUITS] = self::safeCount("SELECT SUM(Nbrrecond) FROM section");
+        // §4.7 — المتربصون المستمرون (DEOH logic)
+        $results[self::KEY_RECONDUITS] = self::safeCount("
+            SELECT SUM(s.Nbrrecond)
+            FROM section s
+            WHERE s.DateDF <= CURRENT_DATE()
+              AND s.DateFF >= CURRENT_DATE()
+        ");
 
         // §4.8 — تسجيل وقت آخر تحديث
         $results[self::KEY_LAST_SYNC_TS] = time();

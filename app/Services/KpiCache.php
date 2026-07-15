@@ -218,24 +218,24 @@ final class KpiCache
                 ? self::scalar("SELECT COUNT(a.IDapprenant) as c FROM apprenant a JOIN section s ON a.IDSection=s.IDSection LEFT JOIN apprenant_fin af ON a.IDapprenant=af.IDapprenant WHERE a.statut = 'actif' AND af.IDapprenant IS NULL AND s.DateDF <= CURRENT_DATE() AND s.DateFF >= CURRENT_DATE()", [])
                 : self::scalar("SELECT COALESCE(SUM(NbrInscr),0) as c FROM offre WHERE NbrInscr>0", []);
 
-            $filles         = self::scalar("SELECT COALESCE(SUM(NbrInscrf),0) as c FROM offre WHERE NbrInscrf>0", []);
+            $filles         = self::scalar("SELECT COUNT(a.IDapprenant) as c FROM apprenant a JOIN section s ON a.IDSection=s.IDSection JOIN candidat c ON a.IDCandidat=c.IDCandidat LEFT JOIN apprenant_fin af ON a.IDapprenant=af.IDapprenant WHERE a.statut = 'actif' AND c.Civ = 2 AND af.IDapprenant IS NULL AND s.DateDF <= CURRENT_DATE() AND s.DateFF >= CURRENT_DATE()", []);
             $offres         = self::scalar("SELECT COUNT(*) as c FROM offre", []);
             $etablissements = self::scalar("SELECT COUNT(*) as c FROM etablissement", []);
             $encadrements   = self::scalar("SELECT COUNT(*) as c FROM encadrement", []);
             $specialites    = self::scalar("SELECT COUNT(DISTINCT IDSpecialite) as c FROM offre", []);
-            $reconduits     = self::scalar("SELECT SUM(Nbrrecond) as c FROM section", []);
+            $reconduits     = self::scalar("SELECT SUM(s.Nbrrecond) as c FROM section s WHERE s.DateDF <= CURRENT_DATE() AND s.DateFF >= CURRENT_DATE()", []);
             $sections_s1    = self::scalar("SELECT COUNT(*) as c FROM section_semestre WHERE Dernier = 1 AND NumSem = 1", []);
         } else {
             $stagiaires = $useApprenant
                 ? self::scalar("SELECT COUNT(a.IDapprenant) as c FROM apprenant a JOIN section s ON a.IDSection=s.IDSection JOIN offre o ON s.IDOffre=o.IDOffre JOIN etablissement e ON o.IDEts_Form=e.IDetablissement LEFT JOIN apprenant_fin af ON a.IDapprenant=af.IDapprenant WHERE $wo AND a.statut = 'actif' AND af.IDapprenant IS NULL AND s.DateDF <= CURRENT_DATE() AND s.DateFF >= CURRENT_DATE()", $paramsOffre)
                 : self::scalar("SELECT COALESCE(SUM(o.NbrInscr),0) as c FROM offre o INNER JOIN etablissement e ON o.IDEts_Form=e.IDetablissement WHERE $wo AND o.NbrInscr>0", $paramsOffre);
 
-            $filles         = self::scalar("SELECT COALESCE(SUM(o.NbrInscrf),0) as c FROM offre o INNER JOIN etablissement e ON o.IDEts_Form=e.IDetablissement WHERE $wo AND o.NbrInscrf>0", $paramsOffre);
+            $filles         = self::scalar("SELECT COUNT(a.IDapprenant) as c FROM apprenant a JOIN section s ON a.IDSection=s.IDSection JOIN offre o ON s.IDOffre=o.IDOffre JOIN etablissement e ON o.IDEts_Form=e.IDetablissement JOIN candidat c ON a.IDCandidat=c.IDCandidat LEFT JOIN apprenant_fin af ON a.IDapprenant=af.IDapprenant WHERE $wo AND a.statut = 'actif' AND c.Civ = 2 AND af.IDapprenant IS NULL AND s.DateDF <= CURRENT_DATE() AND s.DateFF >= CURRENT_DATE()", $paramsOffre);
             $offres         = self::scalar("SELECT COUNT(*) as c FROM offre o INNER JOIN etablissement e ON o.IDEts_Form=e.IDetablissement WHERE $wo", $paramsOffre);
             $etablissements = self::scalar("SELECT COUNT(*) as c FROM etablissement e WHERE $we", $paramsEtab);
             $encadrements   = self::scalar("SELECT COUNT(*) as c FROM encadrement enc WHERE $wn", $paramsEnc);
             $specialites    = self::scalar("SELECT COUNT(DISTINCT o.IDSpecialite) as c FROM offre o INNER JOIN etablissement e ON o.IDEts_Form=e.IDetablissement WHERE $wo", $paramsOffre);
-            $reconduits     = self::scalar("SELECT SUM(s.Nbrrecond) as c FROM section s INNER JOIN offre o ON s.IDOffre=o.IDOffre INNER JOIN etablissement e ON o.IDEts_Form=e.IDetablissement WHERE $wo", $paramsOffre);
+            $reconduits     = self::scalar("SELECT SUM(s.Nbrrecond) as c FROM section s INNER JOIN offre o ON s.IDOffre=o.IDOffre INNER JOIN etablissement e ON o.IDEts_Form=e.IDetablissement WHERE s.DateDF <= CURRENT_DATE() AND s.DateFF >= CURRENT_DATE() AND $wo", $paramsOffre);
             $sections_s1    = self::scalar("SELECT COUNT(*) as c FROM section_semestre ss INNER JOIN section s ON ss.IDSection=s.IDSection INNER JOIN offre o ON s.IDOffre=o.IDOffre INNER JOIN etablissement e ON o.IDEts_Form=e.IDetablissement WHERE ss.Dernier = 1 AND ss.NumSem = 1 AND $wo", $paramsOffre);
         }
 
