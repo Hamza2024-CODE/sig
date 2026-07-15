@@ -1682,13 +1682,35 @@ class DashboardController extends Controller
                 ->limit(5)
                 ->get();
         });
-        $data['total_stagiaires'] = collect($data['sessions_breakdown'])->sum('count');
-        
-        // 1. Active Continuing Trainees S2-S5 (sessions 31 to 34)
-        $data['total_reconduits'] = collect($data['sessions_breakdown'])->slice(1)->sum('count');
-        
-        // 2. Active S1 Sections (current session 35)
-        $data['total_sections_s1'] = \Illuminate\Support\Facades\Cache::remember('sgfep:kpi:minister:s1_sections', 900, function() {
+        // 1. Total Active Trainees (DEOH logic)
+        $data['total_stagiaires'] = \Illuminate\Support\Facades\Cache::remember('sgfep:kpi:minister:total_stagiaires_correct', 900, function() {
+            return DB::table('apprenant as a')
+                ->join('section as s', 'a.IDSection', '=', 's.IDSection')
+                ->leftJoin('apprenant_fin as af', 'a.IDapprenant', '=', 'af.IDapprenant')
+                ->where('a.statut', 'actif')
+                ->whereNull('af.IDapprenant')
+                ->where('s.DateDF', '<=', now())
+                ->where('s.DateFF', '>=', now())
+                ->count();
+        });
+
+        // 2. Active Continuing Trainees S2-S5 (DEOH logic)
+        $data['total_reconduits'] = \Illuminate\Support\Facades\Cache::remember('sgfep:kpi:minister:total_reconduits_correct_appr', 900, function() {
+            return DB::table('apprenant as a')
+                ->join('section as s', 'a.IDSection', '=', 's.IDSection')
+                ->join('section_semestre as ss', 's.IDSection', '=', 'ss.IDSection')
+                ->leftJoin('apprenant_fin as af', 'a.IDapprenant', '=', 'af.IDapprenant')
+                ->where('a.statut', 'actif')
+                ->whereNull('af.IDapprenant')
+                ->where('s.DateDF', '<=', now())
+                ->where('s.DateFF', '>=', now())
+                ->where('ss.Dernier', 1)
+                ->where('ss.NumSem', '>', 1)
+                ->count();
+        });
+
+        // 3. Active S1 Sections (current session 35)
+        $data['total_sections_s1'] = \Illuminate\Support\Facades\Cache::remember('sgfep:kpi:minister:s1_sections_correct', 900, function() {
             return DB::table('section_semestre as ss')
                 ->join('section as s', 'ss.IDSection', '=', 's.IDSection')
                 ->where('ss.Dernier', 1)
@@ -1696,56 +1718,30 @@ class DashboardController extends Controller
                 ->where('s.IDSession', 35)
                 ->count();
         });
-        
-        // 3. Active Female Trainees (sessions 31 to 35)
-        $data['total_filles'] = \Illuminate\Support\Facades\Cache::remember('sgfep:kpi:minister:active_filles', 900, function() {
+
+        // 4. Active Female Trainees (DEOH logic)
+        $data['total_filles'] = \Illuminate\Support\Facades\Cache::remember('sgfep:kpi:minister:total_filles_correct_appr', 900, function() {
             return DB::table('apprenant as a')
                 ->join('section as s', 'a.IDSection', '=', 's.IDSection')
-                ->join('offre as o', 's.IDOffre', '=', 'o.IDOffre')
-                ->join('session as sess', 'o.IDSession', '=', 'sess.IDSession')
-                ->join('specialite as sp', 'o.IDSpecialite', '=', 'sp.IDSpecialite')
                 ->join('candidat as c', 'a.IDCandidat', '=', 'c.IDCandidat')
                 ->leftJoin('apprenant_fin as af', 'a.IDapprenant', '=', 'af.IDapprenant')
-                ->whereIn('s.IDSession', [31, 32, 33, 34, 35])
+                ->where('a.statut', 'actif')
                 ->whereNull('af.IDapprenant')
+                ->where('s.DateDF', '<=', now())
+                ->where('s.DateFF', '>=', now())
                 ->where('c.Civ', 2)
-                ->whereRaw("DATE_ADD(sess.DateD, INTERVAL COALESCE(NULLIF(sp.dureeM, 0), sp.NbrSem * 6, 24) MONTH) >= CURRENT_DATE()")
                 ->count();
         });
 
-        // 4. Total Successful Graduates (all time)
-        $data['total_graduates'] = \Illuminate\Support\Facades\Cache::remember('sgfep:kpi:minister:total_graduates', 900, function() {
+        // 5. Total Successful Graduates (all time)
+        $data['total_graduates'] = \Illuminate\Support\Facades\Cache::remember('sgfep:kpi:minister:total_graduates_correct_appr', 900, function() {
             return DB::table('apprenant_fin')
                 ->whereIn('IDDecision_evalf', [1, 2, 3])
                 ->count();
         });
 
-        $data['total_encadrements'] = \Illuminate\Support\Facades\Cache::get('sgfep:kpi:minister:total_encadrements', 0);
-        $data['total_etablissements'] = \Illuminate\Support\Facades\Cache::get('sgfep:kpi:minister:total_etablissements', 0);
-
-        // If cache is empty, load directly
-        if ($data['total_stagiaires'] == 0) {
-            try {
-                $r = DB::selectOne("SELECT
-                    SUM(CASE WHEN a.IDSection IS NOT NULL AND (af.IDapprenant IS NULL OR af.SituationFin IN (0,4)) THEN 1 ELSE 0 END) as total_actifs,
-                    SUM(CASE WHEN s.IDSemestre NOT IN (1,3,5,7) AND (af.IDapprenant IS NULL OR af.SituationFin IN (0,4)) THEN 1 ELSE 0 END) as reconduits,
-                    SUM(CASE WHEN s.IDSemestre IN (1,3,5,7) AND (af.IDapprenant IS NULL OR af.SituationFin IN (0,4)) THEN 1 ELSE 0 END) as sections_s1,
-                    SUM(CASE WHEN a.Sexe IN ('F','f','2',2) AND (af.IDapprenant IS NULL OR af.SituationFin IN (0,4)) THEN 1 ELSE 0 END) as filles
-                    FROM apprenant a
-                    LEFT JOIN section s ON a.IDSection = s.IDSection
-                    LEFT JOIN apprenant_fin af ON a.IDapprenant = af.IDapprenant");
-                $data['total_stagiaires']  = (int)($r->total_actifs ?? 0);
-                $data['total_reconduits']  = (int)($r->reconduits  ?? 0);
-                $data['total_sections_s1'] = (int)($r->sections_s1 ?? 0);
-                $data['total_filles']      = (int)($r->filles       ?? 0);
-            } catch (\Throwable $e) {}
-        }
-        if ($data['total_encadrements'] == 0) {
-            try { $data['total_encadrements'] = DB::table('encadrement')->count(); } catch (\Throwable $e) {}
-        }
-        if ($data['total_etablissements'] == 0) {
-            try { $data['total_etablissements'] = DB::table('etablissement')->count(); } catch (\Throwable $e) {}
-        }
+        try { $data['total_encadrements'] = DB::table('encadrement')->count(); } catch (\Throwable $e) { $data['total_encadrements'] = 0; }
+        try { $data['total_etablissements'] = DB::table('etablissement')->count(); } catch (\Throwable $e) { $data['total_etablissements'] = 0; }
 
         // Institution breakdown
         $data['count_cfpa']   = \Illuminate\Support\Facades\Cache::remember('sgfep:kpi:minister:cfpa',   900, fn() => DB::table('etablissement')->where('IDNature_etsF', 8)->where('activee', 0)->count());
