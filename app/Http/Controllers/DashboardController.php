@@ -1096,8 +1096,8 @@ class DashboardController extends Controller
             \Illuminate\Support\Facades\Log::error('[Dashboard Builder] Error loading custom dashboard: ' . $e->getMessage());
         }
 
-        if ($role === 'admin') {
-            return view('dashboard.departments.admin_stats', $data);
+        if (in_array($role, ['admin', 'secretaire_general', 'ministre'])) {
+            return redirect()->route('admin.stats');
         }
 
         return view('dashboard.index', $data);
