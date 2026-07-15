@@ -988,18 +988,19 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
             <!-- Category: Training (التكوين والتعليم) -->
             @if (($hasPerm('offres') || $hasPerm('inscriptions') || in_array($roleCode, ['dfep', 'admin', 'central', 'etablissement', 'directeur', 'employee'])) && in_array($dept, ['general', 'pedagogie', 'orientation', 'apprentissage']))
                 <div class="sidebar-dropdown">
-                    <button type="button" class="sidebar-item {{ ($isActive('/dashboard/offres') || $isActive('/dashboard/inscriptions') || $isActive('/dashboard/preinscrits') || $isActive('/dashboard/specialites') || $isActive('/dashboard/sessions') || $isActive('/dashboard/effectifs') || $isActive('/dashboard/apprenants') || $isActive('/dashboard/sections') || $isActive('/dashboard/reconduits') || $isActive('/dashboard/reconduits/transfers') || $isActive('/dashboard/diplomes/liste-2021-present') || $isActive('/dashboard/schedule')) ? 'active' : '' }}" onclick="toggleSidebarDropdown(this)" title="التكوين والتعليم">
+                    <button type="button" class="sidebar-item {{ ($isActive('/dashboard/offres') || $isActive('/dashboard/pedagogical-activity-report') || $isActive('/dashboard/inscriptions') || $isActive('/dashboard/preinscrits') || $isActive('/dashboard/specialites') || $isActive('/dashboard/sessions') || $isActive('/dashboard/effectifs') || $isActive('/dashboard/apprenants') || $isActive('/dashboard/sections') || $isActive('/dashboard/reconduits') || $isActive('/dashboard/reconduits/transfers') || $isActive('/dashboard/diplomes/liste-2021-present') || $isActive('/dashboard/schedule')) ? 'active' : '' }}" onclick="toggleSidebarDropdown(this)" title="التكوين والتعليم">
                         <i class="fa-solid fa-graduation-cap"></i>
                         <span>التكوين والتعليم</span>
                         <i class="fa-solid fa-chevron-down ms-auto dropdown-chevron" style="font-size: 0.7rem;"></i>
                     </button>
-                    <div class="sidebar-submenu {{ ($isActive('/dashboard/offres') || $isActive('/dashboard/inscriptions') || $isActive('/dashboard/preinscrits') || $isActive('/dashboard/specialites') || $isActive('/dashboard/sessions') || $isActive('/dashboard/effectifs') || $isActive('/dashboard/apprenants') || $isActive('/dashboard/sections') || $isActive('/dashboard/reconduits') || $isActive('/dashboard/reconduits/transfers') || $isActive('/dashboard/diplomes/liste-2021-present') || $isActive('/dashboard/schedule')) ? 'open' : '' }}">
+                    <div class="sidebar-submenu {{ ($isActive('/dashboard/offres') || $isActive('/dashboard/pedagogical-activity-report') || $isActive('/dashboard/inscriptions') || $isActive('/dashboard/preinscrits') || $isActive('/dashboard/specialites') || $isActive('/dashboard/sessions') || $isActive('/dashboard/effectifs') || $isActive('/dashboard/apprenants') || $isActive('/dashboard/sections') || $isActive('/dashboard/reconduits') || $isActive('/dashboard/reconduits/transfers') || $isActive('/dashboard/diplomes/liste-2021-present') || $isActive('/dashboard/schedule')) ? 'open' : '' }}">
                         @if(!$isDeohUser && !$isDecUser && !$isDfcriUser)
                             @if (in_array($dept, ['general', 'pedagogie', 'apprentissage']))
                                 <a href="{{ url('dashboard/offres') }}" class="sidebar-subitem {{ $isActive('/dashboard/offres', true) }}" title="العروض"><i class="fa-solid fa-briefcase"></i> <span>العروض</span></a>
                                 @if (in_array($roleCode, ['admin', 'dfep', 'central']) && $dept === 'general')
                                     <a href="{{ url('dashboard/offres/validation') }}" class="sidebar-subitem {{ $isActive('/dashboard/offres/validation') }}" title="المصادقة على العروض"><i class="fa-solid fa-stamp"></i> <span>المصادقة على العروض</span></a>
                                 @endif
+                                <a href="{{ url('dashboard/pedagogical-activity-report') }}" class="sidebar-subitem {{ $isActive('/dashboard/pedagogical-activity-report') }}" title="حصيلة النشاطات البيداغوجية"><i class="fa-solid fa-chart-pie text-success"></i> <span>حصيلة النشاطات البيداغوجية</span></a>
                             @endif
                         @endif
                         @if(!$isDosfpUser)

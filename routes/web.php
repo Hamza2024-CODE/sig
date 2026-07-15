@@ -278,6 +278,10 @@ Route::middleware('check.session')->group(function () {
         Route::get('/pdf/{type}',    [\App\Http\Controllers\Admin\ReportController::class, 'pdfReport'])->name('pdf');
     });
 
+    // ── 📊 Pedagogical Activity Report ─────────────────────────────────────
+    Route::get('/dashboard/pedagogical-activity-report', [\App\Http\Controllers\Admin\PedagogicalActivityReportController::class, 'index'])->name('pedagogical-activity-report.index');
+    Route::get('/dashboard/pedagogical-activity-report/export', [\App\Http\Controllers\Admin\PedagogicalActivityReportController::class, 'exportExcel'])->name('pedagogical-activity-report.export');
+
     // ── التسيير المالي (Finances) — CRUD + Print ──────────────────────────
     Route::prefix('dashboard/finances')->group(function () {
         Route::get('/',                             [\App\Http\Controllers\Admin\FinancesController::class, 'index'])->name('finances.index');
