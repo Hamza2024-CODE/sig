@@ -57,7 +57,9 @@ echo "<h1>Auto-Updating All Modified Files...</h1>";
 $files = [
     'resources/views/dashboard/departments/exam.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/dashboard/departments/exam.blade.php',
     'resources/views/dashboard/departments/admin_stats.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/dashboard/departments/admin_stats.blade.php',
+    'resources/views/admin/apprenants/index.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/apprenants/index.blade.php',
     'app/Http/Controllers/DashboardController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/DashboardController.php',
+    'app/Http/Controllers/Admin/ApprenantController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/ApprenantController.php',
     'routes/web.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/routes/web.php',
     'app/Services/KpiCache.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Services/KpiCache.php',
     'app/Services/StatsService.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Services/StatsService.php',

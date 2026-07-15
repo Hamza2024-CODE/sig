@@ -429,7 +429,7 @@ $to   = min($page * $per_page, $total_count);
                             </div>
                         </div>
 
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label small fw-bold text-secondary mb-1">القسم الدراسي *</label>
                             <select name="section_id" id="edit_section_id" class="form-select text-dark" required style="font-size:0.9rem; color: #212529 !important; background-color: #ffffff !important; height: 42px; border-radius: 8px; border: 1px solid #ced4da !important;">
                                 <?php foreach ($sections as $s): ?>
@@ -438,9 +438,14 @@ $to   = min($page * $per_page, $total_count);
                             </select>
                         </div>
 
-                        <div class="col-md-6">
-                            <label class="form-label small fw-bold text-secondary mb-1">رقم بطاقة التعريف الوطنية / رقم التسجيل *</label>
-                            <input type="text" name="nccp" id="edit_nccp" class="form-control text-dark" required style="font-size:0.9rem; color: #212529 !important; background-color: #ffffff !important; height: 42px; border-radius: 8px; border: 1px solid #ced4da !important;">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-secondary mb-1">رقم التعريف الوطني (NIN) *</label>
+                            <input type="text" name="nin" id="edit_nin" class="form-control text-dark" required style="font-size:0.9rem; color: #212529 !important; background-color: #ffffff !important; height: 42px; border-radius: 8px; border: 1px solid #ced4da !important;">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-secondary mb-1">رقم التسجيل البيداغوجي *</label>
+                            <input type="text" name="num_ins" id="edit_num_ins" class="form-control text-dark" required style="font-size:0.9rem; color: #212529 !important; background-color: #ffffff !important; height: 42px; border-radius: 8px; border: 1px solid #ced4da !important;">
                         </div>
 
                         <div class="col-md-4">
@@ -530,7 +535,8 @@ function openEditModal(id) {
                 }
                 selectEl.value = res.data.IDSection;
                 
-                document.getElementById('edit_nccp').value = res.data.Nccp || res.data.nin || '';
+                document.getElementById('edit_nin').value = res.data.nin || '';
+                document.getElementById('edit_num_ins').value = res.data.num_ins || res.data.Nccp || '';
                 document.getElementById('edit_groupe').value = res.data.Groupe ?? 1;
                 document.getElementById('edit_valide').value = res.data.Valide;
                 document.getElementById('edit_statut').value = res.data.statut;

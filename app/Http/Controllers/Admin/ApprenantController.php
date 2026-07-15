@@ -259,6 +259,7 @@ class ApprenantController extends Controller
                 'candidat.DateNais as date_nais',
                 'candidat.LieuNais as lieu_nais',
                 'candidat.Nin as nin',
+                'candidat.NumIns as num_ins',
                 'candidat.Civ as civ',
                 'candidat.Tel as tel',
                 'candidat.email as email',
@@ -376,7 +377,8 @@ class ApprenantController extends Controller
         $validated = $request->validate([
             'id' => 'required|integer',
             'section_id' => 'required|integer',
-            'nccp' => 'required|string|max:50',
+            'nin' => 'nullable|string|max:50',
+            'num_ins' => 'required|string|max:50',
             'statut' => 'required|string|max:50',
             'valide' => 'required|integer',
             'groupe' => 'required|integer',
@@ -408,16 +410,25 @@ class ApprenantController extends Controller
         }
 
         try {
-            DB::table('apprenant')
-                ->where('IDapprenant', $validated['id'])
-                ->update([
-                    'IDSection' => $validated['section_id'],
-                    'Nccp' => $validated['nccp'],
-                    'statut' => $validated['statut'],
-                    'Valide' => $validated['valide'],
-                    'Groupe' => $validated['groupe'],
-                    'update_time' => now(),
-                ]);
+            DB::transaction(function () use ($validated, $student) {
+                DB::table('apprenant')
+                    ->where('IDapprenant', $validated['id'])
+                    ->update([
+                        'IDSection' => $validated['section_id'],
+                        'Nccp' => $validated['num_ins'],
+                        'statut' => $validated['statut'],
+                        'Valide' => $validated['valide'],
+                        'Groupe' => $validated['groupe'],
+                        'update_time' => now(),
+                    ]);
+
+                DB::table('candidat')
+                    ->where('IDCandidat', $student->IDCandidat)
+                    ->update([
+                        'Nin' => $validated['nin'] ?? null,
+                        'NumIns' => $validated['num_ins'],
+                    ]);
+            });
 
             session(['flash_success' => 'تم تحديث بيانات الطالب بنجاح / Stagiaire modifié avec succès']);
         } catch (\Exception $e) {
