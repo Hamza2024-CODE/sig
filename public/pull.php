@@ -117,6 +117,13 @@ $appCacheDir = __DIR__ . '/../storage/framework/cache/data';
 $clearDir($appCacheDir);
 echo "✓ Application Cache Cleared (Filesystem Traversal)<br>";
 
+try {
+    \Illuminate\Support\Facades\Cache::flush();
+    echo "✓ Laravel Cache::flush() executed successfully!<br>";
+} catch (\Throwable $ex) {
+    echo "✗ Direct Cache::flush() failed: " . $ex->getMessage() . "<br>";
+}
+
 // 3. Clear bootstrap cache (services.php, packages.php)
 $bootstrapCacheDir = __DIR__ . '/../bootstrap/cache';
 if (is_dir($bootstrapCacheDir)) {
