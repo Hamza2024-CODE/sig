@@ -109,6 +109,19 @@ if (isset($_GET['action'])) {
     if ($action === 'import_file') {
         $file = $_POST['file'] ?? '';
         $targetFilePath = $sqlDir . '/' . $file;
+        
+        // Auto-extract ZIP package if SQL file is missing but ZIP is present
+        if (!file_exists($targetFilePath) && str_ends_with($file, '.sql')) {
+            $zipFile = substr($targetFilePath, 0, -4) . '.zip';
+            if (file_exists($zipFile) && class_exists('ZipArchive')) {
+                $zip = new ZipArchive();
+                if ($zip->open($zipFile) === TRUE) {
+                    $zip->extractTo($sqlDir);
+                    $zip->close();
+                }
+            }
+        }
+
         if (empty($file) || !file_exists($targetFilePath)) {
             echo json_encode(['success' => false, 'message' => "الملف $file غير موجود على السيرفر في المسار $sqlDir"]);
             exit;
@@ -196,6 +209,7 @@ if (isset($_GET['action'])) {
 $filesToImport = [
     'missing_hrt_specialty.sql',
     'missing_saida_schedules.sql',
+    'missing_schedules_all.sql',
     'missing_etablissement_all.sql',
     'missing_specialite_all.sql',
     'missing_offre_all.sql',

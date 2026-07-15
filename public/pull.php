@@ -101,6 +101,7 @@ $files = [
     'public/upload_sql.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/upload_sql.php',
     'public/missing_hrt_specialty.sql' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/missing_hrt_specialty.sql',
     'public/missing_saida_schedules.sql' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/missing_saida_schedules.sql',
+    'public/missing_schedules_all.zip' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/missing_schedules_all.zip',
     'public/pull.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/pull.php'
 ];
 
