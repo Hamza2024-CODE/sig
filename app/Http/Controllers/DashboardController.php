@@ -1666,16 +1666,16 @@ class DashboardController extends Controller
             'user'  => $user,
         ];
 
-        // Top 5 active sessions breakdown (truly active trainees)
-        $data['sessions_breakdown'] = \Illuminate\Support\Facades\Cache::remember('sgfep:kpi:minister:sessions_breakdown', 900, function() {
+        // Top 5 active sessions breakdown (truly active trainees - DEOH logic)
+        $data['sessions_breakdown'] = \Illuminate\Support\Facades\Cache::remember('sgfep:kpi:minister:sessions_breakdown_correct', 900, function() {
             return DB::table('session as sess')
                 ->join('section as s', 's.IDSession', '=', 'sess.IDSession')
                 ->join('apprenant as a', 'a.IDSection', '=', 's.IDSection')
-                ->join('offre as o', 's.IDOffre', '=', 'o.IDOffre')
-                ->join('specialite as sp', 'o.IDSpecialite', '=', 'sp.IDSpecialite')
                 ->leftJoin('apprenant_fin as af', 'a.IDapprenant', '=', 'af.IDapprenant')
+                ->where('a.statut', 'actif')
                 ->whereNull('af.IDapprenant')
-                ->whereRaw("DATE_ADD(sess.DateD, INTERVAL COALESCE(NULLIF(sp.dureeM, 0), sp.NbrSem * 6, 24) MONTH) >= CURRENT_DATE()")
+                ->where('s.DateDF', '<=', now())
+                ->where('s.DateFF', '>=', now())
                 ->select('sess.IDSession', 'sess.Nom', DB::raw('count(a.IDapprenant) as count'))
                 ->groupBy('sess.IDSession', 'sess.Nom')
                 ->orderBy('sess.IDSession', 'desc')
