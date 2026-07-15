@@ -81,6 +81,9 @@ foreach ($files as $localPath => $remoteUrl) {
             if (function_exists('opcache_invalidate')) {
                 @opcache_invalidate($fullPath, true);
             }
+            if (function_exists('opcache_reset')) {
+                @opcache_reset();
+            }
             echo "✓ Updated: $localPath (" . strlen($content) . " bytes)<br>";
         } else {
             echo "<span style='color:red;'>✗ Failed to download: $localPath</span><br>";
