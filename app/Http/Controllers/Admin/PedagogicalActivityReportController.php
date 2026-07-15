@@ -336,7 +336,7 @@ class PedagogicalActivityReportController extends Controller
             foreach ($headers as $col => $text) {
                 $sheet->setCellValue($col . '1', $text);
                 $sheet->getStyle($col . '1')->applyFromArray($headerStyle);
-                $sheet->getColumnDimension($col)->setAutoWidth(true);
+                $sheet->getColumnDimension($col)->setAutoSize(true);
             }
 
             // Fill data
