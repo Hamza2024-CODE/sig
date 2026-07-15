@@ -118,6 +118,8 @@ $files = [
     'resources/views/admin/grades/input.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/grades/input.blade.php',
     'resources/views/admin/grades/transcript.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/grades/transcript.blade.php',
     'resources/views/admin/grades/grading_control.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/grades/grading_control.blade.php',
+    'app/Http/Controllers/Admin/PedagogicalActivityReportController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/PedagogicalActivityReportController.php',
+    'resources/views/admin/reports/pedagogical_activities.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/reports/pedagogical_activities.blade.php',
     'public/pull.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/pull.php'
 ];
 

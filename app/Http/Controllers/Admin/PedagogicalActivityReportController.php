@@ -69,7 +69,9 @@ class PedagogicalActivityReportController extends Controller
                     COALESCE(stats.total_inscrits, 0) AS total_inscrits,
                     COALESCE(stats.femmes_inscrits, 0) AS femmes_inscrits,
                     COALESCE(stats.total_actifs, 0) AS total_actifs,
-                    COALESCE(stats.femmes_actifs, 0) AS femmes_actifs
+                    COALESCE(stats.femmes_actifs, 0) AS femmes_actifs,
+                    COALESCE(stats.total_foreigners, 0) AS total_foreigners,
+                    COALESCE(stats.total_handicapes, 0) AS total_handicapes
                 FROM section s
                 LEFT JOIN specialite sp ON s.IDSpecialite = sp.IDSpecialite
                 LEFT JOIN branche b ON sp.IDBranche = b.IDBranche
@@ -84,7 +86,9 @@ class PedagogicalActivityReportController extends Controller
                         COUNT(*) AS total_inscrits,
                         SUM(CASE WHEN c.Civ IN ('أنثى', 'female', '2', 'أنثي', 'f', 'F') THEN 1 ELSE 0 END) AS femmes_inscrits,
                         SUM(CASE WHEN a.statut = 'actif' THEN 1 ELSE 0 END) AS total_actifs,
-                        SUM(CASE WHEN a.statut = 'actif' AND c.Civ IN ('أنثى', 'female', '2', 'أنثي', 'f', 'F') THEN 1 ELSE 0 END) AS femmes_actifs
+                        SUM(CASE WHEN a.statut = 'actif' AND c.Civ IN ('أنثى', 'female', '2', 'أنثي', 'f', 'F') THEN 1 ELSE 0 END) AS femmes_actifs,
+                        SUM(CASE WHEN c.Nationalite IS NOT NULL AND TRIM(c.Nationalite) != '' AND c.Nationalite NOT IN ('الجزائرية', 'جزائرية', 'algerienne', 'Algerian', 'dz', 'DZ', '1') THEN 1 ELSE 0 END) AS total_foreigners,
+                        SUM(CASE WHEN c.endicape = 1 OR c.endicape = '1' OR c.endicape = 'OUI' OR c.endicape = 'Oui' OR c.endicape = 'yes' OR c.endicape = 'Yes' THEN 1 ELSE 0 END) AS total_handicapes
                     FROM apprenant a
                     LEFT JOIN candidat c ON a.IDCandidat = c.IDCandidat
                     GROUP BY a.IDSection
@@ -214,7 +218,9 @@ class PedagogicalActivityReportController extends Controller
                     COALESCE(stats.total_inscrits, 0) AS total_inscrits,
                     COALESCE(stats.femmes_inscrits, 0) AS femmes_inscrits,
                     COALESCE(stats.total_actifs, 0) AS total_actifs,
-                    COALESCE(stats.femmes_actifs, 0) AS femmes_actifs
+                    COALESCE(stats.femmes_actifs, 0) AS femmes_actifs,
+                    COALESCE(stats.total_foreigners, 0) AS total_foreigners,
+                    COALESCE(stats.total_handicapes, 0) AS total_handicapes
                 FROM section s
                 LEFT JOIN specialite sp ON s.IDSpecialite = sp.IDSpecialite
                 LEFT JOIN branche b ON sp.IDBranche = b.IDBranche
@@ -229,7 +235,9 @@ class PedagogicalActivityReportController extends Controller
                         COUNT(*) AS total_inscrits,
                         SUM(CASE WHEN c.Civ IN ('أنثى', 'female', '2', 'أنثي', 'f', 'F') THEN 1 ELSE 0 END) AS femmes_inscrits,
                         SUM(CASE WHEN a.statut = 'actif' THEN 1 ELSE 0 END) AS total_actifs,
-                        SUM(CASE WHEN a.statut = 'actif' AND c.Civ IN ('أنثى', 'female', '2', 'أنثي', 'f', 'F') THEN 1 ELSE 0 END) AS femmes_actifs
+                        SUM(CASE WHEN a.statut = 'actif' AND c.Civ IN ('أنثى', 'female', '2', 'أنثي', 'f', 'F') THEN 1 ELSE 0 END) AS femmes_actifs,
+                        SUM(CASE WHEN c.Nationalite IS NOT NULL AND TRIM(c.Nationalite) != '' AND c.Nationalite NOT IN ('الجزائرية', 'جزائرية', 'algerienne', 'Algerian', 'dz', 'DZ', '1') THEN 1 ELSE 0 END) AS total_foreigners,
+                        SUM(CASE WHEN c.endicape = 1 OR c.endicape = '1' OR c.endicape = 'OUI' OR c.endicape = 'Oui' OR c.endicape = 'yes' OR c.endicape = 'Yes' THEN 1 ELSE 0 END) AS total_handicapes
                     FROM apprenant a
                     LEFT JOIN candidat c ON a.IDCandidat = c.IDCandidat
                     GROUP BY a.IDSection
@@ -297,13 +305,15 @@ class PedagogicalActivityReportController extends Controller
                 'F' => 'الفوج / القسم',
                 'G' => 'بداية التكوين',
                 'H' => 'نهاية التكوين',
-                'I' => 'العدد الكلي للمسجلين',
+                'I' => 'عدد المدمجين للمسجلين',
                 'J' => 'منهم إناث',
-                'K' => 'قيد التكوين (نشط)',
-                'L' => 'منهم إناث (نشط)',
-                'M' => 'النمط',
-                'N' => 'المؤسسة التكوينية',
-                'O' => 'الشعبة المهنية'
+                'K' => 'عدد الأجانب',
+                'L' => 'عدد ذوي الاحتياجات الخاصة',
+                'M' => 'قيد التكوين (نشط)',
+                'N' => 'منهم إناث (نشط)',
+                'O' => 'النمط',
+                'P' => 'المؤسسة التكوينية',
+                'Q' => 'الشعبة المهنية'
             ];
 
             // Format Headers
@@ -364,18 +374,23 @@ class PedagogicalActivityReportController extends Controller
                 $sheet->setCellValue('C' . $rowIdx, $item['nom_specialite']);
                 $sheet->setCellValue('D' . $rowIdx, $item['nom_formation']);
                 $sheet->setCellValue('E' . $rowIdx, $item['numero_semestre']);
-                $sheet->setCellValue('F' . $rowIdx, $item['section_nom']);
+                // Extract only numbers from section name
+                $secNum = preg_replace('/[^0-9]/', '', $item['section_nom']);
+                $displaySection = ($secNum !== '') ? $secNum : $item['section_nom'];
+                $sheet->setCellValue('F' . $rowIdx, $displaySection);
                 $sheet->setCellValue('G' . $rowIdx, $item['date_debut'] ? date('Y/m/d', strtotime($item['date_debut'])) : '—');
                 $sheet->setCellValue('H' . $rowIdx, $item['date_fin'] ? date('Y/m/d', strtotime($item['date_fin'])) : '—');
                 $sheet->setCellValue('I' . $rowIdx, $item['total_inscrits']);
                 $sheet->setCellValue('J' . $rowIdx, $item['femmes_inscrits']);
-                $sheet->setCellValue('K' . $rowIdx, $item['total_actifs']);
-                $sheet->setCellValue('L' . $rowIdx, $item['femmes_actifs']);
-                $sheet->setCellValue('M' . $rowIdx, $item['nom_mode_formation']);
-                $sheet->setCellValue('N' . $rowIdx, $item['nom_etablissement']);
-                $sheet->setCellValue('O' . $rowIdx, $item['nom_branche']);
+                $sheet->setCellValue('K' . $rowIdx, $item['total_foreigners']);
+                $sheet->setCellValue('L' . $rowIdx, $item['total_handicapes']);
+                $sheet->setCellValue('M' . $rowIdx, $item['total_actifs']);
+                $sheet->setCellValue('N' . $rowIdx, $item['femmes_actifs']);
+                $sheet->setCellValue('O' . $rowIdx, $item['nom_mode_formation']);
+                $sheet->setCellValue('P' . $rowIdx, $item['nom_etablissement']);
+                $sheet->setCellValue('Q' . $rowIdx, $item['nom_branche']);
 
-                $sheet->getStyle('A' . $rowIdx . ':O' . $rowIdx)->applyFromArray($dataStyle);
+                $sheet->getStyle('A' . $rowIdx . ':Q' . $rowIdx)->applyFromArray($dataStyle);
                 $sheet->getRowDimension($rowIdx)->setRowHeight(25);
                 $rowIdx++;
             }

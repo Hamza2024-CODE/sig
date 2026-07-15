@@ -65,12 +65,22 @@
                     </li>
                     <li>
                         <label class="dropdown-item d-flex align-items-center gap-2 py-1 px-1 rounded cursor-pointer">
-                            <input type="checkbox" class="col-toggle-checkbox" data-column="col-total-inscrits" checked> <span>العدد الكلي للمسجلين</span>
+                            <input type="checkbox" class="col-toggle-checkbox" data-column="col-total-inscrits" checked> <span>عدد المدمجين للمسجلين</span>
                         </label>
                     </li>
                     <li>
                         <label class="dropdown-item d-flex align-items-center gap-2 py-1 px-1 rounded cursor-pointer">
                             <input type="checkbox" class="col-toggle-checkbox" data-column="col-femmes-inscrits" checked> <span>منهم إناث (مسجل)</span>
+                        </label>
+                    </li>
+                    <li>
+                        <label class="dropdown-item d-flex align-items-center gap-2 py-1 px-1 rounded cursor-pointer">
+                            <input type="checkbox" class="col-toggle-checkbox" data-column="col-foreigners" checked> <span>عدد الأجانب</span>
+                        </label>
+                    </li>
+                    <li>
+                        <label class="dropdown-item d-flex align-items-center gap-2 py-1 px-1 rounded cursor-pointer">
+                            <input type="checkbox" class="col-toggle-checkbox" data-column="col-special-needs" checked> <span>ذوي الاحتياجات الخاصة</span>
                         </label>
                     </li>
                     <li>
@@ -193,8 +203,10 @@
                     <th class="col-section py-3 px-3 text-center" style="width: 8%;">الفوج / القسم</th>
                     <th class="col-date-debut py-3 px-3 text-center" style="width: 7%;">بداية التكوين</th>
                     <th class="col-date-fin py-3 px-3 text-center" style="width: 7%;">نهاية التكوين</th>
-                    <th class="col-total-inscrits py-3 px-3 text-center" style="width: 6%;">العدد الكلي</th>
+                    <th class="col-total-inscrits py-3 px-3 text-center" style="width: 6%;">عدد المدمجين</th>
                     <th class="col-femmes-inscrits py-3 px-3 text-center" style="width: 5%;">منهم إناث</th>
+                    <th class="col-foreigners py-3 px-3 text-center" style="width: 5%;">الأجانب</th>
+                    <th class="col-special-needs py-3 px-3 text-center" style="width: 6%;">ذوي الاحتياجات</th>
                     <th class="col-total-actifs py-3 px-3 text-center" style="width: 6%;">قيد التكوين</th>
                     <th class="col-femmes-actifs py-3 px-3 text-center" style="width: 5%;">منهم إناث</th>
                     <th class="col-mode py-3 px-3 text-center" style="width: 8%;">النمط</th>
@@ -215,11 +227,18 @@
                                 السداسي {{ $item['numero_semestre'] }}
                             </span>
                         </td>
-                        <td class="col-section text-center fw-bold text-primary">{{ $item['section_nom'] }}</td>
+                        <td class="col-section text-center fw-bold text-primary">
+                            <?php 
+                            $secNum = preg_replace('/[^0-9]/', '', $item['section_nom']);
+                            echo ($secNum !== '') ? htmlspecialchars($secNum) : htmlspecialchars($item['section_nom']);
+                            ?>
+                        </td>
                         <td class="col-date-debut text-center text-muted" style="font-size:0.78rem;">{{ $item['date_debut'] ? date('Y/m/d', strtotime($item['date_debut'])) : '—' }}</td>
                         <td class="col-date-fin text-center text-muted" style="font-size:0.78rem;">{{ $item['date_fin'] ? date('Y/m/d', strtotime($item['date_fin'])) : '—' }}</td>
                         <td class="col-total-inscrits text-center fw-bold text-dark fs-6">{{ $item['total_inscrits'] }}</td>
                         <td class="col-femmes-inscrits text-center fw-bold text-secondary">{{ $item['femmes_inscrits'] }}</td>
+                        <td class="col-foreigners text-center fw-bold text-dark fs-6">{{ $item['total_foreigners'] }}</td>
+                        <td class="col-special-needs text-center fw-bold text-dark fs-6">{{ $item['total_handicapes'] }}</td>
                         <td class="col-total-actifs text-center fw-bold text-success fs-6">{{ $item['total_actifs'] }}</td>
                         <td class="col-femmes-actifs text-center fw-bold text-secondary">{{ $item['femmes_actifs'] }}</td>
                         <td class="col-mode text-center fw-semibold">{{ $item['nom_mode_formation'] }}</td>
