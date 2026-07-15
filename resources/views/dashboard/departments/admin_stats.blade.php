@@ -172,6 +172,10 @@
                             </div>
                             @endforeach
                         </div>
+                        <div class="mt-3 pt-2 border-top text-muted" style="font-size: 0.78rem; line-height: 1.4;">
+                            <i class="fa-solid fa-circle-info text-primary me-1"></i>
+                            <strong>ملاحظة:</strong> مجموع تفصيل الدورات أعلاه يمثل المتربصين في أهم 5 دورات نشطة. الفارق البسيط عن الإجمالي العام يعود لمتربصين مستمرين من دورات سابقة/أخرى لا تزال وضعيتهم البيداغوجية نشطة بصفة رسمية.
+                        </div>
                     </div>
                 </div>
             </div>
