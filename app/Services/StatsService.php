@@ -75,15 +75,6 @@ final class StatsService
      */
     public static function getMany(array $keys): array
     {
-        $statsEnabled = \App\Helpers\SovereignLicensingHelper::getSetting('feature_complex_stats_enabled', '1') === '1';
-        if (!$statsEnabled) {
-            $result = [];
-            foreach ($keys as $key) {
-                $result[$key] = 0;
-            }
-            return $result;
-        }
-
         // حاول القراءة من Cache أولاً
         $result = [];
         $missing = [];
@@ -217,10 +208,6 @@ final class StatsService
      */
     public static function refreshAll(): array
     {
-        $statsEnabled = \App\Helpers\SovereignLicensingHelper::getSetting('feature_complex_stats_enabled', '1') === '1';
-        if (!$statsEnabled) {
-            return [];
-        }
         $stats = self::computeAll();
 
         // حفظ دفعي في dashboard_stats (upsert واحد)
