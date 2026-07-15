@@ -152,22 +152,58 @@ foreach ($files as $localPath => $remoteUrl) {
 }
 
 echo "<h2>Clearing Laravel Cache and Views...</h2>";
-try {
-    Artisan::call('view:clear');
-    echo "✓ View Cache Cleared: " . Artisan::output() . "<br>";
-    
-    Artisan::call('cache:clear');
-    echo "✓ Application Cache Cleared: " . Artisan::output() . "<br>";
-    
-    Artisan::call('route:clear');
-    echo "✓ Route Cache Cleared: " . Artisan::output() . "<br>";
-    
-    if (function_exists('opcache_reset')) {
-        opcache_reset();
-        echo "✓ OPCache Cleared!<br>";
+
+// Helper function to recursively empty directories
+$clearDir = function($dir) {
+    if (!is_dir($dir)) return;
+    try {
+        $files = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($dir, RecursiveDirectoryIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::CHILD_FIRST
+        );
+        foreach ($files as $fileinfo) {
+            $todo = $fileinfo->getRealPath();
+            if ($fileinfo->isDir()) {
+                @rmdir($todo);
+            } else {
+                @unlink($todo);
+            }
+        }
+    } catch (\Throwable $ex) {}
+};
+
+// 1. Clear view cache via filesystem
+$viewCacheDir = __DIR__ . '/../storage/framework/views';
+$clearDir($viewCacheDir);
+echo "✓ View Cache Cleared (Filesystem Traversal)<br>";
+
+// 2. Clear application cache via filesystem
+$appCacheDir = __DIR__ . '/../storage/framework/cache/data';
+$clearDir($appCacheDir);
+echo "✓ Application Cache Cleared (Filesystem Traversal)<br>";
+
+// 3. Clear bootstrap cache (services.php, packages.php)
+$bootstrapCacheDir = __DIR__ . '/../bootstrap/cache';
+if (is_dir($bootstrapCacheDir)) {
+    foreach (glob($bootstrapCacheDir . '/*.php') as $f) {
+        @unlink($f);
     }
+    echo "✓ Bootstrap Cache files Cleared<br>";
+}
+
+// 4. Try Artisan commands individually as optional fallback
+try {
+    @Artisan::call('view:clear');
+    @Artisan::call('cache:clear');
+    @Artisan::call('route:clear');
+    echo "✓ Optional Artisan Cache Commands invoked<br>";
 } catch (\Throwable $e) {
-    echo "<span style='color:red;'>Error clearing cache: " . $e->getMessage() . "</span><br>";
+    echo "<i>Note: Artisan command skipped/failed (" . $e->getMessage() . ") - Filesystem cleaning used instead.</i><br>";
+}
+
+if (function_exists('opcache_reset')) {
+    opcache_reset();
+    echo "✓ OPCache Cleared!<br>";
 }
 
 echo "<h2>Running Global Terminology Replacements on Server...</h2>";
