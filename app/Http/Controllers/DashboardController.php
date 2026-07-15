@@ -58,6 +58,9 @@ class DashboardController extends Controller
                 ->orderBy('w.Nom')
                 ->orderBy('e.Nom')
                 ->get();
+            return response()->json($etabs);
+        }
+
         if ($request->has('verify_cert_num')) {
             $num = $request->query('verify_cert_num');
             try {
