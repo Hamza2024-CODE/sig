@@ -684,7 +684,7 @@ canvas {
         </h5>
         <div class="row g-3">
             <!-- Card 1: Historical -->
-            <div class="col-md-3 col-sm-6">
+            <div class="col-md-4 col-sm-6">
                 <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; background: #fff; border: 1px solid rgba(226,232,240,0.8) !important;">
                     <div class="d-flex justify-content-between align-items-start mb-1">
                         <span class="text-muted fw-bold small">إجمالي المتربصين النشطين</span>
@@ -695,7 +695,7 @@ canvas {
                 </div>
             </div>
             <!-- Card 2: New -->
-            <div class="col-md-3 col-sm-6">
+            <div class="col-md-4 col-sm-6">
                 <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; background: #fff; border: 1px solid rgba(226,232,240,0.8) !important;">
                     <span class="text-muted fw-bold small d-block mb-1">المتربصون الجدد (فيفري 2026)</span>
                     <h4 class="fw-bold mb-1 text-success counter-val" data-counter="<?= $newTraineesCount ?>" style="font-family:'Inter';">0</h4>
@@ -703,19 +703,11 @@ canvas {
                 </div>
             </div>
             <!-- Card 3: Continuing -->
-            <div class="col-md-3 col-sm-6">
+            <div class="col-md-4 col-sm-12">
                 <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; background: #fff; border: 1px solid rgba(226,232,240,0.8) !important;">
                     <span class="text-muted fw-bold small d-block mb-1">المتربصون المستمرون</span>
                     <h4 class="fw-bold mb-1 text-primary counter-val" data-counter="<?= $continuingTraineesCount ?>" style="font-family:'Inter';">0</h4>
                     <span class="text-muted small" style="font-size:0.7rem;">دفعة 2024 وما قبلها جارية</span>
-                </div>
-            </div>
-            <!-- Card 4: Dropped Out -->
-            <div class="col-md-3 col-sm-6">
-                <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; background: #fff; border: 1px solid rgba(226,232,240,0.8) !important;">
-                    <span class="text-muted fw-bold small d-block mb-1">المتربصون المتخلون / المنقطعون</span>
-                    <h4 class="fw-bold mb-1 text-danger counter-val" data-counter="<?= $droppedTraineesCount ?>" style="font-family:'Inter';">0</h4>
-                    <span class="text-muted small" style="font-size:0.7rem;">ملفات معلقة أو منقطعة</span>
                 </div>
             </div>
         </div>
@@ -844,7 +836,7 @@ canvas {
     <!-- Third Row: Market Overview Equivalent -->
     <div class="row g-4 mb-4">
         <!-- Market Overview (Sessions Candidates Bar Chart) -->
-        <div class="col-lg-6">
+        <div class="col-lg-8">
             <div class="card border-0 shadow-sm p-4 h-100" style="border-radius: 16px; background: #fff; border: 1px solid rgba(226,232,240,0.8) !important;">
                 <h5 class="fw-bold mb-3 text-dark" style="font-family: 'Cairo', sans-serif;">
                     تطور تعداد المترشحين حسب الدورات / Candidate Distribution (أعمدة بيانية)
@@ -856,7 +848,7 @@ canvas {
         </div>
 
         <!-- Top Wilayas List (Top Coins in MINIA) -->
-        <div class="col-lg-3">
+        <div class="col-lg-4">
             <div class="card border-0 shadow-sm p-4 h-100" style="border-radius: 16px; background: #fff; border: 1px solid rgba(226,232,240,0.8) !important;">
                 <h5 class="fw-bold mb-3 text-dark" style="font-family: 'Cairo', sans-serif;">
                     الولايات الأكثر إقبالاً / Top Wilayas
@@ -875,22 +867,6 @@ canvas {
                         <span class="badge bg-primary-subtle text-primary fw-bold" style="font-family:'Inter'; font-size:0.8rem;"><?= number_format($w->candidates_count) ?></span>
                     </div>
                     <?php endforeach; ?>
-                </div>
-            </div>
-        </div>
-
-        <!-- Mode Distribution (Sales by Location Pie) -->
-        <div class="col-lg-3">
-            <div class="card border-0 shadow-sm p-4 h-100" style="border-radius: 16px; background: #fff; border: 1px solid rgba(226,232,240,0.8) !important;">
-                <h5 class="fw-bold mb-3 text-dark" style="font-family: 'Cairo', sans-serif;">
-                    أنماط التكوين / Mode Success
-                </h5>
-                <div style="height: 180px; position: relative;">
-                    <canvas id="chart-modes-success"></canvas>
-                </div>
-                <div class="mt-2 text-center" style="font-size: 0.8rem;">
-                    <span class="text-muted d-block mb-1">التمهين يقود الكثافة البيداغوجية</span>
-                    <span class="badge bg-success-subtle text-success fw-bold">الأكثر فعالية</span>
                 </div>
             </div>
         </div>
@@ -1041,34 +1017,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // 8. Mode success doughnut chart
-    const modeLabels     = <?= json_encode(array_map(fn($m) => $m->mode_nom, $modeCertsStats)) ?>;
-    const modeCandidates = <?= json_encode(array_map(fn($m) => (int)$m->candidates_count, $modeCertsStats)) ?>;
-    safeChart('chart-modes-success', {
-        type: 'doughnut',
-        data: {
-            labels: modeLabels,
-            datasets: [{
-                data: modeCandidates,
-                backgroundColor: ['#1e3a8a', '#10b981', '#3b82f6', '#f59e0b'],
-                borderWidth: 2,
-                borderColor: '#ffffff'
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            return ' ' + context.label + ': ' + context.raw.toLocaleString() + ' مترشح';
-                        }
-                    }
-                }
-            }
-        }
-    });
 });
 </script>
 
