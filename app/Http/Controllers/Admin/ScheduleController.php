@@ -125,12 +125,12 @@ class ScheduleController extends Controller
             ";
             $offresWhere = "1=1";
             $offresParams = [];
-            if ($role_code === 'dfep' && isset($user['iddfep']) && $user['iddfep'] > 0) {
+            if ($role_code === 'dfep' && $dfepId > 0) {
                 $offresWhere = "o.IDEts_Form IN (SELECT IDetablissement FROM etablissement WHERE IDDFEP = ?)";
-                $offresParams[] = $user['iddfep'];
-            } elseif (in_array($role_code, ['etablissement', 'directeur']) && isset($user['etablissement_id']) && $user['etablissement_id'] > 0) {
+                $offresParams[] = $dfepId;
+            } elseif (in_array($role_code, ['etablissement', 'directeur']) && $etabId > 0) {
                 $offresWhere = "o.IDEts_Form = ?";
-                $offresParams[] = $user['etablissement_id'];
+                $offresParams[] = $etabId;
             }
             $stmtOffres = $this->db->prepare($offresQuery . " WHERE " . $offresWhere);
             $stmtOffres->execute($offresParams);
@@ -143,12 +143,12 @@ class ScheduleController extends Controller
             ";
             $formateursWhere = "1=1";
             $formateursParams = [];
-            if ($role_code === 'dfep' && isset($user['iddfep']) && $user['iddfep'] > 0) {
+            if ($role_code === 'dfep' && $dfepId > 0) {
                 $formateursWhere = "IDetablissement IN (SELECT IDetablissement FROM etablissement WHERE IDDFEP = ?)";
-                $formateursParams[] = $user['iddfep'];
-            } elseif (in_array($role_code, ['etablissement', 'directeur']) && isset($user['etablissement_id']) && $user['etablissement_id'] > 0) {
+                $formateursParams[] = $dfepId;
+            } elseif (in_array($role_code, ['etablissement', 'directeur']) && $etabId > 0) {
                 $formateursWhere = "IDetablissement = ?";
-                $formateursParams[] = $user['etablissement_id'];
+                $formateursParams[] = $etabId;
             }
             $stmtFormateurs = $this->db->prepare($formateursQuery . " WHERE " . $formateursWhere);
             $stmtFormateurs->execute($formateursParams);
@@ -163,12 +163,12 @@ class ScheduleController extends Controller
             ";
             $matieresWhere = "1=1";
             $matieresParams = [];
-            if ($role_code === 'dfep' && isset($user['iddfep']) && $user['iddfep'] > 0) {
-                $matieresWhere = "sec.IDDFEP = ?";
-                $matieresParams[] = $user['iddfep'];
-            } elseif (in_array($role_code, ['etablissement', 'directeur']) && isset($user['etablissement_id']) && $user['etablissement_id'] > 0) {
-                $matieresWhere = "sec.IDOffre IN (SELECT IDOffre FROM offre WHERE IDEts_Form = ?)";
-                $matieresParams[] = $user['etablissement_id'];
+            if ($role_code === 'dfep' && $dfepId > 0) {
+                $matieresWhere = "sec.IDEts_Form IN (SELECT IDetablissement FROM etablissement WHERE IDDFEP = ?)";
+                $matieresParams[] = $dfepId;
+            } elseif (in_array($role_code, ['etablissement', 'directeur']) && $etabId > 0) {
+                $matieresWhere = "sec.IDEts_Form = ?";
+                $matieresParams[] = $etabId;
             }
             $stmtMatieres = $this->db->prepare($matieresQuery . " WHERE " . $matieresWhere . " LIMIT 150");
             $stmtMatieres->execute($matieresParams);
