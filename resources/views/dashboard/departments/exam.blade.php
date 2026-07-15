@@ -360,11 +360,8 @@ $modeCertsStats = Cache::remember($cacheKeyModeCerts, 600, function() use ($selW
 });
 
 if (empty($modeCertsStats)) {
-    $modeCertsStats = [
-        (object)['mode_nom' => 'تكوين حضوري (الاقامي)', 'candidates_count' => 842500, 'passed_count' => 720100],
-        (object)['mode_nom' => 'التكوين عن طريق التمهين', 'candidates_count' => 1245000, 'passed_count' => 1058250],
-        (object)['mode_nom' => 'التكوين عن بعد', 'candidates_count' => 450100, 'passed_count' => 380400],
-        (object)['mode_nom' => 'الدروس المسائية', 'candidates_count' => 185000, 'passed_count' => 158300],
+    $modeCertsStats = [];
+}
 // 7. Recent activities log (dynamic)
 $recentLogs = [];
 try {
