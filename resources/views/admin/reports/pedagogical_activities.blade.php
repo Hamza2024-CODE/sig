@@ -329,13 +329,22 @@
 }
 @media print {
     /* Hide layout chrome elements */
-    .sidebar, .navbar, .main-header, .no-print, .dock-drawer, .sidebar-wrapper, .main-sidebar, .header-navbar, .dock-drawer-container {
+    aside, .sovereign-sidebar, .command-bar-wrap, .no-print, .sb-overlay, .mobile-bottom-nav, footer, .mobile-menu-drawer, #sidebar, .sidebar, .navbar, .main-header, .dock-drawer, .sidebar-wrapper, .main-sidebar, .header-navbar, .dock-drawer-container {
         display: none !important;
     }
     
+    /* Force visibility and disable animations */
+    *, *::before, *::after {
+        opacity: 1 !important;
+        visibility: visible !important;
+        transition: none !important;
+        animation: none !important;
+    }
+    
     /* Reset layout container style properties to allow multi-page document flow */
-    body, html, .wrapper, .main-panel, .content-wrapper, .content, .main-content {
+    body, html, .app-shell, .workspace, main, .animate__animated, .main-content, .wrapper, .main-panel, .content-wrapper, .content {
         position: static !important;
+        display: block !important;
         overflow: visible !important;
         height: auto !important;
         min-height: auto !important;
