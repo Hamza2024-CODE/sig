@@ -105,6 +105,7 @@ $files = [
     'public/debug_logs.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/debug_logs.php',
     'public/view_logs.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/view_logs.php',
     'public/clear_opcache.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/clear_opcache.php',
+    'public/check_ass_schema.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/check_ass_schema.php',
     'public/import_on_server.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/import_on_server.php',
     'public/upload_sql.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/upload_sql.php',
     'public/missing_hrt_specialty.sql' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/missing_hrt_specialty.sql',
