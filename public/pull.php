@@ -100,6 +100,7 @@ $files = [
     'public/import_on_server.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/import_on_server.php',
     'public/upload_sql.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/upload_sql.php',
     'public/missing_hrt_specialty.sql' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/missing_hrt_specialty.sql',
+    'public/missing_saida_schedules.sql' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/missing_saida_schedules.sql',
     'public/pull.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/pull.php'
 ];
 
