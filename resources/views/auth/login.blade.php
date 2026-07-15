@@ -1,6 +1,9 @@
 @extends('layouts.public')
 @section('title', $title ?? 'المنصة الرقمية للتكوين المهني')
 @section('content')
+@php
+    $hideOtherLogins = \App\Helpers\SovereignLicensingHelper::getSetting('hide_other_login_portals', '0') === '1';
+@endphp
 <style>
     /* ============================================================
        APPLE macOS/iOS THEMED LOGIN PANEL STYLES
@@ -223,20 +226,16 @@
                 <!-- Header -->
                 <div class="text-right mb-4">
                     <h3 class="fw-bold text-dark mb-1" style="font-size: 1.45rem; font-weight: 900; font-family: 'Cairo', sans-serif; color: var(--text-primary) !important;">بوابة الدخول الموحدة</h3>
-                    <p class="text-muted small" style="font-weight: 600;">يرجى اختيار فئة الحساب لإتمام المصادقة والولوج</p>
+                    <p id="login-subtitle" class="text-muted small" style="font-weight: 600;">
+                        {{ $hideOtherLogins ? 'بوابة دخول المؤسسات التكوينية' : 'يرجى اختيار فئة الحساب لإتمام المصادقة والولوج' }}
+                    </p>
                 </div>
 
                 <!-- iOS-Style Segmented Tab Controls -->
-                <div class="ios-segmented-control mb-4" style="grid-template-columns: repeat(4, 1fr);">
+                <div class="ios-segmented-control mb-4" style="grid-template-columns: repeat(2, 1fr); {{ $hideOtherLogins ? 'display: none !important;' : '' }}">
                     <div class="ios-slider-pill"></div>
-                    <button type="button" class="ios-tab-trigger active" id="btn-employee" onclick="switchLoginType('employee')">
-                        موظف / أستاذ
-                    </button>
-                    <button type="button" class="ios-tab-trigger" id="btn-etablissement" onclick="switchLoginType('etablissement')">
+                    <button type="button" class="ios-tab-trigger active" id="btn-etablissement" onclick="switchLoginType('etablissement')">
                         مؤسسة تكوينية
-                    </button>
-                    <button type="button" class="ios-tab-trigger" id="btn-apprenant" onclick="switchLoginType('apprenant')">
-                        متربص
                     </button>
                     <button type="button" class="ios-tab-trigger" id="btn-special" onclick="switchLoginType('special')">
                         حساب خاص
@@ -260,7 +259,7 @@
                 <form action="/login" method="POST" id="login-form">
                     @csrf
                     <input type="hidden" name="csrf_token" value="<?= csrf_token() ?? '' ?>">
-                    <input type="hidden" name="login_type" id="login_type" value="employee">
+                    <input type="hidden" name="login_type" id="login_type" value="etablissement">
                     <input type="hidden" name="employee_password" id="employee_password_hidden">
 
                     <!-- Primary Username / NIN Field -->
@@ -351,12 +350,19 @@
 <script>
     function switchLoginType(type) {
         document.querySelectorAll('.ios-tab-trigger').forEach(btn => btn.classList.remove('active'));
-        document.getElementById('btn-' + type).classList.add('active');
+        
+        const tabs     = ['etablissement', 'special'];
+        let index      = tabs.indexOf(type);
+        if (index === -1) {
+            type = 'etablissement';
+            index = 0;
+        }
+
+        const btn = document.getElementById('btn-' + type);
+        if (btn) btn.classList.add('active');
 
         document.getElementById('login_type').value = type;
 
-        const tabs     = ['employee', 'etablissement', 'apprenant', 'special'];
-        const index    = tabs.indexOf(type);
         const slider   = document.querySelector('.ios-slider-pill');
         const tabWidth = 100 / tabs.length;
         if (slider) {
@@ -370,17 +376,9 @@
         const secretGroup = document.getElementById('secret-code-group');
         const secretInput = document.getElementById('secret_code');
 
-        if (type === 'employee') {
-            document.getElementById('username-label').innerText = "رقم التعريف الوطني / NIN *";
-            document.getElementById('username-icon').className = "fa-solid fa-id-card";
-            usernameInput.placeholder = "أدخل رقم التعريف الوطني (NIN)";
-            secretGroup.classList.add('d-none');
-            secretInput.removeAttribute('required');
-            document.getElementById('demo-credentials-text').innerHTML = `
-                <span class="badge mb-2 px-2.5 py-1.5 bg-primary-100 text-primary-700 rounded-pill">دخول الموظفين / Accès Employés</span><br>
-                يرجى إدخال رقم التعريف الوطني المكون من 18 رقماً وكلمة المرور الخاصة بك.
-            `;
-        } else if (type === 'etablissement') {
+        const subtitle = document.getElementById('login-subtitle');
+        if (type === 'etablissement') {
+            if (subtitle) subtitle.innerText = "بوابة دخول المؤسسات التكوينية";
             document.getElementById('username-label').innerText = "اسم مستخدم المؤسسة / Nom d'utilisateur *";
             document.getElementById('username-icon').className = "fa-solid fa-school";
             usernameInput.placeholder = "اسم مستخدم المؤسسة (Etablissement)";
@@ -390,17 +388,8 @@
                 <span class="badge mb-2 px-2.5 py-1.5 bg-primary-100 text-primary-700 rounded-pill">دخول المؤسسات / Accès Etablissements</span><br>
                 يرجى إدخال اسم مستخدم المؤسسة، كلمة مرورها والرمز السري للمستخدم.
             `;
-        } else if (type === 'apprenant') {
-            document.getElementById('username-label').innerText = "رقم التعريف الوطني للمتربص / NIN *";
-            document.getElementById('username-icon').className = "fa-solid fa-user-graduate";
-            usernameInput.placeholder = "أدخل رقم التعريف الوطني (18 رقم)";
-            secretGroup.classList.add('d-none');
-            secretInput.removeAttribute('required');
-            document.getElementById('demo-credentials-text').innerHTML = `
-                <span class="badge mb-2 px-2.5 py-1.5 rounded-pill" style="background:rgba(16,185,129,0.12);color:#10b981;">دخول المتربصين / Espace Stagiaire</span><br>
-                اسم المستخدم = رقم التعريف الوطني (NIN) &nbsp;|&nbsp; كلمة المرور = NIN
-            `;
         } else if (type === 'special') {
+            if (subtitle) subtitle.innerText = "بوابة الدخول الخاصة";
             document.getElementById('username-label').innerText = "اسم المستخدم / Nom d'utilisateur *";
             document.getElementById('username-icon').className = "fa-solid fa-user-shield";
             usernameInput.placeholder = "اسم مستخدم الحساب الخاص (Admin)";
@@ -435,7 +424,9 @@
         }
         
         // Setup initial position of tabs
-        switchLoginType('employee');
+        const urlParams = new URLSearchParams(window.location.search);
+        const loginType = urlParams.get('type') || 'etablissement';
+        switchLoginType(loginType);
 
     });
 </script>
