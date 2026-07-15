@@ -121,6 +121,11 @@ $files = [
     'app/Http/Controllers/Admin/PedagogicalActivityReportController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/PedagogicalActivityReportController.php',
     'resources/views/admin/reports/pedagogical_activities.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/reports/pedagogical_activities.blade.php',
     'resources/views/admin/grades/index.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/grades/index.blade.php',
+    'resources/views/dashboard/departments/exam.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/dashboard/departments/exam.blade.php',
+    'resources/views/dashboard/departments/minister.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/dashboard/departments/minister.blade.php',
+    'resources/views/dashboard/departments/admin_stats.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/dashboard/departments/admin_stats.blade.php',
+    'resources/views/admin/modules/eval_stagiaires.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/modules/eval_stagiaires.blade.php',
+    'resources/views/admin/digital-cards/index.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/digital-cards/index.blade.php',
     'public/pull.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/pull.php'
 ];
 
