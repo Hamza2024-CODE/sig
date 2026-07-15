@@ -136,7 +136,7 @@ class PedagogicalActivityReportController extends Controller
             if ($currentPage < 1) $currentPage = 1;
             $offset = ($currentPage - 1) * $perPage;
 
-            $query .= " ORDER BY e.Nom ASC, b.Nom ASC, sp.Nom ASC LIMIT " . (int)$perPage . " OFFSET " . (int)$offset;
+            $query .= " ORDER BY (CASE WHEN e.IDDFEP = 16 THEN 0 ELSE 1 END) ASC, e.Nom ASC, b.Nom ASC, sp.Nom ASC LIMIT " . (int)$perPage . " OFFSET " . (int)$offset;
             
             $rawData = DB::select($query, $params);
             $dataList = [];
@@ -281,7 +281,7 @@ class PedagogicalActivityReportController extends Controller
                 $params[] = $q;
             }
 
-            $query .= " ORDER BY e.Nom ASC, b.Nom ASC, sp.Nom ASC ";
+            $query .= " ORDER BY (CASE WHEN e.IDDFEP = 16 THEN 0 ELSE 1 END) ASC, e.Nom ASC, b.Nom ASC, sp.Nom ASC ";
 
             $rawData = DB::select($query, $params);
             $data = [];
