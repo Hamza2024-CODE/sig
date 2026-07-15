@@ -1882,7 +1882,7 @@ function fetchNotifications() {
                     const iconColor = n.type === 'success' ? '#0EA66E' : (n.type === 'warning' ? '#F0A500' : '#d9534f');
                     const iconClass = n.type === 'success' ? 'fa-circle-check' : (n.type === 'warning' ? 'fa-triangle-exclamation' : 'fa-circle-exclamation');
                     list.innerHTML += `
-                        <a href="${n.link || '#'}" class="text-decoration-none" onclick="markNotifRead(${n.id})">
+                        <a href="${n.url ? (basePrefix + n.url) : '#'}" class="text-decoration-none" onclick="markNotifRead(${n.id})">
                             <div class="d-flex gap-2 p-2 rounded-3 mb-1" style="${unread ? 'background:rgba(26,107,204,.05);' : ''}">
                                 <i class="fa-solid ${iconClass} mt-1" style="color:${iconColor}; font-size:.85rem;"></i>
                                 <div class="flex-grow-1 text-end" style="direction: rtl;">
