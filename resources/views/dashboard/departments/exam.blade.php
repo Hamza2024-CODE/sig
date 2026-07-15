@@ -565,9 +565,6 @@ canvas {
                 </p>
             </div>
             <div class="d-flex gap-2">
-                <button onclick="toggleHelpPanel()" class="btn btn-premium-help d-inline-flex align-items-center gap-2 px-3.5 py-2 fw-bold" style="background: rgba(14, 165, 233, 0.15); border: 1.5px solid #0ea5e9; border-radius: 30px; font-size: 0.85rem; color: #0ea5e9; transition: all 0.2s;">
-                    <i class="fa-solid fa-circle-info"></i> دليل الشرح المبسط
-                </button>
                 <button onclick="window.print()" class="btn btn-premium-print d-inline-flex align-items-center gap-2 px-3.5 py-2 fw-bold" style="background:#fff;border:1.5px solid #cbd5e1;border-radius:30px;font-size:0.85rem;color:#475569;transition:all 0.2s;">
                     <i class="fa-solid fa-print"></i> طباعة التقرير
                 </button>
@@ -575,76 +572,7 @@ canvas {
         </div>
     </div>
 
-    <!-- Guide Panel: smooth max-height toggle (no Bootstrap collapse, no animate flicker) -->
-    <div id="helpPanel"
-         style="max-height: 0; overflow: hidden; transition: max-height 0.45s cubic-bezier(0.4,0,0.2,1); will-change: max-height;"
-         class="card border-0 mb-4 p-0 no-print"
-         aria-hidden="true">
-        <div class="p-4" style="border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); background: #ffffff; border: 1.5px solid #0ea5e9; text-align: right;">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="fw-bold m-0" style="color: var(--deoh-primary); font-family: 'Cairo', sans-serif;">
-                <i class="fa-solid fa-circle-question text-info me-2"></i> دليل شرح مؤشرات لوحة التحكم
-            </h5>
-            <button onclick="toggleHelpPanel()" type="button" class="btn-close" aria-label="Close" style="margin-right: auto; margin-left: 0;"></button>
-        </div>
-        <div class="row g-3">
-            <div class="col-md-3">
-                <div class="p-3 rounded-3 h-100" style="background: rgba(14,165,233,0.05); border-right: 4px solid #0ea5e9;">
-                    <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-school text-primary me-1"></i> مراكز الامتحانات</h6>
-                    <p class="text-muted small mb-0">يعرض العدد الإجمالي لمراكز الإجراء الوطنية مفصلة إلى: INSFP، CFPA، IEP، ملحقات، خاصة.</p>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="p-3 rounded-3 h-100" style="background: rgba(16,185,129,0.05); border-right: 4px solid #10b981;">
-                    <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-users text-success me-1"></i> المتربصون النشطون</h6>
-                    <p class="text-muted small mb-0">يعكس نفس منطق KpiCache: statut='actif' + لم يتخرج + الدورة لم تنتهِ. المستمرون: SUM(Nbrrecond). الجدد: section_semestre NumSem=1.</p>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="p-3 rounded-3 h-100" style="background: rgba(59,130,246,0.05); border-right: 4px solid #3b82f6;">
-                    <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-graduation-cap text-warning me-1"></i> الخريجون والمنقطعون</h6>
-                    <p class="text-muted small mb-0">الخريجون: apprenant_fin.IDDecision_evalf IN(1,2,3). المنقطعون: IDDecision_evalf IN(4,5) أو SituationFin IN(2,3).</p>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="p-3 rounded-3 h-100" style="background: rgba(245,158,11,0.05); border-right: 4px solid #f59e0b;">
-                    <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-file-signature text-info me-1"></i> الشهادات والنسب</h6>
-                    <p class="text-muted small mb-0">شهادات: COUNT(*) FROM Attestation_succ. نسبة النجاح: SUM(statut='admis')/COUNT(IDCandidat). QR: 88% تقديري.</p>
-                </div>
-            </div>
-        </div>
-        </div>
-    </div>
 
-    <script>
-    function toggleHelpPanel() {
-        const panel = document.getElementById('helpPanel');
-        if (!panel) return;
-        const isOpen = panel.style.maxHeight && panel.style.maxHeight !== '0px';
-        panel.style.maxHeight = isOpen ? '0' : (panel.scrollHeight + 60) + 'px';
-        panel.setAttribute('aria-hidden', isOpen ? 'true' : 'false');
-    }
-
-    function toggleDetailGuide() {
-        const panel = document.getElementById('guidePanel');
-        const btn   = document.getElementById('detailGuideBtn');
-        const icon  = document.getElementById('detailGuideIcon');
-        if (!panel) return;
-        const isOpen = panel.style.maxHeight && panel.style.maxHeight !== '0px';
-        if (isOpen) {
-            panel.style.maxHeight = '0';
-            if (btn)  btn.classList.remove('btn-primary');
-            if (btn)  btn.classList.add('btn-outline-primary');
-            if (icon) { icon.className = 'fa-solid fa-eye me-1'; }
-            if (btn)  btn.innerHTML = '<i class="fa-solid fa-eye me-1" id="detailGuideIcon"></i> عرض التفاصيل';
-        } else {
-            panel.style.maxHeight = (panel.scrollHeight + 80) + 'px';
-            if (btn)  btn.classList.remove('btn-outline-primary');
-            if (btn)  btn.classList.add('btn-primary');
-            if (btn)  btn.innerHTML = '<i class="fa-solid fa-eye-slash me-1" id="detailGuideIcon"></i> إخفاء';
-        }
-    }
-    </script>
 
 
     <!-- Registration Date Filter Form -->
@@ -667,127 +595,7 @@ canvas {
         </form>
     </div>
 
-    <!-- دليل البيانات التفصيلي (يُفتح/يُغلق بزر في الهيدر) -->
-    <div class="card border-0 shadow-sm mb-4 no-print" style="border-radius: 12px; background: #f8fafc; border: 1px solid rgba(226,232,240,0.8) !important;">
-        <div class="card-header bg-transparent border-0 pt-3 pb-0 d-flex justify-content-between align-items-center">
-            <h5 class="fw-bold m-0 text-primary" style="font-family: 'Cairo', sans-serif;">
-                <i class="fa-solid fa-database text-primary me-2"></i> مصادر البيانات والاستعلامات المستخدمة في كل مؤشر
-            </h5>
-            <button id="detailGuideBtn" type="button" onclick="toggleDetailGuide()" class="btn btn-sm btn-outline-primary rounded-pill px-3">
-                <i class="fa-solid fa-eye me-1" id="detailGuideIcon"></i> عرض التفاصيل
-            </button>
-        </div>
-        <div id="guidePanel" style="max-height: 0; overflow: hidden; transition: max-height 0.45s cubic-bezier(0.4,0,0.2,1);">
-            <div class="card-body" style="font-size: 0.85rem; line-height: 1.7; text-align: right;">
-                <div class="row g-3">
 
-                    <!-- 1 -->
-                    <div class="col-md-6">
-                        <div class="p-3 rounded-3 h-100" style="background: rgba(59,130,246,0.04); border-right: 4px solid #3b82f6;">
-                            <h6 class="fw-bold text-dark mb-1"><i class="fa-solid fa-school text-primary me-1"></i> 1. مراكز الامتحانات الرسمية — المصدر: <code>etablissement</code></h6>
-                            <p class="text-muted mb-0">
-                                يُحتسب من جدول <strong>établissement</strong> مقسَّماً حسب طبيعة المؤسسة (<strong>nature_etsf</strong>):
-                                <br>• <strong>INSFP</strong> (<?= $insfpCount ?> مؤسسة) — معاهد وطنية متخصصة لمستوى تقني سامي
-                                <br>• <strong>CFPA</strong> (<?= $cfpaCount ?> مركزاً) — مراكز التكوين المهني المباشر
-                                <br>• <strong>IEP</strong> (<?= $iepCount ?>) — معاهد التعليم المهني
-                                <br>• <strong>ملحقات</strong> (<?= $annexCount ?>) — هياكل تابعة ملحقة
-                                <br>• <strong>خاصة</strong> (<?= $privateCount ?>) — مدارس معتمدة تحت إشراف بيداغوجي
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- 2 -->
-                    <div class="col-md-6">
-                        <div class="p-3 rounded-3 h-100" style="background: rgba(16,185,129,0.04); border-right: 4px solid #10b981;">
-                            <h6 class="fw-bold text-dark mb-1"><i class="fa-solid fa-users text-success me-1"></i> 2. المتربصون النشطون — المصدر: <code>apprenant + apprenant_fin + specialite</code></h6>
-                            <p class="text-muted mb-0">
-                                يُحتسب بنفس منطق لوحة تحكم المدير الوطني (<strong>KpiCache</strong>):
-                                <br>• <strong>شرط 1:</strong> <code>statut = 'actif'</code>
-                                <br>• <strong>شرط 2:</strong> لم يُسجَّل في <code>apprenant_fin</code> (لم يتخرج)
-                                <br>• <strong>شرط 3:</strong> <code>DATE_ADD(sess.DateD, INTERVAL dureeM MONTH) >= CURRENT_DATE()</code> (دورته لم تنتهِ)
-                                <br>→ الرقم الحالي: <strong><?= number_format($historicalTraineesCount) ?> متربص نشط</strong>
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- 3 -->
-                    <div class="col-md-6">
-                        <div class="p-3 rounded-3 h-100" style="background: rgba(99,102,241,0.04); border-right: 4px solid #6366f1;">
-                            <h6 class="fw-bold text-dark mb-1"><i class="fa-solid fa-arrows-spin text-info me-1"></i> 3. المستمرون S2→S5 — المصدر: <code>section.Nbrrecond</code></h6>
-                            <p class="text-muted mb-0">
-                                يُحتسب من <code>SUM(Nbrrecond)</code> في جدول <strong>section</strong>، وهو الحقل المخصص لتتبع الأقسام المُجدَّدة من السداسي الثاني فأكثر.
-                                <br>→ الرقم الحالي: <strong><?= number_format($continuingTraineesCount) ?> قسم مستمر</strong>
-                                <br><span class="text-danger small">⚠ الرقم السابق (672,234) كان خاطئاً — كان يحسب المتربصين في دورات 2024 وليس الأقسام المستمرة.</span>
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- 4 -->
-                    <div class="col-md-6">
-                        <div class="p-3 rounded-3 h-100" style="background: rgba(245,158,11,0.04); border-right: 4px solid #f59e0b;">
-                            <h6 class="fw-bold text-dark mb-1"><i class="fa-solid fa-folder-plus text-warning me-1"></i> 4. الجدد S1 — المصدر: <code>section_semestre</code></h6>
-                            <p class="text-muted mb-0">
-                                يُحتسب من جدول <strong>section_semestre</strong> بشروط:
-                                <br>• <code>Dernier = 1</code> (الفترة الأخيرة النشطة)
-                                <br>• <code>NumSem = 1</code> (السداسي الأول فقط)
-                                <br>• <code>IDSession = 35</code> (الدورة الحالية)
-                                <br>→ الرقم الحالي: <strong><?= number_format($newTraineesCount) ?> قسم جديد</strong>
-                                <br><span class="text-danger small">⚠ الرقم السابق (248,258) كان خاطئاً — كان يحسب المتربصين في دورة فيفري وليس الأقسام الجديدة.</span>
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- 5 -->
-                    <div class="col-md-6">
-                        <div class="p-3 rounded-3 h-100" style="background: rgba(236,72,153,0.04); border-right: 4px solid #ec4899;">
-                            <h6 class="fw-bold text-dark mb-1"><i class="fa-solid fa-venus text-danger me-1"></i> 5. المتربصات — إناث — المصدر: <code>candidat.Civ = 2</code></h6>
-                            <p class="text-muted mb-0">
-                                يُحتسب من جدول <strong>apprenant</strong> مرتبطاً بـ<strong>candidat</strong> بشرط <code>Civ = 2</code> (إناث)، مع استثناء المتخرجات (<code>apprenant_fin IS NULL</code>).
-                                <br>→ الرقم الحالي: <strong><?= number_format($femaleTraineesCount) ?> متربصة</strong>
-                                <br>→ نسبة التمثيل: <strong><?= $historicalTraineesCount > 0 ? round($femaleTraineesCount * 100 / $historicalTraineesCount, 1) : 0 ?>%</strong>
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- 6 -->
-                    <div class="col-md-6">
-                        <div class="p-3 rounded-3 h-100" style="background: rgba(16,185,129,0.04); border-right: 4px solid #10b981;">
-                            <h6 class="fw-bold text-dark mb-1"><i class="fa-solid fa-graduation-cap text-success me-1"></i> 6. الخريجون الناجحون — المصدر: <code>apprenant_fin.IDDecision_evalf</code></h6>
-                            <p class="text-muted mb-0">
-                                يُحتسب من جدول <strong>apprenant_fin</strong> بشرط <code>IDDecision_evalf IN (1,2,3)</code> (ناجح بتقدير مقبول أو جيد أو جيد جداً).
-                                <br>→ الإجمالي التاريخي: <strong><?= number_format($totalGraduates) ?> خريج</strong>
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- 7 -->
-                    <div class="col-md-6">
-                        <div class="p-3 rounded-3 h-100" style="background: rgba(239,68,68,0.04); border-right: 4px solid #ef4444;">
-                            <h6 class="fw-bold text-dark mb-1"><i class="fa-solid fa-user-slash text-danger me-1"></i> 7. المنقطعون — المصدر: <code>apprenant_fin.IDDecision_evalf / SituationFin</code></h6>
-                            <p class="text-muted mb-0">
-                                يُحتسب من <strong>apprenant_fin</strong> بشرط <code>IDDecision_evalf IN (4,5)</code> أو <code>SituationFin IN (2,3)</code>.
-                                <br>→ الرقم الحالي: <strong><?= number_format($droppedTraineesCount) ?> حالة انقطاع</strong>
-                                <br><span class="text-danger small">⚠ الكود القديم كان يبحث عن <code>statut LIKE 'abandon'</code> وهو غير دقيق.</span>
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- 8 -->
-                    <div class="col-md-6">
-                        <div class="p-3 rounded-3 h-100" style="background: rgba(14,165,233,0.04); border-right: 4px solid #0ea5e9;">
-                            <h6 class="fw-bold text-dark mb-1"><i class="fa-solid fa-file-signature text-info me-1"></i> 8. الشهادات والنسب — المصدر: <code>Attestation_succ + candidat</code></h6>
-                            <p class="text-muted mb-0">
-                                • <strong>الشهادات المطبوعة:</strong> <code>COUNT(*) FROM Attestation_succ</code> = <?= number_format($certsCount) ?>
-                                <br>• <strong>نسبة النجاح:</strong> <code>SUM(statut='admis') / COUNT(IDCandidat)</code> = <?= $successRate ?>%
-                                <br>• <strong>المصادقة QR:</strong> 88% تقديرياً (<?= number_format(round($certsCount*0.88)) ?>) — يحتاج ربط بجدول التصديق الرقمي
-                            </p>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-        </div>
-    </div>
 
 
     <!-- SECTION 1: المؤسسات التكوينية -->
