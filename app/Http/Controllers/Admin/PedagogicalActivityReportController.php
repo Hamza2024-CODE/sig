@@ -65,9 +65,9 @@ class PedagogicalActivityReportController extends Controller
                     b.Nom AS nom_branche,
                     -- Trainees stats:
                     (SELECT COUNT(*) FROM apprenant a WHERE a.IDSection = s.IDSection) AS total_inscrits,
-                    (SELECT COUNT(*) FROM apprenant a JOIN candidat c ON a.IDCandidat = c.IDCandidat WHERE a.IDSection = s.IDSection AND (c.sexe = 'F' OR c.sexe = '2' OR c.sexe = 'أنثى' OR c.sexe = 'أنثي')) AS femmes_inscrits,
+                    (SELECT COUNT(*) FROM apprenant a JOIN candidat c ON a.IDCandidat = c.IDCandidat WHERE a.IDSection = s.IDSection AND (c.Civ IN ('أنثى', 'female', '2', 'أنثي', 'f', 'F'))) AS femmes_inscrits,
                     (SELECT COUNT(*) FROM apprenant a WHERE a.IDSection = s.IDSection AND a.statut = 'actif') AS total_actifs,
-                    (SELECT COUNT(*) FROM apprenant a JOIN candidat c ON a.IDCandidat = c.IDCandidat WHERE a.IDSection = s.IDSection AND a.statut = 'actif' AND (c.sexe = 'F' OR c.sexe = '2' OR c.sexe = 'أنثى' OR c.sexe = 'أنثي')) AS femmes_actifs
+                    (SELECT COUNT(*) FROM apprenant a JOIN candidat c ON a.IDCandidat = c.IDCandidat WHERE a.IDSection = s.IDSection AND a.statut = 'actif' AND (c.Civ IN ('أنثى', 'female', '2', 'أنثي', 'f', 'F'))) AS femmes_actifs
                 FROM section s
                 LEFT JOIN specialite sp ON s.IDSpecialite = sp.IDSpecialite
                 LEFT JOIN branche b ON sp.IDBranche = b.IDBranche
@@ -152,9 +152,9 @@ class PedagogicalActivityReportController extends Controller
                 mf.Nom AS nom_mode_formation,
                 b.Nom AS nom_branche,
                 (SELECT COUNT(*) FROM apprenant a WHERE a.IDSection = s.IDSection) AS total_inscrits,
-                (SELECT COUNT(*) FROM apprenant a JOIN candidat c ON a.IDCandidat = c.IDCandidat WHERE a.IDSection = s.IDSection AND (c.sexe = 'F' OR c.sexe = '2' OR c.sexe = 'أنثى' OR c.sexe = 'أنثي')) AS femmes_inscrits,
+                (SELECT COUNT(*) FROM apprenant a JOIN candidat c ON a.IDCandidat = c.IDCandidat WHERE a.IDSection = s.IDSection AND (c.Civ IN ('أنثى', 'female', '2', 'أنثي', 'f', 'F'))) AS femmes_inscrits,
                 (SELECT COUNT(*) FROM apprenant a WHERE a.IDSection = s.IDSection AND a.statut = 'actif') AS total_actifs,
-                (SELECT COUNT(*) FROM apprenant a JOIN candidat c ON a.IDCandidat = c.IDCandidat WHERE a.IDSection = s.IDSection AND a.statut = 'actif' AND (c.sexe = 'F' OR c.sexe = '2' OR c.sexe = 'أنثى' OR c.sexe = 'أنثي')) AS femmes_actifs
+                (SELECT COUNT(*) FROM apprenant a JOIN candidat c ON a.IDCandidat = c.IDCandidat WHERE a.IDSection = s.IDSection AND a.statut = 'actif' AND (c.Civ IN ('أنثى', 'female', '2', 'أنثي', 'f', 'F'))) AS femmes_actifs
             FROM section s
             LEFT JOIN specialite sp ON s.IDSpecialite = sp.IDSpecialite
             LEFT JOIN branche b ON sp.IDBranche = b.IDBranche
