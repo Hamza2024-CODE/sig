@@ -227,12 +227,7 @@
                                 السداسي {{ $item['numero_semestre'] }}
                             </span>
                         </td>
-                        <td class="col-section text-center fw-bold text-primary">
-                            <?php 
-                            $secNum = preg_replace('/[^0-9]/', '', $item['section_nom']);
-                            echo ($secNum !== '') ? htmlspecialchars($secNum) : htmlspecialchars($item['section_nom']);
-                            ?>
-                        </td>
+                        <td class="col-section text-center fw-bold text-primary">{{ $item['section_formatted'] }}</td>
                         <td class="col-date-debut text-center text-muted" style="font-size:0.78rem;">{{ $item['date_debut'] ? date('Y/m/d', strtotime($item['date_debut'])) : '—' }}</td>
                         <td class="col-date-fin text-center text-muted" style="font-size:0.78rem;">{{ $item['date_fin'] ? date('Y/m/d', strtotime($item['date_fin'])) : '—' }}</td>
                         <td class="col-total-inscrits text-center fw-bold text-dark fs-6">{{ $item['total_inscrits'] }}</td>

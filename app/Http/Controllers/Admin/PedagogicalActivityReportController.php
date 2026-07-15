@@ -170,7 +170,12 @@ class PedagogicalActivityReportController extends Controller
             $queryParams[] = $offset;
 
             $rawData = DB::select($query, $queryParams);
-            $dataList = array_map(fn($item) => (array)$item, $rawData);
+            $dataList = [];
+            foreach ($rawData as $item) {
+                $arr = (array)$item;
+                $arr['section_formatted'] = $this->formatSectionName($arr['section_nom']);
+                $dataList[] = $arr;
+            }
 
             // Create LengthAwarePaginator
             $data = new \Illuminate\Pagination\LengthAwarePaginator(
@@ -287,7 +292,13 @@ class PedagogicalActivityReportController extends Controller
 
             $query .= " ORDER BY e.Nom ASC, b.Nom ASC, sp.Nom ASC ";
 
-            $data = array_map(fn($item) => (array)$item, DB::select($query, $params));
+            $rawData = DB::select($query, $params);
+            $data = [];
+            foreach ($rawData as $item) {
+                $arr = (array)$item;
+                $arr['section_formatted'] = $this->formatSectionName($arr['section_nom']);
+                $data[] = $arr;
+            }
 
             // Create Spreadsheet
             $spreadsheet = new Spreadsheet();
@@ -374,10 +385,7 @@ class PedagogicalActivityReportController extends Controller
                 $sheet->setCellValue('C' . $rowIdx, $item['nom_specialite']);
                 $sheet->setCellValue('D' . $rowIdx, $item['nom_formation']);
                 $sheet->setCellValue('E' . $rowIdx, $item['numero_semestre']);
-                // Extract only numbers from section name
-                $secNum = preg_replace('/[^0-9]/', '', $item['section_nom']);
-                $displaySection = ($secNum !== '') ? $secNum : $item['section_nom'];
-                $sheet->setCellValue('F' . $rowIdx, $displaySection);
+                $sheet->setCellValue('F' . $rowIdx, $item['section_formatted']);
                 $sheet->setCellValue('G' . $rowIdx, $item['date_debut'] ? date('Y/m/d', strtotime($item['date_debut'])) : '—');
                 $sheet->setCellValue('H' . $rowIdx, $item['date_fin'] ? date('Y/m/d', strtotime($item['date_fin'])) : '—');
                 $sheet->setCellValue('I' . $rowIdx, $item['total_inscrits']);
@@ -573,5 +581,51 @@ class PedagogicalActivityReportController extends Controller
                 'message' => $e->getMessage()
             ], 500);
         }
+    }
+
+    private function formatSectionName(string $name): string
+    {
+        $name = trim($name);
+        
+        // Map common words
+        $map = [
+            'الأول' => '1',
+            'الاول' => '1',
+            'واحد' => '1',
+            'الثاني' => '2',
+            'الثاني' => '2',
+            'اثنان' => '2',
+            'الثالث' => '3',
+            'ثلاثة' => '3',
+            'الرابع' => '4',
+            'أربعة' => '4',
+            'الخامس' => '5',
+            'خمسة' => '5',
+            'السادس' => '6',
+            'ستة' => '6',
+            'السابع' => '7',
+            'سبعة' => '7',
+            'الثامن' => '8',
+            'ثمانية' => '8',
+            'التاسع' => '9',
+            'تسعة' => '9',
+            'العاشر' => '10',
+            'عشرة' => '10',
+        ];
+
+        // Try exact/partial matching of words
+        foreach ($map as $word => $num) {
+            if (mb_strpos($name, $word) !== false) {
+                return $num;
+            }
+        }
+
+        // Extract any existing digit
+        $digits = preg_replace('/[^0-9]/', '', $name);
+        if ($digits !== '') {
+            return $digits;
+        }
+
+        return $name;
     }
 }
