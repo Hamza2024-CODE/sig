@@ -37,12 +37,15 @@ class PedagogicalActivityReportController extends Controller
 
             // Fetch filter data for dropdowns
             $branches = DB::select("SELECT IDBranche as id, Nom as nom FROM branche ORDER BY Nom ASC");
+            $wilayas = DB::select("SELECT IDWilayaa as id, Nom as nom FROM wilaya ORDER BY Nom ASC");
             
             $etablissements = [];
             if (in_array($role, ['admin', 'central', 'ministre'])) {
-                $etablissements = DB::select("SELECT IDetablissement as id, Nom as nom FROM etablissement ORDER BY Nom ASC");
+                $etablissements = DB::select("SELECT IDetablissement as id, Nom as nom, IDDFEP as wilaya_id FROM etablissement ORDER BY Nom ASC");
             } elseif ($role === 'dfep' && $dfepId > 0) {
-                $etablissements = DB::select("SELECT IDetablissement as id, Nom as nom FROM etablissement WHERE IDDFEP = ? ORDER BY Nom ASC", [$dfepId]);
+                $etablissements = DB::select("SELECT IDetablissement as id, Nom as nom, IDDFEP as wilaya_id FROM etablissement WHERE IDDFEP = ? ORDER BY Nom ASC", [$dfepId]);
+            } else {
+                $etablissements = DB::select("SELECT IDetablissement as id, Nom as nom, IDDFEP as wilaya_id FROM etablissement WHERE IDetablissement = ?", [$etabId]);
             }
 
             $modes = DB::select("SELECT IDMode_formation as id, Nom as nom FROM mode_formation ORDER BY Nom ASC");
@@ -91,6 +94,10 @@ class PedagogicalActivityReportController extends Controller
             }
 
             // Apply HTML Filters
+            if ($request->filled('wilaya_id')) {
+                $query .= " AND e.IDDFEP = ? ";
+                $params[] = (int)$request->wilaya_id;
+            }
             if ($request->filled('etab_id')) {
                 $query .= " AND s.IDEts_Form = ? ";
                 $params[] = (int)$request->etab_id;
@@ -119,9 +126,9 @@ class PedagogicalActivityReportController extends Controller
 
             $data = array_map(fn($item) => (array)$item, DB::select($query, $params));
 
-            return view('admin.reports.pedagogical_activities', compact('data', 'branches', 'etablissements', 'modes', 'user'));
+            return view('admin.reports.pedagogical_activities', compact('data', 'branches', 'wilayas', 'etablissements', 'modes', 'user'));
         } catch (\Throwable $e) {
-            dd($e->getMessage(), $e->getFile(), $e->getLine(), $e->getTraceAsString());
+            return back()->with('error', 'حدث خطأ أثناء تحميل الحصيلة البيداغوجية: ' . $e->getMessage());
         }
     }
 
@@ -130,190 +137,253 @@ class PedagogicalActivityReportController extends Controller
      */
     public function exportExcel(Request $request)
     {
-        $user = session('user');
-        $role = strtolower($user['role_code'] ?? '');
-        $etabId = (int)($user['etablissement_id'] ?? 0);
-        $dfepId = (int)($user['iddfep'] ?? 0);
+        try {
+            $user = session('user');
+            $role = strtolower($user['role_code'] ?? '');
+            $etabId = (int)($user['etablissement_id'] ?? 0);
+            $dfepId = (int)($user['iddfep'] ?? 0);
 
-        // Build data query
-        $query = "
-            SELECT 
-                s.IDSection AS section_id,
-                s.IDOffre AS id_offre,
-                e.Nom AS nom_etablissement,
-                sp.CodeSpec AS code_specialite,
-                sp.Nom AS nom_specialite,
-                sp.NomFr AS nom_formation,
-                sp.NbrSem AS duree_semestres,
-                s.Nom AS section_nom,
-                COALESCE(ss.NumSem, 1) AS numero_semestre,
-                s.DateDF AS date_debut,
-                s.DateFF AS date_fin,
-                mf.Nom AS nom_mode_formation,
-                b.Nom AS nom_branche,
-                (SELECT COUNT(*) FROM apprenant a WHERE a.IDSection = s.IDSection) AS total_inscrits,
-                (SELECT COUNT(*) FROM apprenant a JOIN candidat c ON a.IDCandidat = c.IDCandidat WHERE a.IDSection = s.IDSection AND (c.Civ IN ('أنثى', 'female', '2', 'أنثي', 'f', 'F'))) AS femmes_inscrits,
-                (SELECT COUNT(*) FROM apprenant a WHERE a.IDSection = s.IDSection AND a.statut = 'actif') AS total_actifs,
-                (SELECT COUNT(*) FROM apprenant a JOIN candidat c ON a.IDCandidat = c.IDCandidat WHERE a.IDSection = s.IDSection AND a.statut = 'actif' AND (c.Civ IN ('أنثى', 'female', '2', 'أنثي', 'f', 'F'))) AS femmes_actifs
-            FROM section s
-            LEFT JOIN specialite sp ON s.IDSpecialite = sp.IDSpecialite
-            LEFT JOIN branche b ON sp.IDBranche = b.IDBranche
-            LEFT JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
-            LEFT JOIN mode_formation mf ON s.IDMode_formation = mf.IDMode_formation
-            LEFT JOIN section_semestre ss ON s.IDSection = ss.IDSection AND ss.IDSection_Semestre = (
-                SELECT MAX(ss2.IDSection_Semestre) FROM section_semestre ss2 WHERE ss2.IDSection = s.IDSection
-            )
-            WHERE 1=1
-        ";
+            // Build data query
+            $query = "
+                SELECT 
+                    s.IDSection AS section_id,
+                    s.IDOffre AS id_offre,
+                    e.Nom AS nom_etablissement,
+                    sp.CodeSpec AS code_specialite,
+                    sp.Nom AS nom_specialite,
+                    sp.NomFr AS nom_formation,
+                    sp.NbrSem AS duree_semestres,
+                    s.Nom AS section_nom,
+                    COALESCE(ss.NumSem, 1) AS numero_semestre,
+                    s.DateDF AS date_debut,
+                    s.DateFF AS date_fin,
+                    mf.Nom AS nom_mode_formation,
+                    b.Nom AS nom_branche,
+                    (SELECT COUNT(*) FROM apprenant a WHERE a.IDSection = s.IDSection) AS total_inscrits,
+                    (SELECT COUNT(*) FROM apprenant a JOIN candidat c ON a.IDCandidat = c.IDCandidat WHERE a.IDSection = s.IDSection AND (c.Civ IN ('أنثى', 'female', '2', 'أنثي', 'f', 'F'))) AS femmes_inscrits,
+                    (SELECT COUNT(*) FROM apprenant a WHERE a.IDSection = s.IDSection AND a.statut = 'actif') AS total_actifs,
+                    (SELECT COUNT(*) FROM apprenant a JOIN candidat c ON a.IDCandidat = c.IDCandidat WHERE a.IDSection = s.IDSection AND a.statut = 'actif' AND (c.Civ IN ('أنثى', 'female', '2', 'أنثي', 'f', 'F'))) AS femmes_actifs
+                FROM section s
+                LEFT JOIN specialite sp ON s.IDSpecialite = sp.IDSpecialite
+                LEFT JOIN branche b ON sp.IDBranche = b.IDBranche
+                LEFT JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
+                LEFT JOIN mode_formation mf ON s.IDMode_formation = mf.IDMode_formation
+                LEFT JOIN section_semestre ss ON s.IDSection = ss.IDSection AND ss.IDSection_Semestre = (
+                    SELECT MAX(ss2.IDSection_Semestre) FROM section_semestre ss2 WHERE ss2.IDSection = s.IDSection
+                )
+                WHERE 1=1
+            ";
 
-        $params = [];
+            $params = [];
 
-        // Role Scoping
-        if ($role === 'dfep' && $dfepId > 0) {
-            $query .= " AND e.IDDFEP = ? ";
-            $params[] = $dfepId;
-        } elseif (in_array($role, ['etablissement', 'directeur', 'employee']) && $etabId > 0) {
-            $query .= " AND s.IDEts_Form = ? ";
-            $params[] = $etabId;
-        }
+            // Role Scoping
+            if ($role === 'dfep' && $dfepId > 0) {
+                $query .= " AND e.IDDFEP = ? ";
+                $params[] = $dfepId;
+            } elseif (in_array($role, ['etablissement', 'directeur', 'employee']) && $etabId > 0) {
+                $query .= " AND s.IDEts_Form = ? ";
+                $params[] = $etabId;
+            }
 
-        // Apply HTML Filters
-        if ($request->filled('etab_id')) {
-            $query .= " AND s.IDEts_Form = ? ";
-            $params[] = (int)$request->etab_id;
-        }
-        if ($request->filled('branche_id')) {
-            $query .= " AND sp.IDBranche = ? ";
-            $params[] = (int)$request->branche_id;
-        }
-        if ($request->filled('mode_id')) {
-            $query .= " AND s.IDMode_formation = ? ";
-            $params[] = (int)$request->mode_id;
-        }
-        if ($request->filled('semester')) {
-            $query .= " AND ss.NumSem = ? ";
-            $params[] = (int)$request->semester;
-        }
-        if ($request->filled('search')) {
-            $q = '%' . $request->search . '%';
-            $query .= " AND (sp.Nom LIKE ? OR sp.CodeSpec LIKE ? OR s.Nom LIKE ?) ";
-            $params[] = $q;
-            $params[] = $q;
-            $params[] = $q;
-        }
+            // Apply HTML Filters
+            if ($request->filled('wilaya_id')) {
+                $query .= " AND e.IDDFEP = ? ";
+                $params[] = (int)$request->wilaya_id;
+            }
+            if ($request->filled('etab_id')) {
+                $query .= " AND s.IDEts_Form = ? ";
+                $params[] = (int)$request->etab_id;
+            }
+            if ($request->filled('branche_id')) {
+                $query .= " AND sp.IDBranche = ? ";
+                $params[] = (int)$request->branche_id;
+            }
+            if ($request->filled('mode_id')) {
+                $query .= " AND s.IDMode_formation = ? ";
+                $params[] = (int)$request->mode_id;
+            }
+            if ($request->filled('semester')) {
+                $query .= " AND ss.NumSem = ? ";
+                $params[] = (int)$request->semester;
+            }
+            if ($request->filled('search')) {
+                $q = '%' . $request->search . '%';
+                $query .= " AND (sp.Nom LIKE ? OR sp.CodeSpec LIKE ? OR s.Nom LIKE ?) ";
+                $params[] = $q;
+                $params[] = $q;
+                $params[] = $q;
+            }
 
-        $query .= " ORDER BY e.Nom ASC, b.Nom ASC, sp.Nom ASC ";
+            $query .= " ORDER BY e.Nom ASC, b.Nom ASC, sp.Nom ASC ";
 
-        $data = array_map(fn($item) => (array)$item, DB::select($query, $params));
+            $data = array_map(fn($item) => (array)$item, DB::select($query, $params));
 
-        // Create Spreadsheet
-        $spreadsheet = new Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
-        $sheet->setRightToLeft(true);
-        $sheet->setTitle('حصيلة النشاطات البيداغوجية');
+            // Create Spreadsheet
+            $spreadsheet = new Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+            $sheet->setRightToLeft(true);
+            $sheet->setTitle('حصيلة النشاطات البيداغوجية');
 
-        // Headers matching the Excel layout
-        $headers = [
-            'A' => 'الرمز',
-            'B' => 'رمز الاختصاص',
-            'C' => 'التسمية العربية',
-            'D' => 'Nom Français',
-            'E' => 'رقم السداسي',
-            'F' => 'الفوج / القسم',
-            'G' => 'بداية التكوين',
-            'H' => 'نهاية التكوين',
-            'I' => 'العدد الكلي للمسجلين',
-            'J' => 'منهم إناث',
-            'K' => 'قيد التكوين (نشط)',
-            'L' => 'منهم إناث (نشط)',
-            'M' => 'النمط',
-            'N' => 'المؤسسة التكوينية',
-            'O' => 'الشعبة المهنية'
-        ];
+            // Headers matching the Excel layout
+            $headers = [
+                'A' => 'الرمز',
+                'B' => 'رمز الاختصاص',
+                'C' => 'التسمية العربية',
+                'D' => 'Nom Français',
+                'E' => 'رقم السداسي',
+                'F' => 'الفوج / القسم',
+                'G' => 'بداية التكوين',
+                'H' => 'نهاية التكوين',
+                'I' => 'العدد الكلي للمسجلين',
+                'J' => 'منهم إناث',
+                'K' => 'قيد التكوين (نشط)',
+                'L' => 'منهم إناث (نشط)',
+                'M' => 'النمط',
+                'N' => 'المؤسسة التكوينية',
+                'O' => 'الشعبة المهنية'
+            ];
 
-        // Format Headers
-        $headerStyle = [
-            'font' => [
-                'bold' => true,
-                'color' => ['rgb' => 'FFFFFF'],
-                'name' => 'Cairo',
-                'size' => 11
-            ],
-            'alignment' => [
-                'horizontal' => Alignment::HORIZONTAL_CENTER,
-                'vertical' => Alignment::VERTICAL_CENTER,
-                'wrapText' => true
-            ],
-            'fill' => [
-                'fillType' => Fill::FILL_SOLID,
-                'startColor' => ['rgb' => '0F172A'] // Platform dark color
-            ],
-            'borders' => [
-                'allBorders' => [
-                    'borderStyle' => Border::BORDER_THIN,
-                    'color' => ['rgb' => '475569']
+            // Format Headers
+            $headerStyle = [
+                'font' => [
+                    'bold' => true,
+                    'color' => ['rgb' => 'FFFFFF'],
+                    'name' => 'Cairo',
+                    'size' => 11
+                ],
+                'alignment' => [
+                    'horizontal' => Alignment::HORIZONTAL_CENTER,
+                    'vertical' => Alignment::VERTICAL_CENTER,
+                    'wrapText' => true
+                ],
+                'fill' => [
+                    'fillType' => Fill::FILL_SOLID,
+                    'startColor' => ['rgb' => '0F172A'] // Platform dark color
+                ],
+                'borders' => [
+                    'allBorders' => [
+                        'borderStyle' => Border::BORDER_THIN,
+                        'color' => ['rgb' => '475569']
+                    ]
                 ]
-            ]
-        ];
+            ];
 
-        $sheet->getRowDimension(1)->setRowHeight(35);
+            $sheet->getRowDimension(1)->setRowHeight(35);
 
-        foreach ($headers as $col => $text) {
-            $sheet->setCellValue($col . '1', $text);
-            $sheet->getStyle($col . '1')->applyFromArray($headerStyle);
-            $sheet->getColumnDimension($col)->setAutoWidth(true);
-        }
+            foreach ($headers as $col => $text) {
+                $sheet->setCellValue($col . '1', $text);
+                $sheet->getStyle($col . '1')->applyFromArray($headerStyle);
+                $sheet->getColumnDimension($col)->setAutoWidth(true);
+            }
 
-        // Fill data
-        $rowIdx = 2;
-        $dataStyle = [
-            'font' => [
-                'name' => 'Cairo',
-                'size' => 10
-            ],
-            'alignment' => [
-                'horizontal' => Alignment::HORIZONTAL_CENTER,
-                'vertical' => Alignment::VERTICAL_CENTER
-            ],
-            'borders' => [
-                'allBorders' => [
-                    'borderStyle' => Border::BORDER_THIN,
-                    'color' => ['rgb' => 'CBD5E1']
+            // Fill data
+            $rowIdx = 2;
+            $dataStyle = [
+                'font' => [
+                    'name' => 'Cairo',
+                    'size' => 10
+                ],
+                'alignment' => [
+                    'horizontal' => Alignment::HORIZONTAL_CENTER,
+                    'vertical' => Alignment::VERTICAL_CENTER
+                ],
+                'borders' => [
+                    'allBorders' => [
+                        'borderStyle' => Border::BORDER_THIN,
+                        'color' => ['rgb' => 'CBD5E1']
+                    ]
                 ]
-            ]
-        ];
+            ];
 
-        foreach ($data as $item) {
-            $sheet->setCellValue('A' . $rowIdx, $item['id_offre']);
-            $sheet->setCellValue('B' . $rowIdx, $item['code_specialite']);
-            $sheet->setCellValue('C' . $rowIdx, $item['nom_specialite']);
-            $sheet->setCellValue('D' . $rowIdx, $item['nom_formation']);
-            $sheet->setCellValue('E' . $rowIdx, $item['numero_semestre']);
-            $sheet->setCellValue('F' . $rowIdx, $item['section_nom']);
-            $sheet->setCellValue('G' . $rowIdx, $item['date_debut'] ? date('Y/m/d', strtotime($item['date_debut'])) : '—');
-            $sheet->setCellValue('H' . $rowIdx, $item['date_fin'] ? date('Y/m/d', strtotime($item['date_fin'])) : '—');
-            $sheet->setCellValue('I' . $rowIdx, $item['total_inscrits']);
-            $sheet->setCellValue('J' . $rowIdx, $item['femmes_inscrits']);
-            $sheet->setCellValue('K' . $rowIdx, $item['total_actifs']);
-            $sheet->setCellValue('L' . $rowIdx, $item['femmes_actifs']);
-            $sheet->setCellValue('M' . $rowIdx, $item['nom_mode_formation']);
-            $sheet->setCellValue('N' . $rowIdx, $item['nom_etablissement']);
-            $sheet->setCellValue('O' . $rowIdx, $item['nom_branche']);
+            foreach ($data as $item) {
+                $sheet->setCellValue('A' . $rowIdx, $item['id_offre']);
+                $sheet->setCellValue('B' . $rowIdx, $item['code_specialite']);
+                $sheet->setCellValue('C' . $rowIdx, $item['nom_specialite']);
+                $sheet->setCellValue('D' . $rowIdx, $item['nom_formation']);
+                $sheet->setCellValue('E' . $rowIdx, $item['numero_semestre']);
+                $sheet->setCellValue('F' . $rowIdx, $item['section_nom']);
+                $sheet->setCellValue('G' . $rowIdx, $item['date_debut'] ? date('Y/m/d', strtotime($item['date_debut'])) : '—');
+                $sheet->setCellValue('H' . $rowIdx, $item['date_fin'] ? date('Y/m/d', strtotime($item['date_fin'])) : '—');
+                $sheet->setCellValue('I' . $rowIdx, $item['total_inscrits']);
+                $sheet->setCellValue('J' . $rowIdx, $item['femmes_inscrits']);
+                $sheet->setCellValue('K' . $rowIdx, $item['total_actifs']);
+                $sheet->setCellValue('L' . $rowIdx, $item['femmes_actifs']);
+                $sheet->setCellValue('M' . $rowIdx, $item['nom_mode_formation']);
+                $sheet->setCellValue('N' . $rowIdx, $item['nom_etablissement']);
+                $sheet->setCellValue('O' . $rowIdx, $item['nom_branche']);
 
-            $sheet->getStyle('A' . $rowIdx . ':O' . $rowIdx)->applyFromArray($dataStyle);
-            $sheet->getRowDimension($rowIdx)->setRowHeight(25);
-            $rowIdx++;
+                $sheet->getStyle('A' . $rowIdx . ':O' . $rowIdx)->applyFromArray($dataStyle);
+                $sheet->getRowDimension($rowIdx)->setRowHeight(25);
+                $rowIdx++;
+            }
+
+            // Export file as download
+            $filename = 'حصيلة_النشاطات_البيداغوجية_محدثة_' . date('Y_m_d_His') . '.xlsx';
+            
+            header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            header('Content-Disposition: attachment;filename="' . $filename . '"');
+            header('Cache-Control: max-age=0');
+
+            $writer = new Xlsx($spreadsheet);
+            $writer->save('php://output');
+            exit;
+        } catch (\Throwable $e) {
+            return back()->with('error', 'حدث خطأ أثناء تصدير ملف إكسيل: ' . $e->getMessage());
         }
+    }
 
-        // Export file as download
-        $filename = 'حصيلة_النشاطات_البيداغوجية_محدثة_' . date('Y_m_d_His') . '.xlsx';
-        
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="' . $filename . '"');
-        header('Cache-Control: max-age=0');
+    /**
+     * AJAX endpoint to return trainees of a section grouped by their residence Wilaya
+     */
+    public function getSectionTrainees(Request $request)
+    {
+        try {
+            $sectionId = (int)$request->query('section_id');
+            if ($sectionId <= 0) {
+                return response()->json(['success' => false, 'message' => 'معرف القسم غير صحيح'], 400);
+            }
 
-        $writer = new Xlsx($spreadsheet);
-        $writer->save('php://output');
-        exit;
+            // Fetch trainees of this section
+            $trainees = DB::select("
+                SELECT 
+                    a.IDapprenant AS id,
+                    COALESCE(c.Nom, '') AS nom,
+                    COALESCE(c.Prenom, '') AS prenom,
+                    COALESCE(c.NumIns, '') AS matricule,
+                    COALESCE(c.Civ, '') AS civ,
+                    a.statut,
+                    COALESCE(w.Nom, 'غير محدد') AS wilaya_nom
+                FROM apprenant a
+                JOIN candidat c ON a.IDCandidat = c.IDCandidat
+                LEFT JOIN wilaya w ON c.IDWilayaR = w.IDWilayaa
+                WHERE a.IDSection = ?
+                ORDER BY w.Nom ASC, c.Nom ASC, c.Prenom ASC
+            ", [$sectionId]);
+
+            // Map and format status / gender labels
+            $formattedTrainees = [];
+            foreach ($trainees as $t) {
+                $civ = strtolower(trim($t->civ));
+                $formattedTrainees[] = [
+                    'id' => $t->id,
+                    'nom' => $t->nom,
+                    'prenom' => $t->prenom,
+                    'matricule' => $t->matricule,
+                    'sexe' => in_array($civ, ['m', 'ذكر', '1']) ? 'ذكر' : 'أنثى',
+                    'statut' => $t->statut === 'actif' ? 'نشط' : 'غير نشط',
+                    'wilaya_nom' => $t->wilaya_nom
+                ];
+            }
+
+            return response()->json([
+                'success' => true,
+                'trainees' => $formattedTrainees
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 }

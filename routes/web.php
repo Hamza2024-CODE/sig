@@ -281,6 +281,7 @@ Route::middleware('check.session')->group(function () {
     // ── 📊 Pedagogical Activity Report ─────────────────────────────────────
     Route::get('/dashboard/pedagogical-activity-report', [\App\Http\Controllers\Admin\PedagogicalActivityReportController::class, 'index'])->name('pedagogical-activity-report.index');
     Route::get('/dashboard/pedagogical-activity-report/export', [\App\Http\Controllers\Admin\PedagogicalActivityReportController::class, 'exportExcel'])->name('pedagogical-activity-report.export');
+    Route::get('/dashboard/pedagogical-activity-report/section-trainees', [\App\Http\Controllers\Admin\PedagogicalActivityReportController::class, 'getSectionTrainees'])->name('pedagogical-activity-report.section-trainees');
 
     // ── التسيير المالي (Finances) — CRUD + Print ──────────────────────────
     Route::prefix('dashboard/finances')->group(function () {
