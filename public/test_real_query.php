@@ -9,6 +9,9 @@ use Illuminate\Support\Facades\DB;
 header('Content-Type: text/plain; charset=utf-8');
 
 echo "=== REAL QUERY DIAGNOSTICS ===\n";
+echo "Cached total_stagiaires (sgfep:kpi:minister:total_stagiaires_correct): " . var_export(\Illuminate\Support\Facades\Cache::get('sgfep:kpi:minister:total_stagiaires_correct'), true) . "\n";
+echo "Cached sessions_breakdown: " . var_export(\Illuminate\Support\Facades\Cache::has('sgfep:kpi:minister:sessions_breakdown'), true) . "\n";
+
 
 // Query 1: DEOH active trainees count
 $q1 = DB::table('apprenant as a')
