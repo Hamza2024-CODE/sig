@@ -215,7 +215,7 @@ final class KpiCache
 
         if (!$hasFilters) {
             $stagiaires = $useApprenant
-                ? self::scalar("SELECT COUNT(a.IDapprenant) as c FROM apprenant a JOIN section s ON a.IDSection=s.IDSection JOIN offre o ON s.IDOffre=o.IDOffre JOIN session sess ON o.IDSession=sess.IDSession JOIN specialite sp ON o.IDSpecialite=sp.IDSpecialite LEFT JOIN apprenant_fin af ON a.IDapprenant=af.IDapprenant WHERE a.statut = 'actif' AND af.IDapprenant IS NULL AND DATE_ADD(sess.DateD, INTERVAL COALESCE(NULLIF(sp.dureeM, 0), sp.NbrSem * 6, 24) MONTH) >= CURRENT_DATE()", [])
+                ? self::scalar("SELECT COUNT(a.IDapprenant) as c FROM apprenant a JOIN section s ON a.IDSection=s.IDSection LEFT JOIN apprenant_fin af ON a.IDapprenant=af.IDapprenant WHERE a.statut = 'actif' AND af.IDapprenant IS NULL AND s.DateDF <= CURRENT_DATE() AND s.DateFF >= CURRENT_DATE()", [])
                 : self::scalar("SELECT COALESCE(SUM(NbrInscr),0) as c FROM offre WHERE NbrInscr>0", []);
 
             $filles         = self::scalar("SELECT COALESCE(SUM(NbrInscrf),0) as c FROM offre WHERE NbrInscrf>0", []);
@@ -227,7 +227,7 @@ final class KpiCache
             $sections_s1    = self::scalar("SELECT COUNT(*) as c FROM section_semestre WHERE Dernier = 1 AND NumSem = 1", []);
         } else {
             $stagiaires = $useApprenant
-                ? self::scalar("SELECT COUNT(a.IDapprenant) as c FROM apprenant a JOIN section s ON a.IDSection=s.IDSection JOIN offre o ON s.IDOffre=o.IDOffre JOIN session sess ON o.IDSession=sess.IDSession JOIN specialite sp ON o.IDSpecialite=sp.IDSpecialite JOIN etablissement e ON o.IDEts_Form=e.IDetablissement LEFT JOIN apprenant_fin af ON a.IDapprenant=af.IDapprenant WHERE $wo AND a.statut = 'actif' AND af.IDapprenant IS NULL AND DATE_ADD(sess.DateD, INTERVAL COALESCE(NULLIF(sp.dureeM, 0), sp.NbrSem * 6, 24) MONTH) >= CURRENT_DATE()", $paramsOffre)
+                ? self::scalar("SELECT COUNT(a.IDapprenant) as c FROM apprenant a JOIN section s ON a.IDSection=s.IDSection JOIN offre o ON s.IDOffre=o.IDOffre JOIN etablissement e ON o.IDEts_Form=e.IDetablissement LEFT JOIN apprenant_fin af ON a.IDapprenant=af.IDapprenant WHERE $wo AND a.statut = 'actif' AND af.IDapprenant IS NULL AND s.DateDF <= CURRENT_DATE() AND s.DateFF >= CURRENT_DATE()", $paramsOffre)
                 : self::scalar("SELECT COALESCE(SUM(o.NbrInscr),0) as c FROM offre o INNER JOIN etablissement e ON o.IDEts_Form=e.IDetablissement WHERE $wo AND o.NbrInscr>0", $paramsOffre);
 
             $filles         = self::scalar("SELECT COALESCE(SUM(o.NbrInscrf),0) as c FROM offre o INNER JOIN etablissement e ON o.IDEts_Form=e.IDetablissement WHERE $wo AND o.NbrInscrf>0", $paramsOffre);
@@ -454,12 +454,12 @@ final class KpiCache
                     FROM apprenant a
                     JOIN section s ON a.IDSection = s.IDSection
                     JOIN offre o ON s.IDOffre = o.IDOffre
-                    JOIN session sess ON o.IDSession = sess.IDSession
-                    JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
                     LEFT JOIN apprenant_fin af ON a.IDapprenant = af.IDapprenant
                     WHERE o.IDEts_Form IN ($placeholders) 
+                      AND a.statut = 'actif'
                       AND af.IDapprenant IS NULL
-                      AND DATE_ADD(sess.DateD, INTERVAL COALESCE(NULLIF(sp.dureeM, 0), sp.NbrSem * 6, 24) MONTH) >= CURRENT_DATE()
+                      AND s.DateDF <= CURRENT_DATE()
+                      AND s.DateFF >= CURRENT_DATE()
                 ", $etabIds);
 
                 $filles = self::scalar("
@@ -467,14 +467,14 @@ final class KpiCache
                     FROM apprenant a
                     JOIN section s ON a.IDSection = s.IDSection
                     JOIN offre o ON s.IDOffre = o.IDOffre
-                    JOIN session sess ON o.IDSession = sess.IDSession
-                    JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
                     JOIN candidat cand ON a.IDCandidat = cand.IDCandidat
                     LEFT JOIN apprenant_fin af ON a.IDapprenant = af.IDapprenant
                     WHERE o.IDEts_Form IN ($placeholders) 
+                      AND a.statut = 'actif'
                       AND cand.Civ = 2
                       AND af.IDapprenant IS NULL
-                      AND DATE_ADD(sess.DateD, INTERVAL COALESCE(NULLIF(sp.dureeM, 0), sp.NbrSem * 6, 24) MONTH) >= CURRENT_DATE()
+                      AND s.DateDF <= CURRENT_DATE()
+                      AND s.DateFF >= CURRENT_DATE()
                 ", $etabIds);
             } else {
                 $stagiaires = self::scalar("SELECT COALESCE(SUM(NbrInscr),0) as c FROM offre WHERE IDEts_Form IN ($placeholders) AND NbrInscr>0", $etabIds);
