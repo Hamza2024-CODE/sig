@@ -25,7 +25,7 @@ class PedagogicalActivityReportController extends Controller
     }
 
     /**
-     * Display report with filters
+     * Display report with filters and pagination
      */
     public function index(Request $request)
     {
@@ -50,7 +50,7 @@ class PedagogicalActivityReportController extends Controller
 
             $modes = DB::select("SELECT IDMode_formation as id, Nom as nom FROM mode_formation ORDER BY Nom ASC");
 
-            // Build data query
+            // Build base data query
             $query = "
                 SELECT 
                     s.IDSection AS section_id,
@@ -92,49 +92,91 @@ class PedagogicalActivityReportController extends Controller
                 WHERE 1=1
             ";
 
+            // Build count query
+            $countQuery = "
+                SELECT COUNT(*) AS total
+                FROM section s
+                LEFT JOIN specialite sp ON s.IDSpecialite = sp.IDSpecialite
+                LEFT JOIN branche b ON sp.IDBranche = b.IDBranche
+                LEFT JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
+                LEFT JOIN mode_formation mf ON s.IDMode_formation = mf.IDMode_formation
+                LEFT JOIN section_semestre ss ON s.IDSection = ss.IDSection AND ss.IDSection_Semestre = (
+                    SELECT MAX(ss2.IDSection_Semestre) FROM section_semestre ss2 WHERE ss2.IDSection = s.IDSection
+                )
+                WHERE 1=1
+            ";
+
             $params = [];
+            $filterSql = "";
 
             // Role Scoping
             if ($role === 'dfep' && $dfepId > 0) {
-                $query .= " AND e.IDDFEP = ? ";
+                $filterSql .= " AND e.IDDFEP = ? ";
                 $params[] = $dfepId;
             } elseif (in_array($role, ['etablissement', 'directeur', 'employee']) && $etabId > 0) {
-                $query .= " AND s.IDEts_Form = ? ";
+                $filterSql .= " AND s.IDEts_Form = ? ";
                 $params[] = $etabId;
             }
 
             // Apply HTML Filters
             if ($request->filled('wilaya_id')) {
-                $query .= " AND e.IDDFEP = ? ";
+                $filterSql .= " AND e.IDDFEP = ? ";
                 $params[] = (int)$request->wilaya_id;
             }
             if ($request->filled('etab_id')) {
-                $query .= " AND s.IDEts_Form = ? ";
+                $filterSql .= " AND s.IDEts_Form = ? ";
                 $params[] = (int)$request->etab_id;
             }
             if ($request->filled('branche_id')) {
-                $query .= " AND sp.IDBranche = ? ";
+                $filterSql .= " AND sp.IDBranche = ? ";
                 $params[] = (int)$request->branche_id;
             }
             if ($request->filled('mode_id')) {
-                $query .= " AND s.IDMode_formation = ? ";
+                $filterSql .= " AND s.IDMode_formation = ? ";
                 $params[] = (int)$request->mode_id;
             }
             if ($request->filled('semester')) {
-                $query .= " AND ss.NumSem = ? ";
+                $filterSql .= " AND ss.NumSem = ? ";
                 $params[] = (int)$request->semester;
             }
             if ($request->filled('search')) {
                 $q = '%' . $request->search . '%';
-                $query .= " AND (sp.Nom LIKE ? OR sp.CodeSpec LIKE ? OR s.Nom LIKE ?) ";
+                $filterSql .= " AND (sp.Nom LIKE ? OR sp.CodeSpec LIKE ? OR s.Nom LIKE ?) ";
                 $params[] = $q;
                 $params[] = $q;
                 $params[] = $q;
             }
 
-            $query .= " ORDER BY e.Nom ASC, b.Nom ASC, sp.Nom ASC ";
+            $query .= $filterSql;
+            $countQuery .= $filterSql;
 
-            $data = array_map(fn($item) => (array)$item, DB::select($query, $params));
+            // Get total records
+            $total = (int)(DB::select($countQuery, $params)[0]->total ?? 0);
+
+            // Pagination parameters
+            $perPage = 50;
+            $currentPage = (int)$request->query('page', 1);
+            if ($currentPage < 1) $currentPage = 1;
+            $offset = ($currentPage - 1) * $perPage;
+
+            $query .= " ORDER BY e.Nom ASC, b.Nom ASC, sp.Nom ASC LIMIT ? OFFSET ? ";
+            
+            $queryParams = $params;
+            $queryParams[] = $perPage;
+            $queryParams[] = $offset;
+
+            $rawData = DB::select($query, $queryParams);
+            $dataList = array_map(fn($item) => (array)$item, $rawData);
+
+            // Create LengthAwarePaginator
+            $data = new \Illuminate\Pagination\LengthAwarePaginator(
+                $dataList,
+                $total,
+                $perPage,
+                $currentPage,
+                ['path' => $request->url()]
+            );
+            $data->withQueryString();
 
             return view('admin.reports.pedagogical_activities', compact('data', 'branches', 'wilayas', 'etablissements', 'modes', 'user'));
         } catch (\Throwable $e) {
@@ -279,7 +321,7 @@ class PedagogicalActivityReportController extends Controller
                 ],
                 'fill' => [
                     'fillType' => Fill::FILL_SOLID,
-                    'startColor' => ['rgb' => '0F172A'] // Platform dark color
+                    'startColor' => ['rgb' => '0F172A']
                 ],
                 'borders' => [
                     'allBorders' => [

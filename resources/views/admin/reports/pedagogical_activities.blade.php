@@ -15,7 +15,92 @@
         <div class="me-auto"></div>
         
         <!-- Action Buttons -->
-        <div class="d-flex gap-2">
+        <div class="d-flex gap-2 align-items-center">
+            <!-- Column Visibility Dropdown -->
+            <div class="dropdown no-print">
+                <button class="btn btn-premium-print d-inline-flex align-items-center gap-2 px-3.5 py-2 fw-bold" style="background:#fff;border:1.5px solid #cbd5e1;border-radius:30px;font-size:0.85rem;color:#475569;transition:all 0.2s;" type="button" id="columnToggleDropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                    <i class="fa-solid fa-table-columns"></i> تحديد الأعمدة
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end border-0 shadow p-3 text-right" aria-labelledby="columnToggleDropdown" style="border-radius:16px;min-width:260px;max-height:350px;overflow-y:auto;direction:rtl;box-shadow:0 10px 30px rgba(0,0,0,0.12)!important;">
+                    <li class="dropdown-header fw-bold text-dark px-1 mb-2" style="font-size:0.85rem;border-bottom:1px solid #f1f5f9;padding-bottom:6px;">إظهار/إخفاء الأعمدة</li>
+                    <li>
+                        <label class="dropdown-item d-flex align-items-center gap-2 py-1 px-1 rounded cursor-pointer">
+                            <input type="checkbox" class="col-toggle-checkbox" data-column="col-id-offre" checked> <span>الرمز</span>
+                        </label>
+                    </li>
+                    <li>
+                        <label class="dropdown-item d-flex align-items-center gap-2 py-1 px-1 rounded cursor-pointer">
+                            <input type="checkbox" class="col-toggle-checkbox" data-column="col-code-spec" checked> <span>رمز الاختصاص</span>
+                        </label>
+                    </li>
+                    <li>
+                        <label class="dropdown-item d-flex align-items-center gap-2 py-1 px-1 rounded cursor-pointer">
+                            <input type="checkbox" class="col-toggle-checkbox" data-column="col-nom-ar" checked> <span>التسمية العربية</span>
+                        </label>
+                    </li>
+                    <li>
+                        <label class="dropdown-item d-flex align-items-center gap-2 py-1 px-1 rounded cursor-pointer">
+                            <input type="checkbox" class="col-toggle-checkbox" data-column="col-nom-fr" checked> <span>Nom Français</span>
+                        </label>
+                    </li>
+                    <li>
+                        <label class="dropdown-item d-flex align-items-center gap-2 py-1 px-1 rounded cursor-pointer">
+                            <input type="checkbox" class="col-toggle-checkbox" data-column="col-semester" checked> <span>رقم السداسي</span>
+                        </label>
+                    </li>
+                    <li>
+                        <label class="dropdown-item d-flex align-items-center gap-2 py-1 px-1 rounded cursor-pointer">
+                            <input type="checkbox" class="col-toggle-checkbox" data-column="col-section" checked> <span>الفوج / القسم</span>
+                        </label>
+                    </li>
+                    <li>
+                        <label class="dropdown-item d-flex align-items-center gap-2 py-1 px-1 rounded cursor-pointer">
+                            <input type="checkbox" class="col-toggle-checkbox" data-column="col-date-debut" checked> <span>بداية التكوين</span>
+                        </label>
+                    </li>
+                    <li>
+                        <label class="dropdown-item d-flex align-items-center gap-2 py-1 px-1 rounded cursor-pointer">
+                            <input type="checkbox" class="col-toggle-checkbox" data-column="col-date-fin" checked> <span>نهاية التكوين</span>
+                        </label>
+                    </li>
+                    <li>
+                        <label class="dropdown-item d-flex align-items-center gap-2 py-1 px-1 rounded cursor-pointer">
+                            <input type="checkbox" class="col-toggle-checkbox" data-column="col-total-inscrits" checked> <span>العدد الكلي للمسجلين</span>
+                        </label>
+                    </li>
+                    <li>
+                        <label class="dropdown-item d-flex align-items-center gap-2 py-1 px-1 rounded cursor-pointer">
+                            <input type="checkbox" class="col-toggle-checkbox" data-column="col-femmes-inscrits" checked> <span>منهم إناث (مسجل)</span>
+                        </label>
+                    </li>
+                    <li>
+                        <label class="dropdown-item d-flex align-items-center gap-2 py-1 px-1 rounded cursor-pointer">
+                            <input type="checkbox" class="col-toggle-checkbox" data-column="col-total-actifs" checked> <span>قيد التكوين (نشط)</span>
+                        </label>
+                    </li>
+                    <li>
+                        <label class="dropdown-item d-flex align-items-center gap-2 py-1 px-1 rounded cursor-pointer">
+                            <input type="checkbox" class="col-toggle-checkbox" data-column="col-femmes-actifs" checked> <span>منهم إناث (نشط)</span>
+                        </label>
+                    </li>
+                    <li>
+                        <label class="dropdown-item d-flex align-items-center gap-2 py-1 px-1 rounded cursor-pointer">
+                            <input type="checkbox" class="col-toggle-checkbox" data-column="col-mode" checked> <span>النمط</span>
+                        </label>
+                    </li>
+                    <li>
+                        <label class="dropdown-item d-flex align-items-center gap-2 py-1 px-1 rounded cursor-pointer">
+                            <input type="checkbox" class="col-toggle-checkbox" data-column="col-etab" checked> <span>المؤسسة التكوينية</span>
+                        </label>
+                    </li>
+                    <li>
+                        <label class="dropdown-item d-flex align-items-center gap-2 py-1 px-1 rounded cursor-pointer">
+                            <input type="checkbox" class="col-toggle-checkbox" data-column="col-branche" checked> <span>الشعبة المهنية</span>
+                        </label>
+                    </li>
+                </ul>
+            </div>
+
             <a href="{{ url('dashboard/pedagogical-activity-report/export?' . http_build_query(request()->all())) }}" class="btn btn-premium-excel d-inline-flex align-items-center gap-2 px-3.5 py-2 fw-bold text-white" style="background:#10b981;border-radius:30px;font-size:0.85rem;text-decoration:none;transition:all 0.2s;">
                 <i class="fa-solid fa-file-excel"></i> تصدير كـ Excel
             </a>
@@ -96,50 +181,50 @@
     </div>
 
     <!-- Data Table -->
-    <div class="table-responsive-wrapper" style="border-radius: 16px; border: 1px solid #e2e8f0; background: #fff; box-shadow: 0 10px 30px rgba(0,0,0,0.02); overflow-x: auto;">
+    <div class="table-responsive-wrapper shadow-sm" style="border-radius: 16px; border: 1px solid #e2e8f0; background: #fff; overflow-x: auto;">
         <table class="table table-hover align-middle m-0 text-right" style="font-size:0.82rem;font-family:'Cairo';">
             <thead class="text-white" style="background:#0f172a;">
                 <tr>
-                    <th class="py-3 px-3 text-center" style="width: 5%;">الرمز</th>
-                    <th class="py-3 px-3 text-center" style="width: 8%;">رمز الاختصاص</th>
-                    <th class="py-3 px-3">التسمية العربية</th>
-                    <th class="py-3 px-3">Nom Français</th>
-                    <th class="py-3 px-3 text-center" style="width: 6%;">رقم السداسي</th>
-                    <th class="py-3 px-3 text-center" style="width: 8%;">الفوج / القسم</th>
-                    <th class="py-3 px-3 text-center" style="width: 7%;">بداية التكوين</th>
-                    <th class="py-3 px-3 text-center" style="width: 7%;">نهاية التكوين</th>
-                    <th class="py-3 px-3 text-center" style="width: 6%;">العدد الكلي</th>
-                    <th class="py-3 px-3 text-center" style="width: 5%;">منهم إناث</th>
-                    <th class="py-3 px-3 text-center" style="width: 6%;">قيد التكوين</th>
-                    <th class="py-3 px-3 text-center" style="width: 5%;">منهم إناث</th>
-                    <th class="py-3 px-3 text-center" style="width: 8%;">النمط</th>
-                    <th class="py-3 px-3">المؤسسة التكوينية</th>
-                    <th class="py-3 px-3">الشعبة المهنية</th>
+                    <th class="col-id-offre py-3 px-3 text-center" style="width: 5%;">الرمز</th>
+                    <th class="col-code-spec py-3 px-3 text-center" style="width: 8%;">رمز الاختصاص</th>
+                    <th class="col-nom-ar py-3 px-3">التسمية العربية</th>
+                    <th class="col-nom-fr py-3 px-3">Nom Français</th>
+                    <th class="col-semester py-3 px-3 text-center" style="width: 6%;">رقم السداسي</th>
+                    <th class="col-section py-3 px-3 text-center" style="width: 8%;">الفوج / القسم</th>
+                    <th class="col-date-debut py-3 px-3 text-center" style="width: 7%;">بداية التكوين</th>
+                    <th class="col-date-fin py-3 px-3 text-center" style="width: 7%;">نهاية التكوين</th>
+                    <th class="col-total-inscrits py-3 px-3 text-center" style="width: 6%;">العدد الكلي</th>
+                    <th class="col-femmes-inscrits py-3 px-3 text-center" style="width: 5%;">منهم إناث</th>
+                    <th class="col-total-actifs py-3 px-3 text-center" style="width: 6%;">قيد التكوين</th>
+                    <th class="col-femmes-actifs py-3 px-3 text-center" style="width: 5%;">منهم إناث</th>
+                    <th class="col-mode py-3 px-3 text-center" style="width: 8%;">النمط</th>
+                    <th class="col-etab py-3 px-3">المؤسسة التكوينية</th>
+                    <th class="col-branche py-3 px-3">الشعبة المهنية</th>
                     <th class="py-3 px-3 text-center no-print" style="width: 8%;">إجراءات</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($data as $item)
                     <tr>
-                        <td class="text-center fw-bold text-secondary"><code>{{ $item['id_offre'] }}</code></td>
-                        <td class="text-center fw-bold"><code>{{ $item['code_specialite'] }}</code></td>
-                        <td class="fw-bold text-dark">{{ $item['nom_specialite'] }}</td>
-                        <td style="font-family:'Outfit';font-size:0.78rem;">{{ $item['nom_formation'] }}</td>
-                        <td class="text-center fw-bold">
+                        <td class="col-id-offre text-center fw-bold text-secondary"><code>{{ $item['id_offre'] }}</code></td>
+                        <td class="col-code-spec text-center fw-bold"><code>{{ $item['code_specialite'] }}</code></td>
+                        <td class="col-nom-ar fw-bold text-dark">{{ $item['nom_specialite'] }}</td>
+                        <td class="col-nom-fr" style="font-family:'Outfit';font-size:0.78rem;">{{ $item['nom_formation'] }}</td>
+                        <td class="col-semester text-center fw-bold">
                             <span class="badge rounded-pill bg-light text-dark px-2.5 py-1.5 border" style="font-size:0.75rem;">
                                 السداسي {{ $item['numero_semestre'] }}
                             </span>
                         </td>
-                        <td class="text-center fw-bold text-primary">{{ $item['section_nom'] }}</td>
-                        <td class="text-center text-muted" style="font-size:0.78rem;">{{ $item['date_debut'] ? date('Y/m/d', strtotime($item['date_debut'])) : '—' }}</td>
-                        <td class="text-center text-muted" style="font-size:0.78rem;">{{ $item['date_fin'] ? date('Y/m/d', strtotime($item['date_fin'])) : '—' }}</td>
-                        <td class="text-center fw-bold text-dark fs-6">{{ $item['total_inscrits'] }}</td>
-                        <td class="text-center fw-bold text-secondary">{{ $item['femmes_inscrits'] }}</td>
-                        <td class="text-center fw-bold text-success fs-6">{{ $item['total_actifs'] }}</td>
-                        <td class="text-center fw-bold text-secondary">{{ $item['femmes_actifs'] }}</td>
-                        <td class="text-center fw-semibold">{{ $item['nom_mode_formation'] }}</td>
-                        <td class="text-muted fw-semibold" style="font-size:0.8rem;">{{ $item['nom_etablissement'] }}</td>
-                        <td><span class="badge bg-secondary-light text-secondary rounded-pill px-2.5 py-1.5" style="background:rgba(71,85,105,0.08);">{{ $item['nom_branche'] }}</span></td>
+                        <td class="col-section text-center fw-bold text-primary">{{ $item['section_nom'] }}</td>
+                        <td class="col-date-debut text-center text-muted" style="font-size:0.78rem;">{{ $item['date_debut'] ? date('Y/m/d', strtotime($item['date_debut'])) : '—' }}</td>
+                        <td class="col-date-fin text-center text-muted" style="font-size:0.78rem;">{{ $item['date_fin'] ? date('Y/m/d', strtotime($item['date_fin'])) : '—' }}</td>
+                        <td class="col-total-inscrits text-center fw-bold text-dark fs-6">{{ $item['total_inscrits'] }}</td>
+                        <td class="col-femmes-inscrits text-center fw-bold text-secondary">{{ $item['femmes_inscrits'] }}</td>
+                        <td class="col-total-actifs text-center fw-bold text-success fs-6">{{ $item['total_actifs'] }}</td>
+                        <td class="col-femmes-actifs text-center fw-bold text-secondary">{{ $item['femmes_actifs'] }}</td>
+                        <td class="col-mode text-center fw-semibold">{{ $item['nom_mode_formation'] }}</td>
+                        <td class="col-etab text-muted fw-semibold" style="font-size:0.8rem;">{{ $item['nom_etablissement'] }}</td>
+                        <td class="col-branche"><span class="badge bg-secondary-light text-secondary rounded-pill px-2.5 py-1.5" style="background:rgba(71,85,105,0.08);">{{ $item['nom_branche'] }}</span></td>
                         <td class="text-center no-print">
                             <div class="dropdown">
                                 <button class="btn btn-sm d-inline-flex align-items-center gap-1 px-3 py-1.5 fw-bold" style="font-size:0.78rem;border-radius:20px;background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;" type="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -166,6 +251,20 @@
             </tbody>
         </table>
     </div>
+
+    <!-- Paginator Footer -->
+    <div class="d-flex align-items-center justify-content-between mt-3 px-2 no-print" style="font-family:'Cairo';font-size:0.85rem;">
+        <span class="text-muted fw-semibold">
+            عرض الفوج {{ $data->firstItem() ?? 0 }} إلى {{ $data->lastItem() ?? 0 }} من أصل {{ $data->total() }} فوج بيداغوجي.
+        </span>
+    </div>
+
+    <!-- Pagination Links -->
+    @if(method_exists($data, 'links'))
+        <div class="d-flex justify-content-center my-4 no-print" style="direction:ltr;">
+            {{ $data->links('pagination::bootstrap-4') }}
+        </div>
+    @endif
 </div>
 
 <!-- Trainees Details Modal -->
@@ -225,6 +324,9 @@
     align-items: center;
     font-size: 0.88rem;
 }
+.cursor-pointer {
+    cursor: pointer;
+}
 @media print {
     body { background:#fff !important; }
     .no-print { display:none !important; }
@@ -235,9 +337,10 @@
 </style>
 
 <script>
-    // Execute on page load to filter institutions
+    // Execute on page load
     document.addEventListener("DOMContentLoaded", function() {
         filterEtablissements();
+        setupColumnVisibility();
     });
 
     /**
@@ -268,6 +371,52 @@
         if (!selectedStillVisible && etabSelect.value !== '') {
             etabSelect.value = '';
         }
+    }
+
+    /**
+     * Handles dynamic show/hide of columns and saves selections to localStorage
+     */
+    function setupColumnVisibility() {
+        const checkboxes = document.querySelectorAll('.col-toggle-checkbox');
+        
+        // Load preferences from localStorage
+        const storedPrefs = localStorage.getItem('pedagogical_activities_columns_pref');
+        if (storedPrefs) {
+            const prefs = JSON.parse(storedPrefs);
+            checkboxes.forEach(cb => {
+                const colClass = cb.getAttribute('data-column');
+                if (prefs[colClass] !== undefined) {
+                    cb.checked = prefs[colClass];
+                    toggleColumnDisplay(colClass, prefs[colClass]);
+                }
+            });
+        }
+        
+        // Add event listeners to checkboxes
+        checkboxes.forEach(cb => {
+            cb.addEventListener('change', function() {
+                const colClass = this.getAttribute('data-column');
+                toggleColumnDisplay(colClass, this.checked);
+                
+                // Save updated preferences to localStorage
+                const currentPrefs = {};
+                checkboxes.forEach(item => {
+                    currentPrefs[item.getAttribute('data-column')] = item.checked;
+                });
+                localStorage.setItem('pedagogical_activities_columns_pref', JSON.stringify(currentPrefs));
+            });
+        });
+    }
+
+    function toggleColumnDisplay(colClass, isVisible) {
+        const elements = document.querySelectorAll('.' + colClass);
+        elements.forEach(el => {
+            if (isVisible) {
+                el.style.setProperty('display', '', 'important');
+            } else {
+                el.style.setProperty('display', 'none', 'important');
+            }
+        });
     }
 
     /**
@@ -310,10 +459,10 @@
                 // Group trainees by Wilaya
                 const grouped = {};
                 trainees.forEach(t => {
-                    if (!grouped[t.wilaya_name]) {
-                        grouped[t.wilaya_name] = [];
+                    if (!grouped[t.wilaya_nom]) {
+                        grouped[t.wilaya_nom] = [];
                     }
-                    grouped[t.wilaya_name].push(t);
+                    grouped[t.wilaya_nom].push(t);
                 });
                 
                 // Render HTML Grouped by Wilaya
