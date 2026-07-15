@@ -29,97 +29,101 @@ class PedagogicalActivityReportController extends Controller
      */
     public function index(Request $request)
     {
-        $user = session('user');
-        $role = strtolower($user['role_code'] ?? '');
-        $etabId = (int)($user['etablissement_id'] ?? 0);
-        $dfepId = (int)($user['iddfep'] ?? 0);
+        try {
+            $user = session('user');
+            $role = strtolower($user['role_code'] ?? '');
+            $etabId = (int)($user['etablissement_id'] ?? 0);
+            $dfepId = (int)($user['iddfep'] ?? 0);
 
-        // Fetch filter data for dropdowns
-        $branches = DB::select("SELECT IDBranche as id, Nom as nom FROM branche ORDER BY Nom ASC");
-        
-        $etablissements = [];
-        if (in_array($role, ['admin', 'central', 'ministre'])) {
-            $etablissements = DB::select("SELECT IDetablissement as id, Nom as nom FROM etablissement ORDER BY Nom ASC");
-        } elseif ($role === 'dfep' && $dfepId > 0) {
-            $etablissements = DB::select("SELECT IDetablissement as id, Nom as nom FROM etablissement WHERE IDDFEP = ? ORDER BY Nom ASC", [$dfepId]);
+            // Fetch filter data for dropdowns
+            $branches = DB::select("SELECT IDBranche as id, Nom as nom FROM branche ORDER BY Nom ASC");
+            
+            $etablissements = [];
+            if (in_array($role, ['admin', 'central', 'ministre'])) {
+                $etablissements = DB::select("SELECT IDetablissement as id, Nom as nom FROM etablissement ORDER BY Nom ASC");
+            } elseif ($role === 'dfep' && $dfepId > 0) {
+                $etablissements = DB::select("SELECT IDetablissement as id, Nom as nom FROM etablissement WHERE IDDFEP = ? ORDER BY Nom ASC", [$dfepId]);
+            }
+
+            $modes = DB::select("SELECT IDMode_formation as id, Nom as nom FROM mode_formation ORDER BY Nom ASC");
+
+            // Build data query
+            $query = "
+                SELECT 
+                    s.IDSection AS section_id,
+                    o.IDOffre AS id_offre,
+                    e.Nom AS nom_etablissement,
+                    sp.CodeSpec AS code_specialite,
+                    sp.Nom AS nom_specialite,
+                    sp.NomFr AS nom_formation,
+                    sp.NbrSem AS duree_semestres,
+                    s.Intitule AS section_nom,
+                    COALESCE(ss.NumSem, 1) AS numero_semestre,
+                    ss.DateD AS date_debut,
+                    ss.DateF AS date_fin,
+                    mf.Nom AS nom_mode_formation,
+                    b.Nom AS nom_branche,
+                    -- Trainees stats:
+                    (SELECT COUNT(*) FROM apprenant a WHERE a.IDSection = s.IDSection) AS total_inscrits,
+                    (SELECT COUNT(*) FROM apprenant a JOIN candidat c ON a.IDCandidat = c.IDCandidat WHERE a.IDSection = s.IDSection AND c.sexe = 'F') AS femmes_inscrits,
+                    (SELECT COUNT(*) FROM apprenant a WHERE a.IDSection = s.IDSection AND a.statut = 'actif') AS total_actifs,
+                    (SELECT COUNT(*) FROM apprenant a JOIN candidat c ON a.IDCandidat = c.IDCandidat WHERE a.IDSection = s.IDSection AND a.statut = 'actif' AND c.sexe = 'F') AS femmes_actifs
+                FROM section s
+                JOIN offre o ON s.IDOffre = o.IDOffre
+                LEFT JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
+                LEFT JOIN branche b ON sp.IDBranche = b.IDBranche
+                LEFT JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
+                LEFT JOIN mode_formation mf ON o.IDMode_formation = mf.IDMode_formation
+                LEFT JOIN section_semestre ss ON s.IDSection = ss.IDSection AND ss.IDSection_Semestre = (
+                    SELECT MAX(ss2.IDSection_Semestre) FROM section_semestre ss2 WHERE ss2.IDSection = s.IDSection
+                )
+                WHERE 1=1
+            ";
+
+            $params = [];
+
+            // Role Scoping
+            if ($role === 'dfep' && $dfepId > 0) {
+                $query .= " AND e.IDDFEP = ? ";
+                $params[] = $dfepId;
+            } elseif (in_array($role, ['etablissement', 'directeur', 'employee']) && $etabId > 0) {
+                $query .= " AND o.IDEts_Form = ? ";
+                $params[] = $etabId;
+            }
+
+            // Apply HTML Filters
+            if ($request->filled('etab_id')) {
+                $query .= " AND o.IDEts_Form = ? ";
+                $params[] = (int)$request->etab_id;
+            }
+            if ($request->filled('branche_id')) {
+                $query .= " AND sp.IDBranche = ? ";
+                $params[] = (int)$request->branche_id;
+            }
+            if ($request->filled('mode_id')) {
+                $query .= " AND o.IDMode_formation = ? ";
+                $params[] = (int)$request->mode_id;
+            }
+            if ($request->filled('semester')) {
+                $query .= " AND ss.NumSem = ? ";
+                $params[] = (int)$request->semester;
+            }
+            if ($request->filled('search')) {
+                $q = '%' . $request->search . '%';
+                $query .= " AND (sp.Nom LIKE ? OR sp.CodeSpec LIKE ? OR s.Intitule LIKE ?) ";
+                $params[] = $q;
+                $params[] = $q;
+                $params[] = $q;
+            }
+
+            $query .= " ORDER BY e.Nom ASC, b.Nom ASC, sp.Nom ASC ";
+
+            $data = array_map(fn($item) => (array)$item, DB::select($query, $params));
+
+            return view('admin.reports.pedagogical_activities', compact('data', 'branches', 'etablissements', 'modes', 'user'));
+        } catch (\Throwable $e) {
+            dd($e->getMessage(), $e->getFile(), $e->getLine(), $e->getTraceAsString());
         }
-
-        $modes = DB::select("SELECT IDMode_formation as id, Nom as nom FROM mode_formation ORDER BY Nom ASC");
-
-        // Build data query
-        $query = "
-            SELECT 
-                s.IDSection AS section_id,
-                o.IDOffre AS id_offre,
-                e.Nom AS nom_etablissement,
-                sp.CodeSpec AS code_specialite,
-                sp.Nom AS nom_specialite,
-                sp.NomFr AS nom_formation,
-                sp.NbrSem AS duree_semestres,
-                s.Intitule AS section_nom,
-                COALESCE(ss.NumSem, 1) AS numero_semestre,
-                ss.DateD AS date_debut,
-                ss.DateF AS date_fin,
-                mf.Nom AS nom_mode_formation,
-                b.Nom AS nom_branche,
-                -- Trainees stats:
-                (SELECT COUNT(*) FROM apprenant a WHERE a.IDSection = s.IDSection) AS total_inscrits,
-                (SELECT COUNT(*) FROM apprenant a JOIN candidat c ON a.IDCandidat = c.IDCandidat WHERE a.IDSection = s.IDSection AND c.Civ IN ('أنثى', 'female', '2', 'أنثي')) AS femmes_inscrits,
-                (SELECT COUNT(*) FROM apprenant a WHERE a.IDSection = s.IDSection AND a.statut = 'actif') AS total_actifs,
-                (SELECT COUNT(*) FROM apprenant a JOIN candidat c ON a.IDCandidat = c.IDCandidat WHERE a.IDSection = s.IDSection AND a.statut = 'actif' AND c.Civ IN ('أنثى', 'female', '2', 'أنثي')) AS femmes_actifs
-            FROM section s
-            JOIN offre o ON s.IDOffre = o.IDOffre
-            LEFT JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
-            LEFT JOIN branche b ON sp.IDBranche = b.IDBranche
-            LEFT JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
-            LEFT JOIN mode_formation mf ON o.IDMode_formation = mf.IDMode_formation
-            LEFT JOIN section_semestre ss ON s.IDSection = ss.IDSection AND ss.IDSection_Semestre = (
-                SELECT MAX(ss2.IDSection_Semestre) FROM section_semestre ss2 WHERE ss2.IDSection = s.IDSection
-            )
-            WHERE 1=1
-        ";
-
-        $params = [];
-
-        // Role Scoping
-        if ($role === 'dfep' && $dfepId > 0) {
-            $query .= " AND e.IDDFEP = ? ";
-            $params[] = $dfepId;
-        } elseif (in_array($role, ['etablissement', 'directeur', 'employee']) && $etabId > 0) {
-            $query .= " AND o.IDEts_Form = ? ";
-            $params[] = $etabId;
-        }
-
-        // Apply HTML Filters
-        if ($request->filled('etab_id')) {
-            $query .= " AND o.IDEts_Form = ? ";
-            $params[] = (int)$request->etab_id;
-        }
-        if ($request->filled('branche_id')) {
-            $query .= " AND sp.IDBranche = ? ";
-            $params[] = (int)$request->branche_id;
-        }
-        if ($request->filled('mode_id')) {
-            $query .= " AND o.IDMode_formation = ? ";
-            $params[] = (int)$request->mode_id;
-        }
-        if ($request->filled('semester')) {
-            $query .= " AND ss.NumSem = ? ";
-            $params[] = (int)$request->semester;
-        }
-        if ($request->filled('search')) {
-            $q = '%' . $request->search . '%';
-            $query .= " AND (sp.Nom LIKE ? OR sp.CodeSpec LIKE ? OR s.Intitule LIKE ?) ";
-            $params[] = $q;
-            $params[] = $q;
-            $params[] = $q;
-        }
-
-        $query .= " ORDER BY e.Nom ASC, b.Nom ASC, sp.Nom ASC ";
-
-        $data = array_map(fn($item) => (array)$item, DB::select($query, $params));
-
-        return view('admin.reports.pedagogical_activities', compact('data', 'branches', 'etablissements', 'modes', 'user'));
     }
 
     /**
