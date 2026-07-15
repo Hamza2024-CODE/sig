@@ -61,8 +61,6 @@ $files = [
     'app/Services/KpiCache.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Services/KpiCache.php',
     'app/Services/StatsService.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Services/StatsService.php',
     'app/Helpers/SovereignLicensingHelper.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Helpers/SovereignLicensingHelper.php',
-    'public/test_etab.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/test_etab.php',
-    'public/test_queries.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/test_queries.php',
     'public/pull.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/pull.php'
 ];
 
@@ -75,16 +73,20 @@ foreach ($files as $localPath => $remoteUrl) {
         mkdir($dir, 0755, true);
     }
     
-    $content = @file_get_contents($remoteUrl . '?v=' . time());
-    if ($content !== false) {
-        file_put_contents($fullPath, $content);
-        clearstatcache(true, $fullPath);
-        if (function_exists('opcache_invalidate')) {
-            @opcache_invalidate($fullPath, true);
+    try {
+        $content = @file_get_contents($remoteUrl . '?v=' . time());
+        if ($content !== false) {
+            file_put_contents($fullPath, $content);
+            clearstatcache(true, $fullPath);
+            if (function_exists('opcache_invalidate')) {
+                @opcache_invalidate($fullPath, true);
+            }
+            echo "✓ Updated: $localPath (" . strlen($content) . " bytes)<br>";
+        } else {
+            echo "<span style='color:red;'>✗ Failed to download: $localPath</span><br>";
         }
-        echo "✓ Updated: $localPath (" . strlen($content) . " bytes)<br>";
-    } else {
-        echo "<span style='color:red;'>✗ Failed to download: $localPath</span><br>";
+    } catch (\Throwable $e) {
+        echo "<span style='color:red;'>✗ Exception downloading $localPath: " . $e->getMessage() . "</span><br>";
     }
 }
 
