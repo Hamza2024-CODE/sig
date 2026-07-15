@@ -51,29 +51,28 @@ class PedagogicalActivityReportController extends Controller
             $query = "
                 SELECT 
                     s.IDSection AS section_id,
-                    o.IDOffre AS id_offre,
+                    s.IDOffre AS id_offre,
                     e.Nom AS nom_etablissement,
                     sp.CodeSpec AS code_specialite,
                     sp.Nom AS nom_specialite,
                     sp.NomFr AS nom_formation,
                     sp.NbrSem AS duree_semestres,
-                    s.Intitule AS section_nom,
+                    s.Nom AS section_nom,
                     COALESCE(ss.NumSem, 1) AS numero_semestre,
-                    ss.DateD AS date_debut,
-                    ss.DateF AS date_fin,
+                    s.DateDF AS date_debut,
+                    s.DateFF AS date_fin,
                     mf.Nom AS nom_mode_formation,
                     b.Nom AS nom_branche,
                     -- Trainees stats:
                     (SELECT COUNT(*) FROM apprenant a WHERE a.IDSection = s.IDSection) AS total_inscrits,
-                    (SELECT COUNT(*) FROM apprenant a JOIN candidat c ON a.IDCandidat = c.IDCandidat WHERE a.IDSection = s.IDSection AND c.sexe = 'F') AS femmes_inscrits,
+                    (SELECT COUNT(*) FROM apprenant a JOIN candidat c ON a.IDCandidat = c.IDCandidat WHERE a.IDSection = s.IDSection AND (c.sexe = 'F' OR c.sexe = '2' OR c.sexe = 'أنثى' OR c.sexe = 'أنثي')) AS femmes_inscrits,
                     (SELECT COUNT(*) FROM apprenant a WHERE a.IDSection = s.IDSection AND a.statut = 'actif') AS total_actifs,
-                    (SELECT COUNT(*) FROM apprenant a JOIN candidat c ON a.IDCandidat = c.IDCandidat WHERE a.IDSection = s.IDSection AND a.statut = 'actif' AND c.sexe = 'F') AS femmes_actifs
+                    (SELECT COUNT(*) FROM apprenant a JOIN candidat c ON a.IDCandidat = c.IDCandidat WHERE a.IDSection = s.IDSection AND a.statut = 'actif' AND (c.sexe = 'F' OR c.sexe = '2' OR c.sexe = 'أنثى' OR c.sexe = 'أنثي')) AS femmes_actifs
                 FROM section s
-                JOIN offre o ON s.IDOffre = o.IDOffre
-                LEFT JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
+                LEFT JOIN specialite sp ON s.IDSpecialite = sp.IDSpecialite
                 LEFT JOIN branche b ON sp.IDBranche = b.IDBranche
-                LEFT JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
-                LEFT JOIN mode_formation mf ON o.IDMode_formation = mf.IDMode_formation
+                LEFT JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
+                LEFT JOIN mode_formation mf ON s.IDMode_formation = mf.IDMode_formation
                 LEFT JOIN section_semestre ss ON s.IDSection = ss.IDSection AND ss.IDSection_Semestre = (
                     SELECT MAX(ss2.IDSection_Semestre) FROM section_semestre ss2 WHERE ss2.IDSection = s.IDSection
                 )
@@ -87,13 +86,13 @@ class PedagogicalActivityReportController extends Controller
                 $query .= " AND e.IDDFEP = ? ";
                 $params[] = $dfepId;
             } elseif (in_array($role, ['etablissement', 'directeur', 'employee']) && $etabId > 0) {
-                $query .= " AND o.IDEts_Form = ? ";
+                $query .= " AND s.IDEts_Form = ? ";
                 $params[] = $etabId;
             }
 
             // Apply HTML Filters
             if ($request->filled('etab_id')) {
-                $query .= " AND o.IDEts_Form = ? ";
+                $query .= " AND s.IDEts_Form = ? ";
                 $params[] = (int)$request->etab_id;
             }
             if ($request->filled('branche_id')) {
@@ -101,7 +100,7 @@ class PedagogicalActivityReportController extends Controller
                 $params[] = (int)$request->branche_id;
             }
             if ($request->filled('mode_id')) {
-                $query .= " AND o.IDMode_formation = ? ";
+                $query .= " AND s.IDMode_formation = ? ";
                 $params[] = (int)$request->mode_id;
             }
             if ($request->filled('semester')) {
@@ -110,7 +109,7 @@ class PedagogicalActivityReportController extends Controller
             }
             if ($request->filled('search')) {
                 $q = '%' . $request->search . '%';
-                $query .= " AND (sp.Nom LIKE ? OR sp.CodeSpec LIKE ? OR s.Intitule LIKE ?) ";
+                $query .= " AND (sp.Nom LIKE ? OR sp.CodeSpec LIKE ? OR s.Nom LIKE ?) ";
                 $params[] = $q;
                 $params[] = $q;
                 $params[] = $q;
@@ -140,28 +139,27 @@ class PedagogicalActivityReportController extends Controller
         $query = "
             SELECT 
                 s.IDSection AS section_id,
-                o.IDOffre AS id_offre,
+                s.IDOffre AS id_offre,
                 e.Nom AS nom_etablissement,
                 sp.CodeSpec AS code_specialite,
                 sp.Nom AS nom_specialite,
                 sp.NomFr AS nom_formation,
                 sp.NbrSem AS duree_semestres,
-                s.Intitule AS section_nom,
+                s.Nom AS section_nom,
                 COALESCE(ss.NumSem, 1) AS numero_semestre,
-                ss.DateD AS date_debut,
-                ss.DateF AS date_fin,
+                s.DateDF AS date_debut,
+                s.DateFF AS date_fin,
                 mf.Nom AS nom_mode_formation,
                 b.Nom AS nom_branche,
                 (SELECT COUNT(*) FROM apprenant a WHERE a.IDSection = s.IDSection) AS total_inscrits,
-                (SELECT COUNT(*) FROM apprenant a JOIN candidat c ON a.IDCandidat = c.IDCandidat WHERE a.IDSection = s.IDSection AND c.Civ IN ('أنثى', 'female', '2', 'أنثي')) AS femmes_inscrits,
+                (SELECT COUNT(*) FROM apprenant a JOIN candidat c ON a.IDCandidat = c.IDCandidat WHERE a.IDSection = s.IDSection AND (c.sexe = 'F' OR c.sexe = '2' OR c.sexe = 'أنثى' OR c.sexe = 'أنثي')) AS femmes_inscrits,
                 (SELECT COUNT(*) FROM apprenant a WHERE a.IDSection = s.IDSection AND a.statut = 'actif') AS total_actifs,
-                (SELECT COUNT(*) FROM apprenant a JOIN candidat c ON a.IDCandidat = c.IDCandidat WHERE a.IDSection = s.IDSection AND a.statut = 'actif' AND c.Civ IN ('أنثى', 'female', '2', 'أنثي')) AS femmes_actifs
+                (SELECT COUNT(*) FROM apprenant a JOIN candidat c ON a.IDCandidat = c.IDCandidat WHERE a.IDSection = s.IDSection AND a.statut = 'actif' AND (c.sexe = 'F' OR c.sexe = '2' OR c.sexe = 'أنثى' OR c.sexe = 'أنثي')) AS femmes_actifs
             FROM section s
-            JOIN offre o ON s.IDOffre = o.IDOffre
-            LEFT JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
+            LEFT JOIN specialite sp ON s.IDSpecialite = sp.IDSpecialite
             LEFT JOIN branche b ON sp.IDBranche = b.IDBranche
-            LEFT JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
-            LEFT JOIN mode_formation mf ON o.IDMode_formation = mf.IDMode_formation
+            LEFT JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
+            LEFT JOIN mode_formation mf ON s.IDMode_formation = mf.IDMode_formation
             LEFT JOIN section_semestre ss ON s.IDSection = ss.IDSection AND ss.IDSection_Semestre = (
                 SELECT MAX(ss2.IDSection_Semestre) FROM section_semestre ss2 WHERE ss2.IDSection = s.IDSection
             )
@@ -175,13 +173,13 @@ class PedagogicalActivityReportController extends Controller
             $query .= " AND e.IDDFEP = ? ";
             $params[] = $dfepId;
         } elseif (in_array($role, ['etablissement', 'directeur', 'employee']) && $etabId > 0) {
-            $query .= " AND o.IDEts_Form = ? ";
+            $query .= " AND s.IDEts_Form = ? ";
             $params[] = $etabId;
         }
 
         // Apply HTML Filters
         if ($request->filled('etab_id')) {
-            $query .= " AND o.IDEts_Form = ? ";
+            $query .= " AND s.IDEts_Form = ? ";
             $params[] = (int)$request->etab_id;
         }
         if ($request->filled('branche_id')) {
@@ -189,7 +187,7 @@ class PedagogicalActivityReportController extends Controller
             $params[] = (int)$request->branche_id;
         }
         if ($request->filled('mode_id')) {
-            $query .= " AND o.IDMode_formation = ? ";
+            $query .= " AND s.IDMode_formation = ? ";
             $params[] = (int)$request->mode_id;
         }
         if ($request->filled('semester')) {
@@ -198,7 +196,7 @@ class PedagogicalActivityReportController extends Controller
         }
         if ($request->filled('search')) {
             $q = '%' . $request->search . '%';
-            $query .= " AND (sp.Nom LIKE ? OR sp.CodeSpec LIKE ? OR s.Intitule LIKE ?) ";
+            $query .= " AND (sp.Nom LIKE ? OR sp.CodeSpec LIKE ? OR s.Nom LIKE ?) ";
             $params[] = $q;
             $params[] = $q;
             $params[] = $q;
