@@ -79,6 +79,7 @@ $files = [
     'resources/views/layouts/main.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/layouts/main.blade.php',
     'app/Domains/Academic/Repositories/ApprenantRepository.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Domains/Academic/Repositories/ApprenantRepository.php',
     'public/debug_absences.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/debug_absences.php',
+    'public/view_logs.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/view_logs.php',
     'public/check_section_schema.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/check_section_schema.php',
     'routes/web.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/routes/web.php',
     'public/pull.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/pull.php'
