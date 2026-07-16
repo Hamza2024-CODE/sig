@@ -26,7 +26,14 @@ class OffresRepository
             $row = $wn->fetchColumn();
             if ($row) $name = $row;
         } elseif (in_array($roleCode, ['etablissement', 'directeur']) && $etabId > 0) {
-            $en = $this->db->prepare("SELECT Nom FROM etablissement WHERE IDetablissement = ? LIMIT 1");
+            $en = $this->db->prepare("
+                SELECT w.Nom 
+                FROM wilaya w
+                INNER JOIN dfep d ON d.IDWilayaa = w.IDWilayaa
+                INNER JOIN etablissement e ON e.IDDFEP = d.IDDFEP
+                WHERE e.IDetablissement = ? 
+                LIMIT 1
+            ");
             $en->execute([$etabId]);
             $row = $en->fetchColumn();
             if ($row) $name = $row;

@@ -1,5 +1,6 @@
 <?php
 require __DIR__.'/../vendor/autoload.php';
+ini_set('user_agent', 'PHP');
 $app = require_once __DIR__.'/../bootstrap/app.php';
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
@@ -62,6 +63,7 @@ $files = [
     'app/Http/Controllers/Admin/ApprenantController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/ApprenantController.php',
     'app/Http/Controllers/Admin/ModulesController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/ModulesController.php',
     'app/Domains/Academic/Repositories/CandidatRepository.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Domains/Academic/Repositories/CandidatRepository.php',
+    'app/Domains/Academic/Repositories/OffresRepository.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Domains/Academic/Repositories/OffresRepository.php',
     'public/check_db.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/check_db.php',
     'public/diag_etab_relations.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/diag_etab_relations.php',
     'public/diag_etab_relations2.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/diag_etab_relations2.php',
