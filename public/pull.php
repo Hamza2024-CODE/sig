@@ -57,6 +57,7 @@ echo "<h1>Auto-Updating All Modified Files...</h1>";
 
 $files = [
     'resources/views/layouts/main.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/layouts/main.blade.php',
+    'resources/views/admin/grades/index.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/grades/index.blade.php',
     'app/Http/Controllers/Admin/GradesController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/GradesController.php',
     'app/Helpers/BepGradingHelper.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Helpers/BepGradingHelper.php',
     'public/pull.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/pull.php'

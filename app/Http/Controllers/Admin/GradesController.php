@@ -115,7 +115,7 @@ class GradesController extends Controller
         $bindings = [];
 
         if (request('type') === 'bep') {
-            $whereClauses[] = "e.IDNature_etsF = 7";
+            $whereClauses[] = "o.IDMode_formation = 8";
         }
 
         if ($isMode10) {
@@ -145,6 +145,7 @@ class GradesController extends Controller
                        s.Nom as spec_ar, s.CodeSpec as spec_code,
                        s.NbrSem as duree_semestres,
                        CASE
+                           WHEN o.IDMode_formation = 8 THEN 'BEP'
                            WHEN s.NbrSem >= 5 THEN 'BTS'
                            WHEN s.NbrSem = 4 THEN 'BTS'
                            WHEN s.NbrSem = 3 THEN 'TS'
@@ -184,6 +185,7 @@ class GradesController extends Controller
                        s.Nom as spec_ar, s.CodeSpec as spec_code,
                        s.NbrSem as duree_semestres,
                        CASE
+                           WHEN o.IDMode_formation = 8 THEN 'BEP'
                            WHEN s.NbrSem >= 5 THEN 'BTS'
                            WHEN s.NbrSem = 4 THEN 'BTS'
                            WHEN s.NbrSem = 3 THEN 'TS'
@@ -234,6 +236,13 @@ class GradesController extends Controller
                 $statsFilter .= " AND o.IDMode_formation = 10";
             } else {
                 $statsFilter = "o.IDMode_formation = 10";
+            }
+        }
+        if (request('type') === 'bep') {
+            if ($statsFilter) {
+                $statsFilter .= " AND o.IDMode_formation = 8";
+            } else {
+                $statsFilter = "o.IDMode_formation = 8";
             }
         }
 
@@ -639,9 +648,20 @@ class GradesController extends Controller
 
         // 1. Wilayas
         if (in_array($role, ['admin', 'central', 'high_admin', 'secretaire_general', 'ministre'])) {
-            $wilayas = \Illuminate\Support\Facades\Cache::remember('filter_wilayas', 86400, function() {
-                return array_map(fn($item) => (array)$item, DB::select("SELECT IDDFEP as id, Nom as nom FROM dfep ORDER BY Nom"));
-            });
+            if (request('type') === 'bep') {
+                $wilayas = array_map(fn($item) => (array)$item, DB::select("
+                    SELECT DISTINCT d.IDDFEP as id, d.Nom as nom 
+                    FROM dfep d
+                    JOIN etablissement e ON e.IDDFEP = d.IDDFEP
+                    JOIN offre o ON o.IDEts_Form = e.IDetablissement
+                    WHERE o.IDMode_formation = 8
+                    ORDER BY d.Nom
+                "));
+            } else {
+                $wilayas = \Illuminate\Support\Facades\Cache::remember('filter_wilayas', 86400, function() {
+                    return array_map(fn($item) => (array)$item, DB::select("SELECT IDDFEP as id, Nom as nom FROM dfep ORDER BY Nom"));
+                });
+            }
         } elseif ($role === 'dfep' && $dfepId > 0) {
             $wilayas = array_map(fn($item) => (array)$item, DB::select("SELECT IDDFEP as id, Nom as nom FROM dfep WHERE IDDFEP = ?", [$dfepId]));
         } else {
@@ -663,14 +683,34 @@ class GradesController extends Controller
         $etablissements = [];
         if (in_array($role, ['admin', 'central', 'high_admin', 'secretaire_general', 'ministre'])) {
             if ($selectedWilaya > 0) {
-                $etablissements = \Illuminate\Support\Facades\Cache::remember("filter_etabs_wilaya_{$selectedWilaya}", 3600, function() use ($selectedWilaya) {
-                    return array_map(fn($item) => (array)$item, DB::select("SELECT IDetablissement as id, Nom as nom, IDDFEP FROM etablissement WHERE IDDFEP = ? ORDER BY Nom", [$selectedWilaya]));
-                });
+                if (request('type') === 'bep') {
+                    $etablissements = array_map(fn($item) => (array)$item, DB::select("
+                        SELECT DISTINCT e.IDetablissement as id, e.Nom as nom, e.IDDFEP 
+                        FROM etablissement e
+                        JOIN offre o ON o.IDEts_Form = e.IDetablissement
+                        WHERE e.IDDFEP = ? AND o.IDMode_formation = 8
+                        ORDER BY e.Nom
+                    ", [$selectedWilaya]));
+                } else {
+                    $etablissements = \Illuminate\Support\Facades\Cache::remember("filter_etabs_wilaya_{$selectedWilaya}", 3600, function() use ($selectedWilaya) {
+                        return array_map(fn($item) => (array)$item, DB::select("SELECT IDetablissement as id, Nom as nom, IDDFEP FROM etablissement WHERE IDDFEP = ? ORDER BY Nom", [$selectedWilaya]));
+                    });
+                }
             }
         } elseif ($role === 'dfep' && $dfepId > 0) {
-            $etablissements = \Illuminate\Support\Facades\Cache::remember("filter_etabs_wilaya_{$dfepId}", 3600, function() use ($dfepId) {
-                return array_map(fn($item) => (array)$item, DB::select("SELECT IDetablissement as id, Nom as nom, IDDFEP FROM etablissement WHERE IDDFEP = ? ORDER BY Nom", [$dfepId]));
-            });
+            if (request('type') === 'bep') {
+                $etablissements = array_map(fn($item) => (array)$item, DB::select("
+                    SELECT DISTINCT e.IDetablissement as id, e.Nom as nom, e.IDDFEP 
+                    FROM etablissement e
+                    JOIN offre o ON o.IDEts_Form = e.IDetablissement
+                    WHERE e.IDDFEP = ? AND o.IDMode_formation = 8
+                    ORDER BY e.Nom
+                ", [$dfepId]));
+            } else {
+                $etablissements = \Illuminate\Support\Facades\Cache::remember("filter_etabs_wilaya_{$dfepId}", 3600, function() use ($dfepId) {
+                    return array_map(fn($item) => (array)$item, DB::select("SELECT IDetablissement as id, Nom as nom, IDDFEP FROM etablissement WHERE IDDFEP = ? ORDER BY Nom", [$dfepId]));
+                });
+            }
         } else {
             if ($etabId > 0) {
                 $etablissements = array_map(fn($item) => (array)$item, DB::select("SELECT IDetablissement as id, Nom as nom, IDDFEP FROM etablissement WHERE IDetablissement = ?", [$etabId]));
