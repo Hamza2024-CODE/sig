@@ -1017,8 +1017,8 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
                                     <a href="{{ url('dashboard/inscriptions') }}" class="sidebar-subitem {{ $isActive('/dashboard/inscriptions') }}" title="التوجيه للأقسام البيداغوجية"><i class="fa-solid fa-user-plus"></i> <span>التوجيه للأقسام</span></a>
                                 @endif
                                 @if (in_array($dept, ['general', 'pedagogie', 'apprentissage']))
-                                    <a href="{{ url('dashboard/apprenants') }}" class="sidebar-subitem {{ $isActive('/dashboard/apprenants') }}" title="إدارة المتربصين النشطين"><i class="fa-solid fa-user-graduate"></i> <span>إدارة المتربصين النشطين</span></a>
-                                    <a href="{{ url('dashboard/reconduits') }}" class="sidebar-subitem {{ $isActive('/dashboard/reconduits') }}" title="تجديد وضعية المتربصين المستمرين"><i class="fa-solid fa-users-viewfinder"></i> <span>تجديد وضعية المتربصين</span></a>
+                                    <a href="{{ url('dashboard/apprenants') }}" class="sidebar-subitem {{ $isActive('/dashboard/apprenants') }}" title="المتربصين الجدد"><i class="fa-solid fa-user-graduate"></i> <span>المتربصين الجدد</span></a>
+                                    <a href="{{ url('dashboard/reconduits') }}" class="sidebar-subitem {{ $isActive('/dashboard/reconduits') }}" title="المتربصين المستمرين"><i class="fa-solid fa-users-viewfinder"></i> <span>المتربصين المستمرين</span></a>
                                     <a href="{{ url('dashboard/reconduits/transfers') }}" class="sidebar-subitem {{ $isActive('/dashboard/reconduits/transfers') }}" title="طلبات تحويل المتربصين بين المؤسسات"><i class="fa-solid fa-arrows-spin text-warning"></i> <span>تحويل المتربصين</span></a>
                                 @endif
                                 @if (in_array($dept, ['general', 'diplomes', 'pedagogie']) && in_array($roleCode, ['admin', 'dfep', 'central', 'high_admin', 'secretaire_general', 'ministre']))
