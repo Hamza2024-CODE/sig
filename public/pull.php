@@ -66,6 +66,12 @@ $files = [
     'public/test_filter.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/test_filter.php',
     'public/find.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/find.php',
     'public/debug_apprenants.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/debug_apprenants.php',
+    'app/Services/KpiCache.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Services/KpiCache.php',
+    'app/Http/Controllers/DashboardController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/DashboardController.php',
+    'resources/views/dashboard/index.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/dashboard/index.blade.php',
+    'public/check_eval.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/check_eval.php',
+    'app/Http/Controllers/Evaluation/EvaluationController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Evaluation/EvaluationController.php',
+    'resources/views/admin/modules/gestion_evaluations.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/modules/gestion_evaluations.blade.php',
     'public/pull.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/pull.php'
 ];
 
