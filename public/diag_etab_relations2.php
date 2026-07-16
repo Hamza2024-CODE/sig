@@ -17,19 +17,15 @@ try {
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
     ]);
 
-    // 1. Get columns of 'offre' table
-    $offre_cols = array_column($pdo->query("DESCRIBE offre")->fetchAll(), 'Field');
+    // 1. Get columns of 'etablissement' table
+    $etab_cols = array_column($pdo->query("DESCRIBE etablissement")->fetchAll(), 'Field');
 
-    // 2. Query some offers for etab 1301 to see what fields are populated (like IDEts_Form, DeIDetablissementRatache, DeIDetablissementRatacheInsfp, etc.)
-    $offers_1301 = $pdo->query("SELECT IDOffre, IDSpecialite, IDEts_Form, DeIDetablissementRatache, DeIDetablissementRatacheInsfp, IDDFEP, NomEtsAnnexe FROM offre WHERE IDEts_Form = 1301 LIMIT 5")->fetchAll();
-    
-    // 3. Let's see what is stored in DeIDetablissementRatache and DeIDetablissementRatacheInsfp for El Tadj El Azrak (1301)
-    $etab1301 = $pdo->query("SELECT IDetablissement, Nom, IDEts_Form, DeIDetablissementRatache, DeIDetablissementRatacheInsfp, IDDFEP FROM etablissement WHERE IDetablissement = 1301")->fetch();
+    // 2. Query Etablissement 1301 details using only safe columns
+    $etab1301 = $pdo->query("SELECT IDetablissement, Nom, NomFr, IDEts_Form, IDDFEP FROM etablissement WHERE IDetablissement = 1301")->fetch();
 
     echo json_encode([
         'status' => 'success',
-        'offre_cols' => $offre_cols,
-        'offers_1301' => $offers_1301,
+        'etab_cols' => $etab_cols,
         'etab1301' => $etab1301
     ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 
