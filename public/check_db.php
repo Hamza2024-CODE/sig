@@ -10,35 +10,35 @@ use Illuminate\Support\Facades\DB;
 header('Content-Type: application/json; charset=utf-8');
 
 try {
-    // Get Etablissement along with nature_id
-    $etab = DB::select("
-        SELECT e.IDetablissement, e.Nom, n.IDNature as nature_id, n.Nom as nature_nom
-        FROM etablissement e
-        INNER JOIN nature_etsf n ON e.IDNature_etsF = n.IDNature_etsF
-        WHERE e.IDetablissement = 1301
-    ");
+    // 1. Get Etablissement 1301 details
+    $etab = DB::select("SELECT IDetablissement, IDDFEP, Nom FROM etablissement WHERE IDetablissement = 1301");
 
+    // 2. Query dfep for IDDFEP = 19
+    $dfep_19 = DB::select("SELECT * FROM dfep WHERE IDDFEP = 19");
+
+    // 3. Query dfep for etablissement's IDDFEP
+    $dfep_etab = [];
     if (count($etab) > 0) {
-        $natureId = $etab[0]->nature_id;
-        
-        // Find matching utilisateur records for this nature_id
-        $users = DB::select("
-            SELECT IDUtilisateur, NomUser, Nom, MotPass, IDBureau, IDNature 
-            FROM utilisateur 
-            WHERE IDNature = ?
-        ", [$natureId]);
-        
-        echo json_encode([
-            'status' => 'success',
-            'etab' => $etab[0],
-            'users' => $users
-        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-    } else {
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'Etablissement 1301 not found or has no matching Nature_etsF'
-        ]);
+        $dfep_etab = DB::select("SELECT * FROM dfep WHERE IDDFEP = ?", [$etab[0]->IDDFEP]);
     }
+
+    // 4. Query wilaya where IDWilayaa = 19
+    $wilaya_19 = DB::select("SELECT * FROM wilaya WHERE IDWilayaa = 19");
+
+    // 5. Query wilaya for the dfep's IDWilayaa
+    $wilaya_dfep = [];
+    if (count($dfep_etab) > 0) {
+        $wilaya_dfep = DB::select("SELECT * FROM wilaya WHERE IDWilayaa = ?", [$dfep_etab[0]->IDWilayaa]);
+    }
+
+    echo json_encode([
+        'status' => 'success',
+        'etab' => $etab,
+        'dfep_19' => $dfep_19,
+        'dfep_etab' => $dfep_etab,
+        'wilaya_19' => $wilaya_19,
+        'wilaya_dfep' => $wilaya_dfep
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 
 } catch (\Throwable $e) {
     echo json_encode([
