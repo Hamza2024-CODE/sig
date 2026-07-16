@@ -227,6 +227,9 @@
                                     <td>
                                         <!-- المؤسسة المستقبلة -->
                                         <span class="d-block fw-semibold text-secondary" style="font-size: 0.85rem;"><i class="fa-solid fa-building-user text-muted me-1"></i> <?= htmlspecialchars($c['etab_nom'] ?? '-') ?></span>
+                                        <?php if (!empty($c['session_nom'])): ?>
+                                            <small class="text-muted d-block" style="font-size: 0.78rem;"><i class="fa-solid fa-calendar-days text-muted me-1"></i> <?= htmlspecialchars($c['session_nom']) ?></small>
+                                        <?php endif; ?>
                                     </td>
                                     <td>
                                         <span class="badge bg-light text-dark px-3 py-2 fw-semibold" style="font-size: 0.85rem;"><?= htmlspecialchars($c['specialite_ar']) ?></span>

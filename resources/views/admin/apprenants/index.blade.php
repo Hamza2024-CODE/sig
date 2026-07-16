@@ -685,13 +685,13 @@ function viewStudentDetails(id) {
                     <!-- Photo and Primary Details -->
                     <div class="col-md-4 text-center border-start">
                         <div class="mb-3">
-                            <img src="${photoUrl}" class="rounded-circle img-thumbnail shadow-sm" style="width:140px; height:140px; object-fit:cover;" onerror="if(this.src && !this.src.includes('/public/uploads/') && this.src.includes('/uploads/')){ this.src = this.src.replace('/uploads/', '/public/uploads/'); } else { this.src='/sig/assets/images/default-avatar.png'; }">
+                            <img src="${photoUrl}" class="rounded-circle img-thumbnail shadow-sm" style="width:140px; height:140px; object-fit:cover;" onerror="if(this.src && !this.src.includes('/public/uploads/') && this.src.includes('/uploads/')){ this.src = this.src.replace('/uploads/', '/public/uploads/'); } else { this.src='${base}/assets/images/default-avatar.png'; }">
                             ${photoActionHtml}
                         </div>
                         <h5 class="fw-bold text-primary mb-1">${data.nom_ar || ''} ${data.prenom_ar || ''}</h5>
                         <p class="text-muted small text-uppercase mb-2 font-monospace">${data.prenom_fr || ''} ${data.nom_fr || ''}</p>
                         <span class="badge rounded-pill bg-light text-dark px-3 py-1.5 fw-bold mb-3" style="font-size:0.8rem;">
-                            رقم التسجيل: ${data.Nccp || '—'}
+                            رقم التسجيل: ${data.num_ins || '—'}
                         </span>
                         
                         <div class="p-3 bg-light rounded text-start small text-right">

@@ -55,7 +55,8 @@ class CandidatRepository
                    c.Validation, c.Obs as motif_refus,
                    o.IDMode_formation as mode_formation,
                    s.Nom as specialite_ar,
-                   ef.Nom as etab_nom
+                   ef.Nom as etab_nom,
+                   sess.Nom as session_nom
             FROM candidat c
             JOIN offre o ON c.IDOffre = o.IDOffre
             JOIN specialite s ON o.IDSpecialite = s.IDSpecialite
@@ -112,7 +113,8 @@ class CandidatRepository
                        c.Validation, c.Obs as motif_refus,
                        o.IDMode_formation as mode_formation,
                        s.Nom as specialite_ar,
-                       ef.Nom as etab_nom
+                       ef.Nom as etab_nom,
+                       sess.Nom as session_nom
                 FROM candidat c
                 JOIN offre o ON c.IDOffre = o.IDOffre
                 JOIN specialite s ON o.IDSpecialite = s.IDSpecialite
