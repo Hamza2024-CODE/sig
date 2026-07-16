@@ -1125,6 +1125,20 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
                 </div>
             @endif
 
+            @if(in_array($roleCode, ['admin', 'central', 'high_admin']) || (int)($user['IDNature_etsF'] ?? 0) === 7 || (int)($user['IDNature_etsF'] ?? 0) === 12 || strtoupper($user['direction_code'] ?? $user['username'] ?? '') === 'DEOH')
+            <!-- نمط التعليم المهني (حصرياً) -->
+            <div class="sidebar-dropdown">
+                <button type="button" class="sidebar-item {{ ($isActive('/dashboard/grades') && request('type') === 'bep') ? 'active' : '' }}" onclick="toggleSidebarDropdown(this)" title="نمط التعليم المهني (حصرياً)">
+                    <i class="fa-solid fa-book-bookmark text-success"></i>
+                    <span>نمط التعليم المهني (حصرياً)</span>
+                    <i class="fa-solid fa-chevron-down ms-auto dropdown-chevron" style="font-size: 0.7rem;"></i>
+                </button>
+                <div class="sidebar-submenu {{ ($isActive('/dashboard/grades') && request('type') === 'bep') ? 'open' : '' }}">
+                    <a href="{{ url('dashboard/grades?type=bep') }}" class="sidebar-subitem {{ (request('type') === 'bep') ? 'active' : '' }}" title="مداولات التعليم المهني"><i class="fa-solid fa-graduation-cap text-success"></i> <span>مداولات التعليم المهني</span></a>
+                </div>
+            </div>
+            @endif
+
             <!-- Category: Discipline & Physical Services -->
             @if (($hasPerm('discipline') || $hasPerm('repas') || $hasPerm('documents') || $roleCode === 'dfep') && !$isDfmUser && !$isDrhUser && !$isDepUser && !$isDeohUser)
                 <div class="sidebar-dropdown">
