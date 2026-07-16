@@ -64,6 +64,7 @@ $files = [
     'app/Domains/Academic/Repositories/CandidatRepository.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Domains/Academic/Repositories/CandidatRepository.php',
     'public/check_db.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/check_db.php',
     'public/get_relations.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/get_relations.php',
+    'public/diag_priv.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/diag_priv.php',
     'public/check_trainees.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/check_trainees.php',
     'public/test_filter.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/test_filter.php',
     'public/find.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/find.php',
