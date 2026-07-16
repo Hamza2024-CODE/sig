@@ -138,6 +138,9 @@ Route::middleware('check.session')->group(function () {
     Route::middleware(['activation.check', 'mfa.check'])->group(function () {
 
         // ── Profil ────────────────────────────────────────────────────────────
+    Route::get('/debug-my-session', function() {
+        return response()->json(session('user'));
+    });
     Route::get('/dashboard/profile',         [ProfileController::class, 'index']);
     Route::post('/dashboard/profile/update', [ProfileController::class, 'update']);
 
