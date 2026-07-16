@@ -430,7 +430,7 @@ class LoginController extends Controller
  
                         // If not matched, check if it's the Apprenticeship Head's personal code
                         if (!$isSecretCodeValid) {
-                            $etabId = $etab['IDEts_Form'] ?? $etab['IDetablissement'];
+                            $etabId = $etab['IDetablissement'];
                             $empHead = DB::table('encadrement')
                                 ->where(function($q) use ($etabId) {
                                     $q->where('IDEts_Form', $etabId)
@@ -513,7 +513,7 @@ class LoginController extends Controller
                             'username'         => $matchedUtilisateur ? strtolower($matchedUtilisateur['NomUser']) : $etab['nomUser'],
                             'nom_complet'      => $matchedUtilisateur ? $matchedUtilisateur['Nom'] : ($etab['Nom'] ?? $etab['nomUser']),
                             // etablissement_id stores the academic ID (IDEts_Form) to correctly query academic data (offre, apprenant, etc.)
-                            'etablissement_id' => $etab['IDEts_Form'] ?? $etab['IDetablissement'],
+                            'etablissement_id' => $etab['IDetablissement'],
                             // profile_etab_id/idetablissement stores the account ID (IDetablissement) to load the profile and modify profile details
                             'profile_etab_id'  => $etab['IDetablissement'],
                             'idetablissement'  => $etab['IDetablissement'],
@@ -1487,7 +1487,7 @@ class LoginController extends Controller
 
                     // If not matched, check if it's the Apprenticeship Head's personal code
                     if (!$isSecretCodeValid) {
-                        $etabId = $etab['IDEts_Form'] ?? $etab['IDetablissement'];
+                        $etabId = $etab['IDetablissement'];
                         $empHead = DB::table('encadrement')
                             ->where(function($q) use ($etabId) {
                                 $q->where('IDEts_Form', $etabId)
@@ -1512,7 +1512,7 @@ class LoginController extends Controller
                 ]);
 
                 if ($isEtabPasswordValid && $isSecretCodeValid) {
-                    $etabId = $etab['IDEts_Form'] ?? $etab['IDetablissement'];
+                    $etabId = $etab['IDetablissement'];
                     $officeUsername = $matchedUtilisateur ? strtolower($matchedUtilisateur['NomUser']) : '';
 
                     // Find the head of this department dynamically
