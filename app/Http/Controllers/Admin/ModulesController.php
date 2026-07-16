@@ -260,7 +260,7 @@ class ModulesController extends Controller {
             $stmtStats = $this->db->prepare("
                 SELECT COUNT(*) as total,
                        SUM(CASE WHEN c.Validation = 1 THEN 1 ELSE 0 END) as acceptes,
-                       SUM(CASE WHEN c.Validation = 0 THEN 1 ELSE 0 END) as en_attente,
+                       SUM(CASE WHEN c.Validation = 0 OR c.Validation IS NULL THEN 1 ELSE 0 END) as en_attente,
                        SUM(CASE WHEN c.Validation = 2 THEN 1 ELSE 0 END) as refuses
                 $countJoin
                 WHERE $ofWhere
@@ -273,15 +273,22 @@ class ModulesController extends Controller {
             $stats['en_attente'] = (int)($resStats['en_attente'] ?? 0);
             $stats['refuses']    = (int)($resStats['refuses'] ?? 0);
 
-            // قاعدة الأعمال: المسجلون = الناشطون = المستمرون = تم توجيههم وقبولهم
-            // Business rule: all registered candidats are considered directed & accepted.
-            // The Validation column in WinDev data is not reliably set for bulk imports,
-            // so we treat total_inscrits as the canonical count for all statuses.
+            // Compute actual counts of oriented candidates (Accepted candidates who have an apprenant section set)
+            $stmtOri = $this->db->prepare("
+                SELECT COUNT(DISTINCT c.IDCandidat)
+                FROM candidat c
+                LEFT JOIN offre o ON c.IDOffre = o.IDOffre
+                LEFT JOIN etablissement ef ON o.IDEts_Form = ef.IDetablissement
+                LEFT JOIN session sess ON o.IDSession = sess.IDSession
+                LEFT JOIN semestre_formation sf ON sess.IDSemestre_formation = sf.IDSemestre_formation
+                INNER JOIN apprenant a ON c.IDCandidat = a.IDCandidat
+                WHERE $ofWhere AND c.Validation = 1 AND a.IDSection > 0
+            ");
+            $stmtOri->execute($params);
+            $stats['orientes'] = (int)$stmtOri->fetchColumn();
             $stats['total_candidats'] = $stats['total'];
-            $stats['orientes']        = $stats['total'];  // all registered = directed/accepted
-            $stats['en_attente']      = 0;               // no backlog — all are considered accepted
 
-            $totalPages = max(1, (int)ceil($stats['total'] / $limit));
+            $totalPages = max(1, (int)ceil($stats['acceptes'] / $limit));
             $page = min($page, $totalPages);
             $offset = ($page - 1) * $limit;
 
@@ -304,7 +311,7 @@ class ModulesController extends Controller {
                            ef.Nom as etab_nom, ef.NomFr as etab_fr,
                            IFNULL(c.NumIns, c.IDCandidat) as numero_inscription,
                            CASE c.Validation WHEN 0 THEN 'en_attente' WHEN 1 THEN 'valide' ELSE 'rejete' END as statut_dossier
-                    $joinBase WHERE $ofWhere
+                    $joinBase WHERE $ofWhere AND c.Validation = 1
                     ORDER BY c.IDCandidat DESC
                     LIMIT ? OFFSET ?";
 
