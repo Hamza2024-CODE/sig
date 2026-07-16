@@ -895,7 +895,7 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
                         </div>
                     </div>
 
-                    @if(in_array($role, ['admin', 'central', 'high_admin']) || (int)($user['IDNature_etsF'] ?? 0) === 7 || strtoupper($user['direction_code'] ?? $user['username'] ?? '') === 'DEOH')
+                    @if(in_array($role, ['admin', 'central', 'high_admin']) || (int)($user['nature_id'] ?? 0) === 7 || (int)($user['nature_id'] ?? 0) === 12 || strtoupper($user['direction_code'] ?? $user['username'] ?? '') === 'DEOH')
                     <!-- نمط التعليم المهني (حصرياً) -->
                     <div class="sidebar-dropdown">
                         <button type="button" class="sidebar-item {{ ($isActive('/dashboard/grades') && request('type') === 'bep') ? 'active' : '' }}" onclick="toggleSidebarDropdown(this)" title="نمط التعليم المهني (حصرياً)">
