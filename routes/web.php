@@ -527,6 +527,8 @@ Route::middleware('check.session')->group(function () {
     Route::get('/dashboard/examens', [\App\Http\Controllers\Evaluation\EvaluationController::class, 'examens'])->name('evaluation.examens');
     Route::get('/dashboard/gestion-evaluations', [\App\Http\Controllers\Evaluation\EvaluationController::class, 'gestionEvaluations'])->name('evaluation.gestion');
     Route::post('/dashboard/gestion-evaluations/store', [\App\Http\Controllers\Evaluation\EvaluationController::class, 'storeInspection'])->name('evaluation.gestion.store');
+    Route::get('/dashboard/gestion-evaluations/inspecteurs', [\App\Http\Controllers\Evaluation\EvaluationController::class, 'listInspecteurs'])->name('evaluation.inspecteurs');
+    Route::get('/dashboard/gestion-evaluations/inspecteurs/details', [\App\Http\Controllers\Evaluation\EvaluationController::class, 'detailsInspecteur'])->name('evaluation.inspecteurs.details');
     Route::get('/dashboard/evaluation-finale', [\App\Http\Controllers\Evaluation\EvaluationController::class, 'evalFinale'])->name('evaluation.finale');
 
     // ── Schedule / Emplois du Temps ────────────────────────────────────────

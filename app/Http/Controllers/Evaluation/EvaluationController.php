@@ -588,4 +588,112 @@ class EvaluationController extends Controller {
             'selected_year' => $filterData['selected_year'],
         ]);
     }
+
+    public function listInspecteurs() {
+        $this->authorizeRole(['admin', 'dfep', 'central', 'etablissement', 'directeur', 'high_admin', 'secretaire_general', 'ministre']);
+        
+        $filterData = $this->buildAdvancedFilter('s');
+        $filter = $filterData['sql'];
+        $params = $filterData['params'];
+
+        $cacheKey = 'inspecteurs_list_' . md5($filter . serialize($params));
+
+        $list = \Illuminate\Support\Facades\Cache::remember($cacheKey, 900, function() use ($filter, $params) {
+            try {
+                $stmt = $this->db->prepare("
+                    SELECT 
+                        mpv.NomPrenom as name,
+                        mpv.NomFonction as rank,
+                        COUNT(DISTINCT mpv.IDSection) as count_inspections,
+                        COALESCE(GROUP_CONCAT(DISTINCT d.Nom SEPARATOR '، '), 'كل الولايات') as wilayas,
+                        ROUND(AVG(af.MoyGen), 2) as average_grade
+                    FROM membrepvfinal mpv
+                    JOIN section s ON mpv.IDSection = s.IDSection
+                    JOIN section_semestre ss ON s.IDSection = ss.IDSection
+                    LEFT JOIN apprenant_fin af ON ss.IDSection_Semestre = af.IDSection_Semestre
+                    LEFT JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
+                    LEFT JOIN dfep d ON e.IDDFEP = d.IDDFEP
+                    WHERE (mpv.NomFonction LIKE '%مفتش%' OR mpv.NomFonction LIKE '%inspecteur%')
+                      AND $filter
+                    GROUP BY mpv.NomPrenom, mpv.NomFonction
+                    ORDER BY count_inspections DESC
+                ");
+                $stmt->execute($params);
+                return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            } catch (\Exception $e) {
+                error_log("Error in listInspecteurs: " . $e->getMessage());
+                return [];
+            }
+        });
+
+        return $this->render('admin/modules/inspecteurs_index', [
+            'title' => 'سجل المفتشين والزيارات التفتيشية / Inspecteurs',
+            'list' => $list
+        ]);
+    }
+
+    public function detailsInspecteur(\Illuminate\Http\Request $request) {
+        $this->authorizeRole(['admin', 'dfep', 'central', 'etablissement', 'directeur', 'high_admin', 'secretaire_general', 'ministre']);
+        
+        $name = $request->query('name');
+        if (empty($name)) {
+            return redirect()->route('evaluation.inspecteurs')->with('error', 'اسم المفتش غير محدد.');
+        }
+
+        $cacheKey = 'inspecteur_details_' . md5($name);
+
+        $data = \Illuminate\Support\Facades\Cache::remember($cacheKey, 900, function() use ($name) {
+            try {
+                $stmt = $this->db->prepare("
+                    SELECT 
+                        s.IDSection as id,
+                        s.Nom as section_nom,
+                        et.Nom as etab_nom,
+                        sp.Nom as spec_ar,
+                        sess.Nom as session_nom,
+                        COUNT(af.IDapprenant) as total_students,
+                        COUNT(CASE WHEN af.MoyGen >= 10 THEN 1 END) as admitted_students,
+                        ROUND(AVG(af.MoyGen), 2) as average_note,
+                        mpv.NomFonction as inspector_rank,
+                        COALESCE(
+                            (SELECT GROUP_CONCAT(CONCAT(QualiteMembre, ': ', NomPrenom) SEPARATOR ' | ') 
+                             FROM membrepvfinal mpv2 
+                             WHERE mpv2.IDSection = s.IDSection AND mpv2.NomPrenom != ?),
+                            'لجنة بيداغوجية مشتركة'
+                        ) as other_members
+                    FROM membrepvfinal mpv
+                    JOIN section s ON mpv.IDSection = s.IDSection
+                    JOIN section_semestre ss ON s.IDSection = ss.IDSection
+                    LEFT JOIN apprenant_fin af ON ss.IDSection_Semestre = af.IDSection_Semestre
+                    LEFT JOIN offre o ON s.IDOffre = o.IDOffre
+                    LEFT JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
+                    LEFT JOIN etablissement et ON s.IDEts_Form = et.IDetablissement
+                    LEFT JOIN session sess ON s.IDSession = sess.IDSession
+                    WHERE mpv.NomPrenom = ?
+                    GROUP BY s.IDSection, s.Nom, et.Nom, sp.Nom, sess.Nom, mpv.NomFonction
+                    ORDER BY s.IDSection DESC
+                ");
+                $stmt->execute([$name, $name]);
+                $visits = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                // Inspector info
+                $info = [
+                    'name' => $name,
+                    'rank' => count($visits) > 0 ? $visits[0]['inspector_rank'] : 'مفتش المقاطعة',
+                    'count' => count($visits)
+                ];
+
+                return compact('visits', 'info');
+            } catch (\Exception $e) {
+                error_log("Error in detailsInspecteur: " . $e->getMessage());
+                return ['visits' => [], 'info' => ['name' => $name, 'rank' => 'مفتش المقاطعة', 'count' => 0]];
+            }
+        });
+
+        return $this->render('admin/modules/inspecteur_details', [
+            'title' => 'تفاصيل زيارات المفتش / ' . $name,
+            'visits' => $data['visits'],
+            'info' => $data['info']
+        ]);
+    }
 }

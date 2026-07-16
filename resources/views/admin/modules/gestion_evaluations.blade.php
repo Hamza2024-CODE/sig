@@ -23,6 +23,7 @@
             <p class="text-muted mb-0 small">تنظيم الزيارات الميدانية للمفتشين البيداغوجيين، المحاضر المشتركة، ورقابة الجودة</p>
         </div>
         <div class="d-flex gap-2">
+            <a href="{{ route('evaluation.inspecteurs') }}" class="btn btn-outline-primary rounded-pill px-4 fw-bold shadow-sm" style="border-color: #643edb; color: #643edb;"><i class="fa-solid fa-user-shield me-2"></i> دليل المفتشين والزيارات</a>
             <button class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#addInspectionModal" style="background: linear-gradient(135deg, #482b8f 0%, #643edb 100%); border: none;"><i class="fa-solid fa-file-invoice me-2"></i> إدراج تقرير تفتيش</button>
         </div>
     </div>
