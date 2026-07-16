@@ -344,46 +344,7 @@ final class KpiCache
 
     private static function getEtabScopeIds(int $etabId): array
     {
-        $ids = [$etabId];
-        try {
-            // Get establishment details (IDEts_Form and DeIDetablissementRatache for private institutions)
-            $etabRow = DB::table('etablissement')
-                ->where('IDetablissement', $etabId)
-                ->select('IDEts_Form', 'DeIDetablissementRatache', 'DeIDetablissementRatacheInsfp')
-                ->first();
-
-            if ($etabRow) {
-                $parentId    = (int)($etabRow->IDEts_Form ?? 0);
-                $ratacheId   = (int)($etabRow->DeIDetablissementRatache ?? 0);
-                $ratacheInsfp = (int)($etabRow->DeIDetablissementRatacheInsfp ?? 0);
-
-                // For private institutions linked to a public center (IDEts_Form > 0):
-                // Check if sections (student data) exist under own ID.
-                // Khotwa (1096) has 7 offers but 0 sections/apprenants under its own ID.
-                // Sections are the reliable indicator of where actual student data lives.
-                $hasOwnSections = $parentId > 0 && $parentId !== $etabId
-                    ? DB::table('section')->where('IDEts_Form', $etabId)->exists()
-                    : true; // public institution always has own data
-
-                if (!$hasOwnSections) {
-                    // Private institution with no own offers → include all related IDs
-                    if ($parentId > 0 && $parentId !== $etabId) $ids[] = $parentId;
-                    if ($ratacheId > 0 && $ratacheId !== $etabId) $ids[] = $ratacheId;
-                    if ($ratacheInsfp > 0 && $ratacheInsfp !== $etabId) $ids[] = $ratacheInsfp;
-                }
-                // If private institution HAS own offers (like Taj 1301), use only own ID.
-                // This prevents mixing data from parent centers in other wilayas.
-            }
-
-            // Always include all direct sub-branches of this establishment.
-            $branches = DB::table('etablissement')
-                ->where('IDEts_Form', $etabId)
-                ->pluck('IDetablissement')
-                ->toArray();
-            $ids = array_merge($ids, $branches);
-
-        } catch (\Throwable $e) {}
-        return array_unique(array_filter($ids));
+        return \App\Support\EtablissementScope::resolve($etabId);
     }
 
     private static function computeEtabKpis(int $etabId): array

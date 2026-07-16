@@ -62,8 +62,14 @@ class OffresService
         $scopeParams = [];
 
         if (in_array($roleCode, ['etablissement', 'directeur', 'formateur']) && $etabId > 0) {
-            $whereConditions[] = "o.IDEts_Form = ?";
-            $scopeParams[] = $etabId;
+            $etabIds = \App\Support\EtablissementScope::resolve($etabId);
+            if (empty($etabIds)) {
+                $whereConditions[] = "1=0";
+            } else {
+                $placeholders = implode(',', array_fill(0, count($etabIds), '?'));
+                $whereConditions[] = "o.IDEts_Form IN ($placeholders)";
+                $scopeParams = array_merge($scopeParams, $etabIds);
+            }
         } elseif ($roleCode === 'dfep' && $dfepId > 0) {
             $whereConditions[] = "e.IDDFEP = ?";
             $scopeParams[] = $dfepId;
@@ -75,11 +81,21 @@ class OffresService
 
         // Apply GET HTTP parameters filters
         if (!empty($getParams['filter_etablissement'])) {
+            $reqFilter = (int)$getParams['filter_etablissement'];
+            if ($etabId > 0) {
+                $etabIds = \App\Support\EtablissementScope::resolve($etabId);
+                abort_if(!in_array($reqFilter, $etabIds), 403, 'غير مصرح لك بالوصول لهذه المؤسسة.');
+            }
             $whereConditions[] = "o.IDEts_Form = ?";
-            $scopeParams[] = (int)$getParams['filter_etablissement'];
+            $scopeParams[] = $reqFilter;
         } elseif (!empty($getParams['filter_etab'])) {
+            $reqFilter = (int)$getParams['filter_etab'];
+            if ($etabId > 0) {
+                $etabIds = \App\Support\EtablissementScope::resolve($etabId);
+                abort_if(!in_array($reqFilter, $etabIds), 403, 'غير مصرح لك بالوصول لهذه المؤسسة.');
+            }
             $whereConditions[] = "o.IDEts_Form = ?";
-            $scopeParams[] = (int)$getParams['filter_etab'];
+            $scopeParams[] = $reqFilter;
         }
         if (!empty($getParams['filter_wilaya'])) {
             $whereConditions[] = "e.IDDFEP = ?";

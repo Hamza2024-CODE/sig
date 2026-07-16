@@ -19,32 +19,7 @@ class ApprenantController extends Controller
         $etabId = (int)($user['etablissement_id'] ?? $user['IDEts_Form'] ?? 0);
         $dfepId = (int)($user['iddfep'] ?? $user['IDDFEP'] ?? 0);
 
-        // Compute scope IDs for private institutions:
-        // Khotwa (1096) has 0 own sections, data is under 1095/376 → include those.
-        // Taj (1301) has 80 own sections → use only own ID.
-        $etabScopeIds = $etabId > 0 ? [$etabId] : [];
-        if ($etabId > 0) {
-            try {
-                $etabRow = DB::table('etablissement')
-                    ->where('IDetablissement', $etabId)
-                    ->select('IDEts_Form', 'DeIDetablissementRatache', 'DeIDetablissementRatacheInsfp')
-                    ->first();
-                if ($etabRow) {
-                    $parentId     = (int)($etabRow->IDEts_Form ?? 0);
-                    $ratacheId    = (int)($etabRow->DeIDetablissementRatache ?? 0);
-                    $ratacheInsfp = (int)($etabRow->DeIDetablissementRatacheInsfp ?? 0);
-                    $hasOwnSections = ($parentId > 0 && $parentId !== $etabId)
-                        ? DB::table('section')->where('IDEts_Form', $etabId)->exists()
-                        : true;
-                    if (!$hasOwnSections) {
-                        if ($parentId > 0 && $parentId !== $etabId)     $etabScopeIds[] = $parentId;
-                        if ($ratacheId > 0 && $ratacheId !== $etabId)   $etabScopeIds[] = $ratacheId;
-                        if ($ratacheInsfp > 0 && $ratacheInsfp !== $etabId) $etabScopeIds[] = $ratacheInsfp;
-                    }
-                }
-            } catch (\Throwable $e) {}
-            $etabScopeIds = array_unique(array_filter($etabScopeIds));
-        }
+        $etabScopeIds = $etabId > 0 ? \App\Support\EtablissementScope::resolve($etabId) : [];
 
         // ── build filters ────────────────────────────────────────────
         $where  = [];
@@ -97,9 +72,12 @@ class ApprenantController extends Controller
             $params[] = $filterStatus;
         }
 
-        // Establishment filter (only for admin/dfep)
+        // Establishment filter (scoped with security check for non-admin/dfep)
         $filterEtab = (int)$request->query('filter_etab', 0);
-        if ($filterEtab > 0 && $etabId === 0) {
+        if ($filterEtab > 0) {
+            if ($etabId > 0) {
+                abort_if(!in_array($filterEtab, $etabScopeIds), 403, 'غير مصرح لك بالوصول لهذه المؤسسة.');
+            }
             $where[]  = 'o.IDEts_Form = ?';
             $params[] = $filterEtab;
         }

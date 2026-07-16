@@ -563,35 +563,7 @@ class DashboardController extends Controller
             } elseif ($isEtab && $etabId > 0) {
                 $data = array_merge($data, KpiCache::etab($etabId));
 
-                // Resolve scope IDs for private institution support.
-                // If private institution has own offers → use only own ID.
-                // If not (data stored under parent/linked centers) → include those IDs.
-                $etabScopeIds = [$etabId];
-                try {
-                    $etabRow = DB::table('etablissement')
-                        ->where('IDetablissement', $etabId)
-                        ->select('IDEts_Form', 'DeIDetablissementRatache', 'DeIDetablissementRatacheInsfp')
-                        ->first();
-
-                    if ($etabRow) {
-                        $parentId     = (int)($etabRow->IDEts_Form ?? 0);
-                        $ratacheId    = (int)($etabRow->DeIDetablissementRatache ?? 0);
-                        $ratacheInsfp = (int)($etabRow->DeIDetablissementRatacheInsfp ?? 0);
-
-                        $hasOwnSections = ($parentId > 0 && $parentId !== $etabId)
-                            ? DB::table('section')->where('IDEts_Form', $etabId)->exists()
-                            : true;
-
-                        if (!$hasOwnSections) {
-                            if ($parentId > 0 && $parentId !== $etabId)     $etabScopeIds[] = $parentId;
-                            if ($ratacheId > 0 && $ratacheId !== $etabId)   $etabScopeIds[] = $ratacheId;
-                            if ($ratacheInsfp > 0 && $ratacheInsfp !== $etabId) $etabScopeIds[] = $ratacheInsfp;
-                        }
-                    }
-                    // Also include direct sub-branches of this establishment
-                    $branches = DB::table('etablissement')->where('IDEts_Form', $etabId)->pluck('IDetablissement')->toArray();
-                    $etabScopeIds = array_unique(array_filter(array_merge($etabScopeIds, $branches)));
-                } catch (\Throwable $e) {}
+                $etabScopeIds = \App\Support\EtablissementScope::resolve($etabId);
 
                 // Active trainees sessions breakdown for Etablissement
                 $data['sessions_breakdown'] = \Illuminate\Support\Facades\Cache::remember("sgfep:kpi:etab:{$etabId}:sessions_breakdown", 900, function() use ($etabScopeIds) {

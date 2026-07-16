@@ -48,31 +48,7 @@ class ModulesController extends Controller {
         $iddfep   = (int)($user['iddfep'] ?? 0);
         $etabId   = (int)($user['etablissement_id'] ?? 0);
 
-        // Compute scope IDs for private institutions:
-        // If no own sections exist (e.g. Khotwa 1096), include parent/linked center IDs.
-        $etabScopeIds = $etabId > 0 ? [$etabId] : [];
-        if ($etabId > 0) {
-            try {
-                $etabRow = \Illuminate\Support\Facades\DB::table('etablissement')
-                    ->where('IDetablissement', $etabId)
-                    ->select('IDEts_Form', 'DeIDetablissementRatache', 'DeIDetablissementRatacheInsfp')
-                    ->first();
-                if ($etabRow) {
-                    $parentId     = (int)($etabRow->IDEts_Form ?? 0);
-                    $ratacheId    = (int)($etabRow->DeIDetablissementRatache ?? 0);
-                    $ratacheInsfp = (int)($etabRow->DeIDetablissementRatacheInsfp ?? 0);
-                    $hasOwnSections = ($parentId > 0 && $parentId !== $etabId)
-                        ? \Illuminate\Support\Facades\DB::table('section')->where('IDEts_Form', $etabId)->exists()
-                        : true;
-                    if (!$hasOwnSections) {
-                        if ($parentId > 0 && $parentId !== $etabId)     $etabScopeIds[] = $parentId;
-                        if ($ratacheId > 0 && $ratacheId !== $etabId)   $etabScopeIds[] = $ratacheId;
-                        if ($ratacheInsfp > 0 && $ratacheInsfp !== $etabId) $etabScopeIds[] = $ratacheInsfp;
-                    }
-                }
-            } catch (\Throwable $e) {}
-            $etabScopeIds = array_unique(array_filter($etabScopeIds));
-        }
+        $etabScopeIds = $etabId > 0 ? \App\Support\EtablissementScope::resolve($etabId) : [];
 
         return compact('role', 'iddfep', 'etabId', 'etabScopeIds');
     }
@@ -97,6 +73,9 @@ class ModulesController extends Controller {
 
         $etabFilterId = (int)(request()->all()['filter_etablissement'] ?? request()->all()['etab_id'] ?? 0);
         if ($etabFilterId > 0) {
+            if ($scope['etabId'] > 0) {
+                abort_if(!in_array($etabFilterId, $scope['etabScopeIds']), 403, 'غير مصرح لك بالوصول لهذه المؤسسة.');
+            }
             $clauses[] = "{$alias}.IDOffre IN (SELECT IDOffre FROM offre WHERE IDEts_Form = " . $etabFilterId . ")";
         }
 
