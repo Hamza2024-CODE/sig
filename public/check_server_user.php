@@ -6,31 +6,27 @@ $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
 use Illuminate\Support\Facades\DB;
 
-echo "=== DIAGNOSTICS FOR ALL PRIVATE ESTABLISHMENTS ===\n";
-
 try {
-    // Get all private establishments (PublPrive = 1)
-    $etabs = DB::table('etablissement')
-        ->where('PublPrive', 1)
-        ->get(['IDetablissement', 'Nom', 'nomUser', 'activee']);
-
-    echo "Found " . $etabs->count() . " private establishments in server database:\n\n";
-
-    foreach ($etabs as $e) {
-        echo "ID: {$e->IDetablissement} | Nom: '{$e->Nom}' | nomUser: '{$e->nomUser}' | activee: {$e->activee}\n";
-    }
-
-    echo "\n=== SEARCH FOR ANY NOMUSER CONTAINING '1300' OR '1301' ===\n";
-    $search = DB::table('etablissement')
-        ->where('nomUser', 'LIKE', '%1300%')
-        ->orWhere('nomUser', 'LIKE', '%1301%')
-        ->get(['IDetablissement', 'Nom', 'nomUser']);
+    $e = DB::table('etablissement')->where('IDetablissement', 1301)->first();
+    if ($e) {
+        echo "Etablissement: {$e->Nom}\n";
+        echo "Username on Server: '{$e->nomUser}'\n";
         
-    echo "Found " . $search->count() . " matches:\n";
-    foreach ($search as $s) {
-        echo "ID: {$s->IDetablissement} | Nom: '{$s->Nom}' | nomUser: '{$s->nomUser}'\n";
+        $pw1301 = 'jyc:@1301';
+        $pw1300 = 'jyc:@1300';
+        
+        $match1301 = (password_verify($pw1301, $e->MotDePass) || $e->MotDePass === $pw1301);
+        $match1300 = (password_verify($pw1300, $e->MotDePass) || $e->MotDePass === $pw1300);
+        
+        echo "Password 'jyc:@1301' matches? " . ($match1301 ? 'YES' : 'NO') . "\n";
+        echo "Password 'jyc:@1300' matches? " . ($match1300 ? 'YES' : 'NO') . "\n";
+        
+        if (!$match1301 && !$match1300) {
+            echo "Current password hash/value in DB: '{$e->MotDePass}'\n";
+        }
+    } else {
+        echo "Establishment 1301 not found.\n";
     }
-
-} catch (\Throwable $e) {
-    echo "Query Error: " . $e->getMessage() . "\n";
+} catch (\Throwable $ex) {
+    echo "Error: " . $ex->getMessage() . "\n";
 }
