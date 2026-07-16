@@ -70,6 +70,7 @@ $files = [
     'app/Http/Controllers/DashboardController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/DashboardController.php',
     'resources/views/dashboard/index.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/dashboard/index.blade.php',
     'public/check_eval.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/check_eval.php',
+    'public/list_tables.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/list_tables.php',
     'app/Http/Controllers/Evaluation/EvaluationController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Evaluation/EvaluationController.php',
     'resources/views/admin/modules/gestion_evaluations.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/modules/gestion_evaluations.blade.php',
     'public/pull.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/pull.php'
