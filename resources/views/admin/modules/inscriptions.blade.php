@@ -100,19 +100,19 @@
     <!-- قاعدة الأعمال: المسجلون = الناشطون = المستمرون = تم توجيههم وقبولهم -->
     <div class="row g-4 mb-4">
         <div class="col-md-4">
-            <div class="card border-0 shadow-sm rounded-4 h-100" style="background: linear-gradient(135deg, #482b8f 0%, #2e1c5b 100%); color: white;">
+            <div class="card border-0 shadow-sm rounded-4 h-100" style="background: #482b8f !important; background: linear-gradient(135deg, #482b8f 0%, #2e1c5b 100%) !important; color: white !important;">
                 <div class="card-body p-4">
                     <h6 class="text-white-50 fw-bold mb-1">إجمالي طلبات التسجيل</h6>
-                    <h2 class="display-5 fw-bold my-2 text-warning"><?= number_format($stats['total_candidats']) ?></h2>
+                    <h2 class="display-5 fw-bold my-2 text-warning" style="color: #ffc107 !important;"><?= number_format($stats['total_candidats']) ?></h2>
                     <span class="small"><i class="fa-solid fa-users text-warning"></i> طلبات مسجلة ومحفظة</span>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card border-0 shadow-sm rounded-4 h-100" style="background: linear-gradient(135deg, #0f7a55 0%, #17a773 100%); color: white;">
+            <div class="card border-0 shadow-sm rounded-4 h-100" style="background: #0f7a55 !important; background: linear-gradient(135deg, #0f7a55 0%, #17a773 100%) !important; color: white !important;">
                 <div class="card-body p-4">
                     <h6 class="text-white-50 fw-bold mb-1">تم توجيههم وقبولهم</h6>
-                    <h2 class="display-5 fw-bold my-2"><?= number_format($stats['orientes']) ?></h2>
+                    <h2 class="display-5 fw-bold my-2 text-white" style="color: #ffffff !important;"><?= number_format($stats['orientes']) ?></h2>
                     <span class="small text-white-50"><i class="fa-solid fa-circle-check me-1"></i> المسجلون = الناشطون = المستمرون</span>
                 </div>
             </div>
