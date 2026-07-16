@@ -125,7 +125,7 @@ class ApprenantController extends Controller
         try {
             $rows = DB::select(
                 "SELECT a.IDapprenant as id,
-                        c.NumIns as numero_matricule,
+                        IFNULL(c.NumIns, c.IDCandidat) as numero_matricule,
                         a.statut,
                         a.Valide as valide,
                         a.Groupe as groupe,
@@ -259,7 +259,7 @@ class ApprenantController extends Controller
                 'candidat.DateNais as date_nais',
                 'candidat.LieuNais as lieu_nais',
                 'candidat.Nin as nin',
-                'candidat.NumIns as num_ins',
+                DB::raw('COALESCE(candidat.NumIns, candidat.IDCandidat) as num_ins'),
                 'candidat.Civ as civ',
                 'candidat.Tel as tel',
                 'candidat.email as email',
