@@ -184,9 +184,9 @@ class EtablissementController extends Controller
                 $cfpaId = (int)$request->input('ratache_cfpa_id', 0);
                 $insfpId = (int)$request->input('ratache_insfp_id', 0);
 
-                $updateData['IDEts_Form'] = $parentId;
-                $updateData['DeIDetablissementRatache'] = $cfpaId;
-                $updateData['DeIDetablissementRatacheInsfp'] = $insfpId;
+                $updateData['IDEts_Form'] = $parentId > 0 ? $parentId : null;
+                $updateData['DeIDetablissementRatache'] = $cfpaId > 0 ? $cfpaId : null;
+                $updateData['DeIDetablissementRatacheInsfp'] = $insfpId > 0 ? $insfpId : null;
 
                 // Dynamically cascade to update existing offers and sections supervising center (IDEts_FormM)
                 $supervisingId = $insfpId > 0 ? $insfpId : ($cfpaId > 0 ? $cfpaId : $parentId);
