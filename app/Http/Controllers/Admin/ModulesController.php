@@ -48,7 +48,33 @@ class ModulesController extends Controller {
         $iddfep   = (int)($user['iddfep'] ?? 0);
         $etabId   = (int)($user['etablissement_id'] ?? 0);
 
-        return compact('role', 'iddfep', 'etabId');
+        // Compute scope IDs for private institutions:
+        // If no own sections exist (e.g. Khotwa 1096), include parent/linked center IDs.
+        $etabScopeIds = $etabId > 0 ? [$etabId] : [];
+        if ($etabId > 0) {
+            try {
+                $etabRow = \Illuminate\Support\Facades\DB::table('etablissement')
+                    ->where('IDetablissement', $etabId)
+                    ->select('IDEts_Form', 'DeIDetablissementRatache', 'DeIDetablissementRatacheInsfp')
+                    ->first();
+                if ($etabRow) {
+                    $parentId     = (int)($etabRow->IDEts_Form ?? 0);
+                    $ratacheId    = (int)($etabRow->DeIDetablissementRatache ?? 0);
+                    $ratacheInsfp = (int)($etabRow->DeIDetablissementRatacheInsfp ?? 0);
+                    $hasOwnSections = ($parentId > 0 && $parentId !== $etabId)
+                        ? \Illuminate\Support\Facades\DB::table('section')->where('IDEts_Form', $etabId)->exists()
+                        : true;
+                    if (!$hasOwnSections) {
+                        if ($parentId > 0 && $parentId !== $etabId)     $etabScopeIds[] = $parentId;
+                        if ($ratacheId > 0 && $ratacheId !== $etabId)   $etabScopeIds[] = $ratacheId;
+                        if ($ratacheInsfp > 0 && $ratacheInsfp !== $etabId) $etabScopeIds[] = $ratacheInsfp;
+                    }
+                }
+            } catch (\Throwable $e) {}
+            $etabScopeIds = array_unique(array_filter($etabScopeIds));
+        }
+
+        return compact('role', 'iddfep', 'etabId', 'etabScopeIds');
     }
 
     /** Build WHERE fragments for section-based queries */
@@ -59,8 +85,9 @@ class ModulesController extends Controller {
         // 1. Role Scoping
         if ($scope['role'] === 'dfep' && $scope['iddfep']) {
             $clauses[] = "{$alias}.IDDFEP = " . (int)$scope['iddfep'];
-        } elseif (in_array($scope['role'], ['etablissement', 'directeur', 'employee', 'formateur']) && $scope['etabId']) {
-            $clauses[] = "{$alias}.IDOffre IN (SELECT IDOffre FROM offre WHERE IDEts_Form = " . (int)$scope['etabId'] . ")";
+        } elseif (in_array($scope['role'], ['etablissement', 'directeur', 'employee', 'formateur']) && !empty($scope['etabScopeIds'])) {
+            $ids = implode(',', array_map('intval', $scope['etabScopeIds']));
+            $clauses[] = "({$alias}.IDEts_Form IN ($ids) OR {$alias}.IDOffre IN (SELECT IDOffre FROM offre WHERE IDEts_Form IN ($ids)))";
         }
 
         // 2. Global Filters
@@ -80,8 +107,9 @@ class ModulesController extends Controller {
         // Enforce Apprenticeship Mode User Scoping
         if ((int)($userSession['IDMode_formation'] ?? 0) === 10) {
             $clauses[] = "{$alias}.IDOffre IN (SELECT IDOffre FROM offre WHERE IDMode_formation = 10)";
-            if (!empty($userSession['etablissement_id'])) {
-                $clauses[] = "{$alias}.IDOffre IN (SELECT IDOffre FROM offre WHERE IDEts_Form = " . (int)$userSession['etablissement_id'] . ")";
+            if (!empty($scope['etabScopeIds'])) {
+                $ids = implode(',', array_map('intval', $scope['etabScopeIds']));
+                $clauses[] = "({$alias}.IDEts_Form IN ($ids) OR {$alias}.IDOffre IN (SELECT IDOffre FROM offre WHERE IDEts_Form IN ($ids)))";
             }
         }
 
@@ -101,8 +129,9 @@ class ModulesController extends Controller {
                 UNION
                 SELECT IDEts_Form FROM ets_form WHERE IDDFEP = $dfepId
             )";
-        } elseif (in_array($scope['role'], ['etablissement', 'directeur', 'employee', 'formateur']) && $scope['etabId']) {
-            $clauses[] = "{$alias}.IDEts_Form = " . (int)$scope['etabId'];
+        } elseif (in_array($scope['role'], ['etablissement', 'directeur', 'employee', 'formateur']) && !empty($scope['etabScopeIds'])) {
+            $ids = implode(',', array_map('intval', $scope['etabScopeIds']));
+            $clauses[] = "{$alias}.IDEts_Form IN ($ids)";
         }
 
         // 2. Global Filters
@@ -127,8 +156,9 @@ class ModulesController extends Controller {
         // Enforce Apprenticeship Mode User Scoping
         if ((int)($userSession['IDMode_formation'] ?? 0) === 10) {
             $clauses[] = "{$alias}.IDMode_formation = 10";
-            if (!empty($userSession['etablissement_id'])) {
-                $clauses[] = "{$alias}.IDEts_Form = " . (int)$userSession['etablissement_id'];
+            if (!empty($scope['etabScopeIds'])) {
+                $ids = implode(',', array_map('intval', $scope['etabScopeIds']));
+                $clauses[] = "{$alias}.IDEts_Form IN ($ids)";
             }
         }
 
