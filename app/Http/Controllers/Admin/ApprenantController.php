@@ -76,6 +76,18 @@ class ApprenantController extends Controller
             $params[] = $filterEtab;
         }
 
+        // Active/Latest Session Restriction (only show trainees from the current/latest new session)
+        $activeSession = DB::table('session')
+            ->join('semestre_formation', 'session.IDSemestre_formation', '=', 'semestre_formation.IDSemestre_formation')
+            ->orderBy('semestre_formation.IDAnnee_Formation', 'desc')
+            ->orderBy('session.DateD', 'desc')
+            ->select('session.IDSession')
+            ->first();
+        if ($activeSession) {
+            $where[]  = 'o.IDSession = ?';
+            $params[] = $activeSession->IDSession;
+        }
+
         $whereSQL = !empty($where) ? 'WHERE ' . implode(' AND ', $where) : '';
 
         // ── Get Total Count (cached 2 mins for performance) ───────────
