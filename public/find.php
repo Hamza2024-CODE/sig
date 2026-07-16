@@ -7,7 +7,7 @@ if (!file_exists($file)) {
 $lines = file($file);
 echo "File has " . count($lines) . " lines.\n";
 foreach ($lines as $num => $line) {
-    if (stripos($line, 'reconduits') !== false) {
+    if (stripos($line, 'transfer') !== false || stripos($line, 'admet') !== false || stripos($line, 'exclu') !== false) {
         echo "Line " . ($num + 1) . ": " . trim($line) . "\n";
     }
 }
