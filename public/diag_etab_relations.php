@@ -17,24 +17,19 @@ try {
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
     ]);
 
-    // Query 1: Get Etablissement 1301 (El Tadj El Azrak)
-    $etab1301 = $pdo->query("SELECT * FROM etablissement WHERE IDetablissement = 1301")->fetch();
+    // 1. Get columns of 'offre' table
+    $offre_cols = array_column($pdo->query("DESCRIBE offre")->fetchAll(), 'Field');
 
-    // Query 2: Get Etablissement 1300
-    $etab1300 = $pdo->query("SELECT * FROM etablissement WHERE IDetablissement = 1300")->fetch();
+    // 2. Query some offers for etab 1301 to see what fields are populated (like IDEts_Form, DeIDetablissementRatache, DeIDetablissementRatacheInsfp, etc.)
+    $offers_1301 = $pdo->query("SELECT IDOffre, IDSpecialite, IDEts_Form, DeIDetablissementRatache, DeIDetablissementRatacheInsfp, IDDFEP, NomEtsAnnexe FROM offre WHERE IDEts_Form = 1301 LIMIT 5")->fetchAll();
 
-    // Query 3: Find all public/private establishments in Setif (IDDFEP = 19)
-    $setifEtabs = $pdo->query("SELECT IDetablissement, Nom, NomFr, IDEts_Form, DeIDetablissementRatache, DeIDetablissementRatacheInsfp, IDDFEP FROM etablissement WHERE IDDFEP = 19 OR IDetablissement IN (1301, 1300) LIMIT 100")->fetchAll();
-
-    // Query 4: Check if there are other entries in the database for Etablissement El Tadj El Azrak
-    $likeTaj = $pdo->query("SELECT IDetablissement, Nom, NomFr, IDEts_Form, DeIDetablissementRatache, DeIDetablissementRatacheInsfp, IDDFEP FROM etablissement WHERE Nom LIKE '%التاج%' OR Nom LIKE '%TAJ%' OR NomFr LIKE '%TAJ%' LIMIT 100")->fetchAll();
-
+    // 3. See if there is a 'centre_delegue' column or similar in the query results from OffresRepository
+    // Let's inspect app/Domains/Academic/Repositories/OffresRepository.php to see the exact SQL query used for offers list!
+    
     echo json_encode([
         'status' => 'success',
-        'etab1301' => $etab1301,
-        'etab1300' => $etab1300,
-        'setifEtabs' => $setifEtabs,
-        'likeTaj' => $likeTaj
+        'offre_cols' => $offre_cols,
+        'offers_1301' => $offers_1301
     ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 
 } catch (\Throwable $e) {
