@@ -17,18 +17,14 @@ try {
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
     ]);
 
-    // 1. Get columns of 'etablissement' table
-    $etab_cols = array_column($pdo->query("DESCRIBE etablissement")->fetchAll(), 'Field');
-
-    // 2. Query Etablissement 1301 details using only safe columns
-    $etab1301 = $pdo->query("SELECT IDetablissement, Nom, NomFr, IDEts_Form, IDDFEP FROM etablissement WHERE IDetablissement = 1301")->fetch();
-
+    // Try a simple query that doesn't mention DeIDetablissementRatache at all.
+    $row = $pdo->query("SELECT * FROM etablissement WHERE IDetablissement = 1301")->fetch();
+    
     echo json_encode([
         'status' => 'success',
-        'etab_cols' => $etab_cols,
-        'etab1301' => $etab1301
+        'row' => $row
     ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 
 } catch (\Throwable $e) {
-    echo json_encode(['error' => $e->getMessage()]);
+    echo json_encode(['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
 }
