@@ -265,7 +265,7 @@ for ($i = 1; $i <= 6; $i++) {
                             <label class="form-label small fw-bold text-muted mb-1">اختر السداسي:</label>
                             <div class="d-flex flex-wrap gap-1" id="semBtns_<?= $o['id'] ?>">
                                 <?php
-                                $semLabels = ['S1','S2','S3','S4','S5'];
+                                $semLabels = ['S1','S2','S3','S4','S5','S6'];
                                 for ($i = 1; $i <= $maxSem; $i++):
                                     $active = ($i === 1) ? 'active' : '';
                                     $isAccessible = ($i === 1 || in_array($i - 1, $validatedSemesters[$o['id']] ?? []));
