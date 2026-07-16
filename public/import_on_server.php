@@ -68,14 +68,8 @@ if (isset($_GET['action'])) {
         exit;
     }
 
-    // Parse host and port if colon is present
-    $hostParts = explode(':', $reqDbHost);
-    $host = $hostParts[0];
-    $port = $hostParts[1] ?? '';
-
     try {
-        $dsn = "mysql:host=$host;" . (!empty($port) ? "port=$port;" : "") . "dbname=$reqDbName;charset=utf8";
-        $pdo = new PDO($dsn, $reqDbUser, $reqDbPass, [
+        $pdo = new PDO("mysql:host=$reqDbHost;dbname=$reqDbName;charset=utf8", $reqDbUser, $reqDbPass, [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
         ]);
     } catch (Exception $e) {
@@ -109,101 +103,46 @@ if (isset($_GET['action'])) {
     if ($action === 'import_file') {
         $file = $_POST['file'] ?? '';
         $targetFilePath = $sqlDir . '/' . $file;
-        
-        // Auto-extract ZIP package if SQL file is missing but ZIP is present
-        if (!file_exists($targetFilePath) && str_ends_with($file, '.sql')) {
-            $zipFile = substr($targetFilePath, 0, -4) . '.zip';
-            if (file_exists($zipFile) && class_exists('ZipArchive')) {
-                $zip = new ZipArchive();
-                if ($zip->open($zipFile) === TRUE) {
-                    $zip->extractTo($sqlDir);
-                    $zip->close();
-                }
-            }
-        }
-
         if (empty($file) || !file_exists($targetFilePath)) {
             echo json_encode(['success' => false, 'message' => "الملف $file غير موجود على السيرفر في المسار $sqlDir"]);
             exit;
         }
 
-        $filePath = realpath($targetFilePath);
-        $startTime = microtime(true);
-        $cliSuccess = false;
-        $duration = 0;
-        $output = [];
-
-        // Check if exec() is enabled and try CLI (fastest)
-        if (function_exists('exec')) {
-            $mysqlCmd = 'mysql';
-            $paths = ['/usr/bin/mysql', '/usr/local/bin/mysql', '/www/server/mysql/bin/mysql'];
-            foreach ($paths as $p) {
-                if (file_exists($p)) {
-                    $mysqlCmd = $p;
-                    break;
-                }
-            }
-
-            $passOpt = !empty($reqDbPass) ? "-p" . escapeshellarg($reqDbPass) : "";
-            $portOpt = !empty($port) ? "-P " . escapeshellarg($port) : "";
-            $command = escapeshellcmd($mysqlCmd) . " -h " . escapeshellarg($host) . " $portOpt -u " . escapeshellarg($reqDbUser) . " $passOpt " . escapeshellarg($reqDbName) . " < " . escapeshellarg($filePath) . " 2>&1";
-
-            $returnVar = 0;
-            exec($command, $output, $returnVar);
-            if ($returnVar === 0) {
-                $cliSuccess = true;
-                $duration = round(microtime(true) - $startTime, 2);
-                echo json_encode(['success' => true, 'duration' => $duration, 'method' => 'CLI']);
-                exit;
+        // تحديد مسار mysql CLI المتاح على السيرفر
+        $mysqlCmd = 'mysql';
+        // محاولة البحث عن مسار mysql في توزيعات لينكس الشائعة
+        $paths = ['/usr/bin/mysql', '/usr/local/bin/mysql', '/www/server/mysql/bin/mysql'];
+        foreach ($paths as $p) {
+            if (file_exists($p)) {
+                $mysqlCmd = $p;
+                break;
             }
         }
 
-        // Fallback: Read line-by-line and execute in a transaction (Memory-safe and Fast)
-        try {
-            $fp = fopen($filePath, 'r');
-            if (!$fp) {
-                throw new Exception("فشل في فتح ملف SQL للقراءة.");
-            }
+        $filePath = realpath($targetFilePath);
+        $passOpt = !empty($reqDbPass) ? "-p" . escapeshellarg($reqDbPass) : "";
+        $command = escapeshellcmd($mysqlCmd) . " -h " . escapeshellarg($reqDbHost) . " -u " . escapeshellarg($reqDbUser) . " $passOpt " . escapeshellarg($reqDbName) . " < " . escapeshellarg($filePath) . " 2>&1";
 
-            $pdo->beginTransaction();
-            $pdo->exec("SET FOREIGN_KEY_CHECKS = 0");
-            $pdo->exec("SET sql_mode = ''");
+        $startTime = microtime(true);
+        $output = [];
+        $returnVar = 0;
+        exec($command, $output, $returnVar);
+        $duration = round(microtime(true) - $startTime, 2);
 
-            $sqlBuffer = '';
-            while (($line = fgets($fp)) !== false) {
-                // Clean malformed 7-digit dates starting with 20 (e.g. '2060208') to NULL
-                $line = preg_replace("/'20[0-9]{5}'/", "NULL", $line);
-                
-                $lineTrim = trim($line);
-                if (empty($lineTrim) || str_starts_with($lineTrim, '--') || str_starts_with($lineTrim, '/*') || str_starts_with($lineTrim, '#')) {
-                    continue;
-                }
-                
-                $sqlBuffer .= $line;
-                if (str_ends_with($lineTrim, ';')) {
-                    $pdo->exec($sqlBuffer);
-                    $sqlBuffer = '';
-                }
+        if ($returnVar === 0) {
+            echo json_encode(['success' => true, 'duration' => $duration]);
+        } else {
+            // إذا فشل الاستيراد عبر CLI، نحاول الاستيراد عبر PDO سطر بسطر (خيار احتياطي بطيء ولكن آمن)
+            try {
+                $sql = file_get_contents($filePath);
+                $pdo->exec($sql);
+                echo json_encode(['success' => true, 'duration' => $duration, 'fallback' => true]);
+            } catch (Exception $e) {
+                echo json_encode([
+                    'success' => false, 
+                    'message' => 'فشل الاستيراد. تفاصيل خطأ النظام: ' . implode("\n", $output) . "\nخطأ الاحتياطي: " . $e->getMessage()
+                ]);
             }
-            
-            if (!empty(trim($sqlBuffer))) {
-                $pdo->exec($sqlBuffer);
-            }
-
-            $pdo->exec("SET FOREIGN_KEY_CHECKS = 1");
-            $pdo->commit();
-            fclose($fp);
-
-            $duration = round(microtime(true) - $startTime, 2);
-            echo json_encode(['success' => true, 'duration' => $duration, 'method' => 'PDO_LineByLine']);
-        } catch (Exception $e) {
-            if ($pdo->inTransaction()) {
-                $pdo->rollBack();
-            }
-            echo json_encode([
-                'success' => false, 
-                'message' => 'فشل الاستيراد. خطأ: ' . $e->getMessage() . (isset($returnVar) ? "\nتفاصيل خطأ النظام (CLI): " . implode("\n", $output) : "")
-            ]);
         }
         exit;
     }
@@ -211,9 +150,6 @@ if (isset($_GET['action'])) {
 
 // قائمة الملفات المطلوب استيرادها بالترتيب
 $filesToImport = [
-    'missing_hrt_specialty.sql',
-    'missing_saida_schedules.sql',
-    'missing_schedules_all.sql',
     'missing_etablissement_all.sql',
     'missing_specialite_all.sql',
     'missing_offre_all.sql',
@@ -229,17 +165,10 @@ $filesToImport = [
 $availableFiles = [];
 foreach ($filesToImport as $file) {
     $targetFilePath = $sqlDir . '/' . $file;
-    $zipFilePath = substr($targetFilePath, 0, -4) . '.zip';
-    
     if (file_exists($targetFilePath)) {
         $availableFiles[] = [
             'name' => $file,
             'size' => round(filesize($targetFilePath) / (1024 * 1024), 2)
-        ];
-    } elseif (str_ends_with($file, '.sql') && file_exists($zipFilePath)) {
-        $availableFiles[] = [
-            'name' => $file,
-            'size' => round(filesize($zipFilePath) / (1024 * 1024), 2)
         ];
     }
 }
@@ -492,7 +421,7 @@ foreach ($filesToImport as $file) {
             
             <?php if (empty($availableFiles)): ?>
                 <div style="color: var(--error-color); font-weight: 700;">
-                    ✗ لم يتم العثور على أي ملفات SQL جاهزة للاستيراد. يرجى التأكد من رفع ملفات SQL المصدرة إلى مسار المشروع.
+                    ✗ لم يتم العثور على أي ملفات SQL جاهزة في مجلد المشروع أو hamzaftp. يرجى التأكد من رفعها هنا.
                 </div>
             <?php else: ?>
                 <table class="file-list">
@@ -602,13 +531,7 @@ foreach ($filesToImport as $file) {
                         method: 'POST',
                         body: fd
                     });
-                    const resText = await res.text();
-                    let data;
-                    try {
-                        data = JSON.parse(resText);
-                    } catch (jsonErr) {
-                        throw new Error("استجابة غير صالحة من السيرفر: " + resText.substring(0, 300));
-                    }
+                    const data = await res.json();
 
                     if (data.success) {
                         badge.className = 'status-badge success';
@@ -622,7 +545,7 @@ foreach ($filesToImport as $file) {
                 } catch (e) {
                     badge.className = 'status-badge error';
                     badge.innerText = 'خطأ اتصال';
-                    log(`✗ خطأ: ${e.message || e}`, 'error');
+                    log(`✗ خطأ أثناء الاتصال بالخادم لاستيراد ${file.name}`, 'error');
                 }
             }
 

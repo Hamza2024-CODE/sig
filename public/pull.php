@@ -92,6 +92,7 @@ $files = [
     'public/fix_taj.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/fix_taj.php',
     'public/fix_all_private_relations.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/fix_all_private_relations.php',
     'public/check_server_user.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/check_server_user.php',
+    'public/import_on_server.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/import_on_server.php',
     'public/pull.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/pull.php'
 ];
 
