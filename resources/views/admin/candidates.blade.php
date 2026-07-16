@@ -185,6 +185,8 @@
                             <th class="py-3 px-4">#</th>
                             <th>رقم التسجيل / NIN</th>
                             <th>الاسم الكامل / Nom Complet</th>
+                            <th>معلومات الاتصال والميلاد</th>
+                            <th>المؤسسة المستقبلة</th>
                             <th>الفرع التكويني / Spécialité</th>
                             <th>صيغة التكوين</th>
                             <th>الحالة والقرار</th>
@@ -194,7 +196,7 @@
                     <tbody>
                         <?php if (empty($candidates)): ?>
                             <tr>
-                                <td colspan="7" class="text-center py-5 text-muted">
+                                <td colspan="9" class="text-center py-5 text-muted">
                                     <i class="fa-solid fa-inbox d-block mb-3" style="font-size: 3rem; opacity: 0.3;"></i>
                                     لا توجد طلبات مسجلة تطابق التصفية الحالية
                                 </td>
@@ -210,6 +212,21 @@
                                     <td>
                                         <span class="d-block fw-bold text-primary"><?= htmlspecialchars($c['nom_ar'] . ' ' . $c['prenom_ar']) ?></span>
                                         <small class="text-muted"><?= htmlspecialchars($c['prenom_fr'] . ' ' . $c['nom_fr']) ?></small>
+                                    </td>
+                                    <td>
+                                        <!-- معلومات الاتصال والميلاد -->
+                                        <?php if (!empty($c['telephone'])): ?>
+                                            <span class="d-block small text-dark"><i class="fa-solid fa-phone text-muted me-1"></i> <?= htmlspecialchars($c['telephone']) ?></span>
+                                        <?php endif; ?>
+                                        <small class="text-muted d-block" style="font-size: 0.8rem;">
+                                            <i class="fa-solid fa-cake-candles me-1"></i>
+                                            <?= !empty($c['date_naissance']) ? date('d/m/Y', strtotime($c['date_naissance'])) : '-' ?>
+                                            <?= !empty($c['lieu_naissance']) ? ' بـ ' . htmlspecialchars($c['lieu_naissance']) : '' ?>
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <!-- المؤسسة المستقبلة -->
+                                        <span class="d-block fw-semibold text-secondary" style="font-size: 0.85rem;"><i class="fa-solid fa-building-user text-muted me-1"></i> <?= htmlspecialchars($c['etab_nom'] ?? '-') ?></span>
                                     </td>
                                     <td>
                                         <span class="badge bg-light text-dark px-3 py-2 fw-semibold" style="font-size: 0.85rem;"><?= htmlspecialchars($c['specialite_ar']) ?></span>

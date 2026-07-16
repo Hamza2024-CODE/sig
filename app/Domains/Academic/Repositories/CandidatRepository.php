@@ -50,13 +50,16 @@ class CandidatRepository
         $sql = "
             SELECT c.IDCandidat as candidat_id, c.Nom as nom_ar, c.Prenom as prenom_ar,
                    c.NomFr as nom_fr, c.PrenomFr as prenom_fr, c.Nin as nin, c.Civ as sexe, c.Tel as telephone,
+                   c.DateNais as date_naissance, c.LieuNais as lieu_naissance,
                    c.IDCandidat as pre_inscr_id, c.NumIns as numero_inscription,
                    c.Validation, c.Obs as motif_refus,
                    o.IDMode_formation as mode_formation,
-                   s.Nom as specialite_ar
+                   s.Nom as specialite_ar,
+                   ef.Nom as etab_nom
             FROM candidat c
             JOIN offre o ON c.IDOffre = o.IDOffre
             JOIN specialite s ON o.IDSpecialite = s.IDSpecialite
+            JOIN etablissement ef ON o.IDEts_Form = ef.IDetablissement
             JOIN session sess ON o.IDSession = sess.IDSession
             JOIN semestre_formation sf ON sess.IDSemestre_formation = sf.IDSemestre_formation
             WHERE 1=1
@@ -104,13 +107,16 @@ class CandidatRepository
             $stmt = $this->db->prepare("
                 SELECT c.IDCandidat as candidat_id, c.Nom as nom_ar, c.Prenom as prenom_ar,
                        c.NomFr as nom_fr, c.PrenomFr as prenom_fr, c.Nin as nin, c.Civ as sexe,
-                       c.Tel as telephone, c.NumIns as numero_inscription,
+                       c.Tel as telephone, c.DateNais as date_naissance, c.LieuNais as lieu_naissance,
+                       c.NumIns as numero_inscription,
                        c.Validation, c.Obs as motif_refus,
                        o.IDMode_formation as mode_formation,
-                       s.Nom as specialite_ar
+                       s.Nom as specialite_ar,
+                       ef.Nom as etab_nom
                 FROM candidat c
                 JOIN offre o ON c.IDOffre = o.IDOffre
                 JOIN specialite s ON o.IDSpecialite = s.IDSpecialite
+                JOIN etablissement ef ON o.IDEts_Form = ef.IDetablissement
                 JOIN session sess ON o.IDSession = sess.IDSession
                 JOIN semestre_formation sf ON sess.IDSemestre_formation = sf.IDSemestre_formation
                 WHERE 1=1

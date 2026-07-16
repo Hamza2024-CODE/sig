@@ -58,6 +58,7 @@ $files = [
     'resources/views/dashboard/departments/exam.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/dashboard/departments/exam.blade.php',
     'resources/views/dashboard/departments/admin_stats.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/dashboard/departments/admin_stats.blade.php',
     'resources/views/admin/apprenants/index.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/apprenants/index.blade.php',
+    'resources/views/admin/candidates.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/candidates.blade.php',
     'resources/views/admin/modules/inscriptions.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/modules/inscriptions.blade.php',
     'resources/views/layouts/main.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/layouts/main.blade.php',
     'app/Http/Controllers/DashboardController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/DashboardController.php',
