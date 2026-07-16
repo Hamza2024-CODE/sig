@@ -562,16 +562,27 @@ class DashboardController extends Controller
 
             } elseif ($isEtab && $etabId > 0) {
                 $data = array_merge($data, KpiCache::etab($etabId));
-                
+
+                // Resolve the full scope IDs (self + parent IDEts_Form if sub-institution)
+                $etabScopeIds = [$etabId];
+                try {
+                    $parentId = DB::table('etablissement')->where('IDetablissement', $etabId)->value('IDEts_Form');
+                    if ($parentId && (int)$parentId > 0 && (int)$parentId !== $etabId) {
+                        $etabScopeIds[] = (int)$parentId;
+                    }
+                    $branches = DB::table('etablissement')->where('IDEts_Form', $etabId)->pluck('IDetablissement')->toArray();
+                    $etabScopeIds = array_unique(array_filter(array_merge($etabScopeIds, $branches)));
+                } catch (\Throwable $e) {}
+
                 // Active trainees sessions breakdown for Etablissement
-                $data['sessions_breakdown'] = \Illuminate\Support\Facades\Cache::remember("sgfep:kpi:etab:{$etabId}:sessions_breakdown", 900, function() use ($etabId) {
+                $data['sessions_breakdown'] = \Illuminate\Support\Facades\Cache::remember("sgfep:kpi:etab:{$etabId}:sessions_breakdown", 900, function() use ($etabScopeIds) {
                     return DB::table('session as sess')
                         ->join('section as s', 's.IDSession', '=', 'sess.IDSession')
                         ->join('apprenant as a', 'a.IDSection', '=', 's.IDSection')
                         ->join('offre as o', 's.IDOffre', '=', 'o.IDOffre')
                         ->join('specialite as sp', 'o.IDSpecialite', '=', 'sp.IDSpecialite')
                         ->leftJoin('apprenant_fin as af', 'a.IDapprenant', '=', 'af.IDapprenant')
-                        ->where('s.IDEts_Form', $etabId)
+                        ->whereIn('s.IDEts_Form', $etabScopeIds)
                         ->whereNull('af.IDapprenant')
                         ->whereRaw("DATE_ADD(sess.DateD, INTERVAL COALESCE(NULLIF(sp.dureeM, 0), sp.NbrSem * 6, 24) MONTH) >= CURRENT_DATE()")
                         ->select('sess.IDSession', 'sess.Nom', DB::raw('count(a.IDapprenant) as count'))
@@ -582,16 +593,16 @@ class DashboardController extends Controller
                 });
                 $data['total_stagiaires'] = collect($data['sessions_breakdown'])->sum('count');
                 $data['total_reconduits'] = collect($data['sessions_breakdown'])->slice(1)->sum('count');
-                $data['total_sections_s1'] = \Illuminate\Support\Facades\Cache::remember("sgfep:kpi:etab:{$etabId}:s1_sections", 900, function() use ($etabId) {
+                $data['total_sections_s1'] = \Illuminate\Support\Facades\Cache::remember("sgfep:kpi:etab:{$etabId}:s1_sections", 900, function() use ($etabScopeIds) {
                     return DB::table('section_semestre as ss')
                         ->join('section as s', 'ss.IDSection', '=', 's.IDSection')
                         ->where('ss.Dernier', 1)
                         ->where('ss.NumSem', 1)
                         ->where('s.IDSession', 35)
-                        ->where('s.IDEts_Form', $etabId)
+                        ->whereIn('s.IDEts_Form', $etabScopeIds)
                         ->count();
                 });
-                $data['total_filles'] = \Illuminate\Support\Facades\Cache::remember("sgfep:kpi:etab:{$etabId}:active_filles", 900, function() use ($etabId) {
+                $data['total_filles'] = \Illuminate\Support\Facades\Cache::remember("sgfep:kpi:etab:{$etabId}:active_filles", 900, function() use ($etabScopeIds) {
                     return DB::table('apprenant as a')
                         ->join('section as s', 'a.IDSection', '=', 's.IDSection')
                         ->join('offre as o', 's.IDOffre', '=', 'o.IDOffre')
@@ -600,17 +611,17 @@ class DashboardController extends Controller
                         ->join('candidat as c', 'a.IDCandidat', '=', 'c.IDCandidat')
                         ->leftJoin('apprenant_fin as af', 'a.IDapprenant', '=', 'af.IDapprenant')
                         ->whereIn('s.IDSession', [31, 32, 33, 34, 35])
-                        ->where('s.IDEts_Form', $etabId)
+                        ->whereIn('s.IDEts_Form', $etabScopeIds)
                         ->whereNull('af.IDapprenant')
                         ->where('c.Civ', 2)
                         ->whereRaw("DATE_ADD(sess.DateD, INTERVAL COALESCE(NULLIF(sp.dureeM, 0), sp.NbrSem * 6, 24) MONTH) >= CURRENT_DATE()")
                         ->count();
                 });
-                $data['total_graduates'] = \Illuminate\Support\Facades\Cache::remember("sgfep:kpi:etab:{$etabId}:total_graduates", 900, function() use ($etabId) {
+                $data['total_graduates'] = \Illuminate\Support\Facades\Cache::remember("sgfep:kpi:etab:{$etabId}:total_graduates", 900, function() use ($etabScopeIds) {
                     return DB::table('apprenant_fin as af')
                         ->join('apprenant as a', 'af.IDapprenant', '=', 'a.IDapprenant')
                         ->join('section as s', 'a.IDSection', '=', 's.IDSection')
-                        ->where('s.IDEts_Form', $etabId)
+                        ->whereIn('s.IDEts_Form', $etabScopeIds)
                         ->whereIn('af.IDDecision_evalf', [1, 2, 3])
                         ->count();
                 });

@@ -346,6 +346,16 @@ final class KpiCache
     {
         $ids = [$etabId];
         try {
+            // 1. If this establishment IS a sub-establishment (private institution),
+            //    also include its parent IDEts_Form so queries on offre/section work.
+            $parentId = DB::table('etablissement')
+                ->where('IDetablissement', $etabId)
+                ->value('IDEts_Form');
+            if ($parentId && (int)$parentId > 0 && (int)$parentId !== $etabId) {
+                $ids[] = (int)$parentId;
+            }
+
+            // 2. Include all sub-establishments (branches) of this establishment.
             $branches = DB::table('etablissement')
                 ->where('IDEts_Form', $etabId)
                 ->pluck('IDetablissement')
