@@ -23,6 +23,13 @@ try {
     } else {
         echo "ERROR: Route 'evaluation.inspecteurs.details' does NOT exist!\n";
     }
+
+    if (Route::has('evaluation.jury')) {
+        echo "SUCCESS: Route 'evaluation.jury' exists!\n";
+        echo "URL: " . route('evaluation.jury') . "\n";
+    } else {
+        echo "ERROR: Route 'evaluation.jury' does NOT exist!\n";
+    }
 } catch (\Throwable $e) {
     echo "ERROR: " . $e->getMessage() . "\n";
 }
