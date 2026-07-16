@@ -10,17 +10,22 @@ use Illuminate\Support\Facades\DB;
 header('Content-Type: text/plain; charset=utf-8');
 
 try {
-    echo "--- Search Etablissement matching IDetablissement = 1301 ---\n";
-    $etab = DB::select("SELECT * FROM etablissement WHERE IDetablissement = 1301");
-    foreach ($etab as $e) {
-        echo "IDetablissement: {$e->IDetablissement} | IDEts_Form: {$e->IDEts_Form} | Nom: {$e->Nom} | NomFr: {$e->NomFr} | IDDFEP: {$e->IDDFEP}\n";
+    echo "--- Public/Private institutions comparison ---\n";
+    
+    // PublPrive column value: let's inspect PublPrive for some institutions
+    $diffs = DB::select("
+        SELECT IDetablissement, IDEts_Form, Nom, PublPrive 
+        FROM etablissement 
+        WHERE IDEts_Form IS NOT NULL AND IDEts_Form != IDetablissement 
+        LIMIT 10
+    ");
+    foreach ($diffs as $d) {
+        echo "IDetablissement: {$d->IDetablissement} | IDEts_Form: {$d->IDEts_Form} | Nom: {$d->Nom} | PublPrive: {$d->PublPrive}\n";
     }
 
-    echo "\n--- Etablissement table schema (columns) ---\n";
-    $cols = DB::select("DESCRIBE etablissement");
-    foreach ($cols as $c) {
-        echo "Field: {$c->Field} | Type: {$c->Type}\n";
-    }
+    echo "\n--- Count of etabs where IDEts_Form != IDetablissement ---\n";
+    $cnt = DB::select("SELECT COUNT(*) as count FROM etablissement WHERE IDEts_Form IS NOT NULL AND IDEts_Form != IDetablissement");
+    echo "Total different: {$cnt[0]->count}\n";
 
 } catch (\Throwable $e) {
     echo "Error: " . $e->getMessage() . "\n";
