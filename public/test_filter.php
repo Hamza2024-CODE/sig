@@ -13,6 +13,10 @@ use Illuminate\Support\Facades\DB;
 
 header('Content-Type: text/plain; charset=utf-8');
 
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 try {
     $repo = new CandidatRepository();
     $auth = new AuthorizationService();
@@ -49,6 +53,6 @@ try {
         echo "ID: {$e->IDetablissement} | Nom: {$e->Nom} | IDDFEP: {$e->IDDFEP}\n";
     }
 
-} catch (\Exception $e) {
-    echo "Error: " . $e->getMessage();
+} catch (\Throwable $e) {
+    echo "Error: " . $e->getMessage() . "\nFile: " . $e->getFile() . "\nLine: " . $e->getLine();
 }
