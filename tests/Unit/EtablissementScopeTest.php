@@ -20,6 +20,10 @@ class EtablissementScopeTest
 
         foreach ($methods as $method) {
             if (strpos($method, 'test') === 0) {
+                // Run each test within a transaction to isolate test data seeding
+                DB::beginTransaction();
+                // Disable foreign key checks to allow seeding without breaking legacy constraints
+                DB::statement('SET FOREIGN_KEY_CHECKS=0;');
                 try {
                     // Clear cache before each test to ensure fresh queries
                     Cache::flush();
@@ -31,6 +35,9 @@ class EtablissementScopeTest
                     echo "✗ {$method} FAILED: " . $e->getMessage() . "\n";
                     echo "  File: " . $e->getFile() . " on line " . $e->getLine() . "\n";
                     $failed++;
+                } finally {
+                    DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+                    DB::rollBack();
                 }
             }
         }
@@ -52,18 +59,37 @@ class EtablissementScopeTest
     }
 
     /**
-     * Test scoping for a public center: INSFP Setif (352)
+     * Test scoping for a public center: INSFP Setif (352) and its supervised schools.
      */
     public function testResolvePublicCenterSetif()
     {
+        // Update or insert public center 352
+        DB::table('etablissement')->updateOrInsert(
+            ['IDetablissement' => 352],
+            ['Nom' => 'INSFP Setif', 'PublPrive' => 0, 'activee' => 0]
+        );
+        // Update or insert private school 1301 supervised by 352
+        DB::table('etablissement')->updateOrInsert(
+            ['IDetablissement' => 1301],
+            ['Nom' => 'Taj Al-Azraq', 'PublPrive' => 1, 'DeIDetablissementRatache' => 352, 'activee' => 0]
+        );
+        // Update or insert private school 1302 supervised by 352
+        DB::table('etablissement')->updateOrInsert(
+            ['IDetablissement' => 1302],
+            ['Nom' => 'Bacha School', 'PublPrive' => 1, 'DeIDetablissementRatacheInsfp' => 352, 'activee' => 0]
+        );
+
         $scope = EtablissementScope::resolve(352);
         
-        // It must contain itself (352) and the supervised private schools (e.g. Taj 1301)
+        // Use in_array checks because the actual database might already contain other supervised schools
         if (!in_array(352, $scope)) {
             throw new \Exception("Scope does not contain the public center itself (352).");
         }
         if (!in_array(1301, $scope)) {
             throw new \Exception("Scope does not contain the supervised private school Taj Al-Azraq (1301).");
+        }
+        if (!in_array(1302, $scope)) {
+            throw new \Exception("Scope does not contain the supervised private school Bacha School (1302).");
         }
     }
 
@@ -72,10 +98,15 @@ class EtablissementScopeTest
      */
     public function testResolvePrivateSchoolTaj()
     {
+        DB::table('etablissement')->updateOrInsert(
+            ['IDetablissement' => 1301],
+            ['Nom' => 'Taj Al-Azraq', 'PublPrive' => 1, 'DeIDetablissementRatache' => 352, 'activee' => 0]
+        );
+
         $scope = EtablissementScope::resolve(1301);
         
         // A private school must only see itself (strict isolation)
-        $this->assertEquals([1301], $scope, "Taj Al-Azraq should only see itself.");
+        $this->assertEquals([1301], $scope, "Taj Al-Azraq should strictly only see itself.");
     }
 
     /**
@@ -89,25 +120,47 @@ class EtablissementScopeTest
     }
 
     /**
+     * Test cycle detection: when B points to A and A points to B
+     */
+    public function testResolveCycleDetection()
+    {
+        // A (ID 7001) is public and points to B (ID 7002) as parent coordinator
+        DB::table('etablissement')->updateOrInsert(
+            ['IDetablissement' => 7001],
+            ['Nom' => 'Etab A', 'PublPrive' => 0, 'IDEts_Form' => 7002, 'activee' => 0]
+        );
+        // B (ID 7002) is public and points to A (ID 7001) as parent coordinator
+        DB::table('etablissement')->updateOrInsert(
+            ['IDetablissement' => 7002],
+            ['Nom' => 'Etab B', 'PublPrive' => 0, 'IDEts_Form' => 7001, 'activee' => 0]
+        );
+
+        $scopeA = EtablissementScope::resolve(7001);
+        $scopeB = EtablissementScope::resolve(7002);
+
+        $this->assertEquals([7001, 7002], $scopeA, "Cycle detection should prevent infinite recursion and return A and B.");
+        $this->assertEquals([7001, 7002], $scopeB, "Cycle detection should prevent infinite recursion and return A and B.");
+    }
+
+    /**
      * Test caching behavior: second call should be resolved from Cache
      */
     public function testResolveCachePerformance()
     {
+        DB::table('etablissement')->updateOrInsert(
+            ['IDetablissement' => 1301],
+            ['Nom' => 'Taj Al-Azraq', 'PublPrive' => 1, 'activee' => 0]
+        );
+
         // 1. Resolve to warm up cache
         $scope1 = EtablissementScope::resolve(1301);
         
         // 2. Temporarily change PublPrive in DB inside transaction.
         // If caching is working, it should still return the cached array [1301]
-        // even though PublPrive is changed to 0 (which would otherwise include Setif schools if queried freshly).
-        DB::beginTransaction();
-        try {
-            DB::table('etablissement')->where('IDetablissement', 1301)->update(['PublPrive' => 0]);
-            
-            $scope2 = EtablissementScope::resolve(1301);
-            $this->assertEquals($scope1, $scope2, "Cache should store and return the resolved scope without querying DB.");
-        } finally {
-            DB::rollBack();
-        }
+        DB::table('etablissement')->where('IDetablissement', 1301)->update(['PublPrive' => 0]);
+        
+        $scope2 = EtablissementScope::resolve(1301);
+        $this->assertEquals($scope1, $scope2, "Cache should store and return the resolved scope without querying DB.");
     }
 }
 

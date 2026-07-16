@@ -191,8 +191,18 @@ class OffresService
             $modeParams[] = (int)$getParams['filter_wilaya'];
         }
         if (!empty($getParams['filter_etab'])) {
+            $reqFilter = (int)$getParams['filter_etab'];
+            if ($etabId > 0) {
+                $etabIds = \App\Support\EtablissementScope::resolve($etabId);
+                abort_if(!in_array($reqFilter, $etabIds), 403, 'غير مصرح لك بالوصول لهذه المؤسسة.');
+            }
             $modeConds[] = "o.IDEts_Form = ?";
-            $modeParams[] = (int)$getParams['filter_etab'];
+            $modeParams[] = $reqFilter;
+        } elseif ($etabId > 0) {
+            $etabIds = \App\Support\EtablissementScope::resolve($etabId);
+            $placeholders = implode(',', array_fill(0, count($etabIds), '?'));
+            $modeConds[] = "o.IDEts_Form IN ($placeholders)";
+            $modeParams = array_merge($modeParams, $etabIds);
         }
         $modeCondStr = implode(" AND ", $modeConds);
         $stmtM = $db->prepare("
@@ -213,8 +223,18 @@ class OffresService
             $sessParams[] = (int)$getParams['filter_wilaya'];
         }
         if (!empty($getParams['filter_etab'])) {
+            $reqFilter = (int)$getParams['filter_etab'];
+            if ($etabId > 0) {
+                $etabIds = \App\Support\EtablissementScope::resolve($etabId);
+                abort_if(!in_array($reqFilter, $etabIds), 403, 'غير مصرح لك بالوصول لهذه المؤسسة.');
+            }
             $sessConds[] = "o.IDEts_Form = ?";
-            $sessParams[] = (int)$getParams['filter_etab'];
+            $sessParams[] = $reqFilter;
+        } elseif ($etabId > 0) {
+            $etabIds = \App\Support\EtablissementScope::resolve($etabId);
+            $placeholders = implode(',', array_fill(0, count($etabIds), '?'));
+            $sessConds[] = "o.IDEts_Form IN ($placeholders)";
+            $sessParams = array_merge($sessParams, $etabIds);
         }
         if (!empty($getParams['filter_mode'])) {
             $modeStr = trim($getParams['filter_mode']);

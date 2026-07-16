@@ -324,14 +324,19 @@ class OffresRepository
      */
     public function getModalEtablissements(string $roleCode, int $etabId, int $dfepId): array
     {
-        if (in_array($roleCode, ['etablissement', 'directeur']) && $etabId > 0) {
+        if (in_array($roleCode, ['etablissement', 'directeur', 'formateur', 'employee']) && $etabId > 0) {
+            $etabScopeIds = \App\Support\EtablissementScope::resolve($etabId);
+            if (empty($etabScopeIds)) {
+                return [];
+            }
+            $placeholders = implode(',', array_fill(0, count($etabScopeIds), '?'));
             $stmt = $this->db->prepare("
                 SELECT IDetablissement as id, Nom as nom_ar 
                 FROM etablissement 
-                WHERE IDDFEP = (SELECT IDDFEP FROM etablissement WHERE IDetablissement = ? LIMIT 1) 
+                WHERE IDetablissement IN ($placeholders) 
                 ORDER BY Nom ASC
             ");
-            $stmt->execute([$etabId]);
+            $stmt->execute($etabScopeIds);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } elseif ($roleCode === 'dfep' && $dfepId > 0) {
             $stmt = $this->db->prepare("SELECT IDetablissement as id, Nom as nom_ar FROM etablissement WHERE IDDFEP = ? ORDER BY Nom ASC");

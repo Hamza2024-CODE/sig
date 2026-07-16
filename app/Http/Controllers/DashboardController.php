@@ -624,14 +624,14 @@ class DashboardController extends Controller
                         ->join('apprenant as a', 'af.IDapprenant', '=', 'a.IDapprenant')
                         ->join('section as s', 'a.IDSection', '=', 's.IDSection')
                         ->join('offre as o', 's.IDOffre', '=', 'o.IDOffre')
-                        ->where('o.IDEts_Form', $etabId)
+                        ->whereIn('o.IDEts_Form', $etabScopeIds)
                         ->count(DB::raw('DISTINCT af.IDapprenant'));
 
                     $data['total_diplomes_granted'] = DB::table('apprenant_fin as af')
                         ->join('apprenant as a', 'af.IDapprenant', '=', 'a.IDapprenant')
                         ->join('section as s', 'a.IDSection', '=', 's.IDSection')
                         ->join('offre as o', 's.IDOffre', '=', 'o.IDOffre')
-                        ->where('o.IDEts_Form', $etabId)
+                        ->whereIn('o.IDEts_Form', $etabScopeIds)
                         ->whereNotNull('af.Numdiplome')
                         ->where('af.Numdiplome', '!=', '')
                         ->count(DB::raw('DISTINCT af.IDapprenant'));
@@ -640,7 +640,7 @@ class DashboardController extends Controller
                         ->join('apprenant as a', 'af.IDapprenant', '=', 'a.IDapprenant')
                         ->join('section as s', 'a.IDSection', '=', 's.IDSection')
                         ->join('offre as o', 's.IDOffre', '=', 'o.IDOffre')
-                        ->where('o.IDEts_Form', $etabId)
+                        ->whereIn('o.IDEts_Form', $etabScopeIds)
                         ->whereNotNull('af.Numdiplome')
                         ->where('af.Numdiplome', '!=', '')
                         ->where(function($q) {

@@ -336,6 +336,11 @@ class LoginController extends Controller
                 }
             } elseif ($loginType === 'etablissement') {
                 // ② Etablissement Login (Triple Credential check)
+                $padded = $username;
+                if (ctype_digit($username) && strlen($username) < 4) {
+                    $padded = str_pad($username, 4, '0', STR_PAD_LEFT);
+                }
+
                 $stmt = $db->prepare("
                     SELECT Etablissement.nomUser, Etablissement.MotDePass, Etablissement.activee, Etablissement.*,
                            Utilisateur.MotPass AS UtilisateurMotPass, Utilisateur.Nom AS UtilisateurNom, Utilisateur.IDUtilisateur,
@@ -347,10 +352,13 @@ class LoginController extends Controller
                     INNER JOIN NatureDirection ON NatureDirection.IDNature = Nature_etsF.IDNature
                     INNER JOIN Utilisateur     ON NatureDirection.IDNature = Utilisateur.IDNature
                     WHERE Etablissement.activee = 0
-                      AND LOWER(Etablissement.nomUser) = LOWER(:nomUser)
+                      AND (LOWER(Etablissement.nomUser) = LOWER(:nomUser) OR LOWER(Etablissement.nomUser) = LOWER(:nomUserPadded))
                     LIMIT 1
                 ");
-                $stmt->execute([':nomUser' => $username]);
+                $stmt->execute([
+                    ':nomUser' => $username,
+                    ':nomUserPadded' => $padded
+                ]);
                 $etab = $stmt->fetch(\PDO::FETCH_ASSOC);
 
                 if ($etab) {
@@ -411,7 +419,7 @@ class LoginController extends Controller
                             if (password_verify($secretCode, $nu['MotPass']) || $secretCode === $nu['MotPass']) {
                                 $isSecretCodeValid = true;
                                 $matchedUtilisateur = $nu;
-                                if (strtolower($nu['NomUser']) === 'sdtpa') {
+                                if (in_array(strtolower($nu['NomUser']), ['sdtpa', 'sdtpap'])) {
                                     $isApprenLogin = true;
                                 }
                                 break;
@@ -1458,6 +1466,11 @@ class LoginController extends Controller
 
         try {
             $db = DB::connection()->getPdo();
+            $padded = $username;
+            if (ctype_digit($username) && strlen($username) < 4) {
+                $padded = str_pad($username, 4, '0', STR_PAD_LEFT);
+            }
+
             $stmt = $db->prepare("
                 SELECT Etablissement.nomUser, Etablissement.MotDePass, Etablissement.activee, Etablissement.IDetablissement, Etablissement.IDEts_Form,
                        Utilisateur.MotPass AS UtilisateurMotPass, Nature_etsF.IDNature AS nature_id
@@ -1466,10 +1479,13 @@ class LoginController extends Controller
                 INNER JOIN NatureDirection ON NatureDirection.IDNature = Nature_etsF.IDNature
                 INNER JOIN Utilisateur     ON NatureDirection.IDNature = Utilisateur.IDNature
                 WHERE Etablissement.activee = 0
-                  AND Etablissement.nomUser = :nomUser
+                  AND (LOWER(Etablissement.nomUser) = LOWER(:nomUser) OR LOWER(Etablissement.nomUser) = LOWER(:nomUserPadded))
                 LIMIT 1
             ");
-            $stmt->execute([':nomUser' => $username]);
+            $stmt->execute([
+                ':nomUser' => $username,
+                ':nomUserPadded' => $padded
+            ]);
             $etab = $stmt->fetch(\PDO::FETCH_ASSOC);
 
             if ($etab) {

@@ -125,6 +125,9 @@ class ModulesController extends Controller {
 
         $etabFilterId = (int)(request()->all()['filter_etablissement'] ?? request()->all()['etab_id'] ?? 0);
         if ($etabFilterId > 0) {
+            if ($scope['etabId'] > 0) {
+                abort_if(!in_array($etabFilterId, $scope['etabScopeIds']), 403, 'غير مصرح لك بالوصول لهذه المؤسسة.');
+            }
             $clauses[] = "{$alias}.IDEts_Form = " . $etabFilterId;
         }
 

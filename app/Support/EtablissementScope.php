@@ -20,53 +20,62 @@ class EtablissementScope
         }
 
         return Cache::remember("etab_scope_{$etabId}", 600, function () use ($etabId) {
-            try {
-                $etabRow = DB::table('etablissement')
-                    ->where('IDetablissement', $etabId)
-                    ->select('PublPrive')
-                    ->first();
+            $visited = [];
+            return self::resolveRecursive($etabId, $visited);
+        });
+    }
 
-                if (!$etabRow) {
-                    return [];
-                }
+    /**
+     * Recursive resolver helper with cycle detection.
+     */
+    private static function resolveRecursive(int $etabId, array &$visited): array
+    {
+        if (isset($visited[$etabId])) {
+            return [];
+        }
+        $visited[$etabId] = true;
 
-                $isPrivate = ((int)($etabRow->PublPrive ?? 0) === 1);
+        try {
+            $etabRow = DB::table('etablissement')
+                ->where('IDetablissement', $etabId)
+                ->select('PublPrive')
+                ->first();
 
-                if ($isPrivate) {
-                    // Private school: strict isolation.
-                    // A private school can only see its own data.
-                    return [$etabId];
-                }
+            if (!$etabRow) {
+                return [];
+            }
 
-                // Public school: can see itself, its sub-branches, and supervised private schools.
-                $ids = [$etabId];
+            $isPrivate = ((int)($etabRow->PublPrive ?? 0) === 1);
 
-                // 1. Direct sub-branches (annexes)
-                $branches = DB::table('etablissement')
-                    ->where('IDEts_Form', $etabId)
-                    ->pluck('IDetablissement')
-                    ->toArray();
-                $ids = array_merge($ids, $branches);
-
-                // 2. Supervised private schools (where this public center is the supervisor or parent coordinator)
-                $supervised = DB::table('etablissement')
-                    ->where('PublPrive', 1)
-                    ->where(function ($query) use ($etabId) {
-                        $query->where('DeIDetablissementRatache', $etabId)
-                              ->orWhere('DeIDetablissementRatacheInsfp', $etabId)
-                              ->orWhere('IDEts_Form', $etabId);
-                    })
-                    ->pluck('IDetablissement')
-                    ->toArray();
-                $ids = array_merge($ids, $supervised);
-
-                return array_values(array_unique(array_filter($ids)));
-
-            } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::error("[EtablissementScope] Error resolving ID {$etabId}: " . $e->getMessage());
+            if ($isPrivate) {
+                // Private school: strict isolation.
                 return [$etabId];
             }
-        });
+
+            // Public school: can see itself + children recursively
+            $ids = [$etabId];
+
+            $children = DB::table('etablissement')
+                ->where(function ($query) use ($etabId) {
+                    $query->where('IDEts_Form', $etabId)
+                          ->orWhere('DeIDetablissementRatache', $etabId)
+                          ->orWhere('DeIDetablissementRatacheInsfp', $etabId);
+                })
+                ->where('IDetablissement', '!=', $etabId)
+                ->pluck('IDetablissement')
+                ->toArray();
+
+            foreach ($children as $childId) {
+                $childIds = self::resolveRecursive((int)$childId, $visited);
+                $ids = array_merge($ids, $childIds);
+            }
+
+            return array_values(array_unique(array_filter($ids)));
+
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error("[EtablissementScope] Error resolving ID {$etabId}: " . $e->getMessage());
+            return [$etabId];
+        }
     }
 
     /**

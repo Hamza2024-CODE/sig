@@ -179,7 +179,13 @@ class ApprenantController extends Controller
         $wilayas = \App\Services\ReferenceCache::wilayas();
         $etablissements = match(true) {
             $dfepId > 0  => \App\Services\ReferenceCache::etablissementsForDfep($dfepId),
-            $etabId > 0  => \App\Services\ReferenceCache::etablissementById($etabId),
+            $etabId > 0  => DB::table('etablissement')
+                                ->whereIn('IDetablissement', $etabScopeIds)
+                                ->select('IDetablissement as id', 'Code as code', 'Nom as nom_ar', 'NomFr as nom_fr', 'IDDFEP as wilaya_id')
+                                ->orderBy('Nom', 'ASC')
+                                ->get()
+                                ->map(fn($r) => (array)$r)
+                                ->toArray(),
             default      => \App\Services\ReferenceCache::etablissements(),
         };
 
@@ -228,8 +234,8 @@ class ApprenantController extends Controller
                 });
             });
         } elseif ($etabId > 0) {
-            $candQuery->whereIn('candidat.IDOffre', function($q) use ($etabId) {
-                $q->select('IDOffre')->from('offre')->where('IDEts_Form', $etabId);
+            $candQuery->whereIn('candidat.IDOffre', function($q) use ($etabScopeIds) {
+                $q->select('IDOffre')->from('offre')->whereIn('IDEts_Form', $etabScopeIds);
             });
         }
 
