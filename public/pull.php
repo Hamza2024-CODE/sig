@@ -74,6 +74,7 @@ $files = [
     'public/check_eval_tables.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/check_eval_tables.php',
     'public/check_qualite.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/check_qualite.php',
     'public/check_eval_routes.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/check_eval_routes.php',
+    'public/check_web_file.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/check_web_file.php',
     'public/test_inspecteurs_query.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/test_inspecteurs_query.php',
     'app/Http/Controllers/Evaluation/EvaluationController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Evaluation/EvaluationController.php',
     'resources/views/admin/modules/gestion_evaluations.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/modules/gestion_evaluations.blade.php',
