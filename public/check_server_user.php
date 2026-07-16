@@ -6,28 +6,52 @@ $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 use Illuminate\Support\Facades\DB;
 
 $username = 'rUQ1300';
+$padded = 'rUQ1300';
+
+echo "=== DIAGNOSTICS FOR USER {$username} ===\n";
+
 try {
-    $e = DB::table('etablissement')->where('nomUser', $username)->first();
-    if ($e) {
-        echo "FOUND ON SERVER!\n";
-        echo "IDetablissement: {$e->IDetablissement} | Nom: {$e->Nom} | activee: {$e->activee} | nomUser: {$e->nomUser}\n";
+    // 1. Direct check on Etablissement table
+    $etab = DB::table('etablissement')
+        ->where(function($q) use ($username, $padded) {
+            $q->where(DB::raw('LOWER(nomUser)'), strtolower($username))
+              ->orWhere(DB::raw('LOWER(nomUser)'), strtolower($padded));
+        })
+        ->first();
+
+    if ($etab) {
+        echo "1. Found in etablissement table! ID: {$etab->IDetablissement}, Nom: {$etab->Nom}, nomUser: {$etab->nomUser}, activee: {$etab->activee}, IDNature_etsF: {$etab->IDNature_etsF}\n";
         
-        // Let's check nature and users
-        $n = DB::table('nature_etsf')->where('IDNature_etsF', $e->IDNature_etsF)->first();
-        echo "Nature IDNature: " . ($n->IDNature ?? 'NULL') . "\n";
-        
-        $u = DB::table('utilisateur')->where('IDNature', $n->IDNature)->get();
-        echo "Utilisateurs count: " . count($u) . "\n";
-        foreach ($u as $user) {
-            echo "  - NomUser: {$user->NomUser}\n";
+        // 2. Check Nature_etsF
+        $nature = DB::table('nature_etsf')->where('IDNature_etsF', $etab->IDNature_etsF)->first();
+        if ($nature) {
+            echo "2. Found in nature_etsf! IDNature_etsF: {$nature->IDNature_etsF}, IDNature: {$nature->IDNature}, Nom: {$nature->Nom}\n";
+            
+            // 3. Check NatureDirection
+            $nd = DB::table('naturedirection')->where('IDNature', $nature->IDNature)->first();
+            if ($nd) {
+                echo "3. Found in naturedirection! IDNature: {$nd->IDNature}, Nom: {$nd->Nom}\n";
+                
+                // 4. Check Utilisateur
+                $users = DB::table('utilisateur')->where('IDNature', $nature->IDNature)->get();
+                if ($users->count() > 0) {
+                    echo "4. Found Utilisateurs matching IDNature {$nature->IDNature}:\n";
+                    foreach ($users as $u) {
+                        echo "   - NomUser: '{$u->NomUser}' | Nom: '{$u->Nom}'\n";
+                    }
+                } else {
+                    echo "4. ERROR: No users found in 'utilisateur' table with IDNature = {$nature->IDNature}\n";
+                }
+            } else {
+                echo "3. ERROR: No row in 'naturedirection' table with IDNature = {$nature->IDNature}\n";
+            }
+        } else {
+            echo "2. ERROR: No row in 'nature_etsf' table with IDNature_etsF = {$etab->IDNature_etsF}\n";
         }
     } else {
-        echo "NOT FOUND ON SERVER for username: '{$username}'\n";
-        // Let's search for similar usernames
-        $sim = DB::table('etablissement')->where('nomUser', 'LIKE', '%1300%')->get(['IDetablissement', 'Nom', 'nomUser']);
-        echo "Similar usernames containing 1300:\n";
-        print_r($sim->toArray());
+        echo "1. ERROR: No row in 'etablissement' table matches nomUser = '{$username}' (case-insensitive)\n";
     }
-} catch (\Throwable $ex) {
-    echo "Error: " . $ex->getMessage() . "\n";
+
+} catch (\Throwable $e) {
+    echo "Query Error: " . $e->getMessage() . "\n";
 }
