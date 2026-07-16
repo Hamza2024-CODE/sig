@@ -96,6 +96,7 @@ $files = [
     'public/check_apprenant_details.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/check_apprenant_details.php',
     'public/clear_cache.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/clear_cache.php',
     'public/debug_etab_cache.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/debug_etab_cache.php',
+    'public/view_log.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/view_log.php',
     'public/pull.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/pull.php'
 ];
 
