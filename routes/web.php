@@ -529,6 +529,7 @@ Route::middleware('check.session')->group(function () {
     Route::post('/dashboard/gestion-evaluations/store', [\App\Http\Controllers\Evaluation\EvaluationController::class, 'storeInspection'])->name('evaluation.gestion.store');
     Route::get('/dashboard/gestion-evaluations/inspecteurs', [\App\Http\Controllers\Evaluation\EvaluationController::class, 'listInspecteurs'])->name('evaluation.inspecteurs');
     Route::get('/dashboard/gestion-evaluations/inspecteurs/details', [\App\Http\Controllers\Evaluation\EvaluationController::class, 'detailsInspecteur'])->name('evaluation.inspecteurs.details');
+    Route::get('/dashboard/gestion-evaluations/jury', [\App\Http\Controllers\Evaluation\EvaluationController::class, 'listJuries'])->name('evaluation.jury');
     Route::get('/dashboard/evaluation-finale', [\App\Http\Controllers\Evaluation\EvaluationController::class, 'evalFinale'])->name('evaluation.finale');
 
     // ── Schedule / Emplois du Temps ────────────────────────────────────────

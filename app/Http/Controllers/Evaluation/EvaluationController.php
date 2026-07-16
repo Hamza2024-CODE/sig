@@ -614,6 +614,7 @@ class EvaluationController extends Controller {
                     LEFT JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
                     LEFT JOIN dfep d ON e.IDDFEP = d.IDDFEP
                     WHERE (mpv.NomFonction LIKE '%مفتش%' OR mpv.NomFonction LIKE '%inspecteur%')
+                      AND TRIM(COALESCE(mpv.NomPrenom, '')) != ''
                       AND $filter
                     GROUP BY mpv.NomPrenom, mpv.NomFonction
                     ORDER BY count_inspections DESC
@@ -669,7 +670,7 @@ class EvaluationController extends Controller {
                     LEFT JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
                     LEFT JOIN etablissement et ON s.IDEts_Form = et.IDetablissement
                     LEFT JOIN session sess ON s.IDSession = sess.IDSession
-                    WHERE mpv.NomPrenom = ?
+                    WHERE TRIM(mpv.NomPrenom) = TRIM(?)
                     GROUP BY s.IDSection, s.Nom, et.Nom, sp.Nom, sess.Nom, mpv.NomFonction
                     ORDER BY s.IDSection DESC
                 ");
@@ -694,6 +695,63 @@ class EvaluationController extends Controller {
             'title' => 'تفاصيل زيارات المفتش / ' . $name,
             'visits' => $data['visits'],
             'info' => $data['info']
+        ]);
+    }
+
+    public function listJuries() {
+        $this->authorizeRole(['admin', 'dfep', 'central', 'etablissement', 'directeur', 'high_admin', 'secretaire_general', 'ministre']);
+        
+        $filterData = $this->buildAdvancedFilter('s');
+        $filter = $filterData['sql'];
+        $params = $filterData['params'];
+
+        $cacheKey = 'juries_list_' . md5($filter . serialize($params));
+
+        $list = \Illuminate\Support\Facades\Cache::remember($cacheKey, 900, function() use ($filter, $params) {
+            try {
+                $stmt = $this->db->prepare("
+                    SELECT 
+                        s.IDSection as id,
+                        s.Nom as section_nom,
+                        et.Nom as etab_nom,
+                        sp.Nom as spec_ar,
+                        sess.Nom as session_nom,
+                        COUNT(af.IDapprenant) as total_students,
+                        COUNT(CASE WHEN af.MoyGen >= 10 THEN 1 END) as admitted_students,
+                        ROUND(AVG(af.MoyGen), 2) as average_note,
+                        (
+                            SELECT COALESCE(GROUP_CONCAT(COALESCE(NULLIF(TRIM(NomPrenom), ''), 'مفتش بيداغوجي') SEPARATOR ' ، '), 'لم يحدد')
+                            FROM membrepvfinal 
+                            WHERE IDSection = s.IDSection AND QualiteMembre = 1
+                            LIMIT 1
+                        ) as president_name,
+                        (
+                            SELECT COALESCE(GROUP_CONCAT(COALESCE(NULLIF(TRIM(NomPrenom), ''), NomFonction) SEPARATOR ' ، '), 'غير محدد')
+                            FROM membrepvfinal 
+                            WHERE IDSection = s.IDSection AND QualiteMembre = 2
+                        ) as members_names
+                    FROM section s
+                    JOIN section_semestre ss ON s.IDSection = ss.IDSection
+                    LEFT JOIN apprenant_fin af ON ss.IDSection_Semestre = af.IDSection_Semestre
+                    LEFT JOIN offre o ON s.IDOffre = o.IDOffre
+                    LEFT JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
+                    LEFT JOIN etablissement et ON s.IDEts_Form = et.IDetablissement
+                    LEFT JOIN session sess ON s.IDSession = sess.IDSession
+                    WHERE $filter
+                    GROUP BY s.IDSection, s.Nom, et.Nom, sp.Nom, sess.Nom
+                    ORDER BY s.IDSection DESC
+                ");
+                $stmt->execute($params);
+                return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            } catch (\Exception $e) {
+                error_log("Error in listJuries: " . $e->getMessage());
+                return [];
+            }
+        });
+
+        return $this->render('admin/modules/juries_index', [
+            'title' => 'لجان مناقشة المذكرات والتخرج / Juries de Soutenance',
+            'list' => $list
         ]);
     }
 }

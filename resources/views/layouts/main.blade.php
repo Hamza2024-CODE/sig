@@ -1079,12 +1079,12 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
             <!-- Category: Evaluations & Exams -->
             @if (($hasPerm('grades') || in_array($roleCode, ['admin','dfep','etablissement','directeur'])) && in_array($dept, ['general', 'pedagogie', 'diplomes', 'apprentissage']) && !$isDosfpUser && !$isDepUser)
                 <div class="sidebar-dropdown">
-                    <button type="button" class="sidebar-item {{ ($isActive('/resultats') || $isActive('/dashboard/evaluation-stagiaires') || $isActive('/dashboard/examens') || $isActive('/dashboard/evaluation-finale') || $isActive('/dashboard/diplomes') || $isActive('/dashboard/diplomes/statistiques') || $isActive('/dashboard/grades/progress') || $isActive('/dashboard/grades')) ? 'active' : '' }}" onclick="toggleSidebarDropdown(this)" title="التقييمات والشهادات">
+                    <button type="button" class="sidebar-item {{ ($isActive('/resultats') || $isActive('/dashboard/evaluation-stagiaires') || $isActive('/dashboard/examens') || $isActive('/dashboard/evaluation-finale') || $isActive('/dashboard/diplomes') || $isActive('/dashboard/diplomes/statistiques') || $isActive('/dashboard/grades/progress') || $isActive('/dashboard/grades') || $isActive('/dashboard/gestion-evaluations')) ? 'active' : '' }}" onclick="toggleSidebarDropdown(this)" title="التقييمات والشهادات">
                         <i class="fa-solid fa-list-check"></i>
                         <span>التقييمات والشهادات</span>
                         <i class="fa-solid fa-chevron-down ms-auto dropdown-chevron" style="font-size: 0.7rem;"></i>
                     </button>
-                    <div class="sidebar-submenu {{ ($isActive('/resultats') || $isActive('/dashboard/evaluation-stagiaires') || $isActive('/dashboard/examens') || $isActive('/dashboard/evaluation-finale') || $isActive('/dashboard/diplomes') || $isActive('/dashboard/diplomes/statistiques') || $isActive('/dashboard/grades/progress') || $isActive('/dashboard/grades')) ? 'open' : '' }}">
+                    <div class="sidebar-submenu {{ ($isActive('/resultats') || $isActive('/dashboard/evaluation-stagiaires') || $isActive('/dashboard/examens') || $isActive('/dashboard/evaluation-finale') || $isActive('/dashboard/diplomes') || $isActive('/dashboard/diplomes/statistiques') || $isActive('/dashboard/grades/progress') || $isActive('/dashboard/grades') || $isActive('/dashboard/gestion-evaluations')) ? 'open' : '' }}">
                         @if (in_array($dept, ['general', 'pedagogie', 'apprentissage']))
                             <a href="{{ url('dashboard/grades') }}" class="sidebar-subitem {{ $isActive('/dashboard/grades') }}" title="دفتر العلامات والمداولات"><i class="fa-solid fa-graduation-cap"></i> <span>دفتر العلامات والمداولات</span></a>
                             @if (in_array($roleCode, ['admin','dfep','etablissement','directeur']))
@@ -1094,6 +1094,11 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
                             <a href="{{ url('dashboard/evaluation-finale') }}" class="sidebar-subitem {{ $isActive('/dashboard/evaluation-finale') }}" title="التقييم نهائي"><i class="fa-solid fa-flag-checkered"></i> <span>التقييم نهائي</span></a>
                             @if (in_array($roleCode, ['admin', 'dfep', 'central', 'high_admin']))
                                 <a href="{{ url('dashboard/evaluation-stagiaires') }}" class="sidebar-subitem {{ $isActive('/dashboard/evaluation-stagiaires') }}" title="التقييم - المتكونين"><i class="fa-solid fa-user-graduate"></i> <span>التقييم - المتكونين</span></a>
+                            @endif
+                            @if (in_array($roleCode, ['admin', 'dfep', 'central', 'etablissement', 'directeur', 'high_admin', 'secretaire_general', 'ministre']))
+                                <a href="{{ url('dashboard/gestion-evaluations') }}" class="sidebar-subitem {{ $isActive('/dashboard/gestion-evaluations') }}" title="لجان التقييم ومتابعة المكونين"><i class="fa-solid fa-file-invoice text-primary"></i> <span>لجان التقييم ومتابعة المكونين</span></a>
+                                <a href="{{ url('dashboard/gestion-evaluations/inspecteurs') }}" class="sidebar-subitem {{ $isActive('/dashboard/gestion-evaluations/inspecteurs') }}" title="سجل المفتشين والزيارات"><i class="fa-solid fa-user-shield text-info"></i> <span>سجل المفتشين والزيارات</span></a>
+                                <a href="{{ url('dashboard/gestion-evaluations/jury') }}" class="sidebar-subitem {{ $isActive('/dashboard/gestion-evaluations/jury') }}" title="لجان مناقشة المذكرات"><i class="fa-solid fa-users text-success"></i> <span>لجان مناقشة المذكرات</span></a>
                             @endif
                         @endif
                         @if (in_array($dept, ['general', 'diplomes']))
