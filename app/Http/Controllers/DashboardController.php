@@ -454,6 +454,13 @@ class DashboardController extends Controller
             'last_sync_ts' => \App\Services\StatsService::get(\App\Services\StatsService::KEY_LAST_SYNC_TS),
         ];
 
+        \Illuminate\Support\Facades\Log::info('DASHBOARD ACCESS USER:', [
+            'user' => $user,
+            'role' => $role,
+            'etabId' => $etabId,
+            'isEtab' => $isEtab,
+        ]);
+
         try {
             // ── §A  المستوى 1: قوائم الفلترة من ReferenceCache (24h) ─────────
             //        يقرأ من RAM في <1ms — لا DB queries هنا
