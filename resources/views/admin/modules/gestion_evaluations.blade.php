@@ -79,9 +79,9 @@
                 <table class="table table-hover align-middle mb-0" id="inspectsTable">
                     <thead class="bg-light text-muted small fw-bold">
                         <tr>
-                            <th class="ps-4">المكون المستهدف</th>
-                            <th>التخصص والمعهد</th>
-                            <th class="text-center">المفتش المتابع</th>
+                            <th class="ps-4">القسم واللجنة البيداغوجية</th>
+                            <th>التخصص والمؤسسة التكوينية</th>
+                            <th class="text-center">الدورة والمحضر المتابع</th>
                             <th class="text-center">التقييم البيداغوجي النهائي</th>
                             <th class="pe-4 text-end">التوصية الفنية للمحضر</th>
                         </tr>
@@ -90,28 +90,46 @@
                         <?php if (empty($list)): ?>
                             <tr>
                                 <td class="ps-4">
-                                    <div class="fw-bold text-dark">أ. بن عيسى خديجة</div>
-                                    <div class="text-muted small">رتبة: مكون رئيسي</div>
+                                    <div class="fw-bold text-dark">قسم مطور الويب والوسائط المتعددة - د5</div>
+                                    <div class="text-muted small">رئيس اللجنة: أ. بن عيسى خديجة | مؤطر: أ. طويل عبد القادر</div>
                                 </td>
                                 <td>مطور الويب والوسائط المتعددة (معهد سعيدة)</td>
-                                <td class="text-center fw-bold text-primary">المفتش الوطني: د. مهداوي</td>
+                                <td class="text-center fw-bold text-primary">دورة فيفري 2026</td>
                                 <td class="text-center fw-bold text-success fs-5">18.5 / 20</td>
                                 <td class="pe-4 text-end">
-                                    <span class="badge bg-success rounded-pill px-3 py-2">موافقة تامة وترقية استثنائية</span>
+                                    <span class="badge bg-success rounded-pill px-3 py-2">معدل النجاح: 100% (25/25 متربص)</span>
                                 </td>
                             </tr>
                         <?php else: ?>
                             <?php foreach ($list as $item): ?>
+                                <?php
+                                if (isset($item['section_nom'])) {
+                                    $title = $item['section_nom'];
+                                    $subtitle = 'أعضاء اللجنة: ' . $item['jury_members'];
+                                    $etab_spec = $item['spec_ar'] . ' (' . $item['etab_nom'] . ')';
+                                    $inspector = $item['session_nom'];
+                                    $note = $item['average_note'];
+                                    $success_pct = $item['total_students'] > 0 ? round(($item['admitted_students'] / $item['total_students']) * 100) : 0;
+                                    $appreciation = "نسبة النجاح: " . $success_pct . "% (" . $item['admitted_students'] . "/" . $item['total_students'] . " متربص)";
+                                } else {
+                                    $title = $item['formateur_nom'];
+                                    $subtitle = 'تفتيش بيداغوجي للمكون';
+                                    $etab_spec = $item['spec_ar'];
+                                    $inspector = 'المفتش: ' . $item['inspecteur_id'];
+                                    $note = $item['note_pedagogique'];
+                                    $appreciation = $item['appreciation'];
+                                }
+                                ?>
                                 <tr>
                                     <td class="ps-4">
-                                        <div class="fw-bold text-dark"><?= htmlspecialchars($item['formateur_nom']) ?></div>
-                                        <div class="text-muted small">رتبة: أستاذ متخصص</div>
+                                        <div class="fw-bold text-dark"><?= htmlspecialchars($title) ?></div>
+                                        <div class="text-muted small"><?= htmlspecialchars($subtitle) ?></div>
                                     </td>
-                                    <td><?= htmlspecialchars($item['spec_ar'] ?? 'تخصص تقني') ?></td>
-                                    <td class="text-center fw-bold text-primary">المفتش: <?= htmlspecialchars($item['inspecteur_id']) ?></td>
-                                    <td class="text-center fw-bold text-success fs-5"><?= htmlspecialchars($item['note_pedagogique']) ?> / 20</td>
+                                    <td><?= htmlspecialchars($etab_spec) ?></td>
+                                    <td class="text-center fw-bold text-primary"><?= htmlspecialchars($inspector) ?></td>
+                                    <td class="text-center fw-bold text-success fs-5"><?= htmlspecialchars($note) ?> / 20</td>
                                     <td class="pe-4 text-end">
-                                        <span class="badge bg-success rounded-pill px-3 py-2"><?= htmlspecialchars($item['appreciation'] ?? 'توصية عامة') ?></span>
+                                        <span class="badge bg-success rounded-pill px-3 py-2"><?= htmlspecialchars($appreciation) ?></span>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>

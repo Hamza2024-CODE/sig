@@ -367,56 +367,74 @@ class EvaluationController extends Controller {
             $list = [];
 
             try {
-                if ($filter === '1=1') {
-                    // Consolidate admin global counts directly on apprenant_fin without joins
-                    $stmtStats = $this->db->prepare("
-                        SELECT 
-                            COUNT(DISTINCT IDapprenant) as commissions,
-                            COUNT(DISTINCT CASE WHEN MoyGen >= 10 THEN IDapprenant END) as pv_prets
-                        FROM apprenant_fin
-                    ");
-                    $stmtStats->execute();
-                    $resStats = $stmtStats->fetch(PDO::FETCH_ASSOC);
-                    $stats['commissions'] = (int)($resStats['commissions'] ?? 0);
-                    $stats['pv_prets'] = (int)($resStats['pv_prets'] ?? 0);
-                } else {
-                    // Consolidate scoped counts joining section_semestre and section directly
-                    $stmtStats = $this->db->prepare("
-                        SELECT 
-                            COUNT(DISTINCT af.IDapprenant) as commissions,
-                            COUNT(DISTINCT CASE WHEN af.MoyGen >= 10 THEN af.IDapprenant END) as pv_prets
+                // Count of Commissions (Sections graduating)
+                $stmtCommissions = $this->db->prepare("
+                    SELECT COUNT(DISTINCT ss.IDSection) 
+                    FROM apprenant_fin af
+                    JOIN section_semestre ss ON af.IDSection_Semestre = ss.IDSection_Semestre
+                    JOIN section s ON ss.IDSection = s.IDSection
+                    WHERE $filter
+                ");
+                $stmtCommissions->execute($params);
+                $stats['commissions'] = (int)($stmtCommissions->fetchColumn() ?? 0);
+
+                // Count of Inspectors/Experts (Jury members)
+                $stmtInspecteurs = $this->db->prepare("
+                    SELECT COUNT(DISTINCT mpv.NomPrenom)
+                    FROM membrepvfinal mpv
+                    JOIN section s ON mpv.IDSection = s.IDSection
+                    JOIN section_semestre ss ON s.IDSection = ss.IDSection
+                    JOIN apprenant_fin af ON ss.IDSection_Semestre = af.IDSection_Semestre
+                    WHERE $filter
+                ");
+                $stmtInspecteurs->execute($params);
+                $stats['inspecteurs'] = (int)($stmtInspecteurs->fetchColumn() ?? 0);
+                if ($stats['inspecteurs'] === 0) {
+                    $stats['inspecteurs'] = 12; // Fallback default
+                }
+
+                // Count of Ready PVs (Sections with average >= 10)
+                $stmtPvPrets = $this->db->prepare("
+                    SELECT COUNT(*) FROM (
+                        SELECT ss.IDSection
                         FROM apprenant_fin af
                         JOIN section_semestre ss ON af.IDSection_Semestre = ss.IDSection_Semestre
                         JOIN section s ON ss.IDSection = s.IDSection
                         WHERE $filter
-                    ");
-                    $stmtStats->execute($params);
-                    $resStats = $stmtStats->fetch(PDO::FETCH_ASSOC);
-                    $stats['commissions'] = (int)($resStats['commissions'] ?? 0);
-                    $stats['pv_prets'] = (int)($resStats['pv_prets'] ?? 0);
-                }
+                        GROUP BY ss.IDSection
+                        HAVING AVG(af.MoyGen) >= 10
+                    ) t
+                ");
+                $stmtPvPrets->execute($params);
+                $stats['pv_prets'] = (int)($stmtPvPrets->fetchColumn() ?? 0);
 
-                $formateursCount = (int)$this->db->query("SELECT COUNT(*) FROM Encadrement WHERE EtatActual = 1")->fetchColumn();
-                $stats['inspecteurs'] = $formateursCount ? (int)ceil($formateursCount / 4) : 12;
-
-                // Fetch list of apprenants with final evaluation, mapped to the view columns (limited to 100)
+                // Fetch list of sections with final evaluation, mapped to the view columns (limited to 100)
                 $stmt = $this->db->prepare("
-                    SELECT af.IDApprenant_Fin as id, af.MoyGen as note_pedagogique, 
-                           c.Nom as nom_ar, c.Prenom as prenom_ar, a.Nccp as numero_matricule,
-                           sp.Nom as spec_ar, 
-                           COALESCE((SELECT CONCAT(enc.Nom, ' ', enc.Prenom) FROM encadrement enc WHERE enc.IDetablissement = o.IDEts_Form LIMIT 1), 'أستاذ مرافقة') as formateur_nom,
-                           'د. مهداوي' as inspecteur_id,
-                           CASE WHEN af.MoyGen >= 16 THEN 'موافقة تامة وترقية استثنائية'
-                                WHEN af.MoyGen >= 14 THEN 'موافقة وتوصية بالترقية'
-                                ELSE 'مقبول وموصى بالاستمرار' END as appreciation
+                    SELECT 
+                        s.IDSection as id,
+                        s.Nom as section_nom,
+                        et.Nom as etab_nom,
+                        sp.Nom as spec_ar,
+                        sess.Nom as session_nom,
+                        COUNT(af.IDapprenant) as total_students,
+                        COUNT(CASE WHEN af.MoyGen >= 10 THEN 1 END) as admitted_students,
+                        ROUND(AVG(af.MoyGen), 2) as average_note,
+                        COALESCE(
+                            (SELECT GROUP_CONCAT(CONCAT(QualiteMembre, ': ', NomPrenom) SEPARATOR ' | ') 
+                             FROM membrepvfinal mpv 
+                             WHERE mpv.IDSection = s.IDSection),
+                            'لجنة بيداغوجية بقرار معتمد'
+                        ) as jury_members
                     FROM apprenant_fin af
-                    LEFT JOIN Apprenant a ON af.IDapprenant = a.IDapprenant
-                    LEFT JOIN candidat c ON a.IDCandidat = c.IDCandidat
-                    LEFT JOIN offre o ON c.IDOffre = o.IDOffre
+                    JOIN section_semestre ss ON af.IDSection_Semestre = ss.IDSection_Semestre
+                    JOIN section s ON ss.IDSection = s.IDSection
+                    LEFT JOIN offre o ON s.IDOffre = o.IDOffre
                     LEFT JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
-                    LEFT JOIN section s ON a.IDSection = s.IDSection
+                    LEFT JOIN etablissement et ON s.IDEts_Form = et.IDetablissement
+                    LEFT JOIN session sess ON s.IDSession = sess.IDSession
                     WHERE $filter
-                    ORDER BY af.MoyGen DESC
+                    GROUP BY s.IDSection, s.Nom, et.Nom, sp.Nom, sess.Nom
+                    ORDER BY s.IDSection DESC
                     LIMIT 100
                 ");
                 $stmt->execute($params);
