@@ -193,9 +193,9 @@ final class KpiCache
         [$condEnc,   $paramsEnc]   = [['1=1'], []];
 
         if (!empty($selWilaya)) {
-            $condOffre[] = 'o.IDEts_Form IN (SELECT IDetablissement FROM etablissement WHERE IDDFEP = ?)'; $paramsOffre[] = $selWilaya;
-            $condEtab[]  = 'e.IDDFEP = ?';                                                                  $paramsEtab[]  = $selWilaya;
-            $condEnc[]   = 'enc.IDetablissement IN (SELECT IDetablissement FROM etablissement WHERE IDDFEP = ?)'; $paramsEnc[] = $selWilaya;
+            $condOffre[] = 'o.IDEts_Form IN (SELECT IDetablissement FROM etablissement WHERE IDDFEP IN (SELECT IDDFEP FROM dfep WHERE IDWilayaa = ?))'; $paramsOffre[] = $selWilaya;
+            $condEtab[]  = 'e.IDDFEP IN (SELECT IDDFEP FROM dfep WHERE IDWilayaa = ?)';                                                          $paramsEtab[]  = $selWilaya;
+            $condEnc[]   = 'enc.IDetablissement IN (SELECT IDetablissement FROM etablissement WHERE IDDFEP IN (SELECT IDDFEP FROM dfep WHERE IDWilayaa = ?))'; $paramsEnc[] = $selWilaya;
         }
         if (!empty($selEtab)) {
             $condOffre[] = 'o.IDEts_Form = ?';       $paramsOffre[] = $selEtab;

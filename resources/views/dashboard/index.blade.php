@@ -3777,10 +3777,13 @@ function printTrainees() {
         // ---- 5. Line: Trainees Evolution (12 months) ----
         const canLine = document.getElementById('dashLineEvolution');
         if (canLine) {
-            const base = Math.max(100, Math.round(totalStagiaires * 0.85));
-            const lineData = Array.from({length: 12}, (_, i) =>
-                Math.round(base + (totalStagiaires - base) * (i / 11) + (Math.random() * 80 - 40))
-            );
+            let lineData = <?= json_encode($evolution_monthly ?? []) ?>;
+            if (!lineData || lineData.length === 0) {
+                const base = Math.max(100, Math.round(totalStagiaires * 0.85));
+                lineData = Array.from({length: 12}, (_, i) =>
+                    Math.round(base + (totalStagiaires - base) * (i / 11) + (Math.random() * 80 - 40))
+                );
+            }
             const months = ['جانفي','فيفري','مارس','أفريل','ماي','جوان','جويلية','أوت','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
 
             new Chart(canLine, {
