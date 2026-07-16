@@ -1,66 +1,52 @@
 <?php
 header('Content-Type: application/json; charset=utf-8');
 
+$results = [];
+
 try {
-    $envPath = __DIR__ . '/../.env';
-    if (!file_exists($envPath)) throw new Exception(".env not found");
-    $env = [];
-    foreach (file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
-        if (strpos(trim($line), '#') === 0) continue;
-        if (strpos($line, '=') === false) continue;
-        list($name, $val) = explode('=', $line, 2);
-        $env[trim($name)] = trim($val, '"\' ');
+    // 1. Bootstrap Laravel
+    define('LARAVEL_START', microtime(true));
+    require __DIR__.'/../vendor/autoload.php';
+    $app = require_once __DIR__.'/../bootstrap/app.php';
+    $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+
+    // 2. Clear all cache (artisan cache:clear equivalent)
+    \Illuminate\Support\Facades\Artisan::call('cache:clear');
+    $results['cache_clear'] = 'success';
+
+    // 3. Download missing files from GitHub
+    $files = [
+        __DIR__.'/../app/Http/Controllers/Admin/ApprenantController.php'
+            => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/ApprenantController.php',
+        __DIR__.'/../app/Http/Controllers/Admin/ModulesController.php'
+            => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/ModulesController.php',
+        __DIR__.'/pull.php'
+            => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/pull.php',
+        __DIR__.'/clear_priv_cache.php'
+            => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/clear_priv_cache.php',
+    ];
+
+    foreach ($files as $dest => $url) {
+        $ctx = stream_context_create(['http' => ['timeout' => 15, 'header' => 'User-Agent: PHP']]);
+        $content = @file_get_contents($url.'?v='.time(), false, $ctx);
+        if ($content !== false && strlen($content) > 100) {
+            file_put_contents($dest, $content);
+            $results['downloaded'][] = basename($dest) . ' (' . strlen($content) . ' bytes)';
+        } else {
+            $results['failed'][] = basename($dest);
+        }
     }
-    $dsn = "mysql:host=" . ($env['DB_HOST'] ?? '127.0.0.1') . ";port=" . ($env['DB_PORT'] ?? '3306') . ";dbname=" . ($env['DB_DATABASE'] ?? 'sgfep_windev') . ";charset=utf8mb4";
-    $pdo = new PDO($dsn, $env['DB_USERNAME'] ?? 'root', $env['DB_PASSWORD'] ?? '', [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
-    ]);
 
-    $ids_str = '1300,1301,1095,1096,376';
+    // 4. Clear opcache for updated files
+    if (function_exists('opcache_reset')) {
+        opcache_reset();
+        $results['opcache'] = 'reset';
+    }
 
-    // 1. Section table columns
-    $section_cols = array_column($pdo->query("DESCRIBE section")->fetchAll(), 'Field');
-
-    // 2. Sections count per IDEts_Form
-    $sections = $pdo->query("SELECT IDEts_Form, COUNT(*) as cnt FROM section WHERE IDEts_Form IN ($ids_str) GROUP BY IDEts_Form")->fetchAll();
-
-    // 3. Offers count per IDEts_Form
-    $offres = $pdo->query("SELECT IDEts_Form, COUNT(*) as cnt FROM offre WHERE IDEts_Form IN ($ids_str) GROUP BY IDEts_Form")->fetchAll();
-
-    // 4. Apprenants count per section.IDEts_Form
-    $apprenants = $pdo->query("
-        SELECT s.IDEts_Form, COUNT(a.IDapprenant) as cnt 
-        FROM apprenant a 
-        JOIN section s ON a.IDSection = s.IDSection 
-        WHERE s.IDEts_Form IN ($ids_str) 
-        GROUP BY s.IDEts_Form
-    ")->fetchAll();
-
-    // 5. Sample sections for Taj (1300 and 1301) - only safe universal columns
-    $sample_sections_taj = $pdo->query("
-        SELECT IDSection, IDEts_Form, IDOffre 
-        FROM section WHERE IDEts_Form IN (1300, 1301) LIMIT 5
-    ")->fetchAll();
-
-    // 6. Etablissement users info
-    $etab_users = $pdo->query("
-        SELECT nomUser, IDetablissement, IDEts_Form, IDDFEP
-        FROM etablissement 
-        WHERE IDetablissement IN (1300, 1301, 1095, 1096)
-    ")->fetchAll();
-
-    echo json_encode([
-        'v' => 2,
-        'status' => 'success',
-        'section_columns' => $section_cols,
-        'sections_per_etab' => $sections,
-        'offres_per_etab' => $offres,
-        'apprenants_per_etab' => $apprenants,
-        'sample_sections_taj' => $sample_sections_taj,
-        'etab_users' => $etab_users
-    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    $results['status'] = 'done';
 
 } catch (\Throwable $e) {
-    echo json_encode(['error' => $e->getMessage()]);
+    $results['error'] = $e->getMessage();
 }
+
+echo json_encode($results, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
