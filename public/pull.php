@@ -91,6 +91,7 @@ $files = [
     'app/Domains/Academic/Services/OffresService.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Domains/Academic/Services/OffresService.php',
     'public/fix_taj.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/fix_taj.php',
     'public/fix_all_private_relations.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/fix_all_private_relations.php',
+    'public/check_server_user.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/check_server_user.php',
     'public/pull.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/pull.php'
 ];
 
