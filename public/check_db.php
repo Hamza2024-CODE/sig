@@ -1,52 +1,34 @@
 <?php
-header('Content-Type: text/plain; charset=utf-8');
-
 define('LARAVEL_START', microtime(true));
-require __DIR__.'/../vendor/autoload.php';
-$app = require_once __DIR__.'/../bootstrap/app.php';
-$kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
-$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+require __DIR__ . '/../vendor/autoload.php';
+$app = require_once __DIR__ . '/../bootstrap/app.php';
+$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
+$kernel->bootstrap();
 
 use Illuminate\Support\Facades\DB;
 
-echo "=== CHECKING EMPLOYEE (ENCADREMENT) PHOTO PATHS ===\n";
+header('Content-Type: text/plain; charset=utf-8');
 
 try {
-    $rows = DB::table('encadrement')
-        ->whereNotNull('photo')
-        ->where('photo', '!=', '')
-        ->select('IDEncadrement', 'Nom', 'Prenom', 'photo')
+    $years = DB::table('annee_formation')->get();
+    foreach ($years as $y) {
+        echo "ID: {$y->IDAnnee_Formation} | Nom: {$y->Nom} | NomFr: {$y->NomFr}\n";
+    }
+
+    $sessions = DB::table('session as s')
+        ->join('semestre_formation as sf', 's.IDSemestre_formation', '=', 'sf.IDSemestre_formation')
+        ->join('annee_formation as af', 'sf.IDAnnee_Formation', '=', 'af.IDAnnee_Formation')
+        ->select('s.IDSession', 's.Nom as s_nom', 'af.Nom as af_nom', 'af.IDAnnee_Formation')
+        ->orderBy('s.IDSession', 'desc')
         ->limit(10)
         ->get();
 
-    if ($rows->isEmpty()) {
-        echo "No records found in 'encadrement' table with a non-empty photo.\n";
-    } else {
-        foreach ($rows as $row) {
-            echo "ID: {$row->IDEncadrement} | Name: {$row->Nom} {$row->Prenom} | Photo path in DB: '{$row->photo}'\n";
-        }
+    echo "\nLatest Sessions:\n";
+    foreach ($sessions as $s) {
+        echo "Session ID: {$s->IDSession} | Nom: {$s->s_nom} | Année: {$s->af_nom} (ID: {$s->IDAnnee_Formation})\n";
     }
+
 } catch (\Exception $e) {
-    echo "Error querying 'encadrement': " . $e->getMessage() . "\n";
+    echo "Error: " . $e->getMessage();
 }
-
-echo "\n=== CHECKING MEMO (ENCADREMEN_MEMO) PHOTO PATHS ===\n";
-
-try {
-    $rowsMemo = DB::table('encadremen_memo')
-        ->whereNotNull('photo')
-        ->where('photo', '!=', '')
-        ->select('IDEncadremen_memo', 'IDEncadrement', 'photo')
-        ->limit(10)
-        ->get();
-
-    if ($rowsMemo->isEmpty()) {
-        echo "No records found in 'encadremen_memo' table with a non-empty photo.\n";
-    } else {
-        foreach ($rowsMemo as $row) {
-            echo "Memo ID: {$row->IDEncadremen_memo} | Employee ID: {$row->IDEncadrement} | Photo path in DB: '{$row->photo}'\n";
-        }
-    }
-} catch (\Exception $e) {
-    echo "Error querying 'encadremen_memo': " . $e->getMessage() . "\n";
-}
+unlink(__FILE__); // Self-delete for security
