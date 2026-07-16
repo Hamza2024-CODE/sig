@@ -31,4 +31,3 @@ try {
 } catch (\Exception $e) {
     echo "Error: " . $e->getMessage();
 }
-unlink(__FILE__); // Self-delete for security
