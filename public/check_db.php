@@ -7,26 +7,39 @@ $kernel->bootstrap();
 
 use Illuminate\Support\Facades\DB;
 
-header('Content-Type: text/plain; charset=utf-8');
+header('Content-Type: application/json; charset=utf-8');
 
 try {
-    echo "--- Public/Private institutions comparison ---\n";
-    
-    // PublPrive column value: let's inspect PublPrive for some institutions
-    $diffs = DB::select("
+    $private_etabs = DB::select("
         SELECT IDetablissement, IDEts_Form, Nom, PublPrive 
         FROM etablissement 
-        WHERE IDEts_Form IS NOT NULL AND IDEts_Form != IDetablissement 
+        WHERE PublPrive = 1 OR Nom LIKE '%خاص%' OR Nom LIKE '%مدرسة%'
         LIMIT 10
     ");
-    foreach ($diffs as $d) {
-        echo "IDetablissement: {$d->IDetablissement} | IDEts_Form: {$d->IDEts_Form} | Nom: {$d->Nom} | PublPrive: {$d->PublPrive}\n";
-    }
 
-    echo "\n--- Count of etabs where IDEts_Form != IDetablissement ---\n";
-    $cnt = DB::select("SELECT COUNT(*) as count FROM etablissement WHERE IDEts_Form IS NOT NULL AND IDEts_Form != IDetablissement");
-    echo "Total different: {$cnt[0]->count}\n";
+    $public_etabs = DB::select("
+        SELECT IDetablissement, IDEts_Form, Nom, PublPrive 
+        FROM etablissement 
+        WHERE PublPrive = 0 OR Nom LIKE '%مركز%' OR Nom LIKE '%معهد%'
+        LIMIT 10
+    ");
+
+    $taj = DB::select("
+        SELECT IDetablissement, IDEts_Form, Nom, PublPrive 
+        FROM etablissement 
+        WHERE IDetablissement = 1301 OR Nom LIKE '%التاج%'
+    ");
+
+    echo json_encode([
+        'status' => 'success',
+        'taj' => $taj,
+        'private' => $private_etabs,
+        'public' => $public_etabs
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 
 } catch (\Throwable $e) {
-    echo "Error: " . $e->getMessage() . "\n";
+    echo json_encode([
+        'status' => 'error',
+        'message' => $e->getMessage()
+    ]);
 }
