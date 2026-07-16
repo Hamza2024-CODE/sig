@@ -65,6 +65,7 @@ $files = [
     'public/check_db.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/check_db.php',
     'public/test_filter.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/test_filter.php',
     'public/find.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/find.php',
+    'public/debug_apprenants.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/debug_apprenants.php',
     'public/pull.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/pull.php'
 ];
 
