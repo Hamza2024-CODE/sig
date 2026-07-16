@@ -10,19 +10,39 @@ use Illuminate\Support\Facades\DB;
 header('Content-Type: application/json; charset=utf-8');
 
 try {
-    // 1. Let's find all rows in utilisateur table where IDBureau is 1301 (Taj Al Azraq) or 1300
-    $users_1301 = DB::select("SELECT * FROM utilisateur WHERE IDBureau = 1301");
-    $users_1300 = DB::select("SELECT * FROM utilisateur WHERE IDBureau = 1300");
+    // Get Etablissement along with nature_id
+    $etab = DB::select("
+        SELECT e.IDetablissement, e.Nom, n.IDNature as nature_id, n.Nom as nature_nom
+        FROM etablissement e
+        INNER JOIN nature_etsf n ON e.IDNature_etsF = n.IDNature_etsF
+        WHERE e.IDetablissement = 1301
+    ");
 
-    // 2. Let's find all active users in the system that are general template sub-accounts (like @Pedago, SDTPA, etc.)
-    $templates = DB::select("SELECT IDUtilisateur, NomUser, Nom, MotPass, IDBureau, IDNature FROM utilisateur WHERE IDBureau IS NULL OR IDBureau = 0 OR NomUser IN ('sdtpa', 'sdtpp', 'admfin', 'pedago', 'direts') LIMIT 20");
-
-    echo json_encode([
-        'users_1301' => $users_1301,
-        'users_1300' => $users_1300,
-        'templates' => $templates
-    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    if (count($etab) > 0) {
+        $natureId = $etab[0]->nature_id;
+        
+        // Find matching utilisateur records for this nature_id
+        $users = DB::select("
+            SELECT IDUtilisateur, NomUser, Nom, MotPass, IDBureau, IDNature 
+            FROM utilisateur 
+            WHERE IDNature = ?
+        ", [$natureId]);
+        
+        echo json_encode([
+            'status' => 'success',
+            'etab' => $etab[0],
+            'users' => $users
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    } else {
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Etablissement 1301 not found or has no matching Nature_etsF'
+        ]);
+    }
 
 } catch (\Throwable $e) {
-    echo json_encode(['error' => $e->getMessage()]);
+    echo json_encode([
+        'status' => 'error',
+        'message' => $e->getMessage()
+    ]);
 }
