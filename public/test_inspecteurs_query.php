@@ -13,10 +13,10 @@ try {
     $filter = "1=1";
     $params = [];
 
-    echo "--- Querying without filter ---\n";
+    echo "--- Querying with fallback name ---\n";
     $sql = "
         SELECT 
-            mpv.NomPrenom as name,
+            COALESCE(NULLIF(TRIM(mpv.NomPrenom), ''), (SELECT CONCAT(enc.Nom, ' ', enc.Prenom) FROM encadrement enc WHERE enc.IDEncadrement = mpv.IDEncadrement), 'مفتش بيداغوجي') as name,
             mpv.NomFonction as rank,
             COUNT(DISTINCT mpv.IDSection) as count_inspections,
             COALESCE(GROUP_CONCAT(DISTINCT d.Nom SEPARATOR '، '), 'كل الولايات') as wilayas,
@@ -29,15 +29,15 @@ try {
         LEFT JOIN dfep d ON e.IDDFEP = d.IDDFEP
         WHERE (mpv.NomFonction LIKE '%مفتش%' OR mpv.NomFonction LIKE '%inspecteur%')
           AND $filter
-        GROUP BY mpv.NomPrenom, mpv.NomFonction
+        GROUP BY name, mpv.NomFonction
         ORDER BY count_inspections DESC
-        LIMIT 10
+        LIMIT 20
     ";
     
     $rows = DB::select($sql, $params);
     echo "Found: " . count($rows) . " rows\n";
     foreach ($rows as $r) {
-        echo "Name: {$r->name} | Rank: {$r->rank} | Inspections: {$r->count_inspections}\n";
+        echo "Name: '{$r->name}' | Rank: {$r->rank} | Inspections: {$r->count_inspections}\n";
     }
 
 } catch (\Throwable $e) {
