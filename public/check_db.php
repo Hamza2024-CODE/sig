@@ -10,24 +10,18 @@ use Illuminate\Support\Facades\DB;
 header('Content-Type: text/plain; charset=utf-8');
 
 try {
-    $years = DB::table('annee_formation')->get();
-    foreach ($years as $y) {
-        echo "ID: {$y->IDAnnee_Formation} | Nom: {$y->Nom} | NomFr: {$y->NomFr}\n";
+    echo "--- Search Etablissement matching IDetablissement = 1301 ---\n";
+    $etab = DB::select("SELECT * FROM etablissement WHERE IDetablissement = 1301");
+    foreach ($etab as $e) {
+        echo "IDetablissement: {$e->IDetablissement} | IDEts_Form: {$e->IDEts_Form} | Nom: {$e->Nom} | NomFr: {$e->NomFr} | IDDFEP: {$e->IDDFEP}\n";
     }
 
-    $sessions = DB::table('session as s')
-        ->join('semestre_formation as sf', 's.IDSemestre_formation', '=', 'sf.IDSemestre_formation')
-        ->join('annee_formation as af', 'sf.IDAnnee_Formation', '=', 'af.IDAnnee_Formation')
-        ->select('s.IDSession', 's.Nom as s_nom', 'af.Nom as af_nom', 'af.IDAnnee_Formation')
-        ->orderBy('s.IDSession', 'desc')
-        ->limit(10)
-        ->get();
-
-    echo "\nLatest Sessions:\n";
-    foreach ($sessions as $s) {
-        echo "Session ID: {$s->IDSession} | Nom: {$s->s_nom} | Année: {$s->af_nom} (ID: {$s->IDAnnee_Formation})\n";
+    echo "\n--- Etablissement table schema (columns) ---\n";
+    $cols = DB::select("DESCRIBE etablissement");
+    foreach ($cols as $c) {
+        echo "Field: {$c->Field} | Type: {$c->Type}\n";
     }
 
-} catch (\Exception $e) {
-    echo "Error: " . $e->getMessage();
+} catch (\Throwable $e) {
+    echo "Error: " . $e->getMessage() . "\n";
 }
