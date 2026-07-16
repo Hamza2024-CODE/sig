@@ -22,6 +22,7 @@ class EtablissementController extends Controller
 
         $roleCode = strtolower($user['role_code'] ?? '');
         $isAdminOrCentral = in_array($roleCode, ['admin', 'central', 'high_admin', 'secretaire_general', 'ministre']);
+        $dfepId = $user['iddfep'] ?? $user['IDDFEP'] ?? 0;
         
         $etab = null;
         $wilayas = [];
@@ -50,10 +51,28 @@ class EtablissementController extends Controller
             $etab = DB::table('etablissement')
                 ->where('IDetablissement', $selectedEtabId)
                 ->first();
-        } elseif ($roleCode === 'dfep') {
-            $dfepId = $user['iddfep'] ?? $user['IDDFEP'] ?? 0;
+        } elseif ($roleCode === 'dfep' && $dfepId > 0) {
+            // DFEP: Can view/manage all establishments in their Wilaya
+            $etablissements = DB::table('etablissement')
+                ->select('IDetablissement', 'Nom', 'IDDFEP')
+                ->where('IDDFEP', $dfepId)
+                ->whereNotNull('Nom')
+                ->where('Nom', '!=', '')
+                ->orderBy('Nom', 'ASC')
+                ->get();
+
+            $selectedEtabId = (int)$request->get('etab_id', 0);
+            if ($selectedEtabId <= 0) {
+                // Fall back to DFEP's own profile establishment
+                $myEtab = DB::table('etablissement')
+                    ->where('IDNature_etsF', 5)
+                    ->where('IDDFEP', $dfepId)
+                    ->first();
+                $selectedEtabId = $myEtab ? (int)$myEtab->IDetablissement : 0;
+            }
+
             $etab = DB::table('etablissement')
-                ->where('IDNature_etsF', 5)
+                ->where('IDetablissement', $selectedEtabId)
                 ->where('IDDFEP', $dfepId)
                 ->first();
         } else {
@@ -70,15 +89,28 @@ class EtablissementController extends Controller
 
         $etab = (array)$etab;
 
+        // Fetch public establishments in the same Wilaya to use for linking if the establishment is private
+        $publicEtabs = [];
+        if ((int)($etab['PublPrive'] ?? 0) === 1) {
+            $publicEtabs = DB::table('etablissement')
+                ->where('IDDFEP', $etab['IDDFEP'])
+                ->where('PublPrive', 0)
+                ->select('IDetablissement as id', 'Nom as nom_ar')
+                ->orderBy('Nom', 'ASC')
+                ->get();
+        }
+
         return view('admin.etablissement.show', [
             'title' => 'ملف المؤسسة / Profil de l\'Établissement',
             'etab' => $etab,
             'roleCode' => $roleCode,
             'user' => $user,
             'isAdminOrCentral' => $isAdminOrCentral,
+            'isAdminOrCentralOrDfep' => ($isAdminOrCentral || $roleCode === 'dfep'),
             'wilayas' => $wilayas,
             'etablissements' => $etablissements,
-            'selectedEtabId' => $selectedEtabId
+            'selectedEtabId' => $selectedEtabId,
+            'publicEtabs' => $publicEtabs
         ]);
     }
 
@@ -99,10 +131,14 @@ class EtablissementController extends Controller
             'adres' => 'nullable|string|max:255',
             'obs' => 'nullable|string',
             'etab_id' => 'nullable|integer',
+            'parent_etab_id' => 'nullable|integer',
+            'ratache_cfpa_id' => 'nullable|integer',
+            'ratache_insfp_id' => 'nullable|integer',
         ]);
 
         $roleCode = strtolower($user['role_code'] ?? '');
         $isAdminOrCentral = in_array($roleCode, ['admin', 'central', 'high_admin', 'secretaire_general', 'ministre']);
+        $dfepId = $user['iddfep'] ?? $user['IDDFEP'] ?? 0;
         
         try {
             $updateData = [
@@ -113,45 +149,48 @@ class EtablissementController extends Controller
                 'Obs' => trim($request->input('obs')),
             ];
 
+            // Determine if the user has permission to manage the selected establishment
+            $canManage = false;
+            $targetEtabId = 0;
+
             if ($isAdminOrCentral) {
-                $etabId = (int)$request->input('etab_id');
-                if ($etabId <= 0) {
-                    return response()->json(['error' => 'معرف المؤسسة غير صالح'], 400);
+                $targetEtabId = (int)$request->input('etab_id');
+                $canManage = ($targetEtabId > 0);
+            } elseif ($roleCode === 'dfep' && $dfepId > 0) {
+                $targetEtabId = (int)$request->input('etab_id');
+                // Ensure the establishment is in the DFEP's Wilaya
+                $targetEtab = DB::table('etablissement')->where('IDetablissement', $targetEtabId)->first();
+                if ($targetEtab && (int)$targetEtab->IDDFEP === $dfepId) {
+                    $canManage = true;
                 }
-
-                DB::table('etablissement')
-                    ->where('IDetablissement', $etabId)
-                    ->update($updateData);
-                
-                $etab = DB::table('etablissement')
-                    ->where('IDetablissement', $etabId)
-                    ->first();
-            } elseif ($roleCode === 'dfep') {
-                $dfepId = $user['iddfep'] ?? $user['IDDFEP'] ?? 0;
-                DB::table('etablissement')
-                    ->where('IDNature_etsF', 5)
-                    ->where('IDDFEP', $dfepId)
-                    ->update($updateData);
-                
-                $etab = DB::table('etablissement')
-                    ->where('IDNature_etsF', 5)
-                    ->where('IDDFEP', $dfepId)
-                    ->first();
             } else {
-                // profile_etab_id stores the correct account IDetablissement. Falls back to id or etablissement_id.
-                $etabId = $user['profile_etab_id'] ?? $user['id'] ?? $user['etablissement_id'] ?? 0;
-                DB::table('etablissement')
-                    ->where('IDetablissement', $etabId)
-                    ->update($updateData);
- 
-                $etab = DB::table('etablissement')
-                    ->where('IDetablissement', $etabId)
-                    ->first();
+                $targetEtabId = $user['profile_etab_id'] ?? $user['id'] ?? $user['etablissement_id'] ?? 0;
+                $canManage = ($targetEtabId > 0 && $targetEtabId === (int)$request->input('etab_id', $targetEtabId));
             }
 
-            if ($etab) {
-                AuditLogger::log('UPDATE', 'etablissement', $etab->IDetablissement);
+            if (!$canManage || $targetEtabId <= 0) {
+                return response()->json(['error' => 'غير مصرح لك بتعديل هذه المؤسسة.'], 403);
             }
+
+            // Retrieve current establishment to check if it's private
+            $etab = DB::table('etablissement')->where('IDetablissement', $targetEtabId)->first();
+            if (!$etab) {
+                return response()->json(['error' => 'المؤسسة غير موجودة.'], 404);
+            }
+
+            // If private, allow updating supervising public centers (DFEP / Admin only)
+            if ((int)$etab->PublPrive === 1 && ($isAdminOrCentral || $roleCode === 'dfep')) {
+                $updateData['IDEts_Form'] = (int)$request->input('parent_etab_id', 0);
+                $updateData['DeIDetablissementRatache'] = (int)$request->input('ratache_cfpa_id', 0);
+                $updateData['DeIDetablissementRatacheInsfp'] = (int)$request->input('ratache_insfp_id', 0);
+            }
+
+            DB::table('etablissement')
+                ->where('IDetablissement', $targetEtabId)
+                ->update($updateData);
+            
+            // Log update
+            AuditLogger::log('UPDATE', 'etablissement', $targetEtabId);
 
             return response()->json([
                 'success' => true,

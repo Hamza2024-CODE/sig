@@ -265,14 +265,15 @@
     </div>
 </div>
 
-@if($isAdminOrCentral)
-<!-- Etablissement Selection Selector (Admin & Central Roles) -->
+@if($isAdminOrCentralOrDfep)
+<!-- Etablissement Selection Selector (Admin, Central & DFEP Roles) -->
 <div class="card mb-4 shadow-sm" style="border-radius: var(--r-xl); border: 1px solid var(--border); background: var(--bg-card); font-family: 'Cairo', sans-serif;">
     <div class="card-body p-4">
         <h5 class="fw-bold mb-3" style="color: var(--tx-1);">
             <i class="fa-solid fa-magnifying-glass text-primary me-2"></i>البحث واختيار ملف المؤسسة التكوينية
         </h5>
         <div class="row g-3">
+            @if($isAdminOrCentral)
             <div class="col-md-5">
                 <label class="form-label fw-bold">الولاية / مديرية التكوين المهني</label>
                 <select id="selectWilaya" class="form-select" style="font-family: 'Cairo';">
@@ -291,6 +292,17 @@
                     @endforeach
                 </select>
             </div>
+            @else
+            <div class="col-md-10">
+                <label class="form-label fw-bold">المؤسسة التكوينية التابعة لمديرية التكوين المهني لولايتكم</label>
+                <select id="selectEtablissement" class="form-select" style="font-family: 'Cairo';">
+                    <option value="">— اختر المؤسسة التكوينية —</option>
+                    @foreach($etablissements as $e)
+                        <option value="{{ $e->IDetablissement }}" data-dfep="{{ $e->IDDFEP }}" @if($e->IDetablissement == $selectedEtabId) selected @endif>{{ $e->Nom }}</option>
+                    @endforeach
+                </select>
+            </div>
+            @endif
             <div class="col-md-2 d-flex align-items-end">
                 <button type="button" onclick="loadEtabProfile()" class="btn btn-primary w-100 fw-bold" style="border-radius: var(--r-md); height: 38px;">
                     <i class="fa-solid fa-check me-1"></i> عرض الملف
@@ -442,6 +454,58 @@
                                 <i class="fa-solid fa-align-right input-icon" style="top: 24px;"></i>
                             </div>
                         </div>
+
+                        @if($isAdminOrCentralOrDfep && (int)($etab['PublPrive'] ?? 0) === 1)
+                        <!-- Section: Supervising Public Centers (For Private Etabs) -->
+                        <div class="col-md-12">
+                            <hr class="my-3">
+                            <h5 class="fw-bold text-primary mb-1"><i class="fa-solid fa-link me-1"></i>ربط المؤسسة الخاصة بالمؤسسات العمومية المشرفة</h5>
+                            <p class="text-muted small">قم باختيار المراكز والمعاهد العمومية المنتدبة للإشراف البيداغوجي والامتحانات على هذه المؤسسة الخاصة في نفس ولايتها.</p>
+                        </div>
+
+                        <!-- 1. Supervising parent/coordination (IDEts_Form) -->
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small text-navy-700">مؤسسة التنسيق والربط (IDEts_Form)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fa-solid fa-building-circle-arrow-right"></i></span>
+                                <select name="parent_etab_id" class="form-select">
+                                    <option value="0">— لا يوجد ربط —</option>
+                                    @foreach($publicEtabs as $pe)
+                                        <option value="{{ $pe->id }}" @if((int)($etab['IDEts_Form'] ?? 0) === (int)$pe->id) selected @endif>{{ $pe->nom_ar }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- 2. Supervising CFPA (DeIDetablissementRatache) -->
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small text-navy-700">المركز العمومي المنتدب (CFPA)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fa-solid fa-school-flag"></i></span>
+                                <select name="ratache_cfpa_id" class="form-select">
+                                    <option value="0">— لا يوجد ربط —</option>
+                                    @foreach($publicEtabs as $pe)
+                                        <option value="{{ $pe->id }}" @if((int)($etab['DeIDetablissementRatache'] ?? 0) === (int)$pe->id) selected @endif>{{ $pe->nom_ar }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- 3. Supervising INSFP (DeIDetablissementRatacheInsfp) -->
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small text-navy-700">المعهد العمومي المنتدب (INSFP)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fa-solid fa-graduation-cap"></i></span>
+                                <select name="ratache_insfp_id" class="form-select">
+                                    <option value="0">— لا يوجد ربط —</option>
+                                    @foreach($publicEtabs as $pe)
+                                        <option value="{{ $pe->id }}" @if((int)($etab['DeIDetablissementRatacheInsfp'] ?? 0) === (int)$pe->id) selected @endif>{{ $pe->nom_ar }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-12"><hr class="my-3"></div>
+                        @endif
                     </div>
 
                     <!-- Actions -->
@@ -468,11 +532,11 @@
 
 @section('scripts')
 <script>
-@if($isAdminOrCentral)
+@if($isAdminOrCentralOrDfep)
 (function() {
     const wilayaSelect = document.getElementById('selectWilaya');
     const etabSelect  = document.getElementById('selectEtablissement');
-    if (!wilayaSelect || !etabSelect) return;
+    if (!etabSelect) return;
 
     // Cache all options
     const allOptions = Array.from(etabSelect.options).map(o => ({
@@ -481,34 +545,36 @@
         dfep: o.getAttribute('data-dfep')
     }));
 
-    // Pre-select the Wilaya corresponding to the active establishment
-    const selectedOpt = etabSelect.options[etabSelect.selectedIndex];
-    if (selectedOpt) {
-        const dfepId = selectedOpt.getAttribute('data-dfep');
-        if (dfepId) {
-            wilayaSelect.value = dfepId;
+    if (wilayaSelect) {
+        // Pre-select the Wilaya corresponding to the active establishment
+        const selectedOpt = etabSelect.options[etabSelect.selectedIndex];
+        if (selectedOpt) {
+            const dfepId = selectedOpt.getAttribute('data-dfep');
+            if (dfepId) {
+                wilayaSelect.value = dfepId;
+            }
         }
-    }
 
-    function filterEtablissements(dfepId) {
-        const currentVal = etabSelect.value;
-        etabSelect.innerHTML = '<option value="">— اختر المؤسسة —</option>';
-        
-        const filtered = dfepId ? allOptions.filter(o => o.dfep == dfepId) : allOptions;
-        filtered.forEach(o => {
-            if (!o.value) return; // skip placeholder
-            const opt = document.createElement('option');
-            opt.value = o.value;
-            opt.textContent = o.text;
-            opt.setAttribute('data-dfep', o.dfep);
-            if (o.value == currentVal) opt.selected = true;
-            etabSelect.appendChild(opt);
+        function filterEtablissements(dfepId) {
+            const currentVal = etabSelect.value;
+            etabSelect.innerHTML = '<option value="">— اختر المؤسسة —</option>';
+            
+            const filtered = dfepId ? allOptions.filter(o => o.dfep == dfepId) : allOptions;
+            filtered.forEach(o => {
+                if (!o.value) return; // skip placeholder
+                const opt = document.createElement('option');
+                opt.value = o.value;
+                opt.textContent = o.text;
+                opt.setAttribute('data-dfep', o.dfep);
+                if (o.value == currentVal) opt.selected = true;
+                etabSelect.appendChild(opt);
+            });
+        }
+
+        wilayaSelect.addEventListener('change', function() {
+            filterEtablissements(this.value);
         });
     }
-
-    wilayaSelect.addEventListener('change', function() {
-        filterEtablissements(this.value);
-    });
 })();
 
 function loadEtabProfile() {
