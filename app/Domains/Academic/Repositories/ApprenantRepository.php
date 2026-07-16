@@ -39,25 +39,22 @@ class ApprenantRepository
     {
         $sql = "
             SELECT a.IDapprenant as id, a.IDCandidat as candidat_id, a.IDSection as section_id,
-                   COALESCE(NULLIF(a.Nccp, ''), c1.NumIns, c2.NumIns) as matricule, a.statut,
-                   COALESCE(c1.Nom, c2.Nom) as nom_ar, COALESCE(c1.Prenom, c2.Prenom) as prenom_ar,
-                   COALESCE(c1.NomFr, c2.NomFr) as nom_fr, COALESCE(c1.PrenomFr, c2.PrenomFr) as prenom_fr,
-                   COALESCE(c1.Civ, c2.Civ) as civ, COALESCE(c1.Nin, c2.Nin) as nin,
+                   COALESCE(NULLIF(a.Nccp, ''), c1.NumIns) as matricule, a.statut,
+                   c1.Nom as nom_ar, c1.Prenom as prenom_ar,
+                   c1.NomFr as nom_fr, c1.PrenomFr as prenom_fr,
+                   c1.Civ as civ, c1.Nin as nin,
                    sp.Nom as specialite_ar,
                    e.Nom as etab_nom,
                    o.IDMode_formation as offre_mode
             FROM apprenant a
             LEFT JOIN section s ON a.IDSection = s.IDSection
             LEFT JOIN candidat c1 ON c1.IDCandidat = a.IDCandidat
-            LEFT JOIN candidat c2 ON c2.IdMihnati1 = a.IDapprenant AND c2.IDCandidat = (
-                SELECT MAX(c3.IDCandidat) FROM candidat c3 WHERE c3.IdMihnati1 = a.IDapprenant
-            )
-            LEFT JOIN offre o ON o.IDOffre = COALESCE(c1.IDOffre, c2.IDOffre)
+            LEFT JOIN offre o ON o.IDOffre = c1.IDOffre
             LEFT JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
             LEFT JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
             WHERE a.statut = 'actif'
             {$extraWhere}
-            ORDER BY COALESCE(c1.Nom, c2.Nom) ASC
+            ORDER BY c1.Nom ASC
             LIMIT {$limit}
         ";
         $stmt = $this->db->prepare($sql);
