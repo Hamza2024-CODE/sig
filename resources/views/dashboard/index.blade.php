@@ -532,7 +532,7 @@ $isDfepRole = ($role === 'dfep');
                                 <option value="">كل المؤسسات / Tous</option>
                             <?php endif; ?>
                             <?php foreach ($filter_etablissements as $et): ?>
-                                <option value="<?= $et['id'] ?>" data-wilaya="<?= $et['wilaya_id'] ?? '' ?>" <?= ($isEtabRole || (session('user')['etablissement_id'] ?? null) == $et['id']) ? 'selected' : '' ?>>
+                                <option value="<?= $et['id'] ?>" data-wilaya="<?= $et['wilaya_id'] ?? '' ?>" <?= ((session('user')['etablissement_id'] ?? null) == $et['id']) ? 'selected' : '' ?>>
                                     <?= htmlspecialchars($et['nom_ar']) ?>
                                 </option>
                             <?php endforeach; ?>

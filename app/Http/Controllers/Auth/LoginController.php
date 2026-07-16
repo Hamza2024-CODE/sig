@@ -508,6 +508,16 @@ class LoginController extends Controller
                             $wilayaId = $iddfep; // Fallback since IDDFEP directly holds the Wilaya ID
                         }
 
+                        $wilayaName = null;
+                        if ($wilayaId > 0) {
+                            try {
+                                $stmtW = $db->prepare("SELECT Nom FROM wilaya WHERE IDWilayaa = ? LIMIT 1");
+                                $stmtW->execute([$wilayaId]);
+                                $wRow = $stmtW->fetch(\PDO::FETCH_ASSOC);
+                                $wilayaName = $wRow['Nom'] ?? null;
+                            } catch (\Exception $ex) {}
+                        }
+
                         $matchedUser = [
                             'id'               => $etab['IDetablissement'],
                             'username'         => $matchedUtilisateur ? strtolower($matchedUtilisateur['NomUser']) : $etab['nomUser'],
@@ -520,6 +530,7 @@ class LoginController extends Controller
                             'parent_etab_id'   => $etab['IDEts_Form'] ?? null,
                             'iddfep'           => $iddfep,
                             'wilaya_id'        => $wilayaId,
+                            'wilaya_name'      => $wilayaName,
                             'role_id'          => $roleId,
                             'role_code'        => $roleCode,
                             'role_ar'          => $roleAr,

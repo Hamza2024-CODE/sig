@@ -1483,10 +1483,10 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
                         <!-- Wilaya Filter -->
                         <div class="col-12 col-md-3">
                             <label for="global-filter-wilaya" class="form-label fw-bold text-secondary mb-1.5" style="font-size: 0.82rem; font-family: 'Cairo';"><i class="fa-solid fa-map-location-dot text-primary me-1"></i> الولاية</label>
-                            <select name="filter_wilaya" id="global-filter-wilaya" class="form-select border-0 shadow-sm py-2.5 px-3 bg-light rounded-3 w-100" style="font-size: 0.85rem; font-family: 'Cairo'; font-weight: 600;" onchange="onGlobalWilayaChange()" {{ ($role === 'dfep' || in_array($role, ['etablissement', 'directeur'])) ? 'disabled' : '' }}>
+                            <select name="filter_wilaya" id="global-filter-wilaya" class="form-select border-0 shadow-sm py-2.5 px-3 bg-light rounded-3 w-100" style="font-size: 0.85rem; font-family: 'Cairo'; font-weight: 600;" onchange="onGlobalWilayaChange()" {{ (in_array($roleCode, ['dfep', 'etablissement', 'directeur'])) ? 'disabled' : '' }}>
                                 <option value="">كل الولايات / Toutes</option>
                                 @foreach ($filter_wilayas as $w)
-                                    <option value="{{ $w['id'] }}" {{ (isset($_GET['filter_wilaya']) && $_GET['filter_wilaya'] == $w['id']) || ($role === 'dfep' && $dfepId == $w['id']) ? 'selected' : '' }}>
+                                    <option value="{{ $w['id'] }}" {{ (isset($_GET['filter_wilaya']) && $_GET['filter_wilaya'] == $w['id']) || (in_array($roleCode, ['dfep', 'etablissement', 'directeur']) && $dfepId == $w['id']) ? 'selected' : '' }}>
                                         {{ $w['nom_ar'] }} ({{ $w['code'] }})
                                     </option>
                                 @endforeach
