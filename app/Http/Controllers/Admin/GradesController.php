@@ -114,6 +114,10 @@ class GradesController extends Controller
         $whereClauses = ["s.Nom != ''", "s.Nom IS NOT NULL", "s.NbrSem > 0", "((s.NbrSem > 3 AND sess.DateD >= '2024-01-01') OR (s.NbrSem <= 3 AND sess.DateD >= '2025-01-01'))"];
         $bindings = [];
 
+        if (request('type') === 'bep') {
+            $whereClauses[] = "e.IDNature_etsF = 7";
+        }
+
         if ($isMode10) {
             $whereClauses[] = "o.IDMode_formation = 10";
         }

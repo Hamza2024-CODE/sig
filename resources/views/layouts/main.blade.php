@@ -895,6 +895,20 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
                         </div>
                     </div>
 
+                    @if(in_array($role, ['admin', 'central', 'high_admin']) || (int)($user['IDNature_etsF'] ?? 0) === 7 || strtoupper($user['direction_code'] ?? $user['username'] ?? '') === 'DEOH')
+                    <!-- نمط التعليم المهني (حصرياً) -->
+                    <div class="sidebar-dropdown">
+                        <button type="button" class="sidebar-item {{ ($isActive('/dashboard/grades') && request('type') === 'bep') ? 'active' : '' }}" onclick="toggleSidebarDropdown(this)" title="نمط التعليم المهني (حصرياً)">
+                            <i class="fa-solid fa-book-bookmark text-success"></i>
+                            <span>نمط التعليم المهني (حصرياً)</span>
+                            <i class="fa-solid fa-chevron-down ms-auto dropdown-chevron" style="font-size: 0.7rem;"></i>
+                        </button>
+                        <div class="sidebar-submenu {{ ($isActive('/dashboard/grades') && request('type') === 'bep') ? 'open' : '' }}">
+                            <a href="{{ url('dashboard/grades?type=bep') }}" class="sidebar-subitem {{ (request('type') === 'bep') ? 'active' : '' }}" title="مداولات التعليم المهني"><i class="fa-solid fa-graduation-cap text-success"></i> <span>مداولات التعليم المهني</span></a>
+                        </div>
+                    </div>
+                    @endif
+
                     <!-- 4. التمهين والمؤسسات -->
                     <div class="sidebar-dropdown">
                         <button type="button" class="sidebar-item {{ ($isActive('/dashboard/partenaires') || $isActive('/dashboard/maitres-apprentissage')) ? 'active' : '' }}" onclick="toggleSidebarDropdown(this)" title="التمهين والمؤسسات">
