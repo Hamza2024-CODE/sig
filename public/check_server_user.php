@@ -7,26 +7,64 @@ $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 use Illuminate\Support\Facades\DB;
 
 try {
-    $e = DB::table('etablissement')->where('IDetablissement', 1301)->first();
-    if ($e) {
-        echo "Etablissement: {$e->Nom}\n";
-        echo "Username on Server: '{$e->nomUser}'\n";
-        
-        $pw1301 = 'jyc:@1301';
-        $pw1300 = 'jyc:@1300';
-        
-        $match1301 = (password_verify($pw1301, $e->MotDePass) || $e->MotDePass === $pw1301);
-        $match1300 = (password_verify($pw1300, $e->MotDePass) || $e->MotDePass === $pw1300);
-        
-        echo "Password 'jyc:@1301' matches? " . ($match1301 ? 'YES' : 'NO') . "\n";
-        echo "Password 'jyc:@1300' matches? " . ($match1300 ? 'YES' : 'NO') . "\n";
-        
-        if (!$match1301 && !$match1300) {
-            echo "Current password hash/value in DB: '{$e->MotDePass}'\n";
+    echo "=== DATA DIAGNOSTICS FOR ETABLISSEMENT 1301 ===\n\n";
+
+    // 1. Check Offers
+    $offersCount = DB::table('offre')->where('IDEts_Form', 1301)->count();
+    echo "1. Total Offers in 'offre' for 1301: {$offersCount}\n";
+    if ($offersCount > 0) {
+        $modes = DB::table('offre')
+            ->where('IDEts_Form', 1301)
+            ->select('IDMode_formation', DB::raw('count(*) as count'))
+            ->groupBy('IDMode_formation')
+            ->get();
+        foreach ($modes as $m) {
+            echo "   - Mode {$m->IDMode_formation}: {$m->count} offers\n";
         }
-    } else {
-        echo "Establishment 1301 not found.\n";
     }
-} catch (\Throwable $ex) {
-    echo "Error: " . $ex->getMessage() . "\n";
+
+    // 2. Check Sections
+    $sectionsCount = DB::table('section')->where('IDEts_Form', 1301)->count();
+    echo "2. Total Sections in 'section' for 1301: {$sectionsCount}\n";
+    if ($sectionsCount > 0) {
+        $secs = DB::table('section')
+            ->where('IDEts_Form', 1301)
+            ->limit(5)
+            ->get(['IDSection', 'Nom', 'DateDF', 'DateFF']);
+        foreach ($secs as $s) {
+            echo "   - Section ID {$s->IDSection}: '{$s->Nom}' | Start: {$s->DateDF} | End: {$s->DateFF}\n";
+        }
+    }
+
+    // 3. Check Trainees
+    $appCount = DB::table('apprenant as a')
+        ->join('section as s', 'a.IDSection', '=', 's.IDSection')
+        ->join('offre as o', 's.IDOffre', '=', 'o.IDOffre')
+        ->where('o.IDEts_Form', 1301)
+        ->count();
+    echo "3. Total Trainees connected to 1301: {$appCount}\n";
+
+    // 4. Check if the active trainees table has active records
+    if ($appCount > 0) {
+        $activeCount = DB::table('apprenant as a')
+            ->join('section as s', 'a.IDSection', '=', 's.IDSection')
+            ->join('offre as o', 's.IDOffre', '=', 'o.IDOffre')
+            ->where('o.IDEts_Form', 1301)
+            ->where('a.statut', 'actif')
+            ->count();
+        echo "   - Active Trainees (a.statut = 'actif'): {$activeCount}\n";
+
+        $dateFiltered = DB::table('apprenant as a')
+            ->join('section as s', 'a.IDSection', '=', 's.IDSection')
+            ->join('offre as o', 's.IDOffre', '=', 'o.IDOffre')
+            ->where('o.IDEts_Form', 1301)
+            ->where('a.statut', 'actif')
+            ->where('s.DateDF', '<=', date('Y-m-d'))
+            ->where('s.DateFF', '>=', date('Y-m-d'))
+            ->count();
+        echo "   - Trainees with Active Section Dates: {$dateFiltered}\n";
+    }
+
+} catch (\Throwable $e) {
+    echo "Error: " . $e->getMessage() . "\n";
 }
