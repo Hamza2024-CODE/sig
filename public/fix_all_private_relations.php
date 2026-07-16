@@ -30,14 +30,22 @@ try {
         $supervisingId = $insfpId > 0 ? $insfpId : ($cfpaId > 0 ? $cfpaId : 0);
 
         if ($supervisingId > 0) {
-            // Update offers
+            // Update offers ONLY if they don't have a supervising center (0 or null)
             $offresCount = DB::table('offre')
                 ->where('IDEts_Form', $etabId)
+                ->where(function($query) {
+                    $query->whereNull('IDEts_FormM')
+                          ->orWhere('IDEts_FormM', 0);
+                })
                 ->update(['IDEts_FormM' => $supervisingId]);
 
-            // Update sections
+            // Update sections ONLY if they don't have a supervising center (0 or null)
             $sectionsCount = DB::table('section')
                 ->where('IDEts_Form', $etabId)
+                ->where(function($query) {
+                    $query->whereNull('IDEts_FormM')
+                          ->orWhere('IDEts_FormM', 0);
+                })
                 ->update(['IDEts_FormM' => $supervisingId]);
 
             if ($offresCount > 0 || $sectionsCount > 0) {
