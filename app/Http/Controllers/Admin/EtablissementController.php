@@ -180,9 +180,25 @@ class EtablissementController extends Controller
 
             // If private, allow updating supervising public centers (DFEP / Admin only)
             if ((int)$etab->PublPrive === 1 && ($isAdminOrCentral || $roleCode === 'dfep')) {
-                $updateData['IDEts_Form'] = (int)$request->input('parent_etab_id', 0);
-                $updateData['DeIDetablissementRatache'] = (int)$request->input('ratache_cfpa_id', 0);
-                $updateData['DeIDetablissementRatacheInsfp'] = (int)$request->input('ratache_insfp_id', 0);
+                $parentId = (int)$request->input('parent_etab_id', 0);
+                $cfpaId = (int)$request->input('ratache_cfpa_id', 0);
+                $insfpId = (int)$request->input('ratache_insfp_id', 0);
+
+                $updateData['IDEts_Form'] = $parentId;
+                $updateData['DeIDetablissementRatache'] = $cfpaId;
+                $updateData['DeIDetablissementRatacheInsfp'] = $insfpId;
+
+                // Dynamically cascade to update existing offers and sections supervising center (IDEts_FormM)
+                $supervisingId = $insfpId > 0 ? $insfpId : ($cfpaId > 0 ? $cfpaId : $parentId);
+                if ($supervisingId > 0) {
+                    DB::table('offre')
+                        ->where('IDEts_Form', $targetEtabId)
+                        ->update(['IDEts_FormM' => $supervisingId]);
+                    
+                    DB::table('section')
+                        ->where('IDEts_Form', $targetEtabId)
+                        ->update(['IDEts_FormM' => $supervisingId]);
+                }
             }
 
             DB::table('etablissement')
