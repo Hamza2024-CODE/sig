@@ -94,6 +94,7 @@ $files = [
     'public/check_server_user.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/check_server_user.php',
     'public/import_on_server.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/import_on_server.php',
     'public/check_apprenant_details.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/check_apprenant_details.php',
+    'public/clear_cache.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/clear_cache.php',
     'public/pull.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/pull.php'
 ];
 
