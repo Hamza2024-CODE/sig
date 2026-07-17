@@ -131,7 +131,7 @@ class GradesController extends Controller
             $bindings[] = $selectedEtab;
         }
         if ($selectedYear > 0) {
-            $whereClauses[] = "YEAR(sess.DateD) = ?";
+            $whereClauses[] = "sess.IDSession = ?";
             $bindings[] = $selectedYear;
         }
 
@@ -226,8 +226,8 @@ class GradesController extends Controller
             $statsParams['etabId'] = $selectedEtab;
         }
         if ($selectedYear > 0) {
-            $statsWhere[] = "YEAR(sess.DateD) = :year";
-            $statsParams['year'] = $selectedYear;
+            $statsWhere[] = "sess.IDSession = :sessionId";
+            $statsParams['sessionId'] = $selectedYear;
         }
 
         $statsFilter = count($statsWhere) > 0 ? implode(" AND ", $statsWhere) : null;
@@ -717,10 +717,14 @@ class GradesController extends Controller
             }
         }
 
-        // 3. Years
-        $years = \Illuminate\Support\Facades\Cache::remember('filter_years', 86400, function() {
-            $rows = DB::select("SELECT DISTINCT YEAR(DateD) as year FROM session WHERE DateD IS NOT NULL AND DateD > '2010-01-01' ORDER BY year DESC");
-            return array_column(array_map(fn($item) => (array)$item, $rows), 'year');
+        // 3. Sessions (replaced simple years for precise session-month filtering)
+        $years = \Illuminate\Support\Facades\Cache::remember('filter_sessions_list', 86400, function() {
+            return array_map(fn($item) => (array)$item, DB::select("
+                SELECT IDSession as id, Nom as name 
+                FROM session 
+                WHERE DateD IS NOT NULL AND DateD > '2010-01-01'
+                ORDER BY DateD DESC
+            "));
         });
 
         return [

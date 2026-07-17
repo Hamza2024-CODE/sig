@@ -46,9 +46,9 @@ class BepGradingHelper
     public static function evaluateEcf(float $ecfMark): array
     {
         $decision = 'إعادة السنة';
-        if ($ecfMark >= 10.00) {
+        if ($ecfMark >= 20.00) {
             $decision = 'نجاح مباشر';
-        } elseif ($ecfMark >= 9.00) {
+        } elseif ($ecfMark >= 18.00) {
             $decision = 'نجاح بالإنقاذ';
         }
         
@@ -62,15 +62,18 @@ class BepGradingHelper
      * حساب النقطة النهائية للمترشح لشهادة التعليم المهني (BEP) في السنة الثالثة.
      * المعادلة: (معدل الـ ECF للسنوات الـ3 * 3/6) + (المعدل العام لمواد التعليم العام للسنوات الـ3 * 2/6) + (تقرير نهاية الدراسة * 1/6)
      *
-     * @param float $ecf3YearsAvg معدل امتحانات الـ ECF للسنوات الثلاثة
-     * @param float $generalEd3YearsAvg المعدل العام للتعليم العام للسنوات الثلاثة
-     * @param float $endOfStudyReport نقطة تقرير نهاية الدراسة
+     * @param float $ecf3YearsAvg معدل امتحانات الـ ECF للسنوات الثلاثة (على 40)
+     * @param float $generalEd3YearsAvg المعدل العام للتعليم العام للسنوات الثلاثة (على 20)
+     * @param float $endOfStudyReport نقطة تقرير نهاية الدراسة (على 20)
      * @return array يحتوي على المعدل النهائي والقرار النهائي للمترشح
      */
     public static function calculateFinalBepMark(float $ecf3YearsAvg, float $generalEd3YearsAvg, float $endOfStudyReport): array
     {
+        // ECF is out of 40, so scale it to out of 20 (by dividing by 2)
+        $ecfScaled = $ecf3YearsAvg / 2.0;
+
         // تطبيق المعاملات: ECF (3/6)، التعليم العام (2/6)، التقرير (1/6)
-        $finalMark = ($ecf3YearsAvg * (3.0 / 6.0)) + ($generalEd3YearsAvg * (2.0 / 6.0)) + ($endOfStudyReport * (1.0 / 6.0));
+        $finalMark = ($ecfScaled * (3.0 / 6.0)) + ($generalEd3YearsAvg * (2.0 / 6.0)) + ($endOfStudyReport * (1.0 / 6.0));
         $finalMark = round($finalMark * 100) / 100;
         
         $decision = 'راسب';

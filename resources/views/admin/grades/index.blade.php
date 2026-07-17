@@ -143,11 +143,11 @@ for ($i = 1; $i <= 6; $i++) {
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label fw-bold small text-muted"><i class="fa-solid fa-calendar-days me-1"></i>سنة الدورة</label>
+                    <label class="form-label fw-bold small text-muted"><i class="fa-solid fa-calendar-days me-1"></i>الدورة التكوينية</label>
                     <select name="filter_year" class="form-select border-0 shadow-sm bg-light rounded-3" onchange="this.form.submit()">
-                        <option value="">-- كل السنوات --</option>
-                        <?php foreach($years as $y): ?>
-                        <option value="<?= $y ?>" <?= $selected_year == $y ? 'selected' : '' ?>><?= $y ?></option>
+                        <option value="">-- كل الدورات --</option>
+                        <?php foreach($years as $sess): ?>
+                        <option value="<?= $sess['id'] ?>" <?= $selected_year == $sess['id'] ? 'selected' : '' ?>><?= htmlspecialchars($sess['name']) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
