@@ -61,6 +61,7 @@ $files = [
     'app/Http/Controllers/Admin/GradesController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/GradesController.php',
     'app/Helpers/BepGradingHelper.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Helpers/BepGradingHelper.php',
     'public/check_view_content.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/check_view_content.php',
+    'public/check_sessions.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/check_sessions.php',
     'public/pull.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/pull.php'
 ];
 
