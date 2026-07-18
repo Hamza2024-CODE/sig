@@ -80,6 +80,8 @@ $files = [
     'public/set_oran_credentials.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/set_oran_credentials.php',
     'public/sig_login_guide.html' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/sig_login_guide.html',
     'public/sig_grading_guide.html' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/sig_grading_guide.html',
+    'resources/views/admin/modules/print_template.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/modules/print_template.blade.php',
+    'app/Http/Controllers/Admin/ModulesController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/ModulesController.php',
     'public/pull.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/pull.php'
 ];
 

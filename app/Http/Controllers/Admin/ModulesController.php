@@ -2970,22 +2970,29 @@ class ModulesController extends Controller {
                            c.Nom as nom_ar, c.Prenom as prenom_ar,
                            c.NomFr as nom_fr, c.PrenomFr as prenom_fr,
                            DATE_FORMAT(c.DateNais, '%d/%m/%Y') as date_naissance,
-                           'الجزائر' as lieu_naissance,
+                           c.LieuNais as lieu_naissance,
+                           c.Adres as adresse_ar,
                            sp.Nom as spec_ar, sp.NomFr as spec_fr, sp.CodeSpec as spec_code,
                            ef.Nom as etab_nom, ef.NomFr as etab_fr,
                            w.Nom as wilaya_nom, w.NomFr as wilaya_nom_fr,
                            a.statut as statut_apprenant,
                            se.Nom as session_nom, se.Code as session_code,
-                           o.DateD as date_debut, o.DateF as date_fin
+                           o.DateD as date_debut, o.DateF as date_fin,
+                           DATE_FORMAT(o.DateD, '%d/%m/%Y') as date_debut_formatted,
+                           DATE_FORMAT(o.DateF, '%d/%m/%Y') as date_fin_formatted,
+                           mf.Nom as mode_formation_ar,
+                           o.IDMode_formation as mode_formation_id,
+                           s.NumSem as semestre_num
                     FROM apprenant a
                     JOIN candidat c ON a.IDCandidat = c.IDCandidat
                     LEFT JOIN offre o ON c.IDOffre = o.IDOffre
                     LEFT JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
-                    LEFT JOIN etablissement ef ON o.IDEts_Form = ef.IDetablissement
+                    LEFT JOIN etablissement ef ON o.IDEts_Form = ef.IDEts_Form
                     LEFT JOIN dfep d ON ef.IDDFEP = d.IDDFEP
                     LEFT JOIN wilaya w ON d.IDWilayaa = w.IDWilayaa
                     LEFT JOIN session se ON o.IDSession = se.IDSession
                     LEFT JOIN section s ON a.IDSection = s.IDSection
+                    LEFT JOIN mode_formation mf ON o.IDMode_formation = mf.IDMode_formation
                     WHERE a.IDapprenant = ?
                 ");
                 $stmt->execute([(int)$userId]);

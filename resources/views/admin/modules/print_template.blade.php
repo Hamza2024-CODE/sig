@@ -29,6 +29,7 @@ $specFr   = $details['spec_fr'] ?? '';
 $titles = [
     'certificat_scolaire'     => ['ar' => 'شـهادة مدرسـية',         'fr' => 'Certificat Scolaire'],
     'attestation_inscription' => ['ar' => 'شـهادة تسـجيل',          'fr' => 'Attestation d\'Inscription'],
+    'attestation_stage'       => ['ar' => 'شـهادة تـربـص',          'fr' => 'Attestation de Stage'],
     'attestation_travail'     => ['ar' => 'شـهادة عـمـل',           'fr' => 'Attestation de Travail'],
     'bulletin_notes'          => ['ar' => 'كشـف النـقاط السـداسي',  'fr' => 'Bulletin de Notes'],
     'decision_isqat'          => ['ar' => 'قـرار إسـقاط بـيـداغـوجـي', 'fr' => 'Décision d\'Exclusion Pédagogique'],
@@ -121,15 +122,27 @@ $titleFr = $titles[$docType]['fr'] ?? 'Document Administratif';
         @media print {
             body { background: white; padding: 0; }
             .print-container { box-shadow: none; width: 100%; padding: 0; margin: 0; }
-            .print-btn-wrap { display: none; }
+            .print-btn-wrap, .no-print { display: none !important; }
         }
     </style>
 </head>
 <body>
 
 <!-- Floating buttons -->
-<div class="print-btn-wrap">
+<div class="print-btn-wrap no-print">
     <button onclick="history.back()" class="btn-p btn-back"><i class="fa-solid fa-arrow-right"></i> رجوع</button>
+    
+    <?php if (in_array($docType, ['certificat_scolaire', 'attestation_inscription', 'attestation_stage'])): ?>
+    <div style="display:flex; align-items:center; gap:8px; background:white; padding:4px 12px; border-radius:50px; border:2px solid #482b8f; box-shadow: 0 4px 15px rgba(0,0,0,0.15); direction: rtl;">
+        <label style="font-weight:700; color:#482b8f; font-size:13px; margin:0; cursor:pointer;" for="docTypeSelector">نوع الوثيقة:</label>
+        <select id="docTypeSelector" onchange="changeDocType(this.value)" style="border:none; outline:none; font-weight:700; color:#1e293b; background:transparent; font-size:13px; cursor:pointer; font-family:'Cairo',sans-serif;">
+            <option value="attestation_stage" <?= $docType === 'attestation_stage' ? 'selected' : '' ?>>شهادة تربص (Attestation de Stage)</option>
+            <option value="certificat_scolaire" <?= $docType === 'certificat_scolaire' ? 'selected' : '' ?>>شهادة مدرسية (Certificat Scolaire)</option>
+            <option value="attestation_inscription" <?= $docType === 'attestation_inscription' ? 'selected' : '' ?>>شهادة تسجيل (Attestation d'Inscription)</option>
+        </select>
+    </div>
+    <?php endif; ?>
+    
     <button onclick="window.print()" class="btn-p btn-print"><i class="fa-solid fa-print"></i> طباعة الوثيقة</button>
 </div>
 
@@ -164,7 +177,40 @@ $titleFr = $titles[$docType]['fr'] ?? 'Document Administratif';
     <!-- ── Document Body ── -->
     <div class="doc-body">
 
-        <?php if ($docType === 'certificat_scolaire'): ?>
+        <?php if ($docType === 'attestation_stage'): ?>
+            إن مدير (ة) المؤسسة يشهد أن المتكون (ة) :
+            <br>
+            &nbsp;&nbsp;&nbsp;اللقب و الاسم : <span class="v"><?= htmlspecialchars($nomAr) ?></span>
+            <br>
+            &nbsp;&nbsp;&nbsp;تاريخ ومكان الميلاد: <span class="v"><?= htmlspecialchars($dateNais) ?></span>
+            بـ: <span class="v"><?= htmlspecialchars($lieu ?: 'الجزائر') ?></span>
+            <br>
+            <?php if (!empty($details['adresse_ar'])): ?>
+            &nbsp;&nbsp;&nbsp;العنوان : <span class="v"><?= htmlspecialchars($details['adresse_ar']) ?></span>
+            <br>
+            <?php endif; ?>
+            &nbsp;&nbsp;&nbsp;مسجل (ة) تحت رقم: <span class="v" style="font-family:'Outfit';"><?= htmlspecialchars($matricule) ?></span>
+            <br>
+            &nbsp;&nbsp;&nbsp;يتابع تكوينا في <span class="v"><?= htmlspecialchars($specAr) ?></span>
+            <br>
+            &nbsp;&nbsp;&nbsp;نمط التكوين : <span class="v"><?= htmlspecialchars($details['mode_formation_ar'] ?? 'عن طريق التمهين') ?></span>
+            <?php if (!empty($details['session_nom'])): ?>
+            — الدروس المسائية للحصول على : <span class="v"><?= htmlspecialchars($details['session_nom']) ?></span>
+            <?php endif; ?>
+            <br>
+            &nbsp;&nbsp;&nbsp;مدة التكوين : من
+            <span class="v"><?= htmlspecialchars($details['date_debut_formatted'] ?? $details['date_debut'] ?? '---') ?></span>
+            إلى <span class="v"><?= htmlspecialchars($details['date_fin_formatted'] ?? $details['date_fin'] ?? '---') ?></span>
+            <br>
+            &nbsp;&nbsp;&nbsp;السنة التكوينية: <span class="v"><?= htmlspecialchars($details['session_nom'] ?? '2026/2025') ?></span>
+            <?php if (!empty($details['semestre_num'])): ?>
+            <br>
+            &nbsp;&nbsp;&nbsp;السداسي رقم : <span class="v"><?= (int)$details['semestre_num'] ?></span>
+            <?php endif; ?>
+            <br><br>
+            سُلمت هذه الوثيقة لاستعمالها فيما يسمح به القانون.
+
+        <?php elseif ($docType === 'certificat_scolaire'): ?>
             يشهد مدير <span class="v"><?= htmlspecialchars($etabNom) ?></span> أن المتربص(ة):
             <br>
             &nbsp;&nbsp;&nbsp;السيد(ة) / الآنسة: <span class="v"><?= htmlspecialchars($nomAr) ?></span>
@@ -623,9 +669,19 @@ $titleFr = $titles[$docType]['fr'] ?? 'Document Administratif';
 </div>
 
 <script>
-    // Auto-open print dialog after fonts render
+    // changeDocType — reload same URL with new doc= param
+    function changeDocType(newType) {
+        var url = new URL(window.location.href);
+        url.searchParams.set('doc', newType);
+        url.searchParams.set('direct', '1');
+        window.location.href = url.toString();
+    }
+
+    // Auto-open print dialog after fonts render (skip if just switching types)
     window.addEventListener('DOMContentLoaded', () => {
-        setTimeout(() => { window.print(); }, 600);
+        if (!window.location.search.includes('no_autoprint')) {
+            setTimeout(() => { window.print(); }, 600);
+        }
     });
 </script>
 </body>
