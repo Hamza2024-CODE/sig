@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>دليل منطق حساب المعدلات للأنماط - SGFEP</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0b0f19 0%, #111827 100%);
+            --panel-bg: rgba(17, 24, 39, 0.7);
+            --panel-border: rgba(255, 255, 255, 0.08);
+            --text-primary: #f9fafb;
+            --text-secondary: #9ca3af;
+            --accent-blue: #38bdf8;
+            --accent-green: #10b981;
+            --accent-purple: #8b5cf6;
+            --accent-orange: #f97316;
+            --accent-rose: #f43f5e;
+            --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.4), 0 8px 10px -6px rgb(0 0 0 / 0.4);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Cairo', sans-serif;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 2rem 1rem;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(to right, #38bdf8, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .tabs-header {
+            display: flex;
+            gap: 0.5rem;
+            background: rgba(15, 23, 42, 0.6);
+            padding: 0.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            border: 1px solid var(--panel-border);
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .tab-btn.active {
+            color: #0f172a;
+            background: var(--accent-blue);
+            font-weight: 700;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .card {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 16px;
+            padding: 2rem;
+            backdrop-filter: blur(12px);
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 1.5rem;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--accent-blue);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        p.intro {
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+            font-size: 1.05rem;
+        }
+
+        .formula-box {
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+            font-family: monospace;
+            font-size: 1.1rem;
+            color: #f1f5f9;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .formula-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 4px;
+            background: var(--accent-purple);
+        }
+
+        .formula-tag {
+            font-size: 0.8rem;
+            background: var(--accent-purple);
+            color: #0f172a;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 700;
+        }
+
+        ul {
+            list-style: none;
+            margin-bottom: 1.5rem;
+        }
+
+        li {
+            position: relative;
+            padding-right: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        li::before {
+            content: '•';
+            color: var(--accent-blue);
+            font-size: 1.5rem;
+            position: absolute;
+            right: 0;
+            top: -0.25rem;
+        }
+
+        /* Interactive Calculator Styling */
+        .calculator-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .input-group label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .input-group input {
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid var(--panel-border);
+            border-radius: 8px;
+            padding: 0.75rem;
+            color: var(--text-primary);
+            font-size: 1.1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .input-group input:focus {
+            border-color: var(--accent-blue);
+        }
+
+        .calc-result-box {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+
+        .calc-result-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--accent-blue);
+            margin: 0.5rem 0;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 1rem;
+            border-radius: 9999px;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .status-pass {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent-green);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status-fail {
+            background: rgba(244, 63, 94, 0.15);
+            color: var(--accent-rose);
+            border: 1px solid rgba(244, 63, 94, 0.3);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>منطق حساب المعدلات والموازين (SGFEP)</h1>
+            <p>دليل القواعد الحسابية التفصيلي لمختلف أطوار وأنماط التكوين</p>
+        </header>
+
+        <div class="tabs-header">
+            <button class="tab-btn active" onclick="switchTab(event, 'tab-module')">حساب معدل المادة</button>
+            <button class="tab-btn" onclick="switchTab(event, 'tab-semester')">المعدل السداسي</button>
+            <button class="tab-btn" onclick="switchTab(event, 'tab-grad')">معدل التخرج النهائي</button>
+            <button class="tab-btn" onclick="switchTab(event, 'tab-special')">حالات استثنائية (BEP / بعد)</button>
+        </div>
+
+        <!-- Tab 1: Module Grade -->
+        <div id="tab-module" class="tab-content active">
+            <div class="card">
+                <h2><i class="fa-solid fa-calculator"></i> المواد القياسية (نظري، تطبيقي، شفهي)</h2>
+                <p class="intro">تُطبق هذه القاعدة لحساب معدل المادة السنوي أو السداسي في الأنماط الحضورية والتمهين:</p>
+                <div class="formula-box">
+                    <span>Moy = (CC * 0.4) + (Exam * 0.6)</span>
+                    <span class="formula-tag">الوزن القياسي 40% / 60%</span>
+                </div>
+                <ul>
+                    <li><strong>المراقبة المستمرة (CC):</strong> متوسط علامة الاختبارين الأول والثاني: <code>(CC1 + CC2) / 2</code>.</li>
+                    <li><strong>الامتحان النهائي (Exam):</strong> يمثل 60% من معدل المادة.</li>
+                    <li><strong>الامتحان الاستدراكي (Remedial/Rattrapage):</strong> إذا تم اجتيازه، يُستبدل علامة الامتحان النهائي بأعلى علامة تم الحصول عليها: <code>max(Exam, Rattrapage)</code>.</li>
+                    <li><strong>نقطة الإقصاء:</strong> تكون المادة إقصائية وتؤدي لرشوب السداسي إذا كان معدلها النهائي أقل من <strong>5.0 / 20</strong>.</li>
+                </ul>
+
+                <!-- Simulator -->
+                <div class="calc-result-box">
+                    <h3>محاكي معدل المادة القياسية</h3>
+                    <div class="calculator-grid" style="margin-top: 1rem;">
+                        <div class="input-group">
+                            <label>المراقبة المستمرة 1 (CC1)</label>
+                            <input type="number" id="cc1" min="0" max="20" step="0.25" value="12" oninput="calcModule()">
+                        </div>
+                        <div class="input-group">
+                            <label>المراقبة المستمرة 2 (CC2)</label>
+                            <input type="number" id="cc2" min="0" max="20" step="0.25" value="10" oninput="calcModule()">
+                        </div>
+                        <div class="input-group">
+                            <label>الامتحان النهائي (Exam)</label>
+                            <input type="number" id="exam" min="0" max="20" step="0.25" value="9" oninput="calcModule()">
+                        </div>
+                        <div class="input-group">
+                            <label>الامتحان الاستدراكي (Rattrapage)</label>
+                            <input type="number" id="ratt" min="0" max="20" step="0.25" placeholder="اختياري" oninput="calcModule()">
+                        </div>
+                    </div>
+                    <div class="calc-result-value" id="module-avg">10.60 / 20</div>
+                    <div id="module-status" class="status-badge status-pass">ناجح في المادة</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Semester GPA -->
+        <div id="tab-semester" class="tab-content">
+            <div class="card">
+                <h2><i class="fa-solid fa-graduation-cap"></i> حساب المعدل السداسي (GPA)</h2>
+                <p class="intro">المعدل السداسي هو المتوسط الموزون لمعاملات المواد المكتسبة:</p>
+                <div class="formula-box">
+                    <span>GPA = مجموع (معدل المادة * معامل المادة) / مجموع المعاملات</span>
+                    <span class="formula-tag">المتوسط الموزون</span>
+                </div>
+                <ul>
+                    <li>تُضرب نقطة كل مادة بعد الاستدراك في معاملها المعتمد.</li>
+                    <li><strong>نمط التمهين (Apprenticeship):</strong> يُضاف التقييم الميداني للوسط المهني (المؤسسة المستخدمة) كعنصر أساسي بمعدل معامل قدره <strong>4.0</strong>.</li>
+                    <li><strong>شروط العبور والنجاح في السداسي:</strong> الحصول على معدل سداسي <code>GPA >= 10.0</code> وبشرط عدم الحصول على أي نقطة إقصائية (أقل من 5.0) في أي مادة أو في نقطة الوسط المهني.</li>
+                </ul>
+
+                <!-- Simulator -->
+                <div class="calc-result-box">
+                    <h3>محاكي المعدل السداسي (مع احتساب التمهين)</h3>
+                    <div class="calculator-grid" style="margin-top: 1rem;">
+                        <div class="input-group">
+                            <label>مجموع نقاط المواد * المعاملات</label>
+                            <input type="number" id="sum-grades" value="120" oninput="calcSemester()">
+                        </div>
+                        <div class="input-group">
+                            <label>مجموع معاملات المواد</label>
+                            <input type="number" id="sum-coefs" value="10" oninput="calcSemester()">
+                        </div>
+                        <div class="input-group">
+                            <label>علامة الوسط المهني (للتمهين)</label>
+                            <input type="number" id="company-grade" min="0" max="20" value="14" oninput="calcSemester()">
+                        </div>
+                    </div>
+                    <div class="calc-result-value" id="semester-avg">12.57 / 20</div>
+                    <div id="semester-status" class="status-badge status-pass">سداسي ناجح</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: Graduation GPA -->
+        <div id="tab-grad" class="tab-content">
+            <div class="card">
+                <h2><i class="fa-solid fa-award"></i> معدل التخرج النهائي والدبلوم</h2>
+                <p class="intro">تختلف طريقة حساب معدل التخرج النهائي حسب الدرجة والمستوى العلمي للشهادة:</p>
+                
+                <div style="margin-bottom: 2rem;">
+                    <h4 style="color: var(--accent-purple); margin-bottom: 0.5rem;">أ) مستوى التقني السامي (TS):</h4>
+                    <p style="color: var(--text-secondary); margin-bottom: 0.75rem;">يُحسب المعدل بوزن السداسيات بضعف وزن مذكرة التخرج ومناقشتها:</p>
+                    <div class="formula-box">
+                        <span>Grad_Avg = ((معدل السداسيات * 2) + (معدل المذكرة * 1)) / 3</span>
+                        <span class="formula-tag">صيغة التقني السامي (TS)</span>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 style="color: var(--accent-orange); margin-bottom: 0.5rem;">ب) باقي المستويات والشهادات (CAP, CMP, TS):</h4>
+                    <p style="color: var(--text-secondary);">المعدل النهائي للتخرج هو المتوسط الحسابي البسيط لجميع معدلات السداسيات المجتازة.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 4: Special Cases -->
+        <div id="tab-special" class="tab-content">
+            <div class="card">
+                <h2><i class="fa-solid fa-circle-info"></i> الحالات الخاصة والأنماط المستحدثة</h2>
+                
+                <div style="margin-bottom: 2rem;">
+                    <h3 style="color: var(--accent-orange); margin-bottom: 0.5rem;"><i class="fa-solid fa-school"></i> شهادة التعليم المهني (BEP - نمط 8)</h3>
+                    <p style="color: var(--text-secondary);">في شهادة التعليم المهني، اختبار الـ ECF والامتحانات الاستدراكية للمواد تكون علاماتها القصوى من 40. لذلك، يتم برمجياً تقسيم علامة الامتحان والاستدراك على 2.0 لتتحول تلقائياً من 20 قبل تطبيق صيغة الاحتساب القياسية.</p>
+                </div>
+
+                <div>
+                    <h3 style="color: var(--accent-blue); margin-bottom: 0.5rem;"><i class="fa-solid fa-laptop-code"></i> التكوين عن بعد (Distance Learning - نمط 18، 21)</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 0.75rem;">تُحسب المادة بالاعتماد على التقييم المستمر للمنصة والامتحانات المكتوبة:</p>
+                    <div class="formula-box">
+                        <span>Moy = (نشاط المنصة * 0.3) + (الفروض والواجبات * 0.3) + (الامتحان المكتوب * 0.4)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(evt, tabId) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tab-content");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].classList.remove("active");
+            }
+            tablinks = document.getElementsByClassName("tab-btn");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].classList.remove("active");
+            }
+            document.getElementById(tabId).classList.add("active");
+            evt.currentTarget.classList.add("active");
+        }
+
+        function calcModule() {
+            var cc1 = parseFloat(document.getElementById("cc1").value) || 0;
+            var cc2 = parseFloat(document.getElementById("cc2").value) || 0;
+            var exam = parseFloat(document.getElementById("exam").value) || 0;
+            var ratt = parseFloat(document.getElementById("ratt").value) || null;
+
+            var ccAvg = (cc1 + cc2) / 2;
+            var bestExam = exam;
+            if (ratt !== null) {
+                bestExam = Math.max(exam, ratt);
+            }
+
+            var avg = (ccAvg * 0.4) + (bestExam * 0.6);
+            avg = Math.round(avg * 100) / 100;
+
+            document.getElementById("module-avg").innerText = avg.toFixed(2) + " / 20";
+
+            var status = document.getElementById("module-status");
+            if (avg < 5.0) {
+                status.innerText = "حالة إقصاء (معدل أقل من 5)";
+                status.className = "status-badge status-fail";
+            } else if (avg < 10.0) {
+                status.innerText = "معدل غير كافي (أقل من 10)";
+                status.className = "status-badge status-fail";
+            } else {
+                status.innerText = "ناجح في المادة";
+                status.className = "status-badge status-pass";
+            }
+        }
+
+        function calcSemester() {
+            var sumGrades = parseFloat(document.getElementById("sum-grades").value) || 0;
+            var sumCoefs = parseFloat(document.getElementById("sum-coefs").value) || 0;
+            var companyGrade = parseFloat(document.getElementById("company-grade").value) || 0;
+
+            // Add company evaluation for Apprenticeship
+            var totalPoints = sumGrades + (companyGrade * 4);
+            var totalCoefs = sumCoefs + 4;
+
+            var avg = totalPoints / totalCoefs;
+            avg = Math.round(avg * 100) / 100;
+
+            document.getElementById("semester-avg").innerText = avg.toFixed(2) + " / 20";
+
+            var status = document.getElementById("semester-status");
+            if (avg < 10.0 || companyGrade < 5.0) {
+                status.innerText = "راسب في السداسي";
+                status.className = "status-badge status-fail";
+            } else {
+                status.innerText = "سداسي ناجح";
+                status.className = "status-badge status-pass";
+            }
+        }
+
+        // Initialize simulations
+        calcModule();
+        calcSemester();
+    </script>
+</body>
+</html>
