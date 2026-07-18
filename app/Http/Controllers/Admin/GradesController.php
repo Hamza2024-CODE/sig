@@ -176,7 +176,7 @@ class GradesController extends Controller
                 JOIN section sec ON ss.IDSection = sec.IDSection
                 JOIN offre o ON sec.IDOffre = o.IDOffre
                 JOIN specialite s ON o.IDSpecialite = s.IDSpecialite
-                JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
+                JOIN etablissement e ON o.IDEts_Form = e.IDEts_Form
                 JOIN session sess ON o.IDSession = sess.IDSession
                 WHERE " . implode(" AND ", $whereClauses) . "
                 ORDER BY s.Nom
@@ -214,7 +214,7 @@ class GradesController extends Controller
                         WHERE sec2.IDOffre = o.IDOffre AND a.statut = 'actif') as nb_actifs
                 FROM offre o
                 JOIN specialite s ON o.IDSpecialite = s.IDSpecialite
-                JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
+                JOIN etablissement e ON o.IDEts_Form = e.IDEts_Form
                 JOIN session sess ON o.IDSession = sess.IDSession
                 WHERE " . implode(" AND ", $whereClauses) . "
                 ORDER BY s.Nom
@@ -279,7 +279,7 @@ class GradesController extends Controller
                     JOIN offre o ON s.IDOffre = o.IDOffre
                     JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
                     JOIN session sess ON s.IDSession = sess.IDSession
-                    JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
+                    JOIN etablissement e ON s.IDEts_Form = e.IDEts_Form
                     WHERE a.statut = 'actif' AND $statsFilter
                 ", $statsParams);
 
@@ -292,7 +292,7 @@ class GradesController extends Controller
                     JOIN offre o ON s.IDOffre = o.IDOffre
                     JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
                     JOIN session sess ON s.IDSession = sess.IDSession
-                    JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
+                    JOIN etablissement e ON s.IDEts_Form = e.IDEts_Form
                     WHERE $statsFilter
                 ", $statsParams);
 
@@ -305,7 +305,7 @@ class GradesController extends Controller
                     JOIN offre o ON s.IDOffre = o.IDOffre
                     JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
                     JOIN session sess ON s.IDSession = sess.IDSession
-                    JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
+                    JOIN etablissement e ON s.IDEts_Form = e.IDEts_Form
                     WHERE $statsFilter
                 ", $statsParams);
 
@@ -319,7 +319,7 @@ class GradesController extends Controller
                     JOIN offre o ON s.IDOffre = o.IDOffre
                     JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
                     JOIN session sess ON s.IDSession = sess.IDSession
-                    JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
+                    JOIN etablissement e ON s.IDEts_Form = e.IDEts_Form
                     WHERE (ass.MoyApr > 0 OR ass.MoyAvr > 0) AND $statsFilter
                 ", $statsParams);
 
@@ -331,7 +331,7 @@ class GradesController extends Controller
                     JOIN offre o ON s.IDOffre = o.IDOffre
                     JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
                     JOIN session sess ON s.IDSession = sess.IDSession
-                    JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
+                    JOIN etablissement e ON s.IDEts_Form = e.IDEts_Form
                     WHERE (af.MoyFinForm > 0 OR af.MoyGen > 0) AND $statsFilter
                 ", $statsParams);
 
@@ -344,7 +344,7 @@ class GradesController extends Controller
                     JOIN offre o ON s.IDOffre = o.IDOffre
                     JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
                     JOIN session sess ON s.IDSession = sess.IDSession
-                    JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
+                    JOIN etablissement e ON s.IDEts_Form = e.IDEts_Form
                     WHERE (ss.NumPv IS NOT NULL AND ss.NumPv != '' OR ss.visaevaldir = 1 OR ss.visaevaldfep = 1) AND $statsFilter
                 ", $statsParams);
 
