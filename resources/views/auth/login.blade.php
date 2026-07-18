@@ -300,12 +300,67 @@
 
                     <!-- Secret User Code (Required for school level accounts) -->
                     <div class="form-group mb-4 text-right d-none" id="secret-code-group">
-                        <label>الرمز السري للمستخدم / Code secret *</label>
+
+                        <!-- ✅ اختيار المصلحة (يحدد NomUser) — يمنع الدخول للمصلحة الخاطئة -->
+                        <div class="mb-2">
+                            <label class="mb-1" style="font-weight:700; font-size:.85rem;">المصلحة / Service *</label>
+                            <div class="apple-input-wrapper">
+                                <select name="role_selection" id="role_selection" class="apple-input" style="appearance:none; cursor:pointer;">
+                                    <option value="">-- اختر المصلحة --</option>
+                                    <!-- مستوى المديرية (DFEP) -->
+                                    <optgroup label="مستوى المديرية الولائية">
+                                        <option value="SA">مصلحة التمهين (SA)</option>
+                                        <option value="SSFEP">مصلحة التكوين الحضوري (SSFEP)</option>
+                                        <option value="SFACI">مصلحة التكوين المتواصل (SFACI)</option>
+                                        <option value="SAMF">مصلحة المالية والوسائل (SAMF)</option>
+                                        <option value="SAMRH">مصلحة الموارد البشرية (SAMRH)</option>
+                                        <option value="SSIP">مصلحة المخططات والإعلام (SSIP)</option>
+                                        <option value="AdmFin#Dfep">الإدارة والمالية — مديرية (AdmFin#Dfep)</option>
+                                        <option value="Pedago#Dfep">البيداغوجيا (Pedago#Dfep)</option>
+                                        <option value="DFEPS">مصلحة التكوين الحضوري — نسخة (DFEPS)</option>
+                                        <option value="dplmDir">مكتب الشهادات — مديرية (dplmDir)</option>
+                                        <option value="wali">حساب الوالي</option>
+                                    </optgroup>
+                                    <!-- مستوى المؤسسة العمومية -->
+                                    <optgroup label="مستوى المؤسسة العمومية">
+                                        <option value="DIRETS">مدير المؤسسة (DIRETS)</option>
+                                        <option value="SDTPA">مصلحة التمهين — مؤسسة (SDTPA)</option>
+                                        <option value="SDTPP">مصلحة الحضوري — مؤسسة (SDTPP)</option>
+                                        <option value="SDTPC">مصلحة المتواصل — مؤسسة (SDTPC)</option>
+                                        <option value="BIAO">مكتب الإرشاد والتوجيه (BIAO)</option>
+                                        <option value="Dplm">مكتب الشهادات — مؤسسة (Dplm)</option>
+                                        <option value="AdmFinE">الإدارة والمالية — مؤسسة (AdmFinE)</option>
+                                        <option value="encadrement">الأطر التربوية (encadrement)</option>
+                                    </optgroup>
+                                    <!-- مستوى المؤسسة الخاصة -->
+                                    <optgroup label="مستوى المؤسسة الخاصة">
+                                        <option value="DIRETSp">مدير المؤسسة الخاصة</option>
+                                        <option value="SDTPAp">مصلحة التمهين — خاصة</option>
+                                        <option value="SDTPPp">مصلحة الحضوري — خاصة</option>
+                                        <option value="SDTPCp">مصلحة المتواصل — خاصة</option>
+                                        <option value="BIAOp">مكتب التوجيه — خاصة</option>
+                                    </optgroup>
+                                    <!-- مؤسسة فرعية/ملحقة -->
+                                    <optgroup label="المؤسسة الفرعية / الملحقة">
+                                        <option value="DIRETSs">مدير الملحقة</option>
+                                        <option value="SDTPAs">مصلحة التمهين — ملحقة</option>
+                                        <option value="SDTPPs">مصلحة الحضوري — ملحقة</option>
+                                        <option value="SDTPCs">مصلحة المتواصل — ملحقة</option>
+                                        <option value="BIAOs">مكتب التوجيه — ملحقة</option>
+                                        <option value="Dplms">مكتب الشهادات — ملحقة</option>
+                                    </optgroup>
+                                </select>
+                                <i class="fa-solid fa-sitemap"></i>
+                            </div>
+                        </div>
+
+                        <label class="mb-1" style="font-weight:700; font-size:.85rem;">الرمز السري للمستخدم / Code secret *</label>
                         <div class="apple-input-wrapper">
                             <input type="password" name="secret_code" id="secret_code" class="apple-input" placeholder="••••••••">
                             <i class="fa-solid fa-key"></i>
                         </div>
                     </div>
+
 
                     <?php if (isset($is_captcha_active) && $is_captcha_active): ?>
                     <!-- Mathematical CAPTCHA -->
