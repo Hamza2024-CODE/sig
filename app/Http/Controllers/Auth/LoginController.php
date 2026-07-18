@@ -410,35 +410,19 @@ class LoginController extends Controller
                     $empHead = null;
  
                     if ($isEtabPasswordValid) {
-                        // ✅ إذا اختار المستخدم المصلحة صراحةً → نبحث بـ IDNature + NomUser (دقيق)
-                        // وإلا → نبحث في كل utilisateur لنفس IDNature (سلوك قديم كاحتياط)
-                        $requestedRole = trim($request->input('role_selection', ''));
-
-                        if (!empty($requestedRole)) {
-                            // بحث دقيق: المصلحة المحددة فقط
-                            $stmtUsers = $db->prepare(
-                                "SELECT * FROM utilisateur WHERE IDNature = ? AND LOWER(NomUser) = LOWER(?) LIMIT 1"
-                            );
-                            $stmtUsers->execute([$etab['nature_id'], $requestedRole]);
-                            $natureUsers = $stmtUsers->fetchAll(\PDO::FETCH_ASSOC);
-                        } else {
-                            // احتياط: البحث في كل المصالح لنفس IDNature (مرتّب للحصول على نتائج ثابتة)
-                            $stmtUsers = $db->prepare(
-                                "SELECT * FROM utilisateur WHERE IDNature = ? ORDER BY IDUtilisateur"
-                            );
-                            $stmtUsers->execute([$etab['nature_id']]);
-                            $natureUsers = $stmtUsers->fetchAll(\PDO::FETCH_ASSOC);
-                        }
+                        // Fetch all Utilisateur records for this nature
+                        $stmtUsers = $db->prepare("SELECT * FROM utilisateur WHERE IDNature = ?");
+                        $stmtUsers->execute([$etab['nature_id']]);
+                        $natureUsers = $stmtUsers->fetchAll(\PDO::FETCH_ASSOC);
  
                         foreach ($natureUsers as $nu) {
                             if (password_verify($secretCode, $nu['MotPass']) || $secretCode === $nu['MotPass']) {
                                 $isSecretCodeValid = true;
                                 $matchedUtilisateur = $nu;
-                                if (in_array(strtolower($nu['NomUser']), ['sdtpa', 'sdtpap', 'sa'])) {
+                                if (in_array(strtolower($nu['NomUser']), ['sdtpa', 'sdtpap'])) {
                                     $isApprenLogin = true;
                                 }
                                 break;
-
                             }
                         }
  
@@ -564,24 +548,8 @@ class LoginController extends Controller
                             'avatar'           => $etab['avatar'] ?? null,
                         ];
 
-                        // ── تحديد IDMode_formation حسب المصلحة ─────────────────────────
                         if ($isApprenLogin) {
-                            // مصلحة التمهين (SA / SDTPA)
                             $matchedUser['IDMode_formation'] = 10;
-                        } elseif ($matchedUtilisateur) {
-                            $nu = strtolower($matchedUtilisateur['NomUser'] ?? '');
-                            // مصلحة التكوين المتواصل (SFACI / SDTPC)
-                            if (in_array($nu, ['sfaci', 'sdtpc', 'sdtpcs', 'sdtpcp'])) {
-                                $matchedUser['IDMode_formation'] = 2; // FC
-                            }
-                            // مصلحة الحضوري (SSFEP / DFEPS / SDTPP)
-                            elseif (in_array($nu, ['ssfep', 'dfeps', 'sdtpp', 'sdtpps', 'sdtppp', 'pedago#dfep', 'pedago', 'pedagoge'])) {
-                                $matchedUser['IDMode_formation'] = 1; // PT (يشمل كل الحضوري)
-                            }
-                            // مصلحة التوجيه (BIAO)
-                            elseif (in_array($nu, ['biao', 'biaos', 'biaop'])) {
-                                $matchedUser['IDMode_formation'] = 0; // كل الأنماط
-                            }
                         }
                     }
                 }
