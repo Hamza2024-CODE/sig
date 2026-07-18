@@ -161,7 +161,7 @@ class ApprenantController extends Controller
                  FROM apprenant a
                  INNER JOIN candidat c ON a.IDCandidat = c.IDCandidat
                  LEFT JOIN section s   ON a.IDSection = s.IDSection
-                 LEFT JOIN offre o     ON c.IDOffre = o.IDOffre
+                 LEFT JOIN offre o     ON s.IDOffre = o.IDOffre
                  LEFT JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
                  LEFT JOIN etablissement et ON o.IDEts_Form = et.IDetablissement
                  LEFT JOIN session sess ON o.IDSession = sess.IDSession
@@ -321,7 +321,7 @@ class ApprenantController extends Controller
                 ->leftJoin('candidat_document', 'candidat.IDCandidat', '=', 'candidat_document.IDCandidat')
                 ->leftJoin('candidat_contratapp', 'candidat.IDCandidat', '=', 'candidat_contratapp.IDCandidat')
                 ->leftJoin('section', 'apprenant.IDSection', '=', 'section.IDSection')
-                ->leftJoin('offre', 'candidat.IDOffre', '=', 'offre.IDOffre')
+                ->leftJoin('offre', 'section.IDOffre', '=', 'offre.IDOffre')
                 ->leftJoin('specialite', 'offre.IDSpecialite', '=', 'specialite.IDSpecialite')
                 ->where('apprenant.IDapprenant', $id)
                 ->select(array_merge($selectCols, ['specialite.Nom as spec_ar']))
@@ -357,10 +357,16 @@ class ApprenantController extends Controller
             return redirect()->back();
         }
 
+        $section = DB::table('section')->where('IDSection', $validated['section_id'])->first();
+        if (!$section) {
+            session(['flash_error' => 'القسم غير موجود.']);
+            return redirect()->back();
+        }
+
         $wilayaId = (int) DB::table('offre')
             ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDetablissement')
             ->join('dfep', 'etablissement.IDDFEP', '=', 'dfep.IDDFEP')
-            ->where('offre.IDOffre', $candidate->IDOffre)
+            ->where('offre.IDOffre', $section->IDOffre)
             ->value('dfep.IDWilayaa');
 
         if (!\App\Helpers\SovereignLicensingHelper::checkEnrollmentPermission('add', $wilayaId)) {
@@ -414,14 +420,14 @@ class ApprenantController extends Controller
             return redirect()->back();
         }
 
-        $candidate = DB::table('candidat')->where('IDCandidat', $student->IDCandidat)->first();
+        $section = DB::table('section')->where('IDSection', $validated['section_id'])->first();
         $wilayaId = 0;
-        if ($candidate && !empty($candidate->IDOffre)) {
+        if ($section && !empty($section->IDOffre)) {
             try {
                 $wilayaId = (int) DB::table('offre')
                     ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDetablissement')
                     ->join('dfep', 'etablissement.IDDFEP', '=', 'dfep.IDDFEP')
-                    ->where('offre.IDOffre', $candidate->IDOffre)
+                    ->where('offre.IDOffre', $section->IDOffre)
                     ->value('dfep.IDWilayaa');
             } catch (\Exception $e) {
                 $wilayaId = 0;
@@ -469,14 +475,14 @@ class ApprenantController extends Controller
 
         $student = DB::table('apprenant')->where('IDapprenant', $id)->first();
         if ($student) {
-            $candidate = DB::table('candidat')->where('IDCandidat', $student->IDCandidat)->first();
+            $section = DB::table('section')->where('IDSection', $student->IDSection)->first();
             $wilayaId = 0;
-            if ($candidate && !empty($candidate->IDOffre)) {
+            if ($section && !empty($section->IDOffre)) {
                 try {
                     $wilayaId = (int) DB::table('offre')
                         ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDetablissement')
                         ->join('dfep', 'etablissement.IDDFEP', '=', 'dfep.IDDFEP')
-                        ->where('offre.IDOffre', $candidate->IDOffre)
+                        ->where('offre.IDOffre', $section->IDOffre)
                         ->value('dfep.IDWilayaa');
                 } catch (\Exception $e) {
                     $wilayaId = 0;
