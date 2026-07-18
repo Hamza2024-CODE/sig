@@ -56,28 +56,8 @@ use Illuminate\Support\Facades\Artisan;
 echo "<h1>Auto-Updating All Modified Files...</h1>";
 
 $files = [
-    'app/Http/Controllers/DashboardController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/DashboardController.php',
-    'app/Services/KpiCache.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Services/KpiCache.php',
     'app/Domains/Academic/Repositories/OffresRepository.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Domains/Academic/Repositories/OffresRepository.php',
-    'app/Domains/Academic/Services/ApprenantService.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Domains/Academic/Services/ApprenantService.php',
-    'app/Domains/Academic/Services/CandidatService.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Domains/Academic/Services/CandidatService.php',
-    'app/Domains/Academic/Services/GradingSystemService.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Domains/Academic/Services/GradingSystemService.php',
-    'app/Domains/Academic/Services/OffresService.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Domains/Academic/Services/OffresService.php',
-    'app/Http/Controllers/Admin/ApprenantController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/ApprenantController.php',
-    'app/Http/Controllers/Admin/CandidatController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/CandidatController.php',
-    'app/Http/Controllers/Admin/GradesController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/GradesController.php',
-    'app/Http/Controllers/Auth/LoginController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Auth/LoginController.php',
-    'resources/views/admin/grades/index.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/grades/index.blade.php',
-    'resources/views/admin/grades/input.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/grades/input.blade.php',
-    'resources/views/dashboard/index.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/dashboard/index.blade.php',
-    'resources/views/layouts/main.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/layouts/main.blade.php',
-    'resources/views/auth/login.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/auth/login.blade.php',
-    'public/check_error.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/check_error.php',
-    'public/get_users.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/get_users.php',
-    'public/get_saida.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/get_saida.php',
-    'public/get_taj_credentials.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/get_taj_credentials.php',
-    'public/reset_passwords_from_csv.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/reset_passwords_from_csv.php',
-    'public/pull.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/pull.php'
+    'app/Domains/Academic/Services/OffresService.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Domains/Academic/Services/OffresService.php'
 ];
 
 foreach ($files as $localPath => $remoteUrl) {

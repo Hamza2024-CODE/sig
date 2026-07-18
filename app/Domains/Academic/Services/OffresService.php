@@ -62,13 +62,28 @@ class OffresService
         $scopeParams = [];
 
         if (in_array($roleCode, ['etablissement', 'directeur', 'formateur']) && $etabId > 0) {
-            $etabIds = \App\Support\EtablissementScope::resolve($etabId);
-            if (empty($etabIds)) {
-                $whereConditions[] = "1=0";
+            // Check if this is a private institution
+            $etabRow = \Illuminate\Support\Facades\DB::table('etablissement')
+                ->where('IDetablissement', $etabId)
+                ->select('PublPrive')
+                ->first();
+            $isPrivate = ((int)($etabRow->PublPrive ?? 0) === 1);
+
+            if ($isPrivate) {
+                // Private institution: strictly sees ONLY its own offers via IDEts_Form
+                $whereConditions[] = "o.IDEts_Form = ?";
+                $scopeParams[] = $etabId;
             } else {
-                $placeholders = implode(',', array_fill(0, count($etabIds), '?'));
-                $whereConditions[] = "o.IDEts_Form IN ($placeholders)";
-                $scopeParams = array_merge($scopeParams, $etabIds);
+                // Public institution: EtablissementScope already includes linked private schools
+                // via DeIDetablissementRatache and DeIDetablissementRatacheInsfp fields
+                $etabIds = \App\Support\EtablissementScope::resolve($etabId);
+                if (empty($etabIds)) {
+                    $whereConditions[] = "1=0";
+                } else {
+                    $placeholders = implode(',', array_fill(0, count($etabIds), '?'));
+                    $whereConditions[] = "o.IDEts_Form IN ($placeholders)";
+                    $scopeParams = array_merge($scopeParams, $etabIds);
+                }
             }
         } elseif ($roleCode === 'dfep' && $dfepId > 0) {
             $whereConditions[] = "e.IDDFEP = ?";
@@ -199,10 +214,15 @@ class OffresService
             $modeConds[] = "o.IDEts_Form = ?";
             $modeParams[] = $reqFilter;
         } elseif ($etabId > 0) {
-            $etabIds = \App\Support\EtablissementScope::resolve($etabId);
-            $placeholders = implode(',', array_fill(0, count($etabIds), '?'));
-            $modeConds[] = "o.IDEts_Form IN ($placeholders)";
-            $modeParams = array_merge($modeParams, $etabIds);
+            if ($isPrivate) {
+                $modeConds[] = "o.IDEts_Form = ?";
+                $modeParams[] = $etabId;
+            } else {
+                $etabIds = \App\Support\EtablissementScope::resolve($etabId);
+                $placeholders = implode(',', array_fill(0, count($etabIds), '?'));
+                $modeConds[] = "o.IDEts_Form IN ($placeholders)";
+                $modeParams = array_merge($modeParams, $etabIds);
+            }
         }
         $modeCondStr = implode(" AND ", $modeConds);
         $stmtM = $db->prepare("
@@ -231,10 +251,15 @@ class OffresService
             $sessConds[] = "o.IDEts_Form = ?";
             $sessParams[] = $reqFilter;
         } elseif ($etabId > 0) {
-            $etabIds = \App\Support\EtablissementScope::resolve($etabId);
-            $placeholders = implode(',', array_fill(0, count($etabIds), '?'));
-            $sessConds[] = "o.IDEts_Form IN ($placeholders)";
-            $sessParams = array_merge($sessParams, $etabIds);
+            if ($isPrivate) {
+                $sessConds[] = "o.IDEts_Form = ?";
+                $sessParams[] = $etabId;
+            } else {
+                $etabIds = \App\Support\EtablissementScope::resolve($etabId);
+                $placeholders = implode(',', array_fill(0, count($etabIds), '?'));
+                $sessConds[] = "o.IDEts_Form IN ($placeholders)";
+                $sessParams = array_merge($sessParams, $etabIds);
+            }
         }
         if (!empty($getParams['filter_mode'])) {
             $modeStr = trim($getParams['filter_mode']);
