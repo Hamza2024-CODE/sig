@@ -16,7 +16,8 @@ class DepartmentHelper
         return $modeId === 10 
             || $roleFr === 'apprentissage'
             || strpos($roleFr, 'apprentissage') !== false
-            || in_array($username, ['sdtpa', 'sdtpas', 'sa']);
+            || in_array($username, ['sdtpa', 'sdtpas', 'sdtpap', 'sa'])
+            || strpos($username, 'sdtpa') === 0;
     }
 
     public static function isPresentielOnly(?array $user): bool
@@ -25,7 +26,9 @@ class DepartmentHelper
             return false;
         }
         $username = strtolower($user['username'] ?? '');
-        return in_array($username, ['sdtpp', 'sdtpps', 'sdtpc', 'sdtpcs', 'ssfep', 'sfaci', 'pedago#dfep', 'pedagoe']);
+        return in_array($username, ['sdtpp', 'sdtpps', 'sdtppp', 'sdtpc', 'sdtpcs', 'sdtpcp', 'ssfep', 'sfaci', 'pedago#dfep', 'pedagoe'])
+            || strpos($username, 'sdtpp') === 0
+            || strpos($username, 'sdtpc') === 0;
     }
 
     public static function getDepartmentType(?array $user): string
@@ -37,19 +40,25 @@ class DepartmentHelper
         if (self::isApprenticeship($user)) {
             return 'apprentissage';
         }
-        if (in_array($username, ['biao', 'biaos'])) {
+        if (in_array($username, ['biao', 'biaos', 'biaop']) || strpos($username, 'biao') === 0) {
             return 'orientation';
         }
-        if (in_array($username, ['dplm', 'dplms'])) {
+        if (in_array($username, ['dplm', 'dplms', 'dplmp']) || strpos($username, 'dplm') === 0) {
             return 'diplomes';
         }
         if (self::isPresentielOnly($user)) {
             return 'pedagogie';
         }
         if (in_array($username, [
-            'admfine', 'admfines', 'samf', 'samfs', 'sdafm', 'sdsafms', 'sdarh', 'sdarhs',
+            'admfine', 'admfines', 'admfinep', 'samf', 'samfs', 'sdafm', 'sdsafms', 'sdarh', 'sdarhs',
             'samrh', 'ssip', 'admfin#dfep'
-        ])) {
+        ]) 
+        || strpos($username, 'admfin') === 0 
+        || strpos($username, 'samf') === 0
+        || strpos($username, 'sdafm') === 0
+        || strpos($username, 'sdarh') === 0
+        || strpos($username, 'samrh') === 0
+        || strpos($username, 'ssip') === 0) {
             return 'administration';
         }
         return 'general';
