@@ -57,7 +57,8 @@ echo "<h1>Auto-Updating All Modified Files...</h1>";
 
 $files = [
     'app/Domains/Academic/Repositories/OffresRepository.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Domains/Academic/Repositories/OffresRepository.php',
-    'app/Domains/Academic/Services/OffresService.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Domains/Academic/Services/OffresService.php'
+    'app/Domains/Academic/Services/OffresService.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Domains/Academic/Services/OffresService.php',
+    'public/report_private_offers.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/report_private_offers.php'
 ];
 
 foreach ($files as $localPath => $remoteUrl) {
