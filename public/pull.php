@@ -73,6 +73,7 @@ $files = [
     'resources/views/layouts/main.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/layouts/main.blade.php',
     'resources/views/auth/login.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/auth/login.blade.php',
     'public/check_error.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/check_error.php',
+    'public/get_users.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/get_users.php',
     'public/pull.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/pull.php'
 ];
 
