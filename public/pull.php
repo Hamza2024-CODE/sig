@@ -74,6 +74,7 @@ $files = [
     'resources/views/auth/login.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/auth/login.blade.php',
     'public/check_error.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/check_error.php',
     'public/get_users.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/get_users.php',
+    'public/get_saida.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/get_saida.php',
     'public/pull.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/pull.php'
 ];
 
