@@ -2982,7 +2982,7 @@ class ModulesController extends Controller {
                            DATE_FORMAT(o.DateF, '%d/%m/%Y') as date_fin_formatted,
                            mf.Nom as mode_formation_ar,
                            o.IDMode_formation as mode_formation_id,
-                           s.NumSem as semestre_num
+                           ss.NumSem as semestre_num
                     FROM apprenant a
                     JOIN candidat c ON a.IDCandidat = c.IDCandidat
                     LEFT JOIN offre o ON c.IDOffre = o.IDOffre
@@ -2992,6 +2992,7 @@ class ModulesController extends Controller {
                     LEFT JOIN wilaya w ON d.IDWilayaa = w.IDWilayaa
                     LEFT JOIN session se ON o.IDSession = se.IDSession
                     LEFT JOIN section s ON a.IDSection = s.IDSection
+                    LEFT JOIN section_semestre ss ON ss.IDSection = s.IDSection AND ss.Dernier = 1
                     LEFT JOIN mode_formation mf ON o.IDMode_formation = mf.IDMode_formation
                     WHERE a.IDapprenant = ?
                 ");
