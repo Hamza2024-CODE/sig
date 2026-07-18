@@ -17,25 +17,13 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        // ✅ ضبط APP_URL ديناميكياً وإجبار HTTPS خلف الـ reverse proxy
-        $proto = null;
-        if (isset($_SERVER['HTTP_X_FORWARDED_PROTO'])) {
-            $proto = strtolower($_SERVER['HTTP_X_FORWARDED_PROTO']);
-        } elseif (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
-            $proto = 'https';
-        } elseif (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443) {
-            $proto = 'https';
-        } else {
-            $proto = 'http';
-        }
-        $host = $_SERVER['HTTP_X_FORWARDED_HOST'] ?? $_SERVER['HTTP_HOST'] ?? null;
-        if ($host) {
-            config(['app.url' => $proto . '://' . $host]);
-        }
-        // إجبار كل روابط URL() و asset() على HTTPS في الإنتاج
-        if ($proto === 'https') {
+        // ✅ إجبار HTTPS بناءً على APP_URL في .env — الحل الأكيد خلف أي reverse proxy
+        // هذا يجعل url() و asset() يولدون HTTPS بغض النظر عن ما يراه PHP داخلياً
+        $configuredUrl = config('app.url', '');
+        if (str_starts_with($configuredUrl, 'https://')) {
             URL::forceScheme('https');
         }
+
 
         // ✅ منع lazy loading في بيئة التطوير → يكشف N+1 فوراً
         if ($this->app->environment('local', 'testing')) {

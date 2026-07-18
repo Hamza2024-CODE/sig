@@ -51,14 +51,16 @@ class SecurityHeadersMiddleware
             "script-src {$self} 'unsafe-inline' 'unsafe-eval' {$cdn}",
             "style-src {$self} 'unsafe-inline' {$cdn} fonts.googleapis.com",
             "font-src {$self} data: fonts.gstatic.com {$cdn}",
-            "img-src {$self} data: blob: {$cdn} *.openstreetmap.org *.cartocdn.com",
+            // السماح لـ http: أيضاً خلال فترة الانتقال (upgrade-insecure-requests ترفعه لـ https تلقائياً)
+            "img-src {$self} data: blob: http: https: {$cdn} *.openstreetmap.org *.cartocdn.com",
             "connect-src {$self} {$cdn}",
             "manifest-src {$self}",
             "worker-src {$self} blob:",
             "object-src 'none'",
             "frame-src 'none'",
             "base-uri {$self}",
-            "form-action {$self}",
+            // form-action يسمح صراحةً بـ https: لأن PHP خلف proxy قد يرى HTTP
+            "form-action {$self} https:",
             "upgrade-insecure-requests",
         ];
         $csp = implode('; ', $cspDirectives);
