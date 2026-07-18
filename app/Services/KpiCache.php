@@ -354,8 +354,16 @@ final class KpiCache
         $isApprentice = \App\Helpers\DepartmentHelper::isApprenticeship($user);
 
         // Resolve scope IDs (the main center + all its branches/extensions)
-        $etabIds = self::getEtabScopeIds($etabId);
+        $localEtabIds = self::getEtabScopeIds($etabId);
+        $etabIds = [];
+        if (!empty($localEtabIds)) {
+            $etabIds = DB::table('etablissement')
+                ->whereIn('IDetablissement', $localEtabIds)
+                ->pluck('IDEts_Form')
+                ->toArray();
+        }
         $placeholders = implode(',', array_fill(0, count($etabIds), '?'));
+        $localPlaceholders = implode(',', array_fill(0, count($localEtabIds), '?'));
 
         if ($isApprentice) {
             if (self::shouldUseApprenantTable()) {
@@ -391,7 +399,7 @@ final class KpiCache
             }
 
             $candidats = self::scalar("SELECT COUNT(*) as c FROM candidat c INNER JOIN offre o ON c.IDOffre=o.IDOffre WHERE o.IDEts_Form IN ($placeholders) AND o.IDMode_formation=10", $etabIds);
-            $encadrements = self::scalar("SELECT COUNT(*) as c FROM encadrement WHERE IDetablissement IN ($placeholders)", $etabIds);
+            $encadrements = self::scalar("SELECT COUNT(*) as c FROM encadrement WHERE IDetablissement IN ($localPlaceholders)", $localEtabIds);
             $specialites = self::scalar("SELECT COUNT(DISTINCT IDSpecialite) as c FROM offre WHERE IDEts_Form IN ($placeholders) AND IDMode_formation=10", $etabIds);
             $reconduits = self::scalar("SELECT SUM(s.Nbrrecond) as c FROM section s JOIN offre o ON s.IDOffre=o.IDOffre WHERE o.IDEts_Form IN ($placeholders) AND o.IDMode_formation=10", $etabIds);
             $sections_s1 = self::scalar("SELECT COUNT(*) as c FROM section_semestre ss JOIN section s ON ss.IDSection=s.IDSection JOIN offre o ON s.IDOffre=o.IDOffre WHERE ss.Dernier = 1 AND ss.NumSem = 1 AND o.IDEts_Form IN ($placeholders) AND o.IDMode_formation=10", $etabIds);
@@ -432,7 +440,7 @@ final class KpiCache
             }
 
             $candidats = self::scalar("SELECT COUNT(*) as c FROM candidat c INNER JOIN offre o ON c.IDOffre=o.IDOffre WHERE o.IDEts_Form IN ($placeholders) AND o.IDMode_formation != 10", $etabIds);
-            $encadrements = self::scalar("SELECT COUNT(*) as c FROM encadrement WHERE IDetablissement IN ($placeholders)", $etabIds);
+            $encadrements = self::scalar("SELECT COUNT(*) as c FROM encadrement WHERE IDetablissement IN ($localPlaceholders)", $localEtabIds);
             $specialites = self::scalar("SELECT COUNT(DISTINCT IDSpecialite) as c FROM offre WHERE IDEts_Form IN ($placeholders) AND IDMode_formation != 10", $etabIds);
             $reconduits = self::scalar("SELECT SUM(s.Nbrrecond) as c FROM section s JOIN offre o ON s.IDOffre=o.IDOffre WHERE o.IDEts_Form IN ($placeholders) AND o.IDMode_formation != 10", $etabIds);
             $sections_s1 = self::scalar("SELECT COUNT(*) as c FROM section_semestre ss JOIN section s ON ss.IDSection=s.IDSection JOIN offre o ON s.IDOffre=o.IDOffre WHERE ss.Dernier = 1 AND ss.NumSem = 1 AND o.IDEts_Form IN ($placeholders) AND o.IDMode_formation != 10", $etabIds);
@@ -477,7 +485,7 @@ final class KpiCache
             }
 
             $candidats = self::scalar("SELECT COUNT(*) as c FROM candidat c INNER JOIN offre o ON c.IDOffre=o.IDOffre WHERE o.IDEts_Form IN ($placeholders)", $etabIds);
-            $encadrements = self::scalar("SELECT COUNT(*) as c FROM encadrement WHERE IDetablissement IN ($placeholders)", $etabIds);
+            $encadrements = self::scalar("SELECT COUNT(*) as c FROM encadrement WHERE IDetablissement IN ($localPlaceholders)", $localEtabIds);
             $specialites = self::scalar("SELECT COUNT(DISTINCT IDSpecialite) as c FROM offre WHERE IDEts_Form IN ($placeholders)", $etabIds);
             $reconduits = self::scalar("SELECT SUM(s.Nbrrecond) as c FROM section s JOIN offre o ON s.IDOffre=o.IDOffre WHERE o.IDEts_Form IN ($placeholders)", $etabIds);
             $sections_s1 = self::scalar("SELECT COUNT(*) as c FROM section_semestre ss JOIN section s ON ss.IDSection=s.IDSection JOIN offre o ON s.IDOffre=o.IDOffre WHERE ss.Dernier = 1 AND ss.NumSem = 1 AND o.IDEts_Form IN ($placeholders)", $etabIds);

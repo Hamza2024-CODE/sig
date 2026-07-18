@@ -139,7 +139,7 @@ class GradesController extends Controller
             // Logged in as establishment (including public supervising centers and isolated private ones)
             if (!empty($etabScopeIds)) {
                 $placeholders = implode(',', array_fill(0, count($etabScopeIds), '?'));
-                $whereClauses[] = "o.IDEts_Form IN ($placeholders)";
+                $whereClauses[] = "e.IDetablissement IN ($placeholders)";
                 $bindings = array_merge($bindings, $etabScopeIds);
             } elseif ($selectedEtab > 0) {
                 $whereClauses[] = "o.IDEts_Form = ?";
@@ -778,10 +778,10 @@ class GradesController extends Controller
         $offre = (array) DB::selectOne("
             SELECT o.IDOffre as id, s.Nom as spec_ar, s.NbrSem as duree_semestres,
                    e.Nom as etab_nom, o.IDMode_formation as mode_formation,
-                   o.IDEts_Form as etablissement_id, e.IDDFEP as dfep_id
+                   e.IDetablissement as etablissement_id, e.IDDFEP as dfep_id
             FROM offre o
             JOIN specialite s ON o.IDSpecialite = s.IDSpecialite
-            JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
+            JOIN etablissement e ON o.IDEts_Form = e.IDEts_Form
             WHERE o.IDOffre = ?
         ", [$offreId]);
 
@@ -918,11 +918,11 @@ class GradesController extends Controller
         // Offre metadata
         $offre = (array) DB::selectOne("
             SELECT o.IDOffre as id, o.IDMode_formation as mode_formation,
-                   o.IDEts_Form as etablissement_id, e.IDDFEP as dfep_id,
+                   e.IDetablissement as etablissement_id, e.IDDFEP as dfep_id,
                    s.NbrSem as duree_semestres
             FROM offre o
             JOIN specialite s ON o.IDSpecialite = s.IDSpecialite
-            JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
+            JOIN etablissement e ON o.IDEts_Form = e.IDEts_Form
             WHERE o.IDOffre = ?
         ", [$offreId]);
 
@@ -974,7 +974,7 @@ class GradesController extends Controller
                        ELSE 'CAP'
                    END as diplome_vise,
                    e.Nom as etab_ar, e.NomFr as etab_fr,
-                   o.IDEts_Form as etablissement_id, e.IDDFEP as dfep_id,
+                   e.IDetablissement as etablissement_id, e.IDDFEP as dfep_id,
                    o.IDMode_formation as mode_formation,
                    o.DateD as date_debut, o.DateF as date_fin
             FROM offre o
@@ -1728,11 +1728,11 @@ class GradesController extends Controller
         // Fetch offer details
         $offre = (array) DB::selectOne("
             SELECT o.IDOffre as id, s.Nom as spec_ar, sec.Nom as section_nom,
-                   o.IDEts_Form as etablissement_id, e.Nom as etab_nom
+                   e.IDetablissement as etablissement_id, e.Nom as etab_nom
             FROM offre o
             JOIN specialite s ON o.IDSpecialite = s.IDSpecialite
             JOIN section sec ON o.IDOffre = sec.IDOffre
-            JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
+            JOIN etablissement e ON o.IDEts_Form = e.IDEts_Form
             WHERE o.IDOffre = ?
         ", [$offreId]);
 

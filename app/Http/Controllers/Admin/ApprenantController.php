@@ -46,7 +46,7 @@ class ApprenantController extends Controller
             $params[] = $dfepId;
         } elseif (!empty($etabScopeIds)) {
             $placeholders = implode(',', array_fill(0, count($etabScopeIds), '?'));
-            $where[]  = "o.IDEts_Form IN ($placeholders)";
+            $where[]  = "et.IDetablissement IN ($placeholders)";
             $params   = array_merge($params, $etabScopeIds);
         } else {
             $where[] = '1=0';
@@ -251,7 +251,9 @@ class ApprenantController extends Controller
             });
         } elseif ($etabId > 0) {
             $candQuery->whereIn('candidat.IDOffre', function($q) use ($etabScopeIds) {
-                $q->select('IDOffre')->from('offre')->whereIn('IDEts_Form', $etabScopeIds);
+                $q->select('IDOffre')->from('offre')
+                  ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDEts_Form')
+                  ->whereIn('etablissement.IDetablissement', $etabScopeIds);
             });
         }
 
@@ -298,8 +300,9 @@ class ApprenantController extends Controller
                 $allowed = DB::table('apprenant')
                     ->join('section', 'apprenant.IDSection', '=', 'section.IDSection')
                     ->join('offre', 'section.IDOffre', '=', 'offre.IDOffre')
+                    ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDEts_Form')
                     ->where('apprenant.IDapprenant', $id)
-                    ->whereIn('offre.IDEts_Form', $etabScopeIds)
+                    ->whereIn('etablissement.IDetablissement', $etabScopeIds)
                     ->exists();
                 abort_unless($allowed, 403, 'غير مصرح لك باستعراض بيانات هذا الطالب.');
             } elseif ($role === 'dfep' && $dfepId > 0) {
@@ -399,15 +402,17 @@ class ApprenantController extends Controller
         if ($etabId > 0) {
             $candidateAllowed = DB::table('candidat')
                 ->join('offre', 'candidat.IDOffre', '=', 'offre.IDOffre')
+                ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDEts_Form')
                 ->where('candidat.IDCandidat', $validated['candidat_id'])
-                ->whereIn('offre.IDEts_Form', $etabScopeIds)
+                ->whereIn('etablissement.IDetablissement', $etabScopeIds)
                 ->exists();
             abort_unless($candidateAllowed, 403, 'غير مصرح لك بإضافة هذا المترشح.');
 
             $sectionAllowed = DB::table('section')
                 ->join('offre', 'section.IDOffre', '=', 'offre.IDOffre')
+                ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDEts_Form')
                 ->where('section.IDSection', $validated['section_id'])
-                ->whereIn('offre.IDEts_Form', $etabScopeIds)
+                ->whereIn('etablissement.IDetablissement', $etabScopeIds)
                 ->exists();
             abort_unless($sectionAllowed, 403, 'غير مصرح لك بالإضافة لهذا القسم.');
         } elseif ($role === 'dfep' && $dfepId > 0) {
@@ -503,15 +508,17 @@ class ApprenantController extends Controller
             $currentAllowed = DB::table('apprenant')
                 ->join('section', 'apprenant.IDSection', '=', 'section.IDSection')
                 ->join('offre', 'section.IDOffre', '=', 'offre.IDOffre')
+                ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDEts_Form')
                 ->where('apprenant.IDapprenant', $validated['id'])
-                ->whereIn('offre.IDEts_Form', $etabScopeIds)
+                ->whereIn('etablissement.IDetablissement', $etabScopeIds)
                 ->exists();
             abort_unless($currentAllowed, 403, 'غير مصرح لك بتعديل هذا الطالب.');
 
             $sectionAllowed = DB::table('section')
                 ->join('offre', 'section.IDOffre', '=', 'offre.IDOffre')
+                ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDEts_Form')
                 ->where('section.IDSection', $validated['section_id'])
-                ->whereIn('offre.IDEts_Form', $etabScopeIds)
+                ->whereIn('etablissement.IDetablissement', $etabScopeIds)
                 ->exists();
             abort_unless($sectionAllowed, 403, 'غير مصرح لك بنقل الطالب لهذا القسم.');
         } elseif ($role === 'dfep' && $dfepId > 0) {
@@ -595,8 +602,9 @@ class ApprenantController extends Controller
                 $allowed = DB::table('apprenant')
                     ->join('section', 'apprenant.IDSection', '=', 'section.IDSection')
                     ->join('offre', 'section.IDOffre', '=', 'offre.IDOffre')
+                    ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDEts_Form')
                     ->where('apprenant.IDapprenant', $id)
-                    ->whereIn('offre.IDEts_Form', $etabScopeIds)
+                    ->whereIn('etablissement.IDetablissement', $etabScopeIds)
                     ->exists();
                 abort_unless($allowed, 403, 'غير مصرح لك بحذف طالب من هذا القسم.');
             } elseif ($role === 'dfep' && $dfepId > 0) {
