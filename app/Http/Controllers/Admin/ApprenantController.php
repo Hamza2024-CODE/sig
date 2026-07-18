@@ -33,7 +33,7 @@ class ApprenantController extends Controller
             $params[] = $dfepId;
         } elseif (!empty($etabScopeIds)) {
             $placeholders = implode(',', array_fill(0, count($etabScopeIds), '?'));
-            $where[]  = "s.IDEts_Form IN ($placeholders)";
+            $where[]  = "o.IDEts_Form IN ($placeholders)";
             $params   = array_merge($params, $etabScopeIds);
         } else {
             $where[] = '1=0';
@@ -83,12 +83,14 @@ class ApprenantController extends Controller
         }
 
         // Active/Latest Session Restriction (only show trainees from the current/latest new session)
-        $activeSession = DB::table('session')
-            ->join('semestre_formation', 'session.IDSemestre_formation', '=', 'semestre_formation.IDSemestre_formation')
-            ->orderBy('semestre_formation.IDAnnee_Formation', 'desc')
-            ->orderBy('session.DateD', 'desc')
-            ->select('session.IDSession')
-            ->first();
+        $activeSession = Cache::remember('active_session', 600, function() {
+            return DB::table('session')
+                ->join('semestre_formation', 'session.IDSemestre_formation', '=', 'semestre_formation.IDSemestre_formation')
+                ->orderBy('semestre_formation.IDAnnee_Formation', 'desc')
+                ->orderBy('session.DateD', 'desc')
+                ->select('session.IDSession')
+                ->first();
+        });
         if ($activeSession) {
             $where[]  = 'o.IDSession = ?';
             $params[] = $activeSession->IDSession;
@@ -200,7 +202,7 @@ class ApprenantController extends Controller
                 $q->select('IDetablissement')->from('etablissement')->where('IDDFEP', $dfepId);
             });
         } elseif (!empty($etabScopeIds)) {
-            $sectionsQuery->whereIn('section.IDEts_Form', $etabScopeIds);
+            $sectionsQuery->whereIn('offre.IDEts_Form', $etabScopeIds);
         } elseif ($filterEtab > 0) {
             $sectionsQuery->where('offre.IDEts_Form', $filterEtab);
         } else {
@@ -350,6 +352,15 @@ class ApprenantController extends Controller
             'valide' => 'required|integer',
             'groupe' => 'required|integer',
         ]);
+        
+        if (!empty($etabScopeIds)) {
+            $sectionAllowed = DB::table('section')
+                ->join('offre', 'section.IDOffre', '=', 'offre.IDOffre')
+                ->where('section.IDSection', $validated['section_id'])
+                ->whereIn('offre.IDEts_Form', $etabScopeIds)
+                ->exists();
+            abort_unless($sectionAllowed, 403, 'غير مصرح لك بالإضافة لهذا القسم.');
+        }
 
         $candidate = DB::table('candidat')->where('IDCandidat', $validated['candidat_id'])->first();
         if (!$candidate) {
@@ -420,6 +431,15 @@ class ApprenantController extends Controller
             return redirect()->back();
         }
 
+        if (!empty($etabScopeIds)) {
+            $sectionAllowed = DB::table('section')
+                ->join('offre', 'section.IDOffre', '=', 'offre.IDOffre')
+                ->where('section.IDSection', $validated['section_id'])
+                ->whereIn('offre.IDEts_Form', $etabScopeIds)
+                ->exists();
+            abort_unless($sectionAllowed, 403, 'غير مصرح لك بالتعديل في هذا القسم.');
+        }
+
         $section = DB::table('section')->where('IDSection', $validated['section_id'])->first();
         $wilayaId = 0;
         if ($section && !empty($section->IDOffre)) {
@@ -475,6 +495,14 @@ class ApprenantController extends Controller
 
         $student = DB::table('apprenant')->where('IDapprenant', $id)->first();
         if ($student) {
+            if (!empty($etabScopeIds)) {
+                $sectionAllowed = DB::table('section')
+                    ->join('offre', 'section.IDOffre', '=', 'offre.IDOffre')
+                    ->where('section.IDSection', $student->IDSection)
+                    ->whereIn('offre.IDEts_Form', $etabScopeIds)
+                    ->exists();
+                abort_unless($sectionAllowed, 403, 'غير مصرح لك بحذف طالب من هذا القسم.');
+            }
             $section = DB::table('section')->where('IDSection', $student->IDSection)->first();
             $wilayaId = 0;
             if ($section && !empty($section->IDOffre)) {
