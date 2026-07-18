@@ -47,7 +47,7 @@ class OffresRepository
     public function getOffersStats(string $scopeWhere, array $scopeParams): array
     {
         $joinEtab = strpos($scopeWhere, 'e.') !== false
-            ? "LEFT JOIN etablissement e ON o.IDEts_Form = e.IDEts_Form"
+            ? "LEFT JOIN etablissement e ON o.IDEts_Form = e.IDetablissement"
             : "";
         
         $cacheKey = 'offres_stats_v2_' . md5($scopeWhere . '_' . serialize($scopeParams));
@@ -174,7 +174,7 @@ class OffresRepository
             // (dfep/etablissement roles). For admin (scopeWhere='1=1'), skip the JOIN entirely
             // to avoid an unnecessary full-table scan that causes timeouts on large datasets.
             $joinEtab = strpos($scopeWhere, 'e.') !== false
-                ? "LEFT JOIN etablissement e ON o.IDEts_Form = e.IDEts_Form"
+                ? "LEFT JOIN etablissement e ON o.IDEts_Form = e.IDetablissement"
                 : "";
 
             $stmtD = $this->db->prepare("
@@ -217,7 +217,7 @@ class OffresRepository
             // (dfep/etablissement roles). For admin (scopeWhere='1=1'), skip the JOIN entirely
             // to avoid an unnecessary full-table scan that causes timeouts on large datasets.
             $joinEtab = strpos($scopeWhere, 'e.') !== false
-                ? "LEFT JOIN etablissement e ON o.IDEts_Form = e.IDEts_Form"
+                ? "LEFT JOIN etablissement e ON o.IDEts_Form = e.IDetablissement"
                 : "";
 
             $stmtFil = $this->db->prepare("
@@ -281,8 +281,8 @@ class OffresRepository
             FROM offre o
             LEFT JOIN specialite    sp   ON o.IDSpecialite    = sp.IDSpecialite
             LEFT JOIN niveau_fp     nf   ON sp.IDNiveau_Fp    = nf.IDNiveau_Fp
-            LEFT JOIN etablissement e    ON o.IDEts_Form      = e.IDEts_Form
-            LEFT JOIN etablissement ed   ON o.IDEts_FormM     = ed.IDEts_Form
+            LEFT JOIN etablissement e    ON o.IDEts_Form      = e.IDetablissement
+            LEFT JOIN etablissement ed   ON o.IDEts_FormM     = ed.IDetablissement
             LEFT JOIN session       sess ON o.IDSession       = sess.IDSession
             LEFT JOIN mode_formation mf  ON o.IDMode_formation = mf.IDMode_formation
             WHERE $scopeWhere AND sess.DateD >= '2024-01-01'
@@ -463,8 +463,8 @@ class OffresRepository
             FROM offre o
             LEFT JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
             LEFT JOIN niveau_fp nf ON sp.IDNiveau_Fp = nf.IDNiveau_Fp
-            LEFT JOIN etablissement e ON o.IDEts_Form = e.IDEts_Form
-            LEFT JOIN etablissement ed ON o.IDEts_FormM = ed.IDEts_Form
+            LEFT JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
+            LEFT JOIN etablissement ed ON o.IDEts_FormM = ed.IDetablissement
             LEFT JOIN session sess ON o.IDSession = sess.IDSession
             LEFT JOIN mode_formation mf ON o.IDMode_formation = mf.IDMode_formation
         ";
@@ -491,15 +491,15 @@ class OffresRepository
             $processed = $stmt2->fetchAll(PDO::FETCH_ASSOC);
 
             // Real counts (without limits)
-            $stmtPC = $this->db->prepare("SELECT COUNT(*) FROM offre o LEFT JOIN etablissement e ON o.IDEts_Form = e.IDEts_Form WHERE e.IDDFEP = ? AND o.Valide = 1 AND o.ValidDfp = 0 AND (o.Obs_Dfep IS NULL OR o.Obs_Dfep = '')");
+            $stmtPC = $this->db->prepare("SELECT COUNT(*) FROM offre o LEFT JOIN etablissement e ON o.IDEts_Form = e.IDetablissement WHERE e.IDDFEP = ? AND o.Valide = 1 AND o.ValidDfp = 0 AND (o.Obs_Dfep IS NULL OR o.Obs_Dfep = '')");
             $stmtPC->execute([$dfepId]);
             $pendingCount = (int)$stmtPC->fetchColumn();
 
-            $stmtAC = $this->db->prepare("SELECT COUNT(*) FROM offre o LEFT JOIN etablissement e ON o.IDEts_Form = e.IDEts_Form WHERE e.IDDFEP = ? AND o.ValidDfp = 1");
+            $stmtAC = $this->db->prepare("SELECT COUNT(*) FROM offre o LEFT JOIN etablissement e ON o.IDEts_Form = e.IDetablissement WHERE e.IDDFEP = ? AND o.ValidDfp = 1");
             $stmtAC->execute([$dfepId]);
             $approvedCount = (int)$stmtAC->fetchColumn();
 
-            $stmtRC = $this->db->prepare("SELECT COUNT(*) FROM offre o LEFT JOIN etablissement e ON o.IDEts_Form = e.IDEts_Form WHERE e.IDDFEP = ? AND o.Valide = 1 AND o.ValidDfp = 0 AND o.Obs_Dfep IS NOT NULL AND o.Obs_Dfep != ''");
+            $stmtRC = $this->db->prepare("SELECT COUNT(*) FROM offre o LEFT JOIN etablissement e ON o.IDEts_Form = e.IDetablissement WHERE e.IDDFEP = ? AND o.Valide = 1 AND o.ValidDfp = 0 AND o.Obs_Dfep IS NOT NULL AND o.Obs_Dfep != ''");
             $stmtRC->execute([$dfepId]);
             $rejectedCount = (int)$stmtRC->fetchColumn();
         } else {
@@ -636,7 +636,7 @@ class OffresRepository
                 o.NbrInscr                         AS inscrits
             FROM offre o
             LEFT JOIN specialite    sp   ON o.IDSpecialite    = sp.IDSpecialite
-            LEFT JOIN etablissement e    ON o.IDEts_Form      = e.IDEts_Form
+            LEFT JOIN etablissement e    ON o.IDEts_Form      = e.IDetablissement
             LEFT JOIN session       sess ON o.IDSession       = sess.IDSession
             ORDER BY o.DateD DESC
             LIMIT 2000
@@ -682,7 +682,7 @@ class OffresRepository
                     o.NbrInscr                 AS inscrits
                 FROM offre o
                 LEFT JOIN specialite    sp   ON o.IDSpecialite    = sp.IDSpecialite
-                LEFT JOIN etablissement e    ON o.IDEts_Form      = e.IDEts_Form
+                LEFT JOIN etablissement e    ON o.IDEts_Form      = e.IDetablissement
                 LEFT JOIN session       sess ON o.IDSession       = sess.IDSession
                 WHERE {$scopeWhere}
                 ORDER BY o.DateD DESC
