@@ -140,10 +140,10 @@ final class KpiCache
             ];
         }
 
-        $modeId = (int)session('user.IDMode_formation');
-        $username = strtolower(session('user.username') ?? '');
-        $excludeMode10 = ($username === 'sdtpp');
-        $key = self::PREFIX . "etab:{$etabId}" . ($modeId === 10 ? ':mode10' : '') . ($excludeMode10 ? ':exclude_mode10' : '');
+        $user = session('user') ?? [];
+        $excludeMode10 = \App\Helpers\DepartmentHelper::isPresentielOnly($user);
+        $isApprentice = \App\Helpers\DepartmentHelper::isApprenticeship($user);
+        $key = self::PREFIX . "etab:{$etabId}" . ($isApprentice ? ':mode10' : '') . ($excludeMode10 ? ':exclude_mode10' : '');
 
         return Cache::remember($key, self::TTL_ETAB, function () use ($etabId) {
             return self::computeEtabKpis($etabId);
@@ -349,15 +349,15 @@ final class KpiCache
 
     private static function computeEtabKpis(int $etabId): array
     {
-        $modeId = (int)session('user.IDMode_formation');
-        $username = strtolower(session('user.username') ?? '');
-        $excludeMode10 = ($username === 'sdtpp');
+        $user = session('user') ?? [];
+        $excludeMode10 = \App\Helpers\DepartmentHelper::isPresentielOnly($user);
+        $isApprentice = \App\Helpers\DepartmentHelper::isApprenticeship($user);
 
         // Resolve scope IDs (the main center + all its branches/extensions)
         $etabIds = self::getEtabScopeIds($etabId);
         $placeholders = implode(',', array_fill(0, count($etabIds), '?'));
 
-        if ($modeId === 10) {
+        if ($isApprentice) {
             if (self::shouldUseApprenantTable()) {
                 $stagiaires = self::scalar("
                     SELECT COUNT(a.IDapprenant) as c 

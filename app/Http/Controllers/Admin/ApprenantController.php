@@ -52,9 +52,9 @@ class ApprenantController extends Controller
             $where[] = '1=0';
         }
 
-        if ((int)($user['IDMode_formation'] ?? 0) === 10) {
+        if (\App\Helpers\DepartmentHelper::isApprenticeship($user)) {
             $where[] = 'o.IDMode_formation = 10';
-        } elseif (strtolower($user['username'] ?? '') === 'sdtpp') {
+        } elseif (\App\Helpers\DepartmentHelper::isPresentielOnly($user)) {
             $where[] = 'o.IDMode_formation != 10';
         }
 

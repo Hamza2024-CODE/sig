@@ -476,9 +476,9 @@ class DashboardController extends Controller
 
             $data['filter_filieres']  = ReferenceCache::branches();
             $data['filter_specialites'] = ReferenceCache::specialites();
-            $data['filter_modes']     = (int)($user['IDMode_formation'] ?? 0) === 10
+            $data['filter_modes']     = \App\Helpers\DepartmentHelper::isApprenticeship($user)
                 ? array_filter(ReferenceCache::modesFormation(), fn($m) => (int)($m['id'] ?? 0) === 10)
-                : (strtolower($user['username'] ?? '') === 'sdtpp'
+                : (\App\Helpers\DepartmentHelper::isPresentielOnly($user)
                     ? array_filter(ReferenceCache::modesFormation(), fn($m) => (int)($m['id'] ?? 0) !== 10)
                     : ReferenceCache::modesFormation());
             $data['filter_annees']    = ReferenceCache::anneesFormation();
@@ -795,9 +795,9 @@ class DashboardController extends Controller
                 });
             }
 
-            $username = strtolower($user['username'] ?? '');
-            $excludeMode10 = ($username === 'sdtpp');
-            $cacheSuffix = ((int)($user['IDMode_formation'] ?? 0) === 10 ? ':mode10' : '') . ($excludeMode10 ? ':exclude_mode10' : '');
+            $excludeMode10 = \App\Helpers\DepartmentHelper::isPresentielOnly($user);
+            $isApprentice = \App\Helpers\DepartmentHelper::isApprenticeship($user);
+            $cacheSuffix = ($isApprentice ? ':mode10' : '') . ($excludeMode10 ? ':exclude_mode10' : '');
             
             // Dynamic Top Specialties with global filters
             $cacheKeySpecs = 'sgfep:kpi:top_specs_static' . $cacheSuffix . ':' . (int)$selWilaya . ':' . (int)$selEtab . ':' . (int)$selMode;
@@ -1207,9 +1207,9 @@ class DashboardController extends Controller
                 $stagCond = ['o.IDEts_Form = ?', "a.statut = 'actif'"];
                 $stagParams = [$etabId];
 
-                if ((int)($user['IDMode_formation'] ?? 0) === 10) {
+                if (\App\Helpers\DepartmentHelper::isApprenticeship($user)) {
                     $stagCond[] = 'o.IDMode_formation = 10';
-                } elseif (strtolower($user['username'] ?? '') === 'sdtpp') {
+                } elseif (\App\Helpers\DepartmentHelper::isPresentielOnly($user)) {
                     $stagCond[] = 'o.IDMode_formation != 10';
                 }
 
@@ -1484,9 +1484,9 @@ class DashboardController extends Controller
 
         // Restrict to Apprenticeship mode if the user belongs to mode 10, or exclude it if sdtpp
         $userSession = session('user') ?? [];
-        if ((int)($userSession['IDMode_formation'] ?? 0) === 10) {
+        if (\App\Helpers\DepartmentHelper::isApprenticeship($userSession)) {
             $cond[] = 'o.IDMode_formation = 10';
-        } elseif (strtolower($userSession['username'] ?? '') === 'sdtpp') {
+        } elseif (\App\Helpers\DepartmentHelper::isPresentielOnly($userSession)) {
             $cond[] = 'o.IDMode_formation != 10';
         }
 

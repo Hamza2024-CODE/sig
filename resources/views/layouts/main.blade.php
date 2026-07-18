@@ -24,18 +24,7 @@ $isDeohUser = ($roleCode === 'central' && ($directionCode === 'DEOH' || $usernam
 $isDecUser = ($roleCode === 'central' && ($directionCode === 'DEC' || $username === 'dec'));
 $isDfcriUser = ($roleCode === 'central' && ($directionCode === 'DFCRI' || $username === 'dfcri'));
 
-$dept = 'general';
-if ($isApprenticeshipDept || in_array($username, ['sdtpa', 'sdtpas'])) {
-    $dept = 'apprentissage';
-} elseif (in_array($username, ['biao', 'biaos'])) {
-    $dept = 'orientation';
-} elseif (in_array($username, ['dplm', 'dplms'])) {
-    $dept = 'diplomes';
-} elseif (in_array($username, ['sdtpp', 'sdtpps', 'sdtpc', 'sdtpcs'])) {
-    $dept = 'pedagogie';
-} elseif (in_array($username, ['admfine', 'admfines', 'samf', 'samfs', 'sdafm', 'sdsafms', 'sdarh', 'sdarhs'])) {
-    $dept = 'administration';
-}
+$dept = \App\Helpers\DepartmentHelper::getDepartmentType($user);
 // if ($roleCode === 'employee') { $roleCode = 'formateur'; }
 
 $dfepId = (int)($user['iddfep'] ?? $user['IDDFEP'] ?? 0);

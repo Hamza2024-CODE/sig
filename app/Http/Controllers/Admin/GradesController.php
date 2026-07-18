@@ -66,10 +66,10 @@ class GradesController extends Controller
         }
 
         // 3. Mode Validation
-        $isMode10 = ((int)($user['IDMode_formation'] ?? 0) === 10 || strtolower($user['role_fr'] ?? '') === 'apprentissage');
+        $isMode10 = \App\Helpers\DepartmentHelper::isApprenticeship($user);
         if ($isMode10 && (int)$offre['mode_formation'] !== 10) {
             abort(403, 'غير مصرح لك بالوصول لغير نمط التمهين.');
-        } elseif (strtolower($user['username'] ?? '') === 'sdtpp' && (int)$offre['mode_formation'] === 10) {
+        } elseif (\App\Helpers\DepartmentHelper::isPresentielOnly($user) && (int)$offre['mode_formation'] === 10) {
             abort(403, 'غير مصرح لك بالوصول لنمط التمهين.');
         }
     }
@@ -85,11 +85,11 @@ class GradesController extends Controller
         $role    = strtolower($user['role_code'] ?? '');
         $dfepId  = $user['iddfep'] ?? null;
 
-        $modeId = (int)($user['IDMode_formation'] ?? 0);
+        $isMode10 = \App\Helpers\DepartmentHelper::isApprenticeship($user);
         if (request('force_mode_10')) {
-            $modeId = 10;
+            $isMode10 = true;
         }
-        $isMode10 = ($modeId === 10 || strtolower($user['role_fr'] ?? '') === 'apprentissage');
+        $isPresentielOnly = \App\Helpers\DepartmentHelper::isPresentielOnly($user);
 
         $selectedWilaya = null;
         $selectedEtab = null;
@@ -122,6 +122,8 @@ class GradesController extends Controller
 
         if ($isMode10) {
             $whereClauses[] = "o.IDMode_formation = 10";
+        } elseif ($isPresentielOnly) {
+            $whereClauses[] = "o.IDMode_formation != 10";
         }
 
         if ($selectedWilaya > 0) {
