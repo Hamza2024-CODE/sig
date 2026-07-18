@@ -53,12 +53,12 @@ class CandidatService
         }
 
         if (!empty($filters['wilaya_id'])) {
-            $extraWhere .= " AND o.IDEts_Form IN (SELECT IDetablissement FROM etablissement WHERE IDDFEP IN (SELECT IDDFEP FROM dfep WHERE IDWilayaa = ?))";
+            $extraWhere .= " AND o.IDEts_Form IN (SELECT IDEts_Form FROM etablissement WHERE IDDFEP IN (SELECT IDDFEP FROM dfep WHERE IDWilayaa = ?))";
             $params[] = (int)$filters['wilaya_id'];
         }
 
         if (!empty($filters['etablissement_id'])) {
-            $extraWhere .= " AND o.IDEts_Form = ?";
+            $extraWhere .= " AND o.IDEts_Form IN (SELECT IDEts_Form FROM etablissement WHERE IDetablissement = ?)";
             $params[] = (int)$filters['etablissement_id'];
         }
 
@@ -170,11 +170,13 @@ class CandidatService
         $params     = [];
 
         if ($roleCode === 'dfep' && $dfepId) {
-            $extraWhere = " AND o.IDEts_Form IN (SELECT IDetablissement FROM etablissement WHERE IDDFEP = ?)";
+            $extraWhere = " AND o.IDEts_Form IN (SELECT IDEts_Form FROM etablissement WHERE IDDFEP = ?)";
             $params[]   = $dfepId;
         } elseif (in_array($roleCode, ['etablissement', 'directeur', 'formateur']) && $etabId) {
-            $extraWhere = " AND o.IDEts_Form = ?";
-            $params[]   = $etabId;
+            $etabScopeIds = \App\Support\EtablissementScope::resolve($etabId);
+            $placeholders = implode(',', array_fill(0, count($etabScopeIds), '?'));
+            $extraWhere = " AND o.IDEts_Form IN (SELECT IDEts_Form FROM etablissement WHERE IDetablissement IN ($placeholders))";
+            $params = array_merge($params, $etabScopeIds);
         }
 
         if (\App\Helpers\DepartmentHelper::isApprenticeship($user)) {
