@@ -59,8 +59,9 @@ class GradesController extends Controller
             }
         } else {
             // Etablissement / Directeur / Employee / Formateur
-            if ($etabId > 0 && (int)$offre['etablissement_id'] !== $etabId) {
-                abort(403, 'غير مصرح لك بالوصول لبيانات مؤسسة أخرى.');
+            $etabScopeIds = $etabId > 0 ? \App\Support\EtablissementScope::resolve($etabId) : [];
+            if ($etabId > 0 && !in_array((int)$offre['etablissement_id'], $etabScopeIds)) {
+                abort(403, 'غير مصرح لك بالوصول لبيانات مؤسسة أخرى خارج نطاق إشرافك.');
             }
         }
 
@@ -93,6 +94,7 @@ class GradesController extends Controller
         $selectedWilaya = null;
         $selectedEtab = null;
         $selectedYear = request('filter_year') ? (int)request('filter_year') : null;
+        $etabScopeIds = $etabId > 0 ? \App\Support\EtablissementScope::resolve($etabId) : [];
 
         if (in_array($role, ['admin', 'central', 'high_admin', 'secretaire_general', 'ministre'])) {
             $selectedWilaya = request('filter_wilaya') ? (int)request('filter_wilaya') : null;
@@ -126,9 +128,21 @@ class GradesController extends Controller
             $whereClauses[] = "e.IDDFEP = ?";
             $bindings[] = $selectedWilaya;
         }
-        if ($selectedEtab > 0) {
-            $whereClauses[] = "o.IDEts_Form = ?";
-            $bindings[] = $selectedEtab;
+        if (in_array($role, ['admin', 'central', 'high_admin', 'secretaire_general', 'ministre', 'dfep'])) {
+            if ($selectedEtab > 0) {
+                $whereClauses[] = "o.IDEts_Form = ?";
+                $bindings[] = $selectedEtab;
+            }
+        } else {
+            // Logged in as establishment (including public supervising centers and isolated private ones)
+            if (!empty($etabScopeIds)) {
+                $placeholders = implode(',', array_fill(0, count($etabScopeIds), '?'));
+                $whereClauses[] = "o.IDEts_Form IN ($placeholders)";
+                $bindings = array_merge($bindings, $etabScopeIds);
+            } elseif ($selectedEtab > 0) {
+                $whereClauses[] = "o.IDEts_Form = ?";
+                $bindings[] = $selectedEtab;
+            }
         }
         if ($selectedYear > 0) {
             $whereClauses[] = "sess.IDSession = ?";
@@ -221,9 +235,18 @@ class GradesController extends Controller
             $statsWhere[] = "e.IDDFEP = :wilayaId";
             $statsParams['wilayaId'] = $selectedWilaya;
         }
-        if ($selectedEtab > 0) {
-            $statsWhere[] = "o.IDEts_Form = :etabId";
-            $statsParams['etabId'] = $selectedEtab;
+        if (in_array($role, ['admin', 'central', 'high_admin', 'secretaire_general', 'ministre', 'dfep'])) {
+            if ($selectedEtab > 0) {
+                $statsWhere[] = "o.IDEts_Form = :etabId";
+                $statsParams['etabId'] = $selectedEtab;
+            }
+        } else {
+            if (!empty($etabScopeIds)) {
+                $statsWhere[] = "o.IDEts_Form IN (" . implode(',', $etabScopeIds) . ")";
+            } else {
+                $statsWhere[] = "o.IDEts_Form = :etabId";
+                $statsParams['etabId'] = $etabId;
+            }
         }
         if ($selectedYear > 0) {
             $statsWhere[] = "sess.IDSession = :sessionId";
