@@ -1,5 +1,6 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="ar" dir="rtl">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -258,11 +259,19 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <header>
@@ -287,10 +296,13 @@
                     <span class="formula-tag">الوزن القياسي 40% / 60%</span>
                 </div>
                 <ul>
-                    <li><strong>المراقبة المستمرة (CC):</strong> متوسط علامة الاختبارين الأول والثاني: <code>(CC1 + CC2) / 2</code>.</li>
+                    <li><strong>المراقبة المستمرة (CC):</strong> متوسط علامة الاختبارين الأول والثاني:
+                        <code>(CC1 + CC2) / 2</code>.</li>
                     <li><strong>الامتحان النهائي (Exam):</strong> يمثل 60% من معدل المادة.</li>
-                    <li><strong>الامتحان الاستدراكي (Remedial/Rattrapage):</strong> إذا تم اجتيازه، يُستبدل علامة الامتحان النهائي بأعلى علامة تم الحصول عليها: <code>max(Exam, Rattrapage)</code>.</li>
-                    <li><strong>نقطة الإقصاء:</strong> تكون المادة إقصائية وتؤدي لرشوب السداسي إذا كان معدلها النهائي أقل من <strong>5.0 / 20</strong>.</li>
+                    <li><strong>الامتحان الاستدراكي (Remedial/Rattrapage):</strong> إذا تم اجتيازه، يُستبدل علامة
+                        الامتحان النهائي بأعلى علامة تم الحصول عليها: <code>max(Exam, Rattrapage)</code>.</li>
+                    <li><strong>نقطة الإقصاء:</strong> تكون المادة إقصائية وتؤدي لرشوب السداسي إذا كان معدلها النهائي
+                        أقل من <strong>5.0 / 20</strong>.</li>
                 </ul>
 
                 <!-- Simulator -->
@@ -299,19 +311,23 @@
                     <div class="calculator-grid" style="margin-top: 1rem;">
                         <div class="input-group">
                             <label>المراقبة المستمرة 1 (CC1)</label>
-                            <input type="number" id="cc1" min="0" max="20" step="0.25" value="12" oninput="calcModule()">
+                            <input type="number" id="cc1" min="0" max="20" step="0.25" value="12"
+                                oninput="calcModule()">
                         </div>
                         <div class="input-group">
                             <label>المراقبة المستمرة 2 (CC2)</label>
-                            <input type="number" id="cc2" min="0" max="20" step="0.25" value="10" oninput="calcModule()">
+                            <input type="number" id="cc2" min="0" max="20" step="0.25" value="10"
+                                oninput="calcModule()">
                         </div>
                         <div class="input-group">
                             <label>الامتحان النهائي (Exam)</label>
-                            <input type="number" id="exam" min="0" max="20" step="0.25" value="9" oninput="calcModule()">
+                            <input type="number" id="exam" min="0" max="20" step="0.25" value="9"
+                                oninput="calcModule()">
                         </div>
                         <div class="input-group">
                             <label>الامتحان الاستدراكي (Rattrapage)</label>
-                            <input type="number" id="ratt" min="0" max="20" step="0.25" placeholder="اختياري" oninput="calcModule()">
+                            <input type="number" id="ratt" min="0" max="20" step="0.25" placeholder="اختياري"
+                                oninput="calcModule()">
                         </div>
                     </div>
                     <div class="calc-result-value" id="module-avg">10.60 / 20</div>
@@ -331,8 +347,10 @@
                 </div>
                 <ul>
                     <li>تُضرب نقطة كل مادة بعد الاستدراك في معاملها المعتمد.</li>
-                    <li><strong>نمط التمهين (Apprenticeship):</strong> يُضاف التقييم الميداني للوسط المهني (المؤسسة المستخدمة) كعنصر أساسي بمعدل معامل قدره <strong>4.0</strong>.</li>
-                    <li><strong>شروط العبور والنجاح في السداسي:</strong> الحصول على معدل سداسي <code>GPA >= 10.0</code> وبشرط عدم الحصول على أي نقطة إقصائية (أقل من 5.0) في أي مادة أو في نقطة الوسط المهني.</li>
+                    <li><strong>نمط التمهين (Apprenticeship):</strong> يُضاف التقييم الميداني للوسط المهني (المؤسسة
+                        المستخدمة) كعنصر أساسي بمعدل معامل قدره <strong>4.0</strong>.</li>
+                    <li><strong>شروط العبور والنجاح في السداسي:</strong> الحصول على معدل سداسي <code>GPA >= 10.0</code>
+                        وبشرط عدم الحصول على أي نقطة إقصائية (أقل من 5.0) في أي مادة أو في نقطة الوسط المهني.</li>
                 </ul>
 
                 <!-- Simulator -->
@@ -349,7 +367,8 @@
                         </div>
                         <div class="input-group">
                             <label>علامة الوسط المهني (للتمهين)</label>
-                            <input type="number" id="company-grade" min="0" max="20" value="14" oninput="calcSemester()">
+                            <input type="number" id="company-grade" min="0" max="20" value="14"
+                                oninput="calcSemester()">
                         </div>
                     </div>
                     <div class="calc-result-value" id="semester-avg">12.57 / 20</div>
@@ -363,10 +382,11 @@
             <div class="card">
                 <h2><i class="fa-solid fa-award"></i> معدل التخرج النهائي والدبلوم</h2>
                 <p class="intro">تختلف طريقة حساب معدل التخرج النهائي حسب الدرجة والمستوى العلمي للشهادة:</p>
-                
+
                 <div style="margin-bottom: 2rem;">
                     <h4 style="color: var(--accent-purple); margin-bottom: 0.5rem;">أ) مستوى التقني السامي (TS):</h4>
-                    <p style="color: var(--text-secondary); margin-bottom: 0.75rem;">يُحسب المعدل بوزن السداسيات بضعف وزن مذكرة التخرج ومناقشتها:</p>
+                    <p style="color: var(--text-secondary); margin-bottom: 0.75rem;">يُحسب المعدل بوزن السداسيات بضعف
+                        وزن مذكرة التخرج ومناقشتها:</p>
                     <div class="formula-box">
                         <span>Grad_Avg = ((معدل السداسيات * 2) + (معدل المذكرة * 1)) / 3</span>
                         <span class="formula-tag">صيغة التقني السامي (TS)</span>
@@ -374,8 +394,10 @@
                 </div>
 
                 <div>
-                    <h4 style="color: var(--accent-orange); margin-bottom: 0.5rem;">ب) باقي المستويات والشهادات (CAP, CMP, TS):</h4>
-                    <p style="color: var(--text-secondary);">المعدل النهائي للتخرج هو المتوسط الحسابي البسيط لجميع معدلات السداسيات المجتازة.</p>
+                    <h4 style="color: var(--accent-orange); margin-bottom: 0.5rem;">ب) باقي المستويات والشهادات (CAP,
+                        CMP, TS):</h4>
+                    <p style="color: var(--text-secondary);">المعدل النهائي للتخرج هو المتوسط الحسابي البسيط لجميع
+                        معدلات السداسيات المجتازة.</p>
                 </div>
             </div>
         </div>
@@ -384,15 +406,20 @@
         <div id="tab-special" class="tab-content">
             <div class="card">
                 <h2><i class="fa-solid fa-circle-info"></i> الحالات الخاصة والأنماط المستحدثة</h2>
-                
+
                 <div style="margin-bottom: 2rem;">
-                    <h3 style="color: var(--accent-orange); margin-bottom: 0.5rem;"><i class="fa-solid fa-school"></i> شهادة التعليم المهني (BEP - نمط 8)</h3>
-                    <p style="color: var(--text-secondary);">في شهادة التعليم المهني، اختبار الـ ECF والامتحانات الاستدراكية للمواد تكون علاماتها القصوى من 40. لذلك، يتم برمجياً تقسيم علامة الامتحان والاستدراك على 2.0 لتتحول تلقائياً من 20 قبل تطبيق صيغة الاحتساب القياسية.</p>
+                    <h3 style="color: var(--accent-orange); margin-bottom: 0.5rem;"><i class="fa-solid fa-school"></i>
+                        شهادة التعليم المهني (BEP - نمط 8)</h3>
+                    <p style="color: var(--text-secondary);">في شهادة التعليم المهني، اختبار الـ ECF والامتحانات
+                        الاستدراكية للمواد تكون علاماتها القصوى من 40. لذلك، يتم برمجياً تقسيم علامة الامتحان والاستدراك
+                        على 2.0 لتتحول تلقائياً من 20 قبل تطبيق صيغة الاحتساب القياسية.</p>
                 </div>
 
                 <div>
-                    <h3 style="color: var(--accent-blue); margin-bottom: 0.5rem;"><i class="fa-solid fa-laptop-code"></i> التكوين عن بعد (Distance Learning - نمط 18، 21)</h3>
-                    <p style="color: var(--text-secondary); margin-bottom: 0.75rem;">تُحسب المادة بالاعتماد على التقييم المستمر للمنصة والامتحانات المكتوبة:</p>
+                    <h3 style="color: var(--accent-blue); margin-bottom: 0.5rem;"><i
+                            class="fa-solid fa-laptop-code"></i> التكوين عن بعد (Distance Learning - نمط 18، 21)</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 0.75rem;">تُحسب المادة بالاعتماد على التقييم
+                        المستمر للمنصة والامتحانات المكتوبة:</p>
                     <div class="formula-box">
                         <span>Moy = (نشاط المنصة * 0.3) + (الفروض والواجبات * 0.3) + (الامتحان المكتوب * 0.4)</span>
                     </div>
@@ -475,4 +502,5 @@
         calcSemester();
     </script>
 </body>
+
 </html>
