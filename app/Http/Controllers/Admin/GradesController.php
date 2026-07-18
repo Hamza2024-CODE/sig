@@ -59,17 +59,16 @@ class GradesController extends Controller
             }
         } else {
             // Etablissement / Directeur / Employee / Formateur
-            $etabScopeIds = $etabId > 0 ? \App\Support\EtablissementScope::resolve($etabId) : [];
-            if ($etabId > 0 && !in_array((int)$offre['etablissement_id'], $etabScopeIds)) {
-                abort(403, 'غير مصرح لك بالوصول لبيانات مؤسسة أخرى خارج نطاق إشرافك.');
+            if ($etabId > 0 && (int)$offre['etablissement_id'] !== $etabId) {
+                abort(403, 'غير مصرح لك بالوصول لبيانات مؤسسة أخرى.');
             }
         }
 
         // 3. Mode Validation
-        $isMode10 = \App\Helpers\DepartmentHelper::isApprenticeship($user);
+        $isMode10 = ((int)($user['IDMode_formation'] ?? 0) === 10 || strtolower($user['role_fr'] ?? '') === 'apprentissage');
         if ($isMode10 && (int)$offre['mode_formation'] !== 10) {
             abort(403, 'غير مصرح لك بالوصول لغير نمط التمهين.');
-        } elseif (\App\Helpers\DepartmentHelper::isPresentielOnly($user) && (int)$offre['mode_formation'] === 10) {
+        } elseif (strtolower($user['username'] ?? '') === 'sdtpp' && (int)$offre['mode_formation'] === 10) {
             abort(403, 'غير مصرح لك بالوصول لنمط التمهين.');
         }
     }
@@ -85,16 +84,15 @@ class GradesController extends Controller
         $role    = strtolower($user['role_code'] ?? '');
         $dfepId  = $user['iddfep'] ?? null;
 
-        $isMode10 = \App\Helpers\DepartmentHelper::isApprenticeship($user);
+        $modeId = (int)($user['IDMode_formation'] ?? 0);
         if (request('force_mode_10')) {
-            $isMode10 = true;
+            $modeId = 10;
         }
-        $isPresentielOnly = \App\Helpers\DepartmentHelper::isPresentielOnly($user);
+        $isMode10 = ($modeId === 10 || strtolower($user['role_fr'] ?? '') === 'apprentissage');
 
         $selectedWilaya = null;
         $selectedEtab = null;
         $selectedYear = request('filter_year') ? (int)request('filter_year') : null;
-        $etabScopeIds = $etabId > 0 ? \App\Support\EtablissementScope::resolve($etabId) : [];
 
         if (in_array($role, ['admin', 'central', 'high_admin', 'secretaire_general', 'ministre'])) {
             $selectedWilaya = request('filter_wilaya') ? (int)request('filter_wilaya') : null;
@@ -116,38 +114,20 @@ class GradesController extends Controller
         $whereClauses = ["s.Nom != ''", "s.Nom IS NOT NULL", "s.NbrSem > 0", "((s.NbrSem > 3 AND sess.DateD >= '2024-01-01') OR (s.NbrSem <= 3 AND sess.DateD >= '2025-01-01'))"];
         $bindings = [];
 
-        if (request('type') === 'bep') {
-            $whereClauses[] = "o.IDMode_formation = 8";
-        }
-
         if ($isMode10) {
             $whereClauses[] = "o.IDMode_formation = 10";
-        } elseif ($isPresentielOnly) {
-            $whereClauses[] = "o.IDMode_formation != 10";
         }
 
         if ($selectedWilaya > 0) {
             $whereClauses[] = "e.IDDFEP = ?";
             $bindings[] = $selectedWilaya;
         }
-        if (in_array($role, ['admin', 'central', 'high_admin', 'secretaire_general', 'ministre', 'dfep'])) {
-            if ($selectedEtab > 0) {
-                $whereClauses[] = "o.IDEts_Form = ?";
-                $bindings[] = $selectedEtab;
-            }
-        } else {
-            // Logged in as establishment (including public supervising centers and isolated private ones)
-            if (!empty($etabScopeIds)) {
-                $placeholders = implode(',', array_fill(0, count($etabScopeIds), '?'));
-                $whereClauses[] = "e.IDetablissement IN ($placeholders)";
-                $bindings = array_merge($bindings, $etabScopeIds);
-            } elseif ($selectedEtab > 0) {
-                $whereClauses[] = "o.IDEts_Form = ?";
-                $bindings[] = $selectedEtab;
-            }
+        if ($selectedEtab > 0) {
+            $whereClauses[] = "o.IDEts_Form = ?";
+            $bindings[] = $selectedEtab;
         }
         if ($selectedYear > 0) {
-            $whereClauses[] = "sess.IDSession = ?";
+            $whereClauses[] = "YEAR(sess.DateD) = ?";
             $bindings[] = $selectedYear;
         }
 
@@ -161,7 +141,6 @@ class GradesController extends Controller
                        s.Nom as spec_ar, s.CodeSpec as spec_code,
                        s.NbrSem as duree_semestres,
                        CASE
-                           WHEN o.IDMode_formation = 8 THEN 'BEP'
                            WHEN s.NbrSem >= 5 THEN 'BTS'
                            WHEN s.NbrSem = 4 THEN 'BTS'
                            WHEN s.NbrSem = 3 THEN 'TS'
@@ -178,7 +157,7 @@ class GradesController extends Controller
                 JOIN section sec ON ss.IDSection = sec.IDSection
                 JOIN offre o ON sec.IDOffre = o.IDOffre
                 JOIN specialite s ON o.IDSpecialite = s.IDSpecialite
-                JOIN etablissement e ON o.IDEts_Form = e.IDEts_Form
+                JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
                 JOIN session sess ON o.IDSession = sess.IDSession
                 WHERE " . implode(" AND ", $whereClauses) . "
                 ORDER BY s.Nom
@@ -201,7 +180,6 @@ class GradesController extends Controller
                        s.Nom as spec_ar, s.CodeSpec as spec_code,
                        s.NbrSem as duree_semestres,
                        CASE
-                           WHEN o.IDMode_formation = 8 THEN 'BEP'
                            WHEN s.NbrSem >= 5 THEN 'BTS'
                            WHEN s.NbrSem = 4 THEN 'BTS'
                            WHEN s.NbrSem = 3 THEN 'TS'
@@ -216,7 +194,7 @@ class GradesController extends Controller
                         WHERE sec2.IDOffre = o.IDOffre AND a.statut = 'actif') as nb_actifs
                 FROM offre o
                 JOIN specialite s ON o.IDSpecialite = s.IDSpecialite
-                JOIN etablissement e ON o.IDEts_Form = e.IDEts_Form
+                JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
                 JOIN session sess ON o.IDSession = sess.IDSession
                 WHERE " . implode(" AND ", $whereClauses) . "
                 ORDER BY s.Nom
@@ -237,22 +215,13 @@ class GradesController extends Controller
             $statsWhere[] = "e.IDDFEP = :wilayaId";
             $statsParams['wilayaId'] = $selectedWilaya;
         }
-        if (in_array($role, ['admin', 'central', 'high_admin', 'secretaire_general', 'ministre', 'dfep'])) {
-            if ($selectedEtab > 0) {
-                $statsWhere[] = "o.IDEts_Form = :etabId";
-                $statsParams['etabId'] = $selectedEtab;
-            }
-        } else {
-            if (!empty($etabScopeIds)) {
-                $statsWhere[] = "o.IDEts_Form IN (" . implode(',', $etabScopeIds) . ")";
-            } else {
-                $statsWhere[] = "o.IDEts_Form = :etabId";
-                $statsParams['etabId'] = $etabId;
-            }
+        if ($selectedEtab > 0) {
+            $statsWhere[] = "o.IDEts_Form = :etabId";
+            $statsParams['etabId'] = $selectedEtab;
         }
         if ($selectedYear > 0) {
-            $statsWhere[] = "sess.IDSession = :sessionId";
-            $statsParams['sessionId'] = $selectedYear;
+            $statsWhere[] = "YEAR(sess.DateD) = :year";
+            $statsParams['year'] = $selectedYear;
         }
 
         $statsFilter = count($statsWhere) > 0 ? implode(" AND ", $statsWhere) : null;
@@ -261,13 +230,6 @@ class GradesController extends Controller
                 $statsFilter .= " AND o.IDMode_formation = 10";
             } else {
                 $statsFilter = "o.IDMode_formation = 10";
-            }
-        }
-        if (request('type') === 'bep') {
-            if ($statsFilter) {
-                $statsFilter .= " AND o.IDMode_formation = 8";
-            } else {
-                $statsFilter = "o.IDMode_formation = 8";
             }
         }
 
@@ -281,7 +243,7 @@ class GradesController extends Controller
                     JOIN offre o ON s.IDOffre = o.IDOffre
                     JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
                     JOIN session sess ON s.IDSession = sess.IDSession
-                    JOIN etablissement e ON s.IDEts_Form = e.IDEts_Form
+                    JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
                     WHERE a.statut = 'actif' AND $statsFilter
                 ", $statsParams);
 
@@ -294,7 +256,7 @@ class GradesController extends Controller
                     JOIN offre o ON s.IDOffre = o.IDOffre
                     JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
                     JOIN session sess ON s.IDSession = sess.IDSession
-                    JOIN etablissement e ON s.IDEts_Form = e.IDEts_Form
+                    JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
                     WHERE $statsFilter
                 ", $statsParams);
 
@@ -307,7 +269,7 @@ class GradesController extends Controller
                     JOIN offre o ON s.IDOffre = o.IDOffre
                     JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
                     JOIN session sess ON s.IDSession = sess.IDSession
-                    JOIN etablissement e ON s.IDEts_Form = e.IDEts_Form
+                    JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
                     WHERE $statsFilter
                 ", $statsParams);
 
@@ -321,7 +283,7 @@ class GradesController extends Controller
                     JOIN offre o ON s.IDOffre = o.IDOffre
                     JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
                     JOIN session sess ON s.IDSession = sess.IDSession
-                    JOIN etablissement e ON s.IDEts_Form = e.IDEts_Form
+                    JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
                     WHERE (ass.MoyApr > 0 OR ass.MoyAvr > 0) AND $statsFilter
                 ", $statsParams);
 
@@ -333,7 +295,7 @@ class GradesController extends Controller
                     JOIN offre o ON s.IDOffre = o.IDOffre
                     JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
                     JOIN session sess ON s.IDSession = sess.IDSession
-                    JOIN etablissement e ON s.IDEts_Form = e.IDEts_Form
+                    JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
                     WHERE (af.MoyFinForm > 0 OR af.MoyGen > 0) AND $statsFilter
                 ", $statsParams);
 
@@ -346,7 +308,7 @@ class GradesController extends Controller
                     JOIN offre o ON s.IDOffre = o.IDOffre
                     JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
                     JOIN session sess ON s.IDSession = sess.IDSession
-                    JOIN etablissement e ON s.IDEts_Form = e.IDEts_Form
+                    JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
                     WHERE (ss.NumPv IS NOT NULL AND ss.NumPv != '' OR ss.visaevaldir = 1 OR ss.visaevaldfep = 1) AND $statsFilter
                 ", $statsParams);
 
@@ -673,20 +635,9 @@ class GradesController extends Controller
 
         // 1. Wilayas
         if (in_array($role, ['admin', 'central', 'high_admin', 'secretaire_general', 'ministre'])) {
-            if (request('type') === 'bep') {
-                $wilayas = array_map(fn($item) => (array)$item, DB::select("
-                    SELECT DISTINCT d.IDDFEP as id, d.Nom as nom 
-                    FROM dfep d
-                    JOIN etablissement e ON e.IDDFEP = d.IDDFEP
-                    JOIN offre o ON o.IDEts_Form = e.IDetablissement
-                    WHERE o.IDMode_formation = 8
-                    ORDER BY d.Nom
-                "));
-            } else {
-                $wilayas = \Illuminate\Support\Facades\Cache::remember('filter_wilayas', 86400, function() {
-                    return array_map(fn($item) => (array)$item, DB::select("SELECT IDDFEP as id, Nom as nom FROM dfep ORDER BY Nom"));
-                });
-            }
+            $wilayas = \Illuminate\Support\Facades\Cache::remember('filter_wilayas', 86400, function() {
+                return array_map(fn($item) => (array)$item, DB::select("SELECT IDDFEP as id, Nom as nom FROM dfep ORDER BY Nom"));
+            });
         } elseif ($role === 'dfep' && $dfepId > 0) {
             $wilayas = array_map(fn($item) => (array)$item, DB::select("SELECT IDDFEP as id, Nom as nom FROM dfep WHERE IDDFEP = ?", [$dfepId]));
         } else {
@@ -708,48 +659,24 @@ class GradesController extends Controller
         $etablissements = [];
         if (in_array($role, ['admin', 'central', 'high_admin', 'secretaire_general', 'ministre'])) {
             if ($selectedWilaya > 0) {
-                if (request('type') === 'bep') {
-                    $etablissements = array_map(fn($item) => (array)$item, DB::select("
-                        SELECT DISTINCT e.IDetablissement as id, e.Nom as nom, e.IDDFEP 
-                        FROM etablissement e
-                        JOIN offre o ON o.IDEts_Form = e.IDetablissement
-                        WHERE e.IDDFEP = ? AND o.IDMode_formation = 8
-                        ORDER BY e.Nom
-                    ", [$selectedWilaya]));
-                } else {
-                    $etablissements = \Illuminate\Support\Facades\Cache::remember("filter_etabs_wilaya_{$selectedWilaya}", 3600, function() use ($selectedWilaya) {
-                        return array_map(fn($item) => (array)$item, DB::select("SELECT IDetablissement as id, Nom as nom, IDDFEP FROM etablissement WHERE IDDFEP = ? ORDER BY Nom", [$selectedWilaya]));
-                    });
-                }
-            }
-        } elseif ($role === 'dfep' && $dfepId > 0) {
-            if (request('type') === 'bep') {
-                $etablissements = array_map(fn($item) => (array)$item, DB::select("
-                    SELECT DISTINCT e.IDetablissement as id, e.Nom as nom, e.IDDFEP 
-                    FROM etablissement e
-                    JOIN offre o ON o.IDEts_Form = e.IDetablissement
-                    WHERE e.IDDFEP = ? AND o.IDMode_formation = 8
-                    ORDER BY e.Nom
-                ", [$dfepId]));
-            } else {
-                $etablissements = \Illuminate\Support\Facades\Cache::remember("filter_etabs_wilaya_{$dfepId}", 3600, function() use ($dfepId) {
-                    return array_map(fn($item) => (array)$item, DB::select("SELECT IDetablissement as id, Nom as nom, IDDFEP FROM etablissement WHERE IDDFEP = ? ORDER BY Nom", [$dfepId]));
+                $etablissements = \Illuminate\Support\Facades\Cache::remember("filter_etabs_wilaya_{$selectedWilaya}", 3600, function() use ($selectedWilaya) {
+                    return array_map(fn($item) => (array)$item, DB::select("SELECT IDetablissement as id, Nom as nom, IDDFEP FROM etablissement WHERE IDDFEP = ? ORDER BY Nom", [$selectedWilaya]));
                 });
             }
+        } elseif ($role === 'dfep' && $dfepId > 0) {
+            $etablissements = \Illuminate\Support\Facades\Cache::remember("filter_etabs_wilaya_{$dfepId}", 3600, function() use ($dfepId) {
+                return array_map(fn($item) => (array)$item, DB::select("SELECT IDetablissement as id, Nom as nom, IDDFEP FROM etablissement WHERE IDDFEP = ? ORDER BY Nom", [$dfepId]));
+            });
         } else {
             if ($etabId > 0) {
                 $etablissements = array_map(fn($item) => (array)$item, DB::select("SELECT IDetablissement as id, Nom as nom, IDDFEP FROM etablissement WHERE IDetablissement = ?", [$etabId]));
             }
         }
 
-        // 3. Sessions (replaced simple years for precise session-month filtering)
-        $years = \Illuminate\Support\Facades\Cache::remember('filter_sessions_list', 86400, function() {
-            return array_map(fn($item) => (array)$item, DB::select("
-                SELECT IDSession as id, Nom as name 
-                FROM session 
-                WHERE DateD IS NOT NULL AND DateD > '2010-01-01'
-                ORDER BY DateD DESC
-            "));
+        // 3. Years
+        $years = \Illuminate\Support\Facades\Cache::remember('filter_years', 86400, function() {
+            $rows = DB::select("SELECT DISTINCT YEAR(DateD) as year FROM session WHERE DateD IS NOT NULL AND DateD > '2010-01-01' ORDER BY year DESC");
+            return array_column(array_map(fn($item) => (array)$item, $rows), 'year');
         });
 
         return [
@@ -778,10 +705,10 @@ class GradesController extends Controller
         $offre = (array) DB::selectOne("
             SELECT o.IDOffre as id, s.Nom as spec_ar, s.NbrSem as duree_semestres,
                    e.Nom as etab_nom, o.IDMode_formation as mode_formation,
-                   e.IDetablissement as etablissement_id, e.IDDFEP as dfep_id
+                   o.IDEts_Form as etablissement_id, e.IDDFEP as dfep_id
             FROM offre o
             JOIN specialite s ON o.IDSpecialite = s.IDSpecialite
-            JOIN etablissement e ON o.IDEts_Form = e.IDEts_Form
+            JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
             WHERE o.IDOffre = ?
         ", [$offreId]);
 
@@ -918,11 +845,11 @@ class GradesController extends Controller
         // Offre metadata
         $offre = (array) DB::selectOne("
             SELECT o.IDOffre as id, o.IDMode_formation as mode_formation,
-                   e.IDetablissement as etablissement_id, e.IDDFEP as dfep_id,
+                   o.IDEts_Form as etablissement_id, e.IDDFEP as dfep_id,
                    s.NbrSem as duree_semestres
             FROM offre o
             JOIN specialite s ON o.IDSpecialite = s.IDSpecialite
-            JOIN etablissement e ON o.IDEts_Form = e.IDEts_Form
+            JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
             WHERE o.IDOffre = ?
         ", [$offreId]);
 
@@ -974,7 +901,7 @@ class GradesController extends Controller
                        ELSE 'CAP'
                    END as diplome_vise,
                    e.Nom as etab_ar, e.NomFr as etab_fr,
-                   e.IDetablissement as etablissement_id, e.IDDFEP as dfep_id,
+                   o.IDEts_Form as etablissement_id, e.IDDFEP as dfep_id,
                    o.IDMode_formation as mode_formation,
                    o.DateD as date_debut, o.DateF as date_fin
             FROM offre o
@@ -1728,11 +1655,11 @@ class GradesController extends Controller
         // Fetch offer details
         $offre = (array) DB::selectOne("
             SELECT o.IDOffre as id, s.Nom as spec_ar, sec.Nom as section_nom,
-                   e.IDetablissement as etablissement_id, e.Nom as etab_nom
+                   o.IDEts_Form as etablissement_id, e.Nom as etab_nom
             FROM offre o
             JOIN specialite s ON o.IDSpecialite = s.IDSpecialite
             JOIN section sec ON o.IDOffre = sec.IDOffre
-            JOIN etablissement e ON o.IDEts_Form = e.IDEts_Form
+            JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
             WHERE o.IDOffre = ?
         ", [$offreId]);
 

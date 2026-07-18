@@ -50,9 +50,9 @@ class CandidatController extends Controller
         $etablissements = [];
         $modes = DB::table('mode_formation')->select('IDMode_formation as id', 'Nom as name')->orderBy('Nom')->get();
 
-        if (\App\Helpers\DepartmentHelper::isApprenticeship($user)) {
+        if ((int)($user['IDMode_formation'] ?? 0) === 10) {
             $modes = $modes->filter(fn($m) => (int)$m->id === 10);
-        } elseif (\App\Helpers\DepartmentHelper::isPresentielOnly($user)) {
+        } elseif (strtolower($user['username'] ?? '') === 'sdtpp') {
             $modes = $modes->filter(fn($m) => (int)$m->id !== 10);
         }
 
@@ -94,9 +94,9 @@ class CandidatController extends Controller
             $offersQuery->where('offre.IDEts_Form', $etabId);
         }
 
-        if (\App\Helpers\DepartmentHelper::isApprenticeship($user)) {
+        if ((int)($user['IDMode_formation'] ?? 0) === 10) {
             $offersQuery->where('offre.IDMode_formation', 10);
-        } elseif (\App\Helpers\DepartmentHelper::isPresentielOnly($user)) {
+        } elseif (strtolower($user['username'] ?? '') === 'sdtpp') {
             $offersQuery->where('offre.IDMode_formation', '!=', 10);
         }
 

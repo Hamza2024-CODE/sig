@@ -11,28 +11,15 @@ class ApprenantController extends Controller
 {
     private const PER_PAGE = 30;
 
-    private function getUserScope(): array
+    public function index(Request $request)
     {
+        @set_time_limit(300);
         $user   = session('user') ?? [];
         $role   = strtolower($user['role_code'] ?? '');
         $etabId = (int)($user['etablissement_id'] ?? $user['IDEts_Form'] ?? 0);
         $dfepId = (int)($user['iddfep'] ?? $user['IDDFEP'] ?? 0);
+
         $etabScopeIds = $etabId > 0 ? \App\Support\EtablissementScope::resolve($etabId) : [];
-
-        return compact('user', 'role', 'etabId', 'dfepId', 'etabScopeIds');
-    }
-
-    public function index(Request $request)
-    {
-        if (function_exists('set_time_limit')) {
-            @set_time_limit(300);
-        }
-        $scope = $this->getUserScope();
-        $user = $scope['user'];
-        $role = $scope['role'];
-        $etabId = $scope['etabId'];
-        $dfepId = $scope['dfepId'];
-        $etabScopeIds = $scope['etabScopeIds'];
 
         // ── build filters ────────────────────────────────────────────
         $where  = [];
@@ -46,15 +33,15 @@ class ApprenantController extends Controller
             $params[] = $dfepId;
         } elseif (!empty($etabScopeIds)) {
             $placeholders = implode(',', array_fill(0, count($etabScopeIds), '?'));
-            $where[]  = "et.IDetablissement IN ($placeholders)";
+            $where[]  = "s.IDEts_Form IN ($placeholders)";
             $params   = array_merge($params, $etabScopeIds);
         } else {
             $where[] = '1=0';
         }
 
-        if (\App\Helpers\DepartmentHelper::isApprenticeship($user)) {
+        if ((int)($user['IDMode_formation'] ?? 0) === 10) {
             $where[] = 'o.IDMode_formation = 10';
-        } elseif (\App\Helpers\DepartmentHelper::isPresentielOnly($user)) {
+        } elseif (strtolower($user['username'] ?? '') === 'sdtpp') {
             $where[] = 'o.IDMode_formation != 10';
         }
 
@@ -96,14 +83,12 @@ class ApprenantController extends Controller
         }
 
         // Active/Latest Session Restriction (only show trainees from the current/latest new session)
-        $activeSession = Cache::remember('active_session', 600, function() {
-            return DB::table('session')
-                ->join('semestre_formation', 'session.IDSemestre_formation', '=', 'semestre_formation.IDSemestre_formation')
-                ->orderBy('semestre_formation.IDAnnee_Formation', 'desc')
-                ->orderBy('session.DateD', 'desc')
-                ->select('session.IDSession')
-                ->first();
-        });
+        $activeSession = DB::table('session')
+            ->join('semestre_formation', 'session.IDSemestre_formation', '=', 'semestre_formation.IDSemestre_formation')
+            ->orderBy('semestre_formation.IDAnnee_Formation', 'desc')
+            ->orderBy('session.DateD', 'desc')
+            ->select('session.IDSession')
+            ->first();
         if ($activeSession) {
             $where[]  = 'o.IDSession = ?';
             $params[] = $activeSession->IDSession;
@@ -112,8 +97,7 @@ class ApprenantController extends Controller
         $whereSQL = !empty($where) ? 'WHERE ' . implode(' AND ', $where) : '';
 
         // ── Get Total Count (cached 2 mins for performance) ───────────
-        $userId = $user['id'] ?? $user['IDetablissement'] ?? $user['username'] ?? 'guest';
-        $cacheKey = 'students_count_' . md5($userId . '_' . $whereSQL . implode(',', $params));
+        $cacheKey = 'students_count_' . md5($whereSQL . implode(',', $params));
         $totalCount = Cache::remember($cacheKey, 120, function () use ($whereSQL, $params) {
             try {
                 $joins = "";
@@ -127,7 +111,7 @@ class ApprenantController extends Controller
                     $joins .= " LEFT JOIN offre o ON s.IDOffre = o.IDOffre";
                 }
                 if (strpos($whereSQL, 'et.') !== false) {
-                    $joins .= " LEFT JOIN etablissement et ON o.IDEts_Form = et.IDEts_Form";
+                    $joins .= " LEFT JOIN etablissement et ON o.IDEts_Form = et.IDetablissement";
                 }
                 if (strpos($whereSQL, 'sess.') !== false) {
                     $joins .= " LEFT JOIN session sess ON o.IDSession = sess.IDSession";
@@ -177,9 +161,9 @@ class ApprenantController extends Controller
                  FROM apprenant a
                  INNER JOIN candidat c ON a.IDCandidat = c.IDCandidat
                  LEFT JOIN section s   ON a.IDSection = s.IDSection
-                 LEFT JOIN offre o     ON s.IDOffre = o.IDOffre
+                 LEFT JOIN offre o     ON c.IDOffre = o.IDOffre
                  LEFT JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
-                 LEFT JOIN etablissement et ON o.IDEts_Form = et.IDEts_Form
+                 LEFT JOIN etablissement et ON o.IDEts_Form = et.IDetablissement
                  LEFT JOIN session sess ON o.IDSession = sess.IDSession
                  {$whereSQL}
                  ORDER BY a.IDapprenant DESC
@@ -216,7 +200,7 @@ class ApprenantController extends Controller
                 $q->select('IDetablissement')->from('etablissement')->where('IDDFEP', $dfepId);
             });
         } elseif (!empty($etabScopeIds)) {
-            $sectionsQuery->whereIn('offre.IDEts_Form', $etabScopeIds);
+            $sectionsQuery->whereIn('section.IDEts_Form', $etabScopeIds);
         } elseif ($filterEtab > 0) {
             $sectionsQuery->where('offre.IDEts_Form', $filterEtab);
         } else {
@@ -251,9 +235,7 @@ class ApprenantController extends Controller
             });
         } elseif ($etabId > 0) {
             $candQuery->whereIn('candidat.IDOffre', function($q) use ($etabScopeIds) {
-                $q->select('IDOffre')->from('offre')
-                  ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDEts_Form')
-                  ->whereIn('etablissement.IDetablissement', $etabScopeIds);
+                $q->select('IDOffre')->from('offre')->whereIn('IDEts_Form', $etabScopeIds);
             });
         }
 
@@ -289,33 +271,6 @@ class ApprenantController extends Controller
     public function show($id)
     {
         try {
-            $scope = $this->getUserScope();
-            $etabId = $scope['etabId'];
-            $etabScopeIds = $scope['etabScopeIds'];
-
-            $role = $scope['role'];
-            $dfepId = $scope['dfepId'];
-
-            if ($etabId > 0) {
-                $allowed = DB::table('apprenant')
-                    ->join('section', 'apprenant.IDSection', '=', 'section.IDSection')
-                    ->join('offre', 'section.IDOffre', '=', 'offre.IDOffre')
-                    ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDEts_Form')
-                    ->where('apprenant.IDapprenant', $id)
-                    ->whereIn('etablissement.IDetablissement', $etabScopeIds)
-                    ->exists();
-                abort_unless($allowed, 403, 'غير مصرح لك باستعراض بيانات هذا الطالب.');
-            } elseif ($role === 'dfep' && $dfepId > 0) {
-                $allowed = DB::table('apprenant')
-                    ->join('section', 'apprenant.IDSection', '=', 'section.IDSection')
-                    ->join('offre', 'section.IDOffre', '=', 'offre.IDOffre')
-                    ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDetablissement')
-                    ->where('apprenant.IDapprenant', $id)
-                    ->where('etablissement.IDDFEP', $dfepId)
-                    ->exists();
-                abort_unless($allowed, 403, 'غير مصرح لك باستعراض بيانات هذا الطالب في ولايتك.');
-            }
-
             $memosEnabled = \App\Helpers\SovereignLicensingHelper::getSetting('feature_large_memos_query_enabled', '1') === '1';
 
             $selectCols = [
@@ -366,7 +321,7 @@ class ApprenantController extends Controller
                 ->leftJoin('candidat_document', 'candidat.IDCandidat', '=', 'candidat_document.IDCandidat')
                 ->leftJoin('candidat_contratapp', 'candidat.IDCandidat', '=', 'candidat_contratapp.IDCandidat')
                 ->leftJoin('section', 'apprenant.IDSection', '=', 'section.IDSection')
-                ->leftJoin('offre', 'section.IDOffre', '=', 'offre.IDOffre')
+                ->leftJoin('offre', 'candidat.IDOffre', '=', 'offre.IDOffre')
                 ->leftJoin('specialite', 'offre.IDSpecialite', '=', 'specialite.IDSpecialite')
                 ->where('apprenant.IDapprenant', $id)
                 ->select(array_merge($selectCols, ['specialite.Nom as spec_ar']))
@@ -384,11 +339,8 @@ class ApprenantController extends Controller
 
     public function store(Request $request)
     {
-        $scope = $this->getUserScope();
-        $etabId = $scope['etabId'];
-        $etabScopeIds = $scope['etabScopeIds'];
-        $role = $scope['role'];
-        $dfepId = $scope['dfepId'];
+        $user = session('user');
+        if (!$user) return redirect('/login');
 
         $validated = $request->validate([
             'candidat_id' => 'required|integer',
@@ -398,40 +350,6 @@ class ApprenantController extends Controller
             'valide' => 'required|integer',
             'groupe' => 'required|integer',
         ]);
-        
-        if ($etabId > 0) {
-            $candidateAllowed = DB::table('candidat')
-                ->join('offre', 'candidat.IDOffre', '=', 'offre.IDOffre')
-                ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDEts_Form')
-                ->where('candidat.IDCandidat', $validated['candidat_id'])
-                ->whereIn('etablissement.IDetablissement', $etabScopeIds)
-                ->exists();
-            abort_unless($candidateAllowed, 403, 'غير مصرح لك بإضافة هذا المترشح.');
-
-            $sectionAllowed = DB::table('section')
-                ->join('offre', 'section.IDOffre', '=', 'offre.IDOffre')
-                ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDEts_Form')
-                ->where('section.IDSection', $validated['section_id'])
-                ->whereIn('etablissement.IDetablissement', $etabScopeIds)
-                ->exists();
-            abort_unless($sectionAllowed, 403, 'غير مصرح لك بالإضافة لهذا القسم.');
-        } elseif ($role === 'dfep' && $dfepId > 0) {
-            $candidateAllowed = DB::table('candidat')
-                ->join('offre', 'candidat.IDOffre', '=', 'offre.IDOffre')
-                ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDEts_Form')
-                ->where('candidat.IDCandidat', $validated['candidat_id'])
-                ->where('etablissement.IDDFEP', $dfepId)
-                ->exists();
-            abort_unless($candidateAllowed, 403, 'غير مصرح لك بإضافة هذا المترشح في ولايتك.');
-
-            $sectionAllowed = DB::table('section')
-                ->join('offre', 'section.IDOffre', '=', 'offre.IDOffre')
-                ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDEts_Form')
-                ->where('section.IDSection', $validated['section_id'])
-                ->where('etablissement.IDDFEP', $dfepId)
-                ->exists();
-            abort_unless($sectionAllowed, 403, 'غير مصرح لك بالإجراء في هذا القسم.');
-        }
 
         $candidate = DB::table('candidat')->where('IDCandidat', $validated['candidat_id'])->first();
         if (!$candidate) {
@@ -439,16 +357,10 @@ class ApprenantController extends Controller
             return redirect()->back();
         }
 
-        $section = DB::table('section')->where('IDSection', $validated['section_id'])->first();
-        if (!$section) {
-            session(['flash_error' => 'القسم غير موجود.']);
-            return redirect()->back();
-        }
-
         $wilayaId = (int) DB::table('offre')
-            ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDEts_Form')
+            ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDetablissement')
             ->join('dfep', 'etablissement.IDDFEP', '=', 'dfep.IDDFEP')
-            ->where('offre.IDOffre', $section->IDOffre)
+            ->where('offre.IDOffre', $candidate->IDOffre)
             ->value('dfep.IDWilayaa');
 
         if (!\App\Helpers\SovereignLicensingHelper::checkEnrollmentPermission('add', $wilayaId)) {
@@ -480,13 +392,11 @@ class ApprenantController extends Controller
 
         return redirect()->back();
     }
+
     public function update(Request $request)
     {
-        $scope = $this->getUserScope();
-        $etabId = $scope['etabId'];
-        $etabScopeIds = $scope['etabScopeIds'];
-        $role = $scope['role'];
-        $dfepId = $scope['dfepId'];
+        $user = session('user');
+        if (!$user) return redirect('/login');
 
         $validated = $request->validate([
             'id' => 'required|integer',
@@ -504,50 +414,14 @@ class ApprenantController extends Controller
             return redirect()->back();
         }
 
-        if ($etabId > 0) {
-            $currentAllowed = DB::table('apprenant')
-                ->join('section', 'apprenant.IDSection', '=', 'section.IDSection')
-                ->join('offre', 'section.IDOffre', '=', 'offre.IDOffre')
-                ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDEts_Form')
-                ->where('apprenant.IDapprenant', $validated['id'])
-                ->whereIn('etablissement.IDetablissement', $etabScopeIds)
-                ->exists();
-            abort_unless($currentAllowed, 403, 'غير مصرح لك بتعديل هذا الطالب.');
-
-            $sectionAllowed = DB::table('section')
-                ->join('offre', 'section.IDOffre', '=', 'offre.IDOffre')
-                ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDEts_Form')
-                ->where('section.IDSection', $validated['section_id'])
-                ->whereIn('etablissement.IDetablissement', $etabScopeIds)
-                ->exists();
-            abort_unless($sectionAllowed, 403, 'غير مصرح لك بنقل الطالب لهذا القسم.');
-        } elseif ($role === 'dfep' && $dfepId > 0) {
-            $currentAllowed = DB::table('apprenant')
-                ->join('section', 'apprenant.IDSection', '=', 'section.IDSection')
-                ->join('offre', 'section.IDOffre', '=', 'offre.IDOffre')
-                ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDEts_Form')
-                ->where('apprenant.IDapprenant', $validated['id'])
-                ->where('etablissement.IDDFEP', $dfepId)
-                ->exists();
-            abort_unless($currentAllowed, 403, 'غير مصرح لك بتعديل هذا الطالب خارج ولايتك.');
-
-            $sectionAllowed = DB::table('section')
-                ->join('offre', 'section.IDOffre', '=', 'offre.IDOffre')
-                ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDEts_Form')
-                ->where('section.IDSection', $validated['section_id'])
-                ->where('etablissement.IDDFEP', $dfepId)
-                ->exists();
-            abort_unless($sectionAllowed, 403, 'غير مصرح لك بنقل الطالب لهذا القسم.');
-        }
-
-        $section = DB::table('section')->where('IDSection', $validated['section_id'])->first();
+        $candidate = DB::table('candidat')->where('IDCandidat', $student->IDCandidat)->first();
         $wilayaId = 0;
-        if ($section && !empty($section->IDOffre)) {
+        if ($candidate && !empty($candidate->IDOffre)) {
             try {
                 $wilayaId = (int) DB::table('offre')
-                    ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDEts_Form')
+                    ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDetablissement')
                     ->join('dfep', 'etablissement.IDDFEP', '=', 'dfep.IDDFEP')
-                    ->where('offre.IDOffre', $section->IDOffre)
+                    ->where('offre.IDOffre', $candidate->IDOffre)
                     ->value('dfep.IDWilayaa');
             } catch (\Exception $e) {
                 $wilayaId = 0;
@@ -590,41 +464,19 @@ class ApprenantController extends Controller
 
     public function destroy($id)
     {
-        $scope = $this->getUserScope();
-        $etabId = $scope['etabId'];
-        $etabScopeIds = $scope['etabScopeIds'];
-        $role = $scope['role'];
-        $dfepId = $scope['dfepId'];
+        $user = session('user');
+        if (!$user) return redirect('/login');
 
         $student = DB::table('apprenant')->where('IDapprenant', $id)->first();
         if ($student) {
-            if ($etabId > 0) {
-                $allowed = DB::table('apprenant')
-                    ->join('section', 'apprenant.IDSection', '=', 'section.IDSection')
-                    ->join('offre', 'section.IDOffre', '=', 'offre.IDOffre')
-                    ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDEts_Form')
-                    ->where('apprenant.IDapprenant', $id)
-                    ->whereIn('etablissement.IDetablissement', $etabScopeIds)
-                    ->exists();
-                abort_unless($allowed, 403, 'غير مصرح لك بحذف طالب من هذا القسم.');
-            } elseif ($role === 'dfep' && $dfepId > 0) {
-                $allowed = DB::table('apprenant')
-                    ->join('section', 'apprenant.IDSection', '=', 'section.IDSection')
-                    ->join('offre', 'section.IDOffre', '=', 'offre.IDOffre')
-                    ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDEts_Form')
-                    ->where('apprenant.IDapprenant', $id)
-                    ->where('etablissement.IDDFEP', $dfepId)
-                    ->exists();
-                abort_unless($allowed, 403, 'غير مصرح لك بحذف هذا الطالب.');
-            }
-            $section = DB::table('section')->where('IDSection', $student->IDSection)->first();
+            $candidate = DB::table('candidat')->where('IDCandidat', $student->IDCandidat)->first();
             $wilayaId = 0;
-            if ($section && !empty($section->IDOffre)) {
+            if ($candidate && !empty($candidate->IDOffre)) {
                 try {
                     $wilayaId = (int) DB::table('offre')
-                        ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDEts_Form')
+                        ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDetablissement')
                         ->join('dfep', 'etablissement.IDDFEP', '=', 'dfep.IDDFEP')
-                        ->where('offre.IDOffre', $section->IDOffre)
+                        ->where('offre.IDOffre', $candidate->IDOffre)
                         ->value('dfep.IDWilayaa');
                 } catch (\Exception $e) {
                     $wilayaId = 0;

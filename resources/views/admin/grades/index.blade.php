@@ -143,16 +143,16 @@ for ($i = 1; $i <= 6; $i++) {
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label fw-bold small text-muted"><i class="fa-solid fa-calendar-days me-1"></i>الدورة التكوينية</label>
+                    <label class="form-label fw-bold small text-muted"><i class="fa-solid fa-calendar-days me-1"></i>سنة الدورة</label>
                     <select name="filter_year" class="form-select border-0 shadow-sm bg-light rounded-3" onchange="this.form.submit()">
-                        <option value="">-- كل الدورات --</option>
-                        <?php foreach($years as $sess): ?>
-                        <option value="<?= $sess['id'] ?>" <?= $selected_year == $sess['id'] ? 'selected' : '' ?>><?= htmlspecialchars($sess['name']) ?></option>
+                        <option value="">-- كل السنوات --</option>
+                        <?php foreach($years as $y): ?>
+                        <option value="<?= $y ?>" <?= $selected_year == $y ? 'selected' : '' ?>><?= $y ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
                 <div class="col-md-1 text-end">
-                    <a href="?<?= request('type') === 'bep' ? 'type=bep' : '' ?>" class="btn btn-light w-100 fw-bold border rounded-3" title="إعادة تعيين"><i class="fa-solid fa-arrows-rotate"></i></a>
+                    <a href="?" class="btn btn-light w-100 fw-bold border rounded-3" title="إعادة تعيين"><i class="fa-solid fa-arrows-rotate"></i></a>
                 </div>
             </form>
         </div>
@@ -170,27 +170,18 @@ for ($i = 1; $i <= 6; $i++) {
                     </div>
                 </div>
                 <div class="col-md-4 d-flex gap-2 flex-wrap">
-                    <?php if (request('type') === 'bep'): ?>
-                        <button class="btn btn-sm fw-bold filter-mode active rounded-pill px-3" data-mode="all" onclick="setMode('all',this)"><i class="fa-solid fa-book-bookmark me-1"></i>التعليم المهني</button>
-                    <?php else: ?>
-                        <button class="btn btn-sm fw-bold filter-mode active rounded-pill px-3" data-mode="all" onclick="setMode('all',this)"><i class="fa-solid fa-layer-group me-1"></i>الكل</button>
-                        <button class="btn btn-sm fw-bold filter-mode rounded-pill px-3" data-mode="resident" onclick="setMode('resident',this)"><i class="fa-solid fa-school me-1"></i>حضوري</button>
-                        <button class="btn btn-sm fw-bold filter-mode rounded-pill px-3" data-mode="apprenti" onclick="setMode('apprenti',this)"><i class="fa-solid fa-building me-1"></i>تمهين</button>
-                    <?php endif; ?>
+                    <button class="btn btn-sm fw-bold filter-mode active rounded-pill px-3" data-mode="all" onclick="setMode('all',this)"><i class="fa-solid fa-layer-group me-1"></i>الكل</button>
+                    <button class="btn btn-sm fw-bold filter-mode rounded-pill px-3" data-mode="resident" onclick="setMode('resident',this)"><i class="fa-solid fa-school me-1"></i>حضوري</button>
+                    <button class="btn btn-sm fw-bold filter-mode rounded-pill px-3" data-mode="apprenti" onclick="setMode('apprenti',this)"><i class="fa-solid fa-building me-1"></i>تمهين</button>
                 </div>
                 <div class="col-md-3">
                     <select id="filterDiplome" class="form-select border-0 bg-light rounded-3 fw-semibold" onchange="filterCards()">
-                        <?php if (request('type') === 'bep'): ?>
-                            <option value="">-- كل الشهادات --</option>
-                            <option value="BEP">BEP — شهادة التعليم المهني</option>
-                        <?php else: ?>
-                            <option value="">-- كل الشهادات --</option>
-                            <option value="BTS">BTS — تقني سامي</option>
-                            <option value="TS">TS — تقني</option>
-                            <option value="CMP">CMP — تحكم مهني</option>
-                            <option value="CAP">CAP — كفاءة مهنية</option>
-                            <option value="Qualifiant">تأهيلية</option>
-                        <?php endif; ?>
+                        <option value="">-- كل الشهادات --</option>
+                        <option value="BTS">BTS — تقني سامي</option>
+                        <option value="TS">TS — تقني</option>
+                        <option value="CMP">CMP — تحكم مهني</option>
+                        <option value="CAP">CAP — كفاءة مهنية</option>
+                        <option value="Qualifiant">تأهيلية</option>
                     </select>
                 </div>
             </div>
@@ -265,7 +256,7 @@ for ($i = 1; $i <= 6; $i++) {
                             <label class="form-label small fw-bold text-muted mb-1">اختر السداسي:</label>
                             <div class="d-flex flex-wrap gap-1" id="semBtns_<?= $o['id'] ?>">
                                 <?php
-                                $semLabels = ['S1','S2','S3','S4','S5','S6'];
+                                $semLabels = ['S1','S2','S3','S4','S5'];
                                 for ($i = 1; $i <= $maxSem; $i++):
                                     $active = ($i === 1) ? 'active' : '';
                                     $isAccessible = ($i === 1 || in_array($i - 1, $validatedSemesters[$o['id']] ?? []));

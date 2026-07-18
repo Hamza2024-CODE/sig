@@ -53,12 +53,12 @@ class CandidatService
         }
 
         if (!empty($filters['wilaya_id'])) {
-            $extraWhere .= " AND o.IDEts_Form IN (SELECT IDEts_Form FROM etablissement WHERE IDDFEP IN (SELECT IDDFEP FROM dfep WHERE IDWilayaa = ?))";
+            $extraWhere .= " AND o.IDEts_Form IN (SELECT IDetablissement FROM etablissement WHERE IDDFEP IN (SELECT IDDFEP FROM dfep WHERE IDWilayaa = ?))";
             $params[] = (int)$filters['wilaya_id'];
         }
 
         if (!empty($filters['etablissement_id'])) {
-            $extraWhere .= " AND o.IDEts_Form IN (SELECT IDEts_Form FROM etablissement WHERE IDetablissement = ?)";
+            $extraWhere .= " AND o.IDEts_Form = ?";
             $params[] = (int)$filters['etablissement_id'];
         }
 
@@ -170,18 +170,16 @@ class CandidatService
         $params     = [];
 
         if ($roleCode === 'dfep' && $dfepId) {
-            $extraWhere = " AND o.IDEts_Form IN (SELECT IDEts_Form FROM etablissement WHERE IDDFEP = ?)";
+            $extraWhere = " AND o.IDEts_Form IN (SELECT IDetablissement FROM etablissement WHERE IDDFEP = ?)";
             $params[]   = $dfepId;
         } elseif (in_array($roleCode, ['etablissement', 'directeur', 'formateur']) && $etabId) {
-            $etabScopeIds = \App\Support\EtablissementScope::resolve($etabId);
-            $placeholders = implode(',', array_fill(0, count($etabScopeIds), '?'));
-            $extraWhere = " AND o.IDEts_Form IN (SELECT IDEts_Form FROM etablissement WHERE IDetablissement IN ($placeholders))";
-            $params = array_merge($params, $etabScopeIds);
+            $extraWhere = " AND o.IDEts_Form = ?";
+            $params[]   = $etabId;
         }
 
-        if (\App\Helpers\DepartmentHelper::isApprenticeship($user)) {
+        if ((int)($user['IDMode_formation'] ?? 0) === 10) {
             $extraWhere .= " AND o.IDMode_formation = 10";
-        } elseif (\App\Helpers\DepartmentHelper::isPresentielOnly($user)) {
+        } elseif (strtolower($user['username'] ?? '') === 'sdtpp') {
             $extraWhere .= " AND o.IDMode_formation != 10";
         }
 

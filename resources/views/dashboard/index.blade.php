@@ -7,7 +7,18 @@ $role = strtolower($user['role_code'] ?? '');
 $username = strtolower($user['username'] ?? '');
 $isAppren = (int)($user['IDMode_formation'] ?? 0) === 10;
 
-$dept = \App\Helpers\DepartmentHelper::getDepartmentType($user);
+$dept = 'general';
+if ($isAppren || in_array($username, ['sdtpa', 'sdtpas'])) {
+    $dept = 'apprentissage';
+} elseif (in_array($username, ['biao', 'biaos'])) {
+    $dept = 'orientation';
+} elseif (in_array($username, ['dplm', 'dplms'])) {
+    $dept = 'diplomes';
+} elseif (in_array($username, ['sdtpp', 'sdtpps', 'sdtpc', 'sdtpcs'])) {
+    $dept = 'pedagogie';
+} elseif (in_array($username, ['admfine', 'admfines', 'samf', 'samfs', 'sdafm', 'sdsafms', 'sdarh', 'sdarhs'])) {
+    $dept = 'administration';
+}
 ?>
 
 <style>

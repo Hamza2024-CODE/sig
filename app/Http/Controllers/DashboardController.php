@@ -476,9 +476,9 @@ class DashboardController extends Controller
 
             $data['filter_filieres']  = ReferenceCache::branches();
             $data['filter_specialites'] = ReferenceCache::specialites();
-            $data['filter_modes']     = \App\Helpers\DepartmentHelper::isApprenticeship($user)
+            $data['filter_modes']     = (int)($user['IDMode_formation'] ?? 0) === 10
                 ? array_filter(ReferenceCache::modesFormation(), fn($m) => (int)($m['id'] ?? 0) === 10)
-                : (\App\Helpers\DepartmentHelper::isPresentielOnly($user)
+                : (strtolower($user['username'] ?? '') === 'sdtpp'
                     ? array_filter(ReferenceCache::modesFormation(), fn($m) => (int)($m['id'] ?? 0) !== 10)
                     : ReferenceCache::modesFormation());
             $data['filter_annees']    = ReferenceCache::anneesFormation();
@@ -578,10 +578,9 @@ class DashboardController extends Controller
                         ->join('section as s', 's.IDSession', '=', 'sess.IDSession')
                         ->join('apprenant as a', 'a.IDSection', '=', 's.IDSection')
                         ->join('offre as o', 's.IDOffre', '=', 'o.IDOffre')
-                        ->join('etablissement as e', 'o.IDEts_Form', '=', 'e.IDEts_Form')
                         ->join('specialite as sp', 'o.IDSpecialite', '=', 'sp.IDSpecialite')
                         ->leftJoin('apprenant_fin as af', 'a.IDapprenant', '=', 'af.IDapprenant')
-                        ->whereIn('e.IDetablissement', $etabScopeIds)
+                        ->whereIn('s.IDEts_Form', $etabScopeIds)
                         ->whereNull('af.IDapprenant')
                         ->whereRaw("DATE_ADD(sess.DateD, INTERVAL COALESCE(NULLIF(sp.dureeM, 0), sp.NbrSem * 6, 24) MONTH) >= CURRENT_DATE()")
                         ->select('sess.IDSession', 'sess.Nom', DB::raw('count(a.IDapprenant) as count'))
@@ -796,9 +795,9 @@ class DashboardController extends Controller
                 });
             }
 
-            $excludeMode10 = \App\Helpers\DepartmentHelper::isPresentielOnly($user);
-            $isApprentice = \App\Helpers\DepartmentHelper::isApprenticeship($user);
-            $cacheSuffix = ($isApprentice ? ':mode10' : '') . ($excludeMode10 ? ':exclude_mode10' : '');
+            $username = strtolower($user['username'] ?? '');
+            $excludeMode10 = ($username === 'sdtpp');
+            $cacheSuffix = ((int)($user['IDMode_formation'] ?? 0) === 10 ? ':mode10' : '') . ($excludeMode10 ? ':exclude_mode10' : '');
             
             // Dynamic Top Specialties with global filters
             $cacheKeySpecs = 'sgfep:kpi:top_specs_static' . $cacheSuffix . ':' . (int)$selWilaya . ':' . (int)$selEtab . ':' . (int)$selMode;
@@ -1208,9 +1207,9 @@ class DashboardController extends Controller
                 $stagCond = ['o.IDEts_Form = ?', "a.statut = 'actif'"];
                 $stagParams = [$etabId];
 
-                if (\App\Helpers\DepartmentHelper::isApprenticeship($user)) {
+                if ((int)($user['IDMode_formation'] ?? 0) === 10) {
                     $stagCond[] = 'o.IDMode_formation = 10';
-                } elseif (\App\Helpers\DepartmentHelper::isPresentielOnly($user)) {
+                } elseif (strtolower($user['username'] ?? '') === 'sdtpp') {
                     $stagCond[] = 'o.IDMode_formation != 10';
                 }
 
@@ -1485,9 +1484,9 @@ class DashboardController extends Controller
 
         // Restrict to Apprenticeship mode if the user belongs to mode 10, or exclude it if sdtpp
         $userSession = session('user') ?? [];
-        if (\App\Helpers\DepartmentHelper::isApprenticeship($userSession)) {
+        if ((int)($userSession['IDMode_formation'] ?? 0) === 10) {
             $cond[] = 'o.IDMode_formation = 10';
-        } elseif (\App\Helpers\DepartmentHelper::isPresentielOnly($userSession)) {
+        } elseif (strtolower($userSession['username'] ?? '') === 'sdtpp') {
             $cond[] = 'o.IDMode_formation != 10';
         }
 

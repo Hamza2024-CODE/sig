@@ -264,11 +264,7 @@ unset($_SESSION['success'], $_SESSION['error']);
                                 <?php else: ?>
                                     <th>المراقبة 1<br><small class="text-muted">/20</small></th>
                                     <th>المراقبة 2<br><small class="text-muted">/20</small></th>
-                                    <?php if ((int)($offre['mode_formation'] ?? 0) === 8): ?>
-                                        <th>الامتحان الشامل<br><small class="text-muted">/40</small></th>
-                                    <?php else: ?>
-                                        <th>الامتحان الشامل<br><small class="text-muted">/20</small></th>
-                                    <?php endif; ?>
+                                    <th>الامتحان الشامل<br><small class="text-muted">/20</small></th>
                                 <?php endif; ?>
                                 <th>استدراكي<br><small class="text-muted">/20</small></th>
                             <?php elseif ($matiere['type_matiere'] === 'stage_pratique'): ?>
@@ -320,14 +316,14 @@ unset($_SESSION['success'], $_SESSION['error']);
                                     <input type="number" name="grades[<?= $sid ?>][exam]"
                                            value="<?= $st['note_examen'] !== null ? $st['note_examen'] : 0 ?>"
                                            class="form-control form-control-sm grade-input text-center fw-bold"
-                                           min="0" max="<?= (int)($offre['mode_formation'] ?? 0) === 8 ? 40 : 20 ?>" step="0.25" placeholder="0"
+                                           min="0" max="20" step="0.25" placeholder="0"
                                            data-student="<?= $sid ?>" data-type="exam" <?= ($is_locked ?? false) ? 'disabled' : '' ?>>
                                 </td>
                                 <td>
                                     <input type="number" name="grades[<?= $sid ?>][rattrapage]"
                                            value="<?= $st['note_rattrapage'] !== null ? $st['note_rattrapage'] : 0 ?>"
                                            class="form-control form-control-sm grade-input text-center"
-                                           min="0" max="<?= (int)($offre['mode_formation'] ?? 0) === 8 ? 40 : 20 ?>" step="0.25" placeholder="0"
+                                           min="0" max="20" step="0.25" placeholder="0"
                                            style="border-color:#f59e0b;"
                                            data-student="<?= $sid ?>" data-type="rattrapage" <?= ($is_locked ?? false) ? 'disabled' : '' ?>>
                                 </td>
@@ -412,15 +408,6 @@ unset($_SESSION['success'], $_SESSION['error']);
 // =============================================================
 document.querySelectorAll('.grade-input').forEach(input => {
     input.addEventListener('input', function() {
-        let val = parseFloat(this.value);
-        const maxVal = parseFloat(this.getAttribute('max')) || 20;
-        if (!isNaN(val)) {
-            if (val < 0) {
-                this.value = 0;
-            } else if (val > maxVal) {
-                this.value = maxVal;
-            }
-        }
         const sid = this.dataset.student;
         calcAvg(sid);
     });
@@ -435,15 +422,8 @@ function calcAvg(sid) {
     if (type === 'theorique') {
         const cc1  = parseFloat(document.querySelector(`input[data-student="${sid}"][data-type="cc1"]`)?.value) || 0;
         const cc2  = parseFloat(document.querySelector(`input[data-student="${sid}"][data-type="cc2"]`)?.value) || 0;
-        let exam = parseFloat(document.querySelector(`input[data-student="${sid}"][data-type="exam"]`)?.value) || 0;
-        let ratt = parseFloat(document.querySelector(`input[data-student="${sid}"][data-type="rattrapage"]`)?.value) || 0;
-        
-        const isBep = <?= (int)($offre['mode_formation'] ?? 0) === 8 ? 'true' : 'false' ?>;
-        if (isBep) {
-            exam = exam / 2.0;
-            ratt = ratt / 2.0;
-        }
-        
+        const exam = parseFloat(document.querySelector(`input[data-student="${sid}"][data-type="exam"]`)?.value) || 0;
+        const ratt = parseFloat(document.querySelector(`input[data-student="${sid}"][data-type="rattrapage"]`)?.value) || 0;
         const ccAvg   = (cc1 + cc2) / 2;
         const bestExp = Math.max(exam, ratt);
         avg = Math.round((ccAvg * 0.40 + bestExp * 0.60) * 100) / 100;

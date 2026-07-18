@@ -86,26 +86,17 @@ class GradingSystemService
 
         $examVal = $exam !== null ? $exam : 0.0;
 
-        // If it is BEP, ECF/comprehensive exam and its remedial are out of 40, so scale them to out of 20
-        if ($modeFormation === 8) {
-            $examValScaled = $examVal / 2.0;
-            $rattValScaled = $ratt !== null ? $ratt / 2.0 : null;
-        } else {
-            $examValScaled = $examVal;
-            $rattValScaled = $ratt;
-        }
-
         // Calculate average before remedial
-        $moyAvr = (($ccAvg * $ccWeight) + ($examValScaled * $examWeight)) / $divisor;
+        $moyAvr = (($ccAvg * $ccWeight) + ($examVal * $examWeight)) / $divisor;
         $moyAvr = round($moyAvr * 100) / 100;
 
         // Calculate average after remedial
-        $bestExamScaled = $examValScaled;
-        if ($rattValScaled !== null) {
-            $bestExamScaled = max($examValScaled, $rattValScaled);
+        $bestExam = $examVal;
+        if ($ratt !== null) {
+            $bestExam = max($examVal, $ratt);
         }
 
-        $moyApr = (($ccAvg * $ccWeight) + ($bestExamScaled * $examWeight)) / $divisor;
+        $moyApr = (($ccAvg * $ccWeight) + ($bestExam * $examWeight)) / $divisor;
         $moyApr = round($moyApr * 100) / 100;
 
         // If average is above passing threshold, it's not eliminated even if exam was low,

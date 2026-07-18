@@ -67,7 +67,7 @@ class OffresService
                 $whereConditions[] = "1=0";
             } else {
                 $placeholders = implode(',', array_fill(0, count($etabIds), '?'));
-                $whereConditions[] = "e.IDetablissement IN ($placeholders)";
+                $whereConditions[] = "o.IDEts_Form IN ($placeholders)";
                 $scopeParams = array_merge($scopeParams, $etabIds);
             }
         } elseif ($roleCode === 'dfep' && $dfepId > 0) {
@@ -86,7 +86,7 @@ class OffresService
                 $etabIds = \App\Support\EtablissementScope::resolve($etabId);
                 abort_if(!in_array($reqFilter, $etabIds), 403, 'غير مصرح لك بالوصول لهذه المؤسسة.');
             }
-            $whereConditions[] = "e.IDetablissement = ?";
+            $whereConditions[] = "o.IDEts_Form = ?";
             $scopeParams[] = $reqFilter;
         } elseif (!empty($getParams['filter_etab'])) {
             $reqFilter = (int)$getParams['filter_etab'];
@@ -187,7 +187,7 @@ class OffresService
         $modeConds = ["1=1"];
         $modeParams = [];
         if (!empty($getParams['filter_wilaya'])) {
-            $modeConds[] = "o.IDEts_Form IN (SELECT IDEts_Form FROM etablissement WHERE IDDFEP = ?)";
+            $modeConds[] = "o.IDEts_Form IN (SELECT IDetablissement FROM etablissement WHERE IDDFEP = ?)";
             $modeParams[] = (int)$getParams['filter_wilaya'];
         }
         if (!empty($getParams['filter_etab'])) {
@@ -196,12 +196,12 @@ class OffresService
                 $etabIds = \App\Support\EtablissementScope::resolve($etabId);
                 abort_if(!in_array($reqFilter, $etabIds), 403, 'غير مصرح لك بالوصول لهذه المؤسسة.');
             }
-            $modeConds[] = "e.IDetablissement = ?";
+            $modeConds[] = "o.IDEts_Form = ?";
             $modeParams[] = $reqFilter;
         } elseif ($etabId > 0) {
             $etabIds = \App\Support\EtablissementScope::resolve($etabId);
             $placeholders = implode(',', array_fill(0, count($etabIds), '?'));
-            $modeConds[] = "e.IDetablissement IN ($placeholders)";
+            $modeConds[] = "o.IDEts_Form IN ($placeholders)";
             $modeParams = array_merge($modeParams, $etabIds);
         }
         $modeCondStr = implode(" AND ", $modeConds);
@@ -209,7 +209,6 @@ class OffresService
             SELECT DISTINCT mf.IDMode_formation as id, mf.Nom as nom_ar, mf.NomFr as nom_fr 
             FROM offre o 
             JOIN mode_formation mf ON o.IDMode_formation = mf.IDMode_formation 
-            JOIN etablissement e ON o.IDEts_Form = e.IDEts_Form
             WHERE $modeCondStr 
             ORDER BY mf.NomOrd ASC, mf.IDMode_formation ASC
         ");
@@ -229,12 +228,12 @@ class OffresService
                 $etabIds = \App\Support\EtablissementScope::resolve($etabId);
                 abort_if(!in_array($reqFilter, $etabIds), 403, 'غير مصرح لك بالوصول لهذه المؤسسة.');
             }
-            $sessConds[] = "e.IDetablissement = ?";
+            $sessConds[] = "o.IDEts_Form = ?";
             $sessParams[] = $reqFilter;
         } elseif ($etabId > 0) {
             $etabIds = \App\Support\EtablissementScope::resolve($etabId);
             $placeholders = implode(',', array_fill(0, count($etabIds), '?'));
-            $sessConds[] = "e.IDetablissement IN ($placeholders)";
+            $sessConds[] = "o.IDEts_Form IN ($placeholders)";
             $sessParams = array_merge($sessParams, $etabIds);
         }
         if (!empty($getParams['filter_mode'])) {
@@ -258,7 +257,6 @@ class OffresService
                             s.DateD as date_debut, NULL as date_fin, s.DateFInscr as date_fin_insc
             FROM offre o 
             JOIN session s ON o.IDSession = s.IDSession 
-            JOIN etablissement e ON o.IDEts_Form = e.IDEts_Form
             WHERE $sessCondStr 
             ORDER BY s.DateD DESC
         ");

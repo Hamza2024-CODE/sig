@@ -307,23 +307,6 @@ class ApprenantService
                     'soutenance' => isset($g['soutenance']) && $g['soutenance'] !== '' ? (float)$g['soutenance'] : null,
                 ];
 
-                // Backend Grade Range Validation
-                foreach ($gradeInputs as $key => $val) {
-                    if ($key === 'type_matiere' || $val === null) {
-                        continue;
-                    }
-                    if ($val < 0) {
-                        throw new \Exception("الرجاء إدخال نقطة موجبة (قيمة أكبر أو تساوي الصفر).");
-                    }
-                    $maxLimit = 20.0;
-                    if ((int)$modeFormation === 8 && in_array($key, ['exam', 'rattrapage'])) {
-                        $maxLimit = 40.0;
-                    }
-                    if ($val > $maxLimit) {
-                        throw new \Exception("الرجاء التحقق من النقاط المدخلة؛ القيمة القصوى المسموحة هي {$maxLimit}.");
-                    }
-                }
-
                 // Calculate module average and status
                 $calc = $gradingService->calculateModuleGrade($gradeInputs, $config, (int)$modeFormation);
 

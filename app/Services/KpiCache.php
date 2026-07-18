@@ -140,10 +140,10 @@ final class KpiCache
             ];
         }
 
-        $user = session('user') ?? [];
-        $excludeMode10 = \App\Helpers\DepartmentHelper::isPresentielOnly($user);
-        $isApprentice = \App\Helpers\DepartmentHelper::isApprenticeship($user);
-        $key = self::PREFIX . "etab:{$etabId}" . ($isApprentice ? ':mode10' : '') . ($excludeMode10 ? ':exclude_mode10' : '');
+        $modeId = (int)session('user.IDMode_formation');
+        $username = strtolower(session('user.username') ?? '');
+        $excludeMode10 = ($username === 'sdtpp');
+        $key = self::PREFIX . "etab:{$etabId}" . ($modeId === 10 ? ':mode10' : '') . ($excludeMode10 ? ':exclude_mode10' : '');
 
         return Cache::remember($key, self::TTL_ETAB, function () use ($etabId) {
             return self::computeEtabKpis($etabId);
@@ -349,23 +349,15 @@ final class KpiCache
 
     private static function computeEtabKpis(int $etabId): array
     {
-        $user = session('user') ?? [];
-        $excludeMode10 = \App\Helpers\DepartmentHelper::isPresentielOnly($user);
-        $isApprentice = \App\Helpers\DepartmentHelper::isApprenticeship($user);
+        $modeId = (int)session('user.IDMode_formation');
+        $username = strtolower(session('user.username') ?? '');
+        $excludeMode10 = ($username === 'sdtpp');
 
         // Resolve scope IDs (the main center + all its branches/extensions)
-        $localEtabIds = self::getEtabScopeIds($etabId);
-        $etabIds = [];
-        if (!empty($localEtabIds)) {
-            $etabIds = DB::table('etablissement')
-                ->whereIn('IDetablissement', $localEtabIds)
-                ->pluck('IDEts_Form')
-                ->toArray();
-        }
+        $etabIds = self::getEtabScopeIds($etabId);
         $placeholders = implode(',', array_fill(0, count($etabIds), '?'));
-        $localPlaceholders = implode(',', array_fill(0, count($localEtabIds), '?'));
 
-        if ($isApprentice) {
+        if ($modeId === 10) {
             if (self::shouldUseApprenantTable()) {
                 $stagiaires = self::scalar("
                     SELECT COUNT(a.IDapprenant) as c 
@@ -399,7 +391,7 @@ final class KpiCache
             }
 
             $candidats = self::scalar("SELECT COUNT(*) as c FROM candidat c INNER JOIN offre o ON c.IDOffre=o.IDOffre WHERE o.IDEts_Form IN ($placeholders) AND o.IDMode_formation=10", $etabIds);
-            $encadrements = self::scalar("SELECT COUNT(*) as c FROM encadrement WHERE IDetablissement IN ($localPlaceholders)", $localEtabIds);
+            $encadrements = self::scalar("SELECT COUNT(*) as c FROM encadrement WHERE IDetablissement IN ($placeholders)", $etabIds);
             $specialites = self::scalar("SELECT COUNT(DISTINCT IDSpecialite) as c FROM offre WHERE IDEts_Form IN ($placeholders) AND IDMode_formation=10", $etabIds);
             $reconduits = self::scalar("SELECT SUM(s.Nbrrecond) as c FROM section s JOIN offre o ON s.IDOffre=o.IDOffre WHERE o.IDEts_Form IN ($placeholders) AND o.IDMode_formation=10", $etabIds);
             $sections_s1 = self::scalar("SELECT COUNT(*) as c FROM section_semestre ss JOIN section s ON ss.IDSection=s.IDSection JOIN offre o ON s.IDOffre=o.IDOffre WHERE ss.Dernier = 1 AND ss.NumSem = 1 AND o.IDEts_Form IN ($placeholders) AND o.IDMode_formation=10", $etabIds);
@@ -440,7 +432,7 @@ final class KpiCache
             }
 
             $candidats = self::scalar("SELECT COUNT(*) as c FROM candidat c INNER JOIN offre o ON c.IDOffre=o.IDOffre WHERE o.IDEts_Form IN ($placeholders) AND o.IDMode_formation != 10", $etabIds);
-            $encadrements = self::scalar("SELECT COUNT(*) as c FROM encadrement WHERE IDetablissement IN ($localPlaceholders)", $localEtabIds);
+            $encadrements = self::scalar("SELECT COUNT(*) as c FROM encadrement WHERE IDetablissement IN ($placeholders)", $etabIds);
             $specialites = self::scalar("SELECT COUNT(DISTINCT IDSpecialite) as c FROM offre WHERE IDEts_Form IN ($placeholders) AND IDMode_formation != 10", $etabIds);
             $reconduits = self::scalar("SELECT SUM(s.Nbrrecond) as c FROM section s JOIN offre o ON s.IDOffre=o.IDOffre WHERE o.IDEts_Form IN ($placeholders) AND o.IDMode_formation != 10", $etabIds);
             $sections_s1 = self::scalar("SELECT COUNT(*) as c FROM section_semestre ss JOIN section s ON ss.IDSection=s.IDSection JOIN offre o ON s.IDOffre=o.IDOffre WHERE ss.Dernier = 1 AND ss.NumSem = 1 AND o.IDEts_Form IN ($placeholders) AND o.IDMode_formation != 10", $etabIds);
@@ -485,7 +477,7 @@ final class KpiCache
             }
 
             $candidats = self::scalar("SELECT COUNT(*) as c FROM candidat c INNER JOIN offre o ON c.IDOffre=o.IDOffre WHERE o.IDEts_Form IN ($placeholders)", $etabIds);
-            $encadrements = self::scalar("SELECT COUNT(*) as c FROM encadrement WHERE IDetablissement IN ($localPlaceholders)", $localEtabIds);
+            $encadrements = self::scalar("SELECT COUNT(*) as c FROM encadrement WHERE IDetablissement IN ($placeholders)", $etabIds);
             $specialites = self::scalar("SELECT COUNT(DISTINCT IDSpecialite) as c FROM offre WHERE IDEts_Form IN ($placeholders)", $etabIds);
             $reconduits = self::scalar("SELECT SUM(s.Nbrrecond) as c FROM section s JOIN offre o ON s.IDOffre=o.IDOffre WHERE o.IDEts_Form IN ($placeholders)", $etabIds);
             $sections_s1 = self::scalar("SELECT COUNT(*) as c FROM section_semestre ss JOIN section s ON ss.IDSection=s.IDSection JOIN offre o ON s.IDOffre=o.IDOffre WHERE ss.Dernier = 1 AND ss.NumSem = 1 AND o.IDEts_Form IN ($placeholders)", $etabIds);
