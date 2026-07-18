@@ -526,10 +526,14 @@ class LoginController extends Controller
                             } catch (\Exception $ex) {}
                         }
 
+                        // For DFEP (nature_id=4): always use the institution name and 'dfeps' username
+                        // so the main DFEP dashboard is shown regardless of which department secret code was used.
+                        $isDfepNature = ($natureId === 4);
                         $matchedUser = [
                             'id'               => $etab['IDetablissement'],
-                            'username'         => $matchedUtilisateur ? strtolower($matchedUtilisateur['NomUser']) : $etab['nomUser'],
-                            'nom_complet'      => $matchedUtilisateur ? $matchedUtilisateur['Nom'] : ($etab['Nom'] ?? $etab['nomUser']),
+                            'username'         => $isDfepNature ? 'dfeps' : ($matchedUtilisateur ? strtolower($matchedUtilisateur['NomUser']) : $etab['nomUser']),
+                            'nom_complet'      => $isDfepNature ? ($etab['Nom'] ?? $etab['nomUser']) : ($matchedUtilisateur ? $matchedUtilisateur['Nom'] : ($etab['Nom'] ?? $etab['nomUser'])),
+                            'dept_utilisateur' => $matchedUtilisateur ? strtolower($matchedUtilisateur['NomUser']) : null,
                             // etablissement_id stores the academic ID (IDEts_Form) to correctly query academic data (offre, apprenant, etc.)
                             'etablissement_id' => $etab['IDetablissement'],
                             // profile_etab_id/idetablissement stores the account ID (IDetablissement) to load the profile and modify profile details
