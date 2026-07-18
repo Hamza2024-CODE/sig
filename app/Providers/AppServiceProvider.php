@@ -6,6 +6,7 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\URL;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -16,13 +17,24 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        // ✅ ضبط APP_URL ديناميكياً لتفادي مشاكل الأنفاق ورابط localhost.run المتغير
-        if (isset($_SERVER['HTTP_X_FORWARDED_HOST'])) {
-            $proto = $_SERVER['HTTP_X_FORWARDED_PROTO'] ?? 'https';
-            config(['app.url' => $proto . '://' . $_SERVER['HTTP_X_FORWARDED_HOST']]);
-        } elseif (isset($_SERVER['HTTP_HOST'])) {
-            $proto = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-            config(['app.url' => $proto . '://' . $_SERVER['HTTP_HOST']]);
+        // ✅ ضبط APP_URL ديناميكياً وإجبار HTTPS خلف الـ reverse proxy
+        $proto = null;
+        if (isset($_SERVER['HTTP_X_FORWARDED_PROTO'])) {
+            $proto = strtolower($_SERVER['HTTP_X_FORWARDED_PROTO']);
+        } elseif (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
+            $proto = 'https';
+        } elseif (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443) {
+            $proto = 'https';
+        } else {
+            $proto = 'http';
+        }
+        $host = $_SERVER['HTTP_X_FORWARDED_HOST'] ?? $_SERVER['HTTP_HOST'] ?? null;
+        if ($host) {
+            config(['app.url' => $proto . '://' . $host]);
+        }
+        // إجبار كل روابط URL() و asset() على HTTPS في الإنتاج
+        if ($proto === 'https') {
+            URL::forceScheme('https');
         }
 
         // ✅ منع lazy loading في بيئة التطوير → يكشف N+1 فوراً

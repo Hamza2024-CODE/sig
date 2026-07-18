@@ -45,18 +45,23 @@ class SecurityHeadersMiddleware
         }
         // 7. CSP
         $cdn = implode(' ', $this->allowedCdnDomains);
-        $csp = implode('; ', [
-            "default-src 'self'",
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' {$cdn}",
-            "style-src 'self' 'unsafe-inline' {$cdn} fonts.googleapis.com",
-            "font-src 'self' data: fonts.gstatic.com {$cdn}",
-            "img-src 'self' data: blob: {$cdn} *.openstreetmap.org *.cartocdn.com",
-            "connect-src 'self' {$cdn}",
+        $self = "'self'";
+        $cspDirectives = [
+            "default-src {$self}",
+            "script-src {$self} 'unsafe-inline' 'unsafe-eval' {$cdn}",
+            "style-src {$self} 'unsafe-inline' {$cdn} fonts.googleapis.com",
+            "font-src {$self} data: fonts.gstatic.com {$cdn}",
+            "img-src {$self} data: blob: {$cdn} *.openstreetmap.org *.cartocdn.com",
+            "connect-src {$self} {$cdn}",
+            "manifest-src {$self}",
+            "worker-src {$self} blob:",
             "object-src 'none'",
             "frame-src 'none'",
-            "base-uri 'self'",
-            "form-action 'self'",
-        ]);
+            "base-uri {$self}",
+            "form-action {$self}",
+            "upgrade-insecure-requests",
+        ];
+        $csp = implode('; ', $cspDirectives);
         // Report-Only in development, Enforce in production
         if (!$isProduction) {
             $response->header('Content-Security-Policy-Report-Only', $csp);
