@@ -53,12 +53,13 @@ class MonitorServices extends Command
 
         // 3. Test HTTP Login endpoint using native curl
         try {
-            $loginUrl = config('app.url') . '/login';
+            $loginUrl = rtrim(config('app.url'), '/') . '/login';
             $ch = curl_init($loginUrl);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Ignore SSL verification errors in monitor
+            curl_setopt($ch, CURLOPT_USERAGENT, 'SGFEP-Monitor/1.0');
             curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             curl_close($ch);
