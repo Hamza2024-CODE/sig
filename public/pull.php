@@ -75,6 +75,7 @@ $files = [
     'public/check_error.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/check_error.php',
     'public/get_users.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/get_users.php',
     'public/get_saida.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/get_saida.php',
+    'public/diagnose_users.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/diagnose_users.php',
     'public/reset_passwords_from_csv.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/reset_passwords_from_csv.php',
     'public/pull.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/pull.php'
 ];
