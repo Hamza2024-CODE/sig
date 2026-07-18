@@ -11,15 +11,26 @@ class ApprenantController extends Controller
 {
     private const PER_PAGE = 30;
 
-    public function index(Request $request)
+    private function getUserScope(): array
     {
-        @set_time_limit(300);
         $user   = session('user') ?? [];
         $role   = strtolower($user['role_code'] ?? '');
         $etabId = (int)($user['etablissement_id'] ?? $user['IDEts_Form'] ?? 0);
         $dfepId = (int)($user['iddfep'] ?? $user['IDDFEP'] ?? 0);
-
         $etabScopeIds = $etabId > 0 ? \App\Support\EtablissementScope::resolve($etabId) : [];
+
+        return compact('user', 'role', 'etabId', 'dfepId', 'etabScopeIds');
+    }
+
+    public function index(Request $request)
+    {
+        @set_time_limit(300);
+        $scope = $this->getUserScope();
+        $user = $scope['user'];
+        $role = $scope['role'];
+        $etabId = $scope['etabId'];
+        $dfepId = $scope['dfepId'];
+        $etabScopeIds = $scope['etabScopeIds'];
 
         // ── build filters ────────────────────────────────────────────
         $where  = [];
@@ -273,6 +284,20 @@ class ApprenantController extends Controller
     public function show($id)
     {
         try {
+            $scope = $this->getUserScope();
+            $etabId = $scope['etabId'];
+            $etabScopeIds = $scope['etabScopeIds'];
+
+            if ($etabId > 0) {
+                $allowed = DB::table('apprenant')
+                    ->join('section', 'apprenant.IDSection', '=', 'section.IDSection')
+                    ->join('offre', 'section.IDOffre', '=', 'offre.IDOffre')
+                    ->where('apprenant.IDapprenant', $id)
+                    ->whereIn('offre.IDEts_Form', $etabScopeIds)
+                    ->exists();
+                abort_unless($allowed, 403, 'غير مصرح لك باستعراض بيانات هذا الطالب.');
+            }
+
             $memosEnabled = \App\Helpers\SovereignLicensingHelper::getSetting('feature_large_memos_query_enabled', '1') === '1';
 
             $selectCols = [
@@ -341,8 +366,9 @@ class ApprenantController extends Controller
 
     public function store(Request $request)
     {
-        $user = session('user');
-        if (!$user) return redirect('/login');
+        $scope = $this->getUserScope();
+        $etabId = $scope['etabId'];
+        $etabScopeIds = $scope['etabScopeIds'];
 
         $validated = $request->validate([
             'candidat_id' => 'required|integer',
@@ -353,7 +379,14 @@ class ApprenantController extends Controller
             'groupe' => 'required|integer',
         ]);
         
-        if (!empty($etabScopeIds)) {
+        if ($etabId > 0) {
+            $candidateAllowed = DB::table('candidat')
+                ->join('offre', 'candidat.IDOffre', '=', 'offre.IDOffre')
+                ->where('candidat.IDCandidat', $validated['candidat_id'])
+                ->whereIn('offre.IDEts_Form', $etabScopeIds)
+                ->exists();
+            abort_unless($candidateAllowed, 403, 'غير مصرح لك بإضافة هذا المترشح.');
+
             $sectionAllowed = DB::table('section')
                 ->join('offre', 'section.IDOffre', '=', 'offre.IDOffre')
                 ->where('section.IDSection', $validated['section_id'])
@@ -412,8 +445,9 @@ class ApprenantController extends Controller
 
     public function update(Request $request)
     {
-        $user = session('user');
-        if (!$user) return redirect('/login');
+        $scope = $this->getUserScope();
+        $etabId = $scope['etabId'];
+        $etabScopeIds = $scope['etabScopeIds'];
 
         $validated = $request->validate([
             'id' => 'required|integer',
@@ -431,13 +465,21 @@ class ApprenantController extends Controller
             return redirect()->back();
         }
 
-        if (!empty($etabScopeIds)) {
+        if ($etabId > 0) {
+            $currentAllowed = DB::table('apprenant')
+                ->join('section', 'apprenant.IDSection', '=', 'section.IDSection')
+                ->join('offre', 'section.IDOffre', '=', 'offre.IDOffre')
+                ->where('apprenant.IDapprenant', $validated['id'])
+                ->whereIn('offre.IDEts_Form', $etabScopeIds)
+                ->exists();
+            abort_unless($currentAllowed, 403, 'غير مصرح لك بتعديل هذا الطالب.');
+
             $sectionAllowed = DB::table('section')
                 ->join('offre', 'section.IDOffre', '=', 'offre.IDOffre')
                 ->where('section.IDSection', $validated['section_id'])
                 ->whereIn('offre.IDEts_Form', $etabScopeIds)
                 ->exists();
-            abort_unless($sectionAllowed, 403, 'غير مصرح لك بالتعديل في هذا القسم.');
+            abort_unless($sectionAllowed, 403, 'غير مصرح لك بنقل الطالب لهذا القسم.');
         }
 
         $section = DB::table('section')->where('IDSection', $validated['section_id'])->first();
@@ -490,18 +532,20 @@ class ApprenantController extends Controller
 
     public function destroy($id)
     {
-        $user = session('user');
-        if (!$user) return redirect('/login');
+        $scope = $this->getUserScope();
+        $etabId = $scope['etabId'];
+        $etabScopeIds = $scope['etabScopeIds'];
 
         $student = DB::table('apprenant')->where('IDapprenant', $id)->first();
         if ($student) {
-            if (!empty($etabScopeIds)) {
-                $sectionAllowed = DB::table('section')
+            if ($etabId > 0) {
+                $allowed = DB::table('apprenant')
+                    ->join('section', 'apprenant.IDSection', '=', 'section.IDSection')
                     ->join('offre', 'section.IDOffre', '=', 'offre.IDOffre')
-                    ->where('section.IDSection', $student->IDSection)
+                    ->where('apprenant.IDapprenant', $id)
                     ->whereIn('offre.IDEts_Form', $etabScopeIds)
                     ->exists();
-                abort_unless($sectionAllowed, 403, 'غير مصرح لك بحذف طالب من هذا القسم.');
+                abort_unless($allowed, 403, 'غير مصرح لك بحذف طالب من هذا القسم.');
             }
             $section = DB::table('section')->where('IDSection', $student->IDSection)->first();
             $wilayaId = 0;
