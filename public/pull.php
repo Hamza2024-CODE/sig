@@ -63,6 +63,7 @@ $files = [
     'app/Http/Controllers/Admin/ApprenantController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/ApprenantController.php',
     'app/Domains/Academic/Services/ApprenantService.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Domains/Academic/Services/ApprenantService.php',
     'app/Domains/Academic/Services/GradingSystemService.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Domains/Academic/Services/GradingSystemService.php',
+    'app/Domains/Academic/Repositories/OffresRepository.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Domains/Academic/Repositories/OffresRepository.php',
     'app/Helpers/BepGradingHelper.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Helpers/BepGradingHelper.php',
     'public/check_view_content.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/check_view_content.php',
     'public/check_etab_details.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/check_etab_details.php',

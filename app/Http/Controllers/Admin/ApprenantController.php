@@ -127,7 +127,7 @@ class ApprenantController extends Controller
                     $joins .= " LEFT JOIN offre o ON s.IDOffre = o.IDOffre";
                 }
                 if (strpos($whereSQL, 'et.') !== false) {
-                    $joins .= " LEFT JOIN etablissement et ON o.IDEts_Form = et.IDetablissement";
+                    $joins .= " LEFT JOIN etablissement et ON o.IDEts_Form = et.IDEts_Form";
                 }
                 if (strpos($whereSQL, 'sess.') !== false) {
                     $joins .= " LEFT JOIN session sess ON o.IDSession = sess.IDSession";
@@ -179,7 +179,7 @@ class ApprenantController extends Controller
                  LEFT JOIN section s   ON a.IDSection = s.IDSection
                  LEFT JOIN offre o     ON s.IDOffre = o.IDOffre
                  LEFT JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
-                 LEFT JOIN etablissement et ON o.IDEts_Form = et.IDetablissement
+                 LEFT JOIN etablissement et ON o.IDEts_Form = et.IDEts_Form
                  LEFT JOIN session sess ON o.IDSession = sess.IDSession
                  {$whereSQL}
                  ORDER BY a.IDapprenant DESC
@@ -413,7 +413,7 @@ class ApprenantController extends Controller
         } elseif ($role === 'dfep' && $dfepId > 0) {
             $candidateAllowed = DB::table('candidat')
                 ->join('offre', 'candidat.IDOffre', '=', 'offre.IDOffre')
-                ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDetablissement')
+                ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDEts_Form')
                 ->where('candidat.IDCandidat', $validated['candidat_id'])
                 ->where('etablissement.IDDFEP', $dfepId)
                 ->exists();
@@ -421,7 +421,7 @@ class ApprenantController extends Controller
 
             $sectionAllowed = DB::table('section')
                 ->join('offre', 'section.IDOffre', '=', 'offre.IDOffre')
-                ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDetablissement')
+                ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDEts_Form')
                 ->where('section.IDSection', $validated['section_id'])
                 ->where('etablissement.IDDFEP', $dfepId)
                 ->exists();
@@ -441,7 +441,7 @@ class ApprenantController extends Controller
         }
 
         $wilayaId = (int) DB::table('offre')
-            ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDetablissement')
+            ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDEts_Form')
             ->join('dfep', 'etablissement.IDDFEP', '=', 'dfep.IDDFEP')
             ->where('offre.IDOffre', $section->IDOffre)
             ->value('dfep.IDWilayaa');
@@ -518,7 +518,7 @@ class ApprenantController extends Controller
             $currentAllowed = DB::table('apprenant')
                 ->join('section', 'apprenant.IDSection', '=', 'section.IDSection')
                 ->join('offre', 'section.IDOffre', '=', 'offre.IDOffre')
-                ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDetablissement')
+                ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDEts_Form')
                 ->where('apprenant.IDapprenant', $validated['id'])
                 ->where('etablissement.IDDFEP', $dfepId)
                 ->exists();
@@ -526,7 +526,7 @@ class ApprenantController extends Controller
 
             $sectionAllowed = DB::table('section')
                 ->join('offre', 'section.IDOffre', '=', 'offre.IDOffre')
-                ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDetablissement')
+                ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDEts_Form')
                 ->where('section.IDSection', $validated['section_id'])
                 ->where('etablissement.IDDFEP', $dfepId)
                 ->exists();
@@ -538,7 +538,7 @@ class ApprenantController extends Controller
         if ($section && !empty($section->IDOffre)) {
             try {
                 $wilayaId = (int) DB::table('offre')
-                    ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDetablissement')
+                    ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDEts_Form')
                     ->join('dfep', 'etablissement.IDDFEP', '=', 'dfep.IDDFEP')
                     ->where('offre.IDOffre', $section->IDOffre)
                     ->value('dfep.IDWilayaa');
@@ -603,7 +603,7 @@ class ApprenantController extends Controller
                 $allowed = DB::table('apprenant')
                     ->join('section', 'apprenant.IDSection', '=', 'section.IDSection')
                     ->join('offre', 'section.IDOffre', '=', 'offre.IDOffre')
-                    ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDetablissement')
+                    ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDEts_Form')
                     ->where('apprenant.IDapprenant', $id)
                     ->where('etablissement.IDDFEP', $dfepId)
                     ->exists();
@@ -614,7 +614,7 @@ class ApprenantController extends Controller
             if ($section && !empty($section->IDOffre)) {
                 try {
                     $wilayaId = (int) DB::table('offre')
-                        ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDetablissement')
+                        ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDEts_Form')
                         ->join('dfep', 'etablissement.IDDFEP', '=', 'dfep.IDDFEP')
                         ->where('offre.IDOffre', $section->IDOffre)
                         ->value('dfep.IDWilayaa');
