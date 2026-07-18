@@ -75,7 +75,6 @@ $files = [
     'public/check_error.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/check_error.php',
     'public/get_users.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/get_users.php',
     'public/get_saida.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/get_saida.php',
-    'public/diagnose_users.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/diagnose_users.php',
     'public/reset_passwords_from_csv.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/reset_passwords_from_csv.php',
     'public/pull.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/pull.php'
 ];
@@ -229,6 +228,13 @@ $checkIndexPath = __DIR__ . '/check_index.php';
 if (file_exists($checkIndexPath)) {
     @unlink($checkIndexPath);
     echo "✓ Diagnostic check_index.php cleaned up.<br>";
+}
+
+// Clean up temporary diagnose_users.php if it exists
+$diagnoseUsersPath = __DIR__ . '/diagnose_users.php';
+if (file_exists($diagnoseUsersPath)) {
+    @unlink($diagnoseUsersPath);
+    echo "✓ Diagnostic diagnose_users.php cleaned up.<br>";
 }
 
 echo "<h2>Running View Compilation Diagnostics...</h2>";
