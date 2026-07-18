@@ -111,7 +111,7 @@ class ApprenantController extends Controller
                     $joins .= " LEFT JOIN offre o ON s.IDOffre = o.IDOffre";
                 }
                 if (strpos($whereSQL, 'et.') !== false) {
-                    $joins .= " LEFT JOIN etablissement et ON o.IDEts_Form = et.IDetablissement";
+                    $joins .= " LEFT JOIN etablissement et ON o.IDEts_Form = et.IDEts_Form";
                 }
                 if (strpos($whereSQL, 'sess.') !== false) {
                     $joins .= " LEFT JOIN session sess ON o.IDSession = sess.IDSession";
@@ -163,7 +163,7 @@ class ApprenantController extends Controller
                  LEFT JOIN section s   ON a.IDSection = s.IDSection
                  LEFT JOIN offre o     ON c.IDOffre = o.IDOffre
                  LEFT JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
-                 LEFT JOIN etablissement et ON o.IDEts_Form = et.IDetablissement
+                 LEFT JOIN etablissement et ON o.IDEts_Form = et.IDEts_Form
                  LEFT JOIN session sess ON o.IDSession = sess.IDSession
                  {$whereSQL}
                  ORDER BY a.IDapprenant DESC
@@ -358,7 +358,7 @@ class ApprenantController extends Controller
         }
 
         $wilayaId = (int) DB::table('offre')
-            ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDetablissement')
+            ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDEts_Form')
             ->join('dfep', 'etablissement.IDDFEP', '=', 'dfep.IDDFEP')
             ->where('offre.IDOffre', $candidate->IDOffre)
             ->value('dfep.IDWilayaa');
@@ -419,7 +419,7 @@ class ApprenantController extends Controller
         if ($candidate && !empty($candidate->IDOffre)) {
             try {
                 $wilayaId = (int) DB::table('offre')
-                    ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDetablissement')
+                    ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDEts_Form')
                     ->join('dfep', 'etablissement.IDDFEP', '=', 'dfep.IDDFEP')
                     ->where('offre.IDOffre', $candidate->IDOffre)
                     ->value('dfep.IDWilayaa');
@@ -474,7 +474,7 @@ class ApprenantController extends Controller
             if ($candidate && !empty($candidate->IDOffre)) {
                 try {
                     $wilayaId = (int) DB::table('offre')
-                        ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDetablissement')
+                        ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDEts_Form')
                         ->join('dfep', 'etablissement.IDDFEP', '=', 'dfep.IDDFEP')
                         ->where('offre.IDOffre', $candidate->IDOffre)
                         ->value('dfep.IDWilayaa');
