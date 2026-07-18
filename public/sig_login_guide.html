@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>دليل تسجيل الدخول ونظام المصالح الموحد - SGFEP</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            --panel-bg: rgba(30, 41, 59, 0.7);
+            --panel-border: rgba(255, 255, 255, 0.08);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-blue: #38bdf8;
+            --accent-green: #34d399;
+            --accent-purple: #c084fc;
+            --accent-orange: #fb923c;
+            --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.3), 0 8px 10px -6px rgb(0 0 0 / 0.3);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Cairo', sans-serif;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 2rem 1rem;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeInDown 0.8s ease;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(to right, #38bdf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .guide-steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .step-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 16px;
+            padding: 2rem;
+            backdrop-filter: blur(12px);
+            box-shadow: var(--shadow-lg);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .step-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+        }
+
+        .step-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .step-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            display: inline-block;
+        }
+
+        .step-card.step-1 .step-icon { color: var(--accent-blue); }
+        .step-card.step-2 .step-icon { color: var(--accent-purple); }
+        .step-card.step-3 .step-icon { color: var(--accent-green); }
+
+        .step-card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 0.75rem;
+            font-weight: 700;
+        }
+
+        .step-card p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .search-box {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .search-box i {
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+        }
+
+        .search-box input {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text-primary);
+            font-size: 1.1rem;
+            width: 100%;
+        }
+
+        .table-container {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 16px;
+            overflow: hidden;
+            backdrop-filter: blur(12px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: right;
+        }
+
+        th, td {
+            padding: 1.2rem 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        th {
+            background: rgba(15, 23, 42, 0.6);
+            color: var(--text-primary);
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .badge-apprenticeship {
+            background: rgba(251, 146, 60, 0.15);
+            color: var(--accent-orange);
+            border: 1px solid rgba(251, 146, 60, 0.3);
+        }
+
+        .badge-presentiel {
+            background: rgba(56, 189, 248, 0.15);
+            color: var(--accent-blue);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+        }
+
+        .badge-admin {
+            background: rgba(192, 132, 252, 0.15);
+            color: var(--accent-purple);
+            border: 1px solid rgba(192, 132, 252, 0.3);
+        }
+
+        .badge-orientation {
+            background: rgba(52, 211, 153, 0.15);
+            color: var(--accent-green);
+            border: 1px solid rgba(52, 211, 153, 0.3);
+        }
+
+        .code-block {
+            font-family: monospace;
+            background: rgba(15, 23, 42, 0.8);
+            padding: 0.3rem 0.6rem;
+            border-radius: 6px;
+            color: #f1f5f9;
+            font-size: 0.95rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            letter-spacing: 0.5px;
+        }
+
+        .copy-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            margin-right: 0.5rem;
+            transition: color 0.2s;
+        }
+
+        .copy-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--accent-green);
+            color: #0f172a;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-weight: 700;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            th, td {
+                padding: 1rem;
+            }
+            header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>نظام تسجيل الدخول الموحد (SGFEP)</h1>
+            <p>دليل المستخدم والمصالح وقواعد تصفية الأنماط (تمهين / حضوري)</p>
+        </header>
+
+        <section class="guide-steps">
+            <div class="step-card step-1">
+                <div class="step-icon"><i class="fa-solid fa-user-gear"></i></div>
+                <h3>1. اسم المستخدم (Nom d'utilisateur)</h3>
+                <p>قم بإدخال رمز المؤسسة (مثال: للعمومي رمز المؤسسة المكون من 4 أرقام، وللمؤسسة الخاصة مثل نوفا ديجيتال رمز الحساب <span class="code-block">gUV2334</span>).</p>
+            </div>
+            <div class="step-card step-2">
+                <div class="step-icon"><i class="fa-solid fa-lock"></i></div>
+                <h3>2. كلمة المرور (Mot de passe)</h3>
+                <p>أدخل كلمة المرور الخاصة بحساب المؤسسة الرئيسي في النظام (مثال: للمؤسسة الخاصة نوفا ديجيتال كلمة المرور هي <span class="code-block">HeM:@2334</span>).</p>
+            </div>
+            <div class="step-card step-3">
+                <div class="step-icon"><i class="fa-solid fa-key"></i></div>
+                <h3>3. الرمز السري للمصلحة (Code secret)</h3>
+                <p>لكل مصلحة (تمهين، حضوري، مالي، توجيه) رمز سري خاص بها يحدد نوع الواجهة ونمط تصفية البيانات تلقائياً.</p>
+            </div>
+        </section>
+
+        <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="ابحث عن المصلحة، الرمز السري، أو الحساب المبرمج...">
+        </div>
+
+        <div class="table-container">
+            <table id="rolesTable">
+                <thead>
+                    <tr>
+                        <th>المصلحة (الدور)</th>
+                        <th>الحساب البرمجي الداخلي</th>
+                        <th>الرمز السري الموحد (Code secret)</th>
+                        <th>نمط التصفية (Filter Scope)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- DFEP level -->
+                    <tr>
+                        <td><strong>مصلحة التمهين - ولائية (المديرية)</strong></td>
+                        <td><span class="code-block">SA</span></td>
+                        <td>
+                            <span class="code-block" id="c1">wonque</span>
+                            <button class="copy-btn" onclick="copyText('c1')"><i class="fa-regular fa-copy"></i></button>
+                        </td>
+                        <td><span class="badge badge-apprenticeship">تمهين فقط (النمط 10)</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>مصلحة متابعة التكوين - ولائية (المديرية)</strong></td>
+                        <td><span class="code-block">SSFEP</span></td>
+                        <td>
+                            <span class="code-block" id="c2">driduv</span>
+                            <button class="copy-btn" onclick="copyText('c2')"><i class="fa-regular fa-copy"></i></button>
+                        </td>
+                        <td><span class="badge badge-presentiel">حضوري فقط (باستثناء 10)</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>مصلحة التكوين المتواصل والشراكة (المديرية)</strong></td>
+                        <td><span class="code-block">SFACI</span></td>
+                        <td>
+                            <span class="code-block" id="c3">devteW</span>
+                            <button class="copy-btn" onclick="copyText('c3')"><i class="fa-regular fa-copy"></i></button>
+                        </td>
+                        <td><span class="badge badge-presentiel">حضوري فقط (باستثناء 10)</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>كل الصلاحيات - الإداري والمالي (المديرية)</strong></td>
+                        <td><span class="code-block">AdmFin#Dfep</span></td>
+                        <td>
+                            <span class="code-block" id="c4">LifabE</span>
+                            <button class="copy-btn" onclick="copyText('c4')"><i class="fa-regular fa-copy"></i></button>
+                        </td>
+                        <td><span class="badge badge-admin">كل الولايات والأقسام</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>مصلحة الإدارة والوسائل / الموارد البشرية (المديرية)</strong></td>
+                        <td><span class="code-block">SAMRH</span></td>
+                        <td>
+                            <span class="code-block" id="c5">furwAn</span>
+                            <button class="copy-btn" onclick="copyText('c5')"><i class="fa-regular fa-copy"></i></button>
+                        </td>
+                        <td><span class="badge badge-admin">كل الولايات والأقسام</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>مصلحة الاستثمارات ومتابعة المشاريع (المديرية)</strong></td>
+                        <td><span class="code-block">SSIP</span></td>
+                        <td>
+                            <span class="code-block" id="c6">keweLA</span>
+                            <button class="copy-btn" onclick="copyText('c6')"><i class="fa-regular fa-copy"></i></button>
+                        </td>
+                        <td><span class="badge badge-admin">كل الولايات والأقسام</span></td>
+                    </tr>
+                    
+                    <!-- Etablissement level -->
+                    <tr>
+                        <td><strong>مدير المؤسسة / المعهد (عمومي / خاص)</strong></td>
+                        <td><span class="code-block">DIRETS / DIRETSs / DIRETSP</span></td>
+                        <td>
+                            <span class="code-block" id="c7">phimEt</span>
+                            <button class="copy-btn" onclick="copyText('c7')"><i class="fa-regular fa-copy"></i></button>
+                        </td>
+                        <td><span class="badge badge-admin">كل التخصصات التابعة للمؤسسة</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>المصالح البيداغوجية - تمهين (عمومي / خاص)</strong></td>
+                        <td><span class="code-block">SDTPA / SDTPAs / SDTPAp</span></td>
+                        <td>
+                            <span class="code-block" id="c8">kYbyfu</span>
+                            <button class="copy-btn" onclick="copyText('c8')"><i class="fa-regular fa-copy"></i></button>
+                        </td>
+                        <td><span class="badge badge-apprenticeship">تمهين فقط (النمط 10)</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>المصالح البيداغوجية - حضوري (عمومي / خاص)</strong></td>
+                        <td><span class="code-block">SDTPP / SDTPPs / SDTPPp</span></td>
+                        <td>
+                            <span class="code-block" id="c9">mEtflY</span>
+                            <button class="copy-btn" onclick="copyText('c9')"><i class="fa-regular fa-copy"></i></button>
+                        </td>
+                        <td><span class="badge badge-presentiel">حضوري فقط (باستثناء 10)</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>المصالح البيداغوجية - متواصل (عمومي / خاص)</strong></td>
+                        <td><span class="code-block">SDTPC / SDTPCs / SDTPCp</span></td>
+                        <td>
+                            <span class="code-block" id="c10">SixikA</span>
+                            <button class="copy-btn" onclick="copyText('c10')"><i class="fa-regular fa-copy"></i></button>
+                        </td>
+                        <td><span class="badge badge-presentiel">حضوري فقط (باستثناء 10)</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>مكتب التوجيه والإعلام (عمومي / خاص)</strong></td>
+                        <td><span class="code-block">BIAO / BIAOs / BIAOp</span></td>
+                        <td>
+                            <span class="code-block" id="c11">nAMUto</span>
+                            <button class="copy-btn" onclick="copyText('c11')"><i class="fa-regular fa-copy"></i></button>
+                        </td>
+                        <td><span class="badge badge-orientation">شؤون التوجيه والتسجيل</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>مكتب الشهادات (عمومي / خاص)</strong></td>
+                        <td><span class="code-block">Dplm / Dplms / Dplmp / dplmDir</span></td>
+                        <td>
+                            <span class="code-block" id="c12">quyCA6</span>
+                            <button class="copy-btn" onclick="copyText('c12')"><i class="fa-regular fa-copy"></i></button>
+                        </td>
+                        <td><span class="badge badge-admin">إصدار ومتابعة الشهادات</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>المصالح الإدارية والمالية (عمومي / خاص)</strong></td>
+                        <td><span class="code-block">SDARH / SDAFM / AdmFinEp</span></td>
+                        <td>
+                            <span class="code-block" id="c13">DEvibi / qYPeze / LifabE</span>
+                        </td>
+                        <td><span class="badge badge-admin">كل التخصصات التابعة للمؤسسة</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="toast" class="toast">تم النسخ بنجاح!</div>
+
+    <script>
+        function filterTable() {
+            var input, filter, table, tr, td, i, j, txtValue;
+            input = document.getElementById("searchInput");
+            filter = input.value.toLowerCase();
+            table = document.getElementById("rolesTable");
+            tr = table.getElementsByTagName("tr");
+
+            for (i = 1; i < tr.length; i++) {
+                tr[i].style.display = "none";
+                td = tr[i].getElementsByTagName("td");
+                for (j = 0; j < td.length; j++) {
+                    if (td[j]) {
+                        txtValue = td[j].textContent || td[j].innerText;
+                        if (txtValue.toLowerCase().indexOf(filter) > -1) {
+                            tr[i].style.display = "";
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        function copyText(elementId) {
+            var text = document.getElementById(elementId).innerText;
+            navigator.clipboard.writeText(text).then(function() {
+                var toast = document.getElementById("toast");
+                toast.classList.add("show");
+                setTimeout(function() {
+                    toast.classList.remove("show");
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

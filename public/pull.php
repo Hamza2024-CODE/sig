@@ -78,6 +78,7 @@ $files = [
     'public/check_etab_cols.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/check_etab_cols.php',
     'public/check_sessions.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/check_sessions.php',
     'public/set_oran_credentials.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/set_oran_credentials.php',
+    'public/sig_login_guide.html' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/sig_login_guide.html',
     'public/pull.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/pull.php'
 ];
 
