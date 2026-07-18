@@ -56,7 +56,8 @@ use Illuminate\Support\Facades\Artisan;
 echo "<h1>Auto-Updating All Modified Files...</h1>";
 
 $files = [
-
+    'app/Http/Controllers/DashboardController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/DashboardController.php',
+    'app/Services/KpiCache.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Services/KpiCache.php',
     'app/Http/Controllers/Auth/LoginController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Auth/LoginController.php',
     'resources/views/auth/login.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/auth/login.blade.php',
     'public/pull.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/pull.php'
