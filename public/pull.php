@@ -86,6 +86,8 @@ $files = [
     'app/Http/Middleware/SecurityHeadersMiddleware.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Middleware/SecurityHeadersMiddleware.php',
     'public/fix_https_env.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/fix_https_env.php',
     'public/set_credentials_pdo.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/set_credentials_pdo.php',
+    'public/diag_secret_codes.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/diag_secret_codes.php',
+    'public/find_taj_azraq.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/find_taj_azraq.php',
     'public/pull.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/pull.php'
 ];
 
