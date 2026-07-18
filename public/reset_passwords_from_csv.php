@@ -169,6 +169,61 @@ echo "     صحيح بالفعل: $utilisateurAlreadyOk\n";
 echo "     غير موجود:   $utilisateurNotFound\n";
 echo "     أخطاء:       $utilisateurErrors\n";
 
+// ─── Reset Private Counterparts (ID 86 to 90) ────────────────────────────────
+echo "\n【1.5】 تحديث الحسابات الخاصة (المؤسسات الخاصة) من نظيرتها العمومية\n";
+echo "────────────────────────────────────────────────\n";
+
+$privateUpdated = 0;
+$privateAlreadyOk = 0;
+$privateCounterparts = [
+    86 => 24, // DIRETSp => DIRETS
+    87 => 25, // BIAOp => BIAO
+    88 => 26, // SDTPPp => SDTPP
+    89 => 27, // SDTPAp => SDTPA
+    90 => 28  // SDTPCp => SDTPC
+];
+
+$stmtFetchUserPass = $db->prepare("SELECT MotPass FROM utilisateur WHERE IDUtilisateur = ?");
+$stmtUpdateUserPass = $db->prepare("UPDATE utilisateur SET MotPass = ? WHERE IDUtilisateur = ?");
+
+foreach ($privateCounterparts as $privId => $pubId) {
+    try {
+        // Get the password that was set/updated for the public counterpart
+        $stmtFetchUserPass->execute([$pubId]);
+        $pubRow = $stmtFetchUserPass->fetch(PDO::FETCH_ASSOC);
+        if (!$pubRow) continue;
+        
+        $pubPassHash = $pubRow['MotPass'];
+        
+        // Get the current password of the private counterpart
+        $stmtFetchUserPass->execute([$privId]);
+        $privRow = $stmtFetchUserPass->fetch(PDO::FETCH_ASSOC);
+        if (!$privRow) continue;
+        
+        $privPassHash = $privRow['MotPass'];
+        
+        if ($privPassHash === $pubPassHash) {
+            $privateAlreadyOk++;
+            continue;
+        }
+        
+        if ($applyChanges) {
+            $stmtUpdateUserPass->execute([$pubPassHash, $privId]);
+            echo "  ✅ تم تحديث الرمز السري للحساب الخاص ID={$privId} لينسخ نظيره العمومي ID={$pubId}\n";
+        } else {
+            echo "  🔄 سيتم تحديث الرمز السري للحساب الخاص ID={$privId} لينسخ نظيره العمومي ID={$pubId}\n";
+        }
+        $privateUpdated++;
+    } catch (Throwable $e) {
+        echo "  ❌ خطأ في تحديث الحساب الخاص ID={$privId}: " . $e->getMessage() . "\n";
+    }
+}
+
+echo "\n  📊 الملخص - الحسابات الخاصة:\n";
+echo "     يحتاج تحديث: $privateUpdated\n";
+echo "     صحيح بالفعل: $privateAlreadyOk\n";
+
+
 // ─── Reset ETABLISSEMENT passwords (MotDePass) ───────────────────────────────
 echo "\n【2】 جدول etablissement → عمود MotDePass (كلمة مرور المؤسسة)\n";
 echo "────────────────────────────────────────────────\n";
@@ -232,7 +287,7 @@ echo "     غير موجود:   $etabNotFound\n";
 echo "     أخطاء:       $etabErrors\n";
 
 // ─── Final Summary ───────────────────────────────────────────────────────────
-$totalUpdated = $utilisateurUpdated + $etabUpdated;
+$totalUpdated = $utilisateurUpdated + $privateUpdated + $etabUpdated;
 echo "\n══════════════════════════════════════════════════\n";
 if ($applyChanges) {
     if ($totalUpdated > 0) {
