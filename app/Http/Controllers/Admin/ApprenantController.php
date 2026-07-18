@@ -381,6 +381,9 @@ class ApprenantController extends Controller
 
     public function store(Request $request)
     {
+        $scope = $this->getUserScope();
+        $etabId = $scope['etabId'];
+        $etabScopeIds = $scope['etabScopeIds'];
         $role = $scope['role'];
         $dfepId = $scope['dfepId'];
 
