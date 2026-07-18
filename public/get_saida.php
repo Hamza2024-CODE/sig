@@ -4,7 +4,7 @@ try {
     $envFile = __DIR__ . '/../.env';
     $env = [];
     foreach (file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
-        if (str_starts_with(trim($line), '#') || !str_contains($line, '=')) continue;
+        if (strpos(trim($line), '#') === 0 || strpos($line, '=') === false) continue;
         [$k, $v] = explode('=', $line, 2);
         $env[trim($k)] = trim($v, " \t\n\r\"'");
     }
@@ -14,52 +14,50 @@ try {
         [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
     );
 
-    echo "=== Wilaya 20 (سعيدة) ===\n";
-    $wRow = $db->query("SELECT IDWilayaa, Code, Nom, NomFr FROM wilaya WHERE Code = '20' OR Nom LIKE '%سعيدة%' OR NomFr LIKE '%Saida%' LIMIT 5")->fetchAll(PDO::FETCH_ASSOC);
-    foreach ($wRow as $w) {
-        echo "IDWilayaa={$w['IDWilayaa']} | Code={$w['Code']} | Nom={$w['Nom']} | NomFr={$w['NomFr']}\n";
-    }
+    $action = $_GET['action'] ?? 'show';
 
-    echo "\n=== DFEP (Nature=4) etablissement for Saida ===\n";
-    $stmt = $db->prepare("
-        SELECT e.IDetablissement, e.Nom, e.nomUser, e.MotDePass, e.IDDFEP, e.activee,
-               w.Code as wilaya_code, w.Nom as wilaya_nom
-        FROM etablissement e
-        LEFT JOIN wilaya w ON e.IDDFEP = w.IDWilayaa
-        INNER JOIN nature_etsf nef ON e.IDNature_etsF = nef.IDNature_etsF
-        WHERE nef.IDNature = 4
-          AND (w.Code = '20' OR w.Nom LIKE '%سعيدة%' OR w.NomFr LIKE '%Saida%' OR e.Nom LIKE '%سعيدة%')
-        ORDER BY e.IDetablissement ASC
-    ");
-    $stmt->execute();
-    $etabs = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    if (empty($etabs)) {
-        echo "No result. Trying IDDFEP=20...\n";
-        $stmt2 = $db->prepare("
-            SELECT e.IDetablissement, e.Nom, e.nomUser, e.MotDePass, e.IDDFEP, e.activee,
-                   nef.IDNature
-            FROM etablissement e
-            INNER JOIN nature_etsf nef ON e.IDNature_etsF = nef.IDNature_etsF
-            WHERE nef.IDNature = 4 AND e.IDDFEP = 20
-        ");
-        $stmt2->execute();
-        $etabs = $stmt2->fetchAll(PDO::FETCH_ASSOC);
-    }
-    foreach ($etabs as $e) {
-        $passDisplay = strlen($e['MotDePass'] ?? '') > 5 
-            ? (str_starts_with($e['MotDePass'], '$2y$') ? '[HASHED]' : $e['MotDePass'])
-            : '(empty)';
-        echo "IDetablissement={$e['IDetablissement']} | Nom={$e['Nom']} | nomUser={$e['nomUser']} | MotDePass={$passDisplay} | IDDFEP={$e['IDDFEP']} | activee={$e['activee']}\n";
-    }
+    if ($action === 'show_raw') {
+        // Show raw (unmasked) password values
+        echo "=== RAW MotDePass for Saida (IDetablissement=375) ===\n";
+        $r = $db->query("SELECT IDetablissement, nomUser, MotDePass FROM etablissement WHERE IDetablissement=375")->fetch(PDO::FETCH_ASSOC);
+        echo "nomUser={$r['nomUser']} | RAW_MotDePass=" . ($r['MotDePass'] ?: '(empty)') . "\n";
 
-    echo "\n=== Utilisateur passwords for nature 4 (DFEP secret codes) ===\n";
-    $uStmt = $db->query("SELECT IDUtilisateur, NomUser, Nom, MotPass FROM utilisateur WHERE IDNature = 4 ORDER BY IDUtilisateur ASC");
-    $users = $uStmt->fetchAll(PDO::FETCH_ASSOC);
-    foreach ($users as $u) {
-        $passDisplay = strlen($u['MotPass'] ?? '') > 5
-            ? (str_starts_with($u['MotPass'], '$2y$') ? '[HASHED]' : $u['MotPass'])
-            : '(empty)';
-        echo "ID={$u['IDUtilisateur']} | NomUser={$u['NomUser']} | Nom={$u['Nom']} | MotPass={$passDisplay}\n";
+        echo "\n=== RAW MotPass for all DFEP utilisateurs ===\n";
+        $users = $db->query("SELECT IDUtilisateur, NomUser, MotPass FROM utilisateur WHERE IDNature=4 ORDER BY IDUtilisateur")->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($users as $u) {
+            echo "ID={$u['IDUtilisateur']} | NomUser={$u['NomUser']} | RAW_MotPass=" . ($u['MotPass'] ?: '(empty)') . "\n";
+        }
+
+    } elseif ($action === 'reset') {
+        // Reset Saida DFEP password and DFEPS secret code to known values
+        $newEtabPass   = password_hash('saida2024', PASSWORD_BCRYPT, ['cost' => 12]);
+        $newSecretDFEPS = password_hash('dfeps2024', PASSWORD_BCRYPT, ['cost' => 12]);
+
+        // Reset institution password for Saida (IDetablissement=375)
+        $stmt = $db->prepare("UPDATE etablissement SET MotDePass=? WHERE IDetablissement=375");
+        $stmt->execute([$newEtabPass]);
+        echo "✓ Saida institution password reset to: saida2024\n";
+
+        // Reset DFEPS utilisateur secret code
+        $stmt2 = $db->prepare("UPDATE utilisateur SET MotPass=? WHERE NomUser='DFEPS'");
+        $stmt2->execute([$newSecretDFEPS]);
+        echo "✓ DFEPS secret code reset to: dfeps2024\n";
+
+        echo "\n=== Login Credentials for Saida DFEP ===\n";
+        echo "Type: Etablissement\n";
+        echo "Username (nomUser): 2000\n";
+        echo "Password: saida2024\n";
+        echo "Secret Code: dfeps2024\n";
+        echo "\nPlease test at: https://test.tassyir.dz/login\n";
+
+    } else {
+        echo "Usage:\n";
+        echo "  ?action=show_raw  — Show raw password values\n";
+        echo "  ?action=reset     — Reset Saida password to 'saida2024' and DFEPS code to 'dfeps2024'\n";
+        echo "\n";
+        echo "Saida IDetablissement: 375\n";
+        echo "Saida nomUser: 2000\n";
+        echo "All passwords are currently [HASHED]\n";
     }
 
 } catch (\Throwable $e) {
