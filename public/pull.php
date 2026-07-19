@@ -61,7 +61,10 @@ $files = [
     'resources/views/admin/modules/documents.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/modules/documents.blade.php',
     'resources/views/admin/modules/print_template.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/modules/print_template.blade.php',
     'resources/views/layouts/main.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/layouts/main.blade.php',
-    'public/test_user.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/test_user.php'
+    'public/test_user.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/test_user.php',
+    'resources/views/admin/diplomes/print.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/diplomes/print.blade.php',
+    'resources/views/admin/diplomes/print_batch.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/diplomes/print_batch.blade.php',
+    'resources/views/admin/diplomes/pdf.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/diplomes/pdf.blade.php'
 ];
 
 foreach ($files as $localPath => $remoteUrl) {

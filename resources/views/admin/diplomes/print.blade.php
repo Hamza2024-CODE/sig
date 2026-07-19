@@ -5,6 +5,13 @@
 /** @var array $d */
 $d = $d ?? [];
 $settings = \App\Helpers\TakwinHelper::getSettings();
+
+// Check if this is a BEP certificate (Vocational Education)
+$isBEP = (str_contains(strtolower($d['type_diplome_fr'] ?? ''), 'brevet d\'enseignement professionnel') 
+       || str_contains(strtolower($d['type_diplome_fr'] ?? ''), 'enseignement professionnel')
+       || str_contains($d['type_diplome_ar'] ?? '', 'التعليم المهني')
+       || (isset($d['niveau_qualification']) && str_contains($d['niveau_qualification'], 'التعليم المهني'))
+);
 ?>
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;600;700&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
 
@@ -300,11 +307,11 @@ $settings = \App\Helpers\TakwinHelper::getSettings();
     }
 
     /* Exact Line-by-Line Vertical Offsets */
-    .bio-line-ar-1, .bio-line-fr-1 { top: 96mm; }
-    .bio-line-ar-2, .bio-line-fr-2 { top: 106mm; }
-    .bio-line-ar-3, .bio-line-fr-3 { top: 116mm; }
-    .bio-line-fr-4 { top: 126mm; }
-    .bio-line-fr-5 { top: 136mm; }
+    .bio-line-ar-1, .bio-line-fr-1 { top: <?= $isBEP ? '84mm' : '96mm' ?>; }
+    .bio-line-ar-2, .bio-line-fr-2 { top: <?= $isBEP ? '94mm' : '106mm' ?>; }
+    .bio-line-ar-3, .bio-line-fr-3 { top: <?= $isBEP ? '104mm' : '116mm' ?>; }
+    .bio-line-fr-4 { top: <?= $isBEP ? '114mm' : '126mm' ?>; }
+    .bio-line-fr-5 { top: <?= $isBEP ? '124mm' : '136mm' ?>; }
 
     /* ═══ QR CODE CONTAINER ════════════════════════════════════════════ */
     .qr-absolute-container {
@@ -469,15 +476,25 @@ $settings = \App\Helpers\TakwinHelper::getSettings();
             </div>
 
             <!-- ── TITLE ───────────────────────────────────────────── -->
-            <div class="main-title"><?= htmlspecialchars($d['type_diplome_ar'] ?? 'شهادة تقني سام') ?></div>
+            @if (!$isBEP)
+                <div class="main-title"><?= htmlspecialchars($d['type_diplome_ar'] ?? 'شهادة تقني سام') ?></div>
+            @else
+                <div class="main-title-bep-spacer" style="height: 48px;"></div>
+            @endif
 
             <!-- ── ARABIC PREAMBLE ──────────────────────── -->
-            <div class="arabic-preamble">
+            <div class="arabic-preamble" style="<?= $isBEP ? 'top: 50mm;' : '' ?>">
                 <div class="preamble-head">إن وزير التكوين و التعليم المهنيين</div>
                 <div class="preamble-body">
-                    بمقتضى المرسوم التنفيذي رقم 16-282 المؤرخ في 2 صفر عام 1438 الموافق لـ 2 نوفمبر 2016 والذي يحدد نظام التكوين المهني الأولي والشهادات المتوجة له<br>
-                    بمقتضى القرار المؤرخ في 23 ربيع الأول عام 1439 الموافق لـ 12 ديسمبر 2017 الذي يحدد شروط وكيفيات تسليم الشهادات المتوجة للتكوين المهني الأولي<br>
-                    بناءا على محضر لجنة مداولات نهاية التكوين رقم : <?= htmlspecialchars($d['num_deliberation'] ?? '31') ?> المؤرخ في : <?= htmlspecialchars($d['date_deliberation_ar'] ?? '') ?>
+                    @if ($isBEP)
+                        بمقتضى المرسوم التنفيذي رقم 17-212 المؤرخ في 26 شوال 1438 الموافق 20 يوليو 2017، الذي يحدد كيفيات إحداث الشهادات المتوجة لأطوار التعليم المهني<br>
+                        بمقتضى القرار الوزاري رقم 102 المؤرخ 8 جمادى الآخرة عام 1442 الموافق 31 جانفي سنة 2021، الذي يحدد شروط وكيفيات تنظيم و تسليم الشهادات المتوجة لأطوار التعليم المهني و كذا نماذجها<br>
+                        بناءا على محضر لجنة المداولات رقم : <?= htmlspecialchars($d['num_deliberation'] ?? '1') ?> المؤرخ في : <?= htmlspecialchars($d['date_deliberation_ar'] ?? '') ?>
+                    @else
+                        بمقتضى المرسوم التنفيذي رقم 16-282 المؤرخ في 2 صفر عام 1438 الموافق لـ 2 نوفمبر 2016 والذي يحدد نظام التكوين المهني الأولي والشهادات المتوجة له<br>
+                        بمقتضى القرار المؤرخ في 23 ربيع الأول عام 1439 الموافق لـ 12 ديسمبر 2017 الذي يحدد شروط وكيفيات تسليم الشهادات المتوجة للتكوين المهني الأولي<br>
+                        بناءا على محضر لجنة مداولات نهاية التكوين رقم : <?= htmlspecialchars($d['num_deliberation'] ?? '31') ?> المؤرخ في : <?= htmlspecialchars($d['date_deliberation_ar'] ?? '') ?>
+                    @endif
                 </div>
             </div>
 
@@ -491,7 +508,19 @@ $settings = \App\Helpers\TakwinHelper::getSettings();
             </div>
 
             <div class="bio-line-ar-3">
-                حرر بـ : <strong><?= htmlspecialchars($d['wilaya_ar'] ?? '') ?></strong> في : <strong><?= htmlspecialchars($d['date_emission_ar'] ?? '') ?></strong>
+                <?php
+                    $city = '';
+                    if (!empty($d['etab_ar'])) {
+                        if (str_contains($d['etab_ar'], 'العلمة')) {
+                            $city = 'العلمة_سطيف';
+                        } else {
+                            $city = $d['wilaya_ar'] ?? '';
+                        }
+                    } else {
+                        $city = $d['wilaya_ar'] ?? '';
+                    }
+                ?>
+                حرر بـ : <strong><?= htmlspecialchars($city) ?></strong> في : <strong><?= htmlspecialchars($d['date_emission_ar'] ?? '') ?></strong>
             </div>
 
             <!-- ── FRENCH BIOGRAPHICAL DETAILS ───────────────── -->
