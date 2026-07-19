@@ -449,11 +449,22 @@ if (!function_exists('cleanFrenchText')) {
         .diploma-scale-container { width: 297mm !important; height: 210mm !important; }
         .diploma-card { box-shadow: none !important; margin: 0 !important; transform: none !important; }
     }
+
+    /* Print without background helper */
+    body.no-bg .diploma-bg,
+    body.no-bg .diploma-watermark,
+    body.no-bg .diploma-border-outer,
+    body.no-bg .diploma-border-inner {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+    }
 </style>
 
 <!-- Toolbar -->
 <div class="print-toolbar">
-    <button class="btn-print" onclick="window.print()">🖨️ طباعة الشهادة الرسمية</button>
+    <button class="btn-print" onclick="window.print()">🖨️ طباعة بخلفية</button>
+    <button class="btn-print" onclick="printWithoutBg()" style="background: #2563eb; color: #fff; margin-right: 6px;">🖨️ طباعة بدون خلفية</button>
     <button class="btn-close" onclick="window.close()">✕ إغلاق</button>
 </div>
 
@@ -586,6 +597,14 @@ if (!function_exists('cleanFrenchText')) {
 </div>
 
 <script>
+    function printWithoutBg() {
+        document.body.classList.add('no-bg');
+        window.print();
+        setTimeout(function () {
+            document.body.classList.remove('no-bg');
+        }, 1000);
+    }
+
     function adjustScale() {
         const card = document.querySelector('.diploma-card');
         const container = document.querySelector('.diploma-wrapper');
