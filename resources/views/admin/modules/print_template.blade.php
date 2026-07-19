@@ -342,6 +342,7 @@ $titleFr = $titles[$docType]['fr'] ?? 'Document Administratif';
                             3 => 'شهادة التحكم المهني (CMP)',
                             4 => 'تقني (BT)',
                             5 => 'تقني سام (BTS)',
+                            6 => 'تقني سام (BTS)',
                         ];
                         $niveauRaw = $details['spec_niveau'] ?? '';
                         $niveauDisplay = $niveauLabels[(int)$niveauRaw] ?? ($niveauRaw ?: '---');
@@ -562,7 +563,8 @@ $titleFr = $titles[$docType]['fr'] ?? 'Document Administratif';
                     2 => 'شهادة الكفاءة المهنية (CAP)',
                     3 => 'شهادة التحكم المهني (CMP)',
                     4 => 'تقني (BT)',
-                    5 => 'تقني سام (BTS)',
+                    5 => 'تقني سامي (BTS)',
+                    6 => 'تقني سامي (BTS)',
                 ];
                 $nRaw = $details['spec_niveau'] ?? '';
                 $nDisplay = $niveauLabelsDec[(int)$nRaw] ?? ($nRaw ?: '---');
