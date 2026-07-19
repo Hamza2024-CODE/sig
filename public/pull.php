@@ -57,6 +57,7 @@ echo "<h1>Auto-Updating All Modified Files...</h1>";
 
 $files = [
     'app/Http/Controllers/Admin/ModulesController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/ModulesController.php',
+    'app/Http/Controllers/Admin/DiplomeController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/DiplomeController.php',
     'resources/views/admin/modules/documents.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/modules/documents.blade.php',
     'resources/views/admin/modules/print_template.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/modules/print_template.blade.php',
     'resources/views/layouts/main.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/layouts/main.blade.php'
