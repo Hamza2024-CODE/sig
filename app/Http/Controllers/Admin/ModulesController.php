@@ -3009,7 +3009,7 @@ class ModulesController extends Controller {
                     LEFT JOIN offre o ON c.IDOffre = o.IDOffre
                     LEFT JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
                     LEFT JOIN qualification_dplm qd ON sp.IDqualification_dplm = qd.IDqualification_dplm
-                    LEFT JOIN etablissement ef ON o.IDEts_Form = ef.IDEts_Form
+                    LEFT JOIN ets_form ef ON o.IDEts_Form = ef.IDEts_Form
                     LEFT JOIN dfep d ON ef.IDDFEP = d.IDDFEP
                     LEFT JOIN wilaya w ON d.IDWilayaa = w.IDWilayaa
                     LEFT JOIN session se ON o.IDSession = se.IDSession
