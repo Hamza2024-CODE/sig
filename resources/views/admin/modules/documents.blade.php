@@ -375,8 +375,8 @@ $category = $category ?? 'all';
                         <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-2" style="width: 50px; height: 50px;">
                             <i class="fa-solid fa-user-slash fs-4 text-danger animate__animated animate__pulse animate__infinite"></i>
                         </div>
-                        <h6 class="fw-bold text-dark mb-1" style="font-size: 0.85rem;">قرار إسقاط بيداغوجي</h6>
-                        <p class="text-muted small mb-0" style="font-size: 0.72rem;">وثيقة شطب أو إسقاط نهائي للمتربص</p>
+                        <h6 class="fw-bold text-dark mb-1" style="font-size: 0.85rem;">شهادة تكوين - مفصولين</h6>
+                        <p class="text-muted small mb-0" style="font-size: 0.72rem;">شهادة تكوين للمتربصين المفصولين</p>
                     </div>
                 </div>
             </div>
@@ -705,7 +705,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                                 <i class="fa-solid fa-file-pdf text-danger me-1"></i> كشف النقاط
                                             </button>
                                             <button type="button" onclick="generateAndPrintPDF(${user.id}, 'stagiaire', 'decision_isqat')" class="btn btn-sm btn-outline-danger fw-bold py-1 px-2 text-nowrap" style="font-size: 0.72rem;">
-                                                <i class="fa-solid fa-user-slash text-danger me-1"></i> قرار إسقاط
+                                                <i class="fa-solid fa-certificate text-danger me-1"></i> شهادة تكوين
                                             </button>
                                             <button type="button" onclick="generateAndPrintPDF(${user.id}, 'stagiaire', 'basma_mouahada')" class="btn btn-sm btn-outline-info fw-bold py-1 px-2 text-nowrap" style="font-size: 0.72rem;">
                                                 <i class="fa-solid fa-fingerprint text-info me-1"></i> بصمة موحدة
@@ -989,7 +989,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <i class="fa-solid fa-file-pdf text-danger me-1"></i> كشف النقاط
                 </button>
                 <button type="button" onclick="generateAndPrintPDF(${user.id}, 'stagiaire', 'decision_isqat')" class="btn btn-sm btn-outline-danger fw-bold rounded-pill px-3 py-2 mb-2">
-                    <i class="fa-solid fa-user-slash text-danger me-1"></i> قرار إسقاط
+                    <i class="fa-solid fa-certificate text-danger me-1"></i> شهادة تكوين
                 </button>
                 <button type="button" onclick="generateAndPrintPDF(${user.id}, 'stagiaire', 'basma_mouahada')" class="btn btn-sm btn-outline-info fw-bold rounded-pill px-3 py-2 mb-2">
                     <i class="fa-solid fa-fingerprint text-info me-1"></i> بصمة موحدة

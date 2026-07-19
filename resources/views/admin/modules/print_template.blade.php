@@ -55,15 +55,15 @@ $titleFr = $titles[$docType]['fr'] ?? 'Document Administratif';
             color: #1e293b;
         }
         @page {
-            size: A4 <?= $docType === 'decision_isqat' ? 'landscape' : 'portrait' ?>;
+            size: A4 portrait;
             margin: 0;
         }
         .print-container {
             background: white;
-            width: <?= $docType === 'decision_isqat' ? '297mm' : '210mm' ?>; 
-            min-height: <?= $docType === 'decision_isqat' ? '210mm' : '297mm' ?>;
+            width: 210mm; 
+            min-height: 297mm;
             margin: 0 auto;
-            padding: <?= $docType === 'decision_isqat' ? '12mm 15mm' : '18mm 20mm' ?>;
+            padding: 12mm 15mm;
             box-shadow: 0 4px 20px rgba(0,0,0,.12);
             border-radius: 8px;
             position: relative;
@@ -153,7 +153,7 @@ $titleFr = $titles[$docType]['fr'] ?? 'Document Administratif';
 
 <div class="print-container">
     <?php if ($docType === 'decision_isqat'): ?>
-        <div style="border: 2px dashed #000; border-radius: 15px; padding: 25px; min-height: 180mm;">
+        <div style="border: 2px solid #000; border-radius: 0; padding: 20px; min-height: 250mm;">
     <?php endif; ?>
 
     <?php if ($docType !== 'bulletin_notes'): ?>
