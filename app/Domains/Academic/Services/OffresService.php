@@ -36,6 +36,7 @@ class OffresService
         $roleCode = strtolower($currentUser['role_code'] ?? '');
         $etabId = (int)($currentUser['etablissement_id'] ?? 0);
         $dfepId = (int)($currentUser['iddfep'] ?? 0);
+        $isCenterRole = in_array($roleCode, ['etablissement', 'directeur', 'formateur']);
 
         // 1. Resolve header wilaya name
         $wilayaName = $this->repository->getWilayaName($roleCode, $etabId, $dfepId);
@@ -62,7 +63,7 @@ class OffresService
         $scopeParams = [];
 
         $isPrivate = false;
-        if ($etabId > 0) {
+        if ($isCenterRole && $etabId > 0) {
             $etabRow = \Illuminate\Support\Facades\DB::table('etablissement')
                 ->where('IDetablissement', $etabId)
                 ->select('PublPrive')
@@ -70,7 +71,7 @@ class OffresService
             $isPrivate = ((int)($etabRow->PublPrive ?? 0) === 1);
         }
 
-        if (in_array($roleCode, ['etablissement', 'directeur', 'formateur']) && $etabId > 0) {
+        if ($isCenterRole && $etabId > 0) {
             if ($isPrivate) {
                 // Private institution: strictly sees ONLY its own offers via IDEts_Form
                 $whereConditions[] = "o.IDEts_Form = ?";
@@ -209,13 +210,13 @@ class OffresService
         }
         if (!empty($getParams['filter_etab'])) {
             $reqFilter = (int)$getParams['filter_etab'];
-            if ($etabId > 0) {
+            if ($isCenterRole && $etabId > 0) {
                 $etabIds = \App\Support\EtablissementScope::resolve($etabId);
                 abort_if(!in_array($reqFilter, $etabIds), 403, 'غير مصرح لك بالوصول لهذه المؤسسة.');
             }
             $modeConds[] = "o.IDEts_Form = ?";
             $modeParams[] = $reqFilter;
-        } elseif ($etabId > 0) {
+        } elseif ($isCenterRole && $etabId > 0) {
             if ($isPrivate) {
                 $modeConds[] = "o.IDEts_Form = ?";
                 $modeParams[] = $etabId;
@@ -246,13 +247,13 @@ class OffresService
         }
         if (!empty($getParams['filter_etab'])) {
             $reqFilter = (int)$getParams['filter_etab'];
-            if ($etabId > 0) {
+            if ($isCenterRole && $etabId > 0) {
                 $etabIds = \App\Support\EtablissementScope::resolve($etabId);
                 abort_if(!in_array($reqFilter, $etabIds), 403, 'غير مصرح لك بالوصول لهذه المؤسسة.');
             }
             $sessConds[] = "o.IDEts_Form = ?";
             $sessParams[] = $reqFilter;
-        } elseif ($etabId > 0) {
+        } elseif ($isCenterRole && $etabId > 0) {
             if ($isPrivate) {
                 $sessConds[] = "o.IDEts_Form = ?";
                 $sessParams[] = $etabId;
