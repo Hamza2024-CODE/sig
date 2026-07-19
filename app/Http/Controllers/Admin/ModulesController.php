@@ -1245,18 +1245,17 @@ class ModulesController extends Controller {
                 $stats = ['total' => 0, 'femmes' => 0, 'hommes' => 0, 'centres' => 0];
                 $list  = [];
 
-                // Count active trainees — join ets_form to count unique real centers
+                // Count active trainees — use o.IDEts_Form directly
                 $stmtT = $this->db->prepare("
                     SELECT
                         COUNT(DISTINCT a.IDapprenant) AS total,
                         COUNT(DISTINCT CASE WHEN c.Civ = 2 THEN a.IDapprenant END) AS femmes,
-                        COUNT(DISTINCT COALESCE(ets.IDetablissement, o.IDEts_Form)) AS centres
+                        COUNT(DISTINCT o.IDEts_Form) AS centres
                     FROM apprenant a
                     INNER JOIN section s   ON a.IDSection  = s.IDSection
                     INNER JOIN offre o     ON s.IDOffre    = o.IDOffre
                     INNER JOIN session sess ON o.IDSession = sess.IDSession
                     INNER JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
-                    LEFT  JOIN ets_form ets ON o.IDEts_Form = ets.IDEts_Form
                     LEFT  JOIN candidat c  ON a.IDCandidat = c.IDCandidat
                     LEFT  JOIN apprenant_fin af ON a.IDapprenant = af.IDapprenant
                     WHERE a.statut = 'actif'
@@ -1271,8 +1270,7 @@ class ModulesController extends Controller {
                 $stats['hommes']  = max(0, $stats['total'] - $stats['femmes']);
                 $stats['centres'] = (int)($row['centres'] ?? 0);
 
-                // Per-center list — LEFT JOIN ets_form to correctly resolve IDEts_Form → IDetablissement
-                // COALESCE fallback: if no ets_form entry, use o.IDEts_Form directly (old behaviour)
+                // Per-center list — use o.IDEts_Form directly (no ets_form mapping needed)
                 $stmt = $this->db->prepare("
                     SELECT ef.IDetablissement AS id_etab,
                            ef.Nom             AS etab_nom,
@@ -1286,7 +1284,7 @@ class ModulesController extends Controller {
                     FROM etablissement ef
                     LEFT JOIN wilaya w ON ef.IDDFEP = w.IDWilayaa
                     LEFT JOIN (
-                        SELECT COALESCE(ets.IDetablissement, o.IDEts_Form) AS etab_id,
+                        SELECT o.IDEts_Form AS etab_id,
                                COUNT(DISTINCT a.IDapprenant) AS total,
                                COUNT(DISTINCT CASE WHEN c.Civ = 2 THEN a.IDapprenant END) AS femmes
                         FROM apprenant a
@@ -1294,14 +1292,13 @@ class ModulesController extends Controller {
                         INNER JOIN offre o     ON s.IDOffre    = o.IDOffre
                         INNER JOIN session sess ON o.IDSession = sess.IDSession
                         INNER JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
-                        LEFT  JOIN ets_form ets ON o.IDEts_Form = ets.IDEts_Form
                         LEFT  JOIN candidat c  ON a.IDCandidat = c.IDCandidat
                         LEFT  JOIN apprenant_fin af ON a.IDapprenant = af.IDapprenant
                         WHERE a.statut = 'actif'
                           AND af.IDapprenant IS NULL
                           AND DATE_ADD(sess.DateD, INTERVAL COALESCE(NULLIF(sp.dureeM, 0), sp.NbrSem * 6, 24) MONTH) >= CURRENT_DATE()
                           AND $ofWhere
-                        GROUP BY COALESCE(ets.IDetablissement, o.IDEts_Form)
+                        GROUP BY o.IDEts_Form
                     ) agg ON ef.IDetablissement = agg.etab_id
                     WHERE $efWhere
                     ORDER BY total DESC
