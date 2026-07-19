@@ -91,6 +91,7 @@ class DiplomeController extends Controller
         JOIN apprenant_fin f ON f.IDapprenant = a.IDapprenant
         JOIN section s     ON a.IDSection = s.IDSection
         JOIN offre o       ON s.IDOffre = o.IDOffre
+        JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
     ";
 
     /**
@@ -163,7 +164,7 @@ class DiplomeController extends Controller
             $params[] = $filterSpec;
         }
         if ($filterQualif > 0) {
-            $where[] = "o.IDqualification_dplm = ?";
+            $where[] = "COALESCE(NULLIF(o.IDqualification_dplm, 0), NULLIF(sp.IDqualification_dplm, 0)) = ?";
             $params[] = $filterQualif;
         }
 
@@ -406,7 +407,7 @@ class DiplomeController extends Controller
             $params[] = $filterSpec;
         }
         if ($filterQualif > 0) {
-            $where[] = "o.IDqualification_dplm = ?";
+            $where[] = "COALESCE(NULLIF(o.IDqualification_dplm, 0), NULLIF(sp.IDqualification_dplm, 0)) = ?";
             $params[] = $filterQualif;
         }
 
