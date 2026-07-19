@@ -61,14 +61,16 @@ class OffresService
         $whereConditions = [];
         $scopeParams = [];
 
-        if (in_array($roleCode, ['etablissement', 'directeur', 'formateur']) && $etabId > 0) {
-            // Check if this is a private institution
+        $isPrivate = false;
+        if ($etabId > 0) {
             $etabRow = \Illuminate\Support\Facades\DB::table('etablissement')
                 ->where('IDetablissement', $etabId)
                 ->select('PublPrive')
                 ->first();
             $isPrivate = ((int)($etabRow->PublPrive ?? 0) === 1);
+        }
 
+        if (in_array($roleCode, ['etablissement', 'directeur', 'formateur']) && $etabId > 0) {
             if ($isPrivate) {
                 // Private institution: strictly sees ONLY its own offers via IDEts_Form
                 $whereConditions[] = "o.IDEts_Form = ?";

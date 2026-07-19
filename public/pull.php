@@ -63,7 +63,8 @@ $files = [
     'resources/views/layouts/main.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/layouts/main.blade.php',
     'resources/views/admin/diplomes/print.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/diplomes/print.blade.php',
     'resources/views/admin/diplomes/print_batch.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/diplomes/print_batch.blade.php',
-    'resources/views/admin/diplomes/pdf.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/diplomes/pdf.blade.php'
+    'resources/views/admin/diplomes/pdf.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/diplomes/pdf.blade.php',
+    'app/Domains/Academic/Services/OffresService.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Domains/Academic/Services/OffresService.php'
 ];
 
 foreach ($files as $localPath => $remoteUrl) {
