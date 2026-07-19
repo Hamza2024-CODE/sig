@@ -100,7 +100,7 @@ class OffresService
         // Apply GET HTTP parameters filters
         if (!empty($getParams['filter_etablissement'])) {
             $reqFilter = (int)$getParams['filter_etablissement'];
-            if ($etabId > 0) {
+            if ($isCenterRole && $etabId > 0) {
                 $etabIds = \App\Support\EtablissementScope::resolve($etabId);
                 abort_if(!in_array($reqFilter, $etabIds), 403, 'غير مصرح لك بالوصول لهذه المؤسسة.');
             }
@@ -108,7 +108,7 @@ class OffresService
             $scopeParams[] = $reqFilter;
         } elseif (!empty($getParams['filter_etab'])) {
             $reqFilter = (int)$getParams['filter_etab'];
-            if ($etabId > 0) {
+            if ($isCenterRole && $etabId > 0) {
                 $etabIds = \App\Support\EtablissementScope::resolve($etabId);
                 abort_if(!in_array($reqFilter, $etabIds), 403, 'غير مصرح لك بالوصول لهذه المؤسسة.');
             }
