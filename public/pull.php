@@ -59,7 +59,8 @@ $files = [
     'app/Domains/Academic/Repositories/OffresRepository.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Domains/Academic/Repositories/OffresRepository.php',
     'app/Domains/Academic/Services/OffresService.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Domains/Academic/Services/OffresService.php',
     'public/report_private_offers.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/report_private_offers.php',
-    'public/swap_bacha_taj.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/swap_bacha_taj.php'
+    'public/swap_bacha_taj.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/swap_bacha_taj.php',
+    'public/check_hfsql_data.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/check_hfsql_data.php'
 ];
 
 foreach ($files as $localPath => $remoteUrl) {
