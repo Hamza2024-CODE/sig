@@ -35,6 +35,15 @@ try {
 
     echo "✓ تم تحديث جدول الأقسام (section): تم تحويل $d صف إلى التاج الأزرق، و $e صف إلى مدرسة الباشا.<br>";
 
+    // 3. Correct parent for etab 1685 (معهد الآفاق الإدريسية)
+    $g = DB::table('etablissement')
+        ->where('IDetablissement', 1685)
+        ->update([
+            'DeIDetablissementRatache' => 71,
+            'DeIDetablissementRatacheInsfp' => 0
+        ]);
+    echo "✓ تم تصحيح ربط معهد الآفاق الإدريسية (1685) بالمركز العمومي بالإدريسية (71).<br>";
+
     DB::statement('SET FOREIGN_KEY_CHECKS=1;');
     DB::commit();
 
