@@ -408,15 +408,26 @@ class LoginController extends Controller
                     $isApprenLogin = false;
                     $matchedUtilisateur = null;
                     $empHead = null;
+
+                    // Fetch all Utilisateur records for this nature
+                    $stmtUsers = $db->prepare("SELECT * FROM utilisateur WHERE IDNature = ?");
+                    $stmtUsers->execute([$etab['nature_id']]);
+                    $natureUsers = $stmtUsers->fetchAll(\PDO::FETCH_ASSOC);
+
+                    // Find the manager user (admin = 1) for fallback if no secret code or manager code is specified
+                    $managerUser = null;
+                    foreach ($natureUsers as $nu) {
+                        if ((int)($nu['admin'] ?? 0) === 1) {
+                            $managerUser = $nu;
+                            break;
+                        }
+                    }
  
-                    if ($isEtabPasswordValid) {
-                        // Fetch all Utilisateur records for this nature
-                        $stmtUsers = $db->prepare("SELECT * FROM utilisateur WHERE IDNature = ?");
-                        $stmtUsers->execute([$etab['nature_id']]);
-                        $natureUsers = $stmtUsers->fetchAll(\PDO::FETCH_ASSOC);
- 
+                    if (!$isEtabPasswordValid) {
+                        // FALLBACK: Check if the entered password itself is a department secret code
                         foreach ($natureUsers as $nu) {
-                            if (password_verify($secretCode, $nu['MotPass']) || $secretCode === $nu['MotPass']) {
+                            if (password_verify($password, $nu['MotPass']) || $password === $nu['MotPass']) {
+                                $isEtabPasswordValid = true;
                                 $isSecretCodeValid = true;
                                 $matchedUtilisateur = $nu;
                                 if (in_array(strtolower($nu['NomUser']), ['sdtpa', 'sdtpap'])) {
@@ -425,18 +436,8 @@ class LoginController extends Controller
                                 break;
                             }
                         }
- 
-                        if (!$isSecretCodeValid) {
-                            foreach ($natureUsers as $nu) {
-                                if (password_verify(strtolower($secretCode), $nu['MotPass']) || strtolower($secretCode) === strtolower($nu['MotPass'])
-                                    || password_verify(strtoupper($secretCode), $nu['MotPass']) || strtoupper($secretCode) === strtoupper($nu['MotPass'])) {
-                                    $isSecretCodeCaseMismatch = true;
-                                    break;
-                                }
-                            }
-                        }
- 
-                        // If not matched, check if it's the Apprenticeship Head's personal code
+
+                        // Check if password matches apprenticeship head code
                         if (!$isSecretCodeValid) {
                             $etabId = $etab['IDetablissement'];
                             $empHead = DB::table('encadrement')
@@ -446,15 +447,63 @@ class LoginController extends Controller
                                 })
                                 ->where('TachesPrincipale', 'LIKE', '%رئيس مصلحة التمهين%')
                                 ->first();
- 
+
                             if ($empHead) {
-                                if (password_verify($secretCode, $empHead->MotDePass) || $secretCode === $empHead->MotDePass || $secretCode === "dry:@{$empHead->IDEncadrement}@:{$empHead->IDEncadrement}") {
+                                if (password_verify($password, $empHead->MotDePass) || $password === $empHead->MotDePass || $password === "dry:@{$empHead->IDEncadrement}@:{$empHead->IDEncadrement}") {
+                                    $isEtabPasswordValid = true;
                                     $isSecretCodeValid = true;
                                     $isApprenLogin = true;
-                                } else {
-                                    if (password_verify(strtolower($secretCode), $empHead->MotDePass) || strtolower($secretCode) === strtolower($empHead->MotDePass)
-                                        || password_verify(strtoupper($secretCode), $empHead->MotDePass) || strtoupper($secretCode) === strtoupper($empHead->MotDePass)) {
+                                }
+                            }
+                        }
+                    } else {
+                        // If establishment password is valid, check the secretCode field
+                        if (empty($secretCode)) {
+                            // If empty, default to Manager (admin = 1)
+                            $isSecretCodeValid = true;
+                            $matchedUtilisateur = $managerUser;
+                        } else {
+                            foreach ($natureUsers as $nu) {
+                                if (password_verify($secretCode, $nu['MotPass']) || $secretCode === $nu['MotPass']) {
+                                    $isSecretCodeValid = true;
+                                    $matchedUtilisateur = $nu;
+                                    if (in_array(strtolower($nu['NomUser']), ['sdtpa', 'sdtpap'])) {
+                                        $isApprenLogin = true;
+                                    }
+                                    break;
+                                }
+                            }
+ 
+                            if (!$isSecretCodeValid) {
+                                foreach ($natureUsers as $nu) {
+                                    if (password_verify(strtolower($secretCode), $nu['MotPass']) || strtolower($secretCode) === strtolower($nu['MotPass'])
+                                        || password_verify(strtoupper($secretCode), $nu['MotPass']) || strtoupper($secretCode) === strtoupper($nu['MotPass'])) {
                                         $isSecretCodeCaseMismatch = true;
+                                        break;
+                                    }
+                                }
+                            }
+ 
+                            // If not matched, check if it's the Apprenticeship Head's personal code
+                            if (!$isSecretCodeValid) {
+                                $etabId = $etab['IDetablissement'];
+                                $empHead = DB::table('encadrement')
+                                    ->where(function($q) use ($etabId) {
+                                        $q->where('IDEts_Form', $etabId)
+                                          ->orWhere('IDetablissement', $etabId);
+                                    })
+                                    ->where('TachesPrincipale', 'LIKE', '%رئيس مصلحة التمهين%')
+                                    ->first();
+ 
+                                if ($empHead) {
+                                    if (password_verify($secretCode, $empHead->MotDePass) || $secretCode === $empHead->MotDePass || $secretCode === "dry:@{$empHead->IDEncadrement}@:{$empHead->IDEncadrement}") {
+                                        $isSecretCodeValid = true;
+                                        $isApprenLogin = true;
+                                    } else {
+                                        if (password_verify(strtolower($secretCode), $empHead->MotDePass) || strtolower($secretCode) === strtolower($empHead->MotDePass)
+                                            || password_verify(strtoupper($secretCode), $empHead->MotDePass) || strtoupper($secretCode) === strtoupper($empHead->MotDePass)) {
+                                            $isSecretCodeCaseMismatch = true;
+                                        }
                                     }
                                 }
                             }

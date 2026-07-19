@@ -412,10 +412,10 @@
             document.getElementById('username-icon').className = "fa-solid fa-school";
             usernameInput.placeholder = "اسم مستخدم المؤسسة (Etablissement)";
             secretGroup.classList.remove('d-none');
-            secretInput.setAttribute('required', 'required');
+            secretInput.removeAttribute('required');
             document.getElementById('demo-credentials-text').innerHTML = `
                 <span class="badge mb-2 px-2.5 py-1.5 bg-primary-100 text-primary-700 rounded-pill">دخول المؤسسات / Accès Etablissements</span><br>
-                يرجى إدخال اسم مستخدم المؤسسة، كلمة مرورها والرمز السري للمستخدم.
+                يرجى إدخال اسم مستخدم المؤسسة، وكلمة المرور (أو الرمز السري للمصلحة مباشرة في حقل كلمة المرور).
             `;
         } else if (type === 'apprenant') {
             if (subtitle) subtitle.innerText = "بوابة دخول المتربصين";
