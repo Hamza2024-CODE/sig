@@ -61,6 +61,25 @@ if ($background) {
         }
     }
 }
+
+if (!function_exists('cleanFrenchText')) {
+    function cleanFrenchText($text) {
+        if (empty($text)) return '';
+        // Map common broken sequences
+        $text = str_replace(
+            ['Option-á:', 'Option-â:', 'Option-ã:', 'Option-ä:', 'Option-à:', 'Option-æ:', 'Option-¦:', 'Option-:R', 'Option-: r'],
+            'Option :',
+            $text
+        );
+        $text = str_replace(
+            ['R-¦seaux', 'R-seaux', 'R-¦seaux', 'R-Â¦seaux', 'R-┬«seaux', 'R-┬«seaux', 'R-¬seaux'],
+            'Réseaux',
+            $text
+        );
+        $text = preg_replace('/Option[-–\s]*[^:]*:/i', 'Option :', $text);
+        return $text;
+    }
+}
 ?>
 
 @foreach ($diplomas as $d)
@@ -159,7 +178,7 @@ $isBEP = (str_contains(strtolower($d['type_diplome_fr'] ?? ''), 'brevet d\'ensei
                     Nom : <strong><?= htmlspecialchars(strtoupper($d['nom_fr'] ?? '')) ?></strong><br>
                     Prénom : <strong><?= htmlspecialchars(ucfirst($d['prenom_fr'] ?? '')) ?></strong><br>
                     Date & Lieu de naissance : <strong><?= htmlspecialchars($d['date_naissance_fr'] ?? '') ?> &nbsp; <?= htmlspecialchars(strtoupper($d['lieu_naissance_fr'] ?? '')) ?></strong><br>
-                    Spécialité : <strong><?= htmlspecialchars($d['spec_fr'] ?? '') ?></strong><br>
+                    Spécialité : <strong><?= htmlspecialchars(cleanFrenchText($d['spec_fr'] ?? '')) ?></strong><br>
                     Diplôme : <strong><?= htmlspecialchars($d['type_diplome_fr'] ?? '') ?></strong>
                 </td>
             </tr>

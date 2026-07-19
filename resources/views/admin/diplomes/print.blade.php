@@ -12,6 +12,25 @@ $isBEP = (str_contains(strtolower($d['type_diplome_fr'] ?? ''), 'brevet d\'ensei
        || str_contains($d['type_diplome_ar'] ?? '', 'التعليم المهني')
        || (isset($d['niveau_qualification']) && str_contains($d['niveau_qualification'], 'التعليم المهني'))
 );
+
+if (!function_exists('cleanFrenchText')) {
+    function cleanFrenchText($text) {
+        if (empty($text)) return '';
+        // Map common broken sequences
+        $text = str_replace(
+            ['Option-á:', 'Option-â:', 'Option-ã:', 'Option-ä:', 'Option-à:', 'Option-æ:', 'Option-¦:', 'Option-:R', 'Option-: r'],
+            'Option :',
+            $text
+        );
+        $text = str_replace(
+            ['R-¦seaux', 'R-seaux', 'R-¦seaux', 'R-Â¦seaux', 'R-┬«seaux', 'R-┬«seaux', 'R-¬seaux'],
+            'Réseaux',
+            $text
+        );
+        $text = preg_replace('/Option[-–\s]*[^:]*:/i', 'Option :', $text);
+        return $text;
+    }
+}
 ?>
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;600;700&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
 
@@ -252,7 +271,7 @@ $isBEP = (str_contains(strtolower($d['type_diplome_fr'] ?? ''), 'brevet d\'ensei
     /* ═══ ARABIC PREAMBLE ══════════════════════════════════════════════ */
     .arabic-preamble {
         position: absolute;
-        top: 61mm;
+        top: <?= $isBEP ? '42mm' : '61mm' ?>;
         right: 15mm;
         width: 184mm;
         z-index: 10;
@@ -307,11 +326,11 @@ $isBEP = (str_contains(strtolower($d['type_diplome_fr'] ?? ''), 'brevet d\'ensei
     }
 
     /* Exact Line-by-Line Vertical Offsets */
-    .bio-line-ar-1, .bio-line-fr-1 { top: <?= $isBEP ? '84mm' : '96mm' ?>; }
-    .bio-line-ar-2, .bio-line-fr-2 { top: <?= $isBEP ? '94mm' : '106mm' ?>; }
-    .bio-line-ar-3, .bio-line-fr-3 { top: <?= $isBEP ? '104mm' : '116mm' ?>; }
-    .bio-line-fr-4 { top: <?= $isBEP ? '114mm' : '126mm' ?>; }
-    .bio-line-fr-5 { top: <?= $isBEP ? '124mm' : '136mm' ?>; }
+    .bio-line-ar-1, .bio-line-fr-1 { top: 96mm; }
+    .bio-line-ar-2, .bio-line-fr-2 { top: 106mm; }
+    .bio-line-ar-3, .bio-line-fr-3 { top: 116mm; }
+    .bio-line-fr-4 { top: 126mm; }
+    .bio-line-fr-5 { top: 136mm; }
 
     /* ═══ QR CODE CONTAINER ════════════════════════════════════════════ */
     .qr-absolute-container {
@@ -483,7 +502,7 @@ $isBEP = (str_contains(strtolower($d['type_diplome_fr'] ?? ''), 'brevet d\'ensei
             @endif
 
             <!-- ── ARABIC PREAMBLE ──────────────────────── -->
-            <div class="arabic-preamble" style="<?= $isBEP ? 'top: 50mm;' : '' ?>">
+            <div class="arabic-preamble">
                 <div class="preamble-head">إن وزير التكوين و التعليم المهنيين</div>
                 <div class="preamble-body">
                     @if ($isBEP)
@@ -537,7 +556,7 @@ $isBEP = (str_contains(strtolower($d['type_diplome_fr'] ?? ''), 'brevet d\'ensei
                 Diplôme : <strong><?= htmlspecialchars($d['type_diplome_fr'] ?? 'Brevet de technicien supérieur') ?></strong>
             </div>
             <div class="bio-line-fr-5">
-                Spécialité : <strong><?= htmlspecialchars($d['spec_fr'] ?? '') ?></strong>
+                Spécialité : <strong><?= htmlspecialchars(cleanFrenchText($d['spec_fr'] ?? '')) ?></strong>
             </div>
 
             <!-- ── QR CODE (left column bottom) ───────────────── -->

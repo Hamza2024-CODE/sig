@@ -5,6 +5,25 @@
 /** @var array $diplomas */
 /** @var int   $count   */
 $settings = \App\Helpers\TakwinHelper::getSettings();
+
+if (!function_exists('cleanFrenchText')) {
+    function cleanFrenchText($text) {
+        if (empty($text)) return '';
+        // Map common broken sequences
+        $text = str_replace(
+            ['Option-á:', 'Option-â:', 'Option-ã:', 'Option-ä:', 'Option-à:', 'Option-æ:', 'Option-¦:', 'Option-:R', 'Option-: r'],
+            'Option :',
+            $text
+        );
+        $text = str_replace(
+            ['R-¦seaux', 'R-seaux', 'R-¦seaux', 'R-Â¦seaux', 'R-┬«seaux', 'R-┬«seaux', 'R-¬seaux'],
+            'Réseaux',
+            $text
+        );
+        $text = preg_replace('/Option[-–\s]*[^:]*:/i', 'Option :', $text);
+        return $text;
+    }
+}
 ?>
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;600;700&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
 
@@ -335,12 +354,7 @@ $settings = \App\Helpers\TakwinHelper::getSettings();
 
     /* ═══ BEP (Vocational Education) Specific Styling Overrides ════════ */
     .diploma-page.is-bep .main-title { visibility: hidden; height: 10px; }
-    .diploma-page.is-bep .arabic-preamble { top: 72px; }
-    .diploma-page.is-bep .bio-line-ar-1, .diploma-page.is-bep .bio-line-fr-1 { top: 122px; }
-    .diploma-page.is-bep .bio-line-ar-2, .diploma-page.is-bep .bio-line-fr-2 { top: 142px; }
-    .diploma-page.is-bep .bio-line-ar-3, .diploma-page.is-bep .bio-line-fr-3 { top: 162px; }
-    .diploma-page.is-bep .bio-line-fr-4 { top: 182px; }
-    .diploma-page.is-bep .bio-line-fr-5 { top: 196px; }
+    .diploma-page.is-bep .arabic-preamble { top: 68px; }
 
     /* ═══ SIGNATURES ══════════════════════════════════════════════════════ */
     .sig-right {
@@ -533,7 +547,8 @@ $isBEP = (str_contains(strtolower($d['type_diplome_fr'] ?? ''), 'brevet d\'ensei
     <div class="bio-line-fr-1">Nom : <strong><?= htmlspecialchars(strtoupper($d['nom_fr'] ?? '')) ?></strong></div>
     <div class="bio-line-fr-2">Prénom : <strong><?= htmlspecialchars(ucfirst($d['prenom_fr'] ?? '')) ?></strong></div>
     <div class="bio-line-fr-3">Date et Lieu de naissance : <strong><?= htmlspecialchars($d['date_naissance_fr'] ?? '') ?> <?= htmlspecialchars(strtoupper($d['lieu_naissance_fr'] ?? '')) ?></strong></div>
-    <div class="bio-line-fr-4">Spécialité : <strong><?= htmlspecialchars($d['spec_fr'] ?? '') ?></strong></div>
+    <div class="bio-line-fr-4">Diplôme : <strong><?= htmlspecialchars($d['type_diplome_fr'] ?? '') ?></strong></div>
+    <div class="bio-line-fr-5">Spécialité : <strong><?= htmlspecialchars(cleanFrenchText($d['spec_fr'] ?? '')) ?></strong></div>
 
     <!-- QR CODE -->
     <div class="qr-absolute-container">
