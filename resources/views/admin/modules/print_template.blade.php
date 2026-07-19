@@ -54,11 +54,16 @@ $titleFr = $titles[$docType]['fr'] ?? 'Document Administratif';
             margin: 0; padding: 20px;
             color: #1e293b;
         }
+        @page {
+            size: A4 <?= $docType === 'decision_isqat' ? 'landscape' : 'portrait' ?>;
+            margin: 0;
+        }
         .print-container {
             background: white;
-            width: 210mm; min-height: 297mm;
+            width: <?= $docType === 'decision_isqat' ? '297mm' : '210mm' ?>; 
+            min-height: <?= $docType === 'decision_isqat' ? '210mm' : '297mm' ?>;
             margin: 0 auto;
-            padding: 18mm 20mm;
+            padding: <?= $docType === 'decision_isqat' ? '12mm 15mm' : '18mm 20mm' ?>;
             box-shadow: 0 4px 20px rgba(0,0,0,.12);
             border-radius: 8px;
             position: relative;
@@ -148,7 +153,7 @@ $titleFr = $titles[$docType]['fr'] ?? 'Document Administratif';
 
 <div class="print-container">
     <?php if ($docType === 'decision_isqat'): ?>
-        <div style="border: 2px dashed #000; border-radius: 15px; padding: 25px; min-height: 270mm;">
+        <div style="border: 2px dashed #000; border-radius: 15px; padding: 25px; min-height: 180mm;">
     <?php endif; ?>
 
     <?php if ($docType !== 'bulletin_notes'): ?>
@@ -372,79 +377,87 @@ $titleFr = $titles[$docType]['fr'] ?? 'Document Administratif';
                             $pointsAfterSum = 0;
                             $hasResit = false;
                             
-                            foreach ($sem['marks'] as $mIdx => $m): 
-                                $coef = (float)$m['coefficient'];
-                                $coefSum += $coef;
-                                
-                                $avgBefore = $m['average_before'] !== null ? (float)$m['average_before'] : (float)$m['average'];
-                                $pointsBeforeSum += $avgBefore * $coef;
-                                
-                                $avgAfter = $m['average'] !== null ? (float)$m['average'] : $avgBefore;
-                                $pointsAfterSum += $avgAfter * $coef;
-                                
-                                if ($m['resit'] !== null) {
-                                    $hasResit = true;
-                                }
-                                
-                                // Determine appreciation/remark
-                                if ($m['average'] === null) {
-                                    $appText = '---';
-                                } elseif ($m['average'] >= 18) {
-                                    $appText = 'ممتاز جداً';
-                                } elseif ($m['average'] >= 16) {
-                                    $appText = 'ممتاز';
-                                } elseif ($m['average'] >= 14) {
-                                    $appText = 'جيد جداً';
-                                } elseif ($m['average'] >= 12) {
-                                    $appText = 'جيد';
-                                } elseif ($m['average'] >= 10) {
-                                    $appText = 'قريب من الحسن';
-                                } else {
-                                    $appText = 'دون الوسط';
-                                }
-                                
-                                $elimText = ($avgAfter < 5.0 && $m['average'] !== null) ? 'قصية' : '0,00';
-                            ?>
-                                <tr style="height: 28px;">
-                                    <td style="border: 1px solid #000; font-family: 'Outfit';"><?= $mIdx + 1 ?></td>
-                                    <td style="border: 1px solid #000; text-align: right; padding-right: 8px; font-weight: 700;"><?= htmlspecialchars($m['module_nom']) ?></td>
-                                    <td style="border: 1px solid #000; font-family: 'Outfit';"><?= $m['cc1'] !== null ? number_format($m['cc1'], 2) : '---' ?></td>
-                                    <td style="border: 1px solid #000; font-family: 'Outfit';"><?= $m['cc2'] !== null ? number_format($m['cc2'], 2) : '---' ?></td>
-                                    <td style="border: 1px solid #000; font-family: 'Outfit';"><?= $m['exam'] !== null ? number_format($m['exam'], 2) : '---' ?></td>
-                                    <td style="border: 1px solid #000; font-family: 'Outfit';"><?= $m['average_before'] !== null ? number_format($m['average_before'], 2) : number_format($avgBefore, 2) ?></td>
-                                    <td style="border: 1px solid #000; font-family: 'Outfit';"><?= $m['resit'] !== null ? number_format($m['resit'], 2) : '---' ?></td>
-                                    <td style="border: 1px solid #000; font-family: 'Outfit'; font-weight: 700;"><?= number_format($avgAfter, 2) ?></td>
-                                    <td style="border: 1px solid #000; font-family: 'Outfit';"><?= $coef ?></td>
-                                    <td style="border: 1px solid #000; font-family: 'Outfit'; color: <?= $elimText === 'إقصائية' || $elimText === 'قصية' ? 'red' : '#000' ?>;"><?= $elimText ?></td>
-                                    <td style="border: 1px solid #000; font-weight: 700;"><?= htmlspecialchars($appText) ?></td>
+                            if (empty($sem['marks'])): ?>
+                                <tr style="height: 40px;">
+                                    <td colspan="11" style="border: 1px solid #000; font-weight: 700; text-align: center; color: #555; font-size: 13.5px; background: #fafafa;">
+                                        لا توجد علامات تفصيلية مسجلة للمواد في هذا السداسي
+                                    </td>
                                 </tr>
-                            <?php endforeach; ?>
-                            
-                            <?php
-                            $avgBeforeResult = $coefSum > 0 ? round($pointsBeforeSum / $coefSum, 2) : 0;
-                            $avgAfterResult = $coefSum > 0 ? round($pointsAfterSum / $coefSum, 2) : 0;
-                            ?>
-                            
-                            <!-- Subtotal row 1: مع قبل -->
-                            <tr style="height: 30px; font-weight: 700; background: #fafafa;">
-                                <td colspan="5" style="border: 1px solid #000; text-align: left; padding-left: 10px;">مع قبل</td>
-                                <td style="border: 1px solid #000; font-family: 'Outfit';"><?= number_format($pointsBeforeSum, 2) ?></td>
-                                <td style="border: 1px solid #000;">---</td>
-                                <td style="border: 1px solid #000; font-family: 'Outfit';"><?= number_format($avgBeforeResult, 2) ?></td>
-                                <td style="border: 1px solid #000; font-family: 'Outfit';"><?= $coefSum ?></td>
-                                <td colspan="2" style="border: 1px solid #000;">---</td>
-                            </tr>
-                            
-                            <!-- Subtotal row 2: مع بعد (only shown if there is a resit or different values) -->
-                            <?php if ($hasResit || $pointsAfterSum !== $pointsBeforeSum): ?>
+                            <?php else:
+                                foreach ($sem['marks'] as $mIdx => $m): 
+                                    $coef = (float)$m['coefficient'];
+                                    $coefSum += $coef;
+                                    
+                                    $avgBefore = $m['average_before'] !== null ? (float)$m['average_before'] : (float)$m['average'];
+                                    $pointsBeforeSum += $avgBefore * $coef;
+                                    
+                                    $avgAfter = $m['average'] !== null ? (float)$m['average'] : $avgBefore;
+                                    $pointsAfterSum += $avgAfter * $coef;
+                                    
+                                    if ($m['resit'] !== null) {
+                                        $hasResit = true;
+                                    }
+                                    
+                                    // Determine appreciation/remark
+                                    if ($m['average'] === null) {
+                                        $appText = '---';
+                                    } elseif ($m['average'] >= 18) {
+                                        $appText = 'ممتاز جداً';
+                                    } elseif ($m['average'] >= 16) {
+                                        $appText = 'ممتاز';
+                                    } elseif ($m['average'] >= 14) {
+                                        $appText = 'جيد جداً';
+                                    } elseif ($m['average'] >= 12) {
+                                        $appText = 'جيد';
+                                    } elseif ($m['average'] >= 10) {
+                                        $appText = 'قريب من الحسن';
+                                    } else {
+                                        $appText = 'دون الوسط';
+                                    }
+                                    
+                                    $elimText = ($avgAfter < 5.0 && $m['average'] !== null) ? 'قصية' : '0,00';
+                                ?>
+                                    <tr style="height: 28px;">
+                                        <td style="border: 1px solid #000; font-family: 'Outfit';"><?= $mIdx + 1 ?></td>
+                                        <td style="border: 1px solid #000; text-align: right; padding-right: 8px; font-weight: 700;"><?= htmlspecialchars($m['module_nom']) ?></td>
+                                        <td style="border: 1px solid #000; font-family: 'Outfit';"><?= $m['cc1'] !== null ? number_format($m['cc1'], 2) : '---' ?></td>
+                                        <td style="border: 1px solid #000; font-family: 'Outfit';"><?= $m['cc2'] !== null ? number_format($m['cc2'], 2) : '---' ?></td>
+                                        <td style="border: 1px solid #000; font-family: 'Outfit';"><?= $m['exam'] !== null ? number_format($m['exam'], 2) : '---' ?></td>
+                                        <td style="border: 1px solid #000; font-family: 'Outfit';"><?= $m['average_before'] !== null ? number_format($m['average_before'], 2) : number_format($avgBefore, 2) ?></td>
+                                        <td style="border: 1px solid #000; font-family: 'Outfit';"><?= $m['resit'] !== null ? number_format($m['resit'], 2) : '---' ?></td>
+                                        <td style="border: 1px solid #000; font-family: 'Outfit'; font-weight: 700;"><?= number_format($avgAfter, 2) ?></td>
+                                        <td style="border: 1px solid #000; font-family: 'Outfit';"><?= $coef ?></td>
+                                        <td style="border: 1px solid #000; font-family: 'Outfit'; color: <?= $elimText === 'إقصائية' || $elimText === 'قصية' ? 'red' : '#000' ?>;"><?= $elimText ?></td>
+                                        <td style="border: 1px solid #000; font-weight: 700;"><?= htmlspecialchars($appText) ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                                
+                                <?php
+                                $avgBeforeResult = $coefSum > 0 ? round($pointsBeforeSum / $coefSum, 2) : 0;
+                                $avgAfterResult = $coefSum > 0 ? round($pointsAfterSum / $coefSum, 2) : 0;
+                                ?>
+                                
+                                <!-- Subtotal row 1: مع قبل -->
                                 <tr style="height: 30px; font-weight: 700; background: #fafafa;">
-                                    <td colspan="5" style="border: 1px solid #000; text-align: left; padding-left: 10px;">مع بعد</td>
-                                    <td style="border: 1px solid #000; font-family: 'Outfit';"><?= number_format($pointsAfterSum, 2) ?></td>
+                                    <td colspan="5" style="border: 1px solid #000; text-align: left; padding-left: 10px;">مع قبل</td>
+                                    <td style="border: 1px solid #000; font-family: 'Outfit';"><?= number_format($pointsBeforeSum, 2) ?></td>
                                     <td style="border: 1px solid #000;">---</td>
-                                    <td style="border: 1px solid #000; font-family: 'Outfit';"><?= number_format($avgAfterResult, 2) ?></td>
+                                    <td style="border: 1px solid #000; font-family: 'Outfit';"><?= number_format($avgBeforeResult, 2) ?></td>
                                     <td style="border: 1px solid #000; font-family: 'Outfit';"><?= $coefSum ?></td>
                                     <td colspan="2" style="border: 1px solid #000;">---</td>
                                 </tr>
+                                
+                                <!-- Subtotal row 2: مع بعد (only shown if there is a resit or different values) -->
+                                <?php if ($hasResit || $pointsAfterSum !== $pointsBeforeSum): ?>
+                                    <tr style="height: 30px; font-weight: 700; background: #fafafa;">
+                                        <td colspan="5" style="border: 1px solid #000; text-align: left; padding-left: 10px;">مع بعد</td>
+                                        <td style="border: 1px solid #000; font-family: 'Outfit';"><?= number_format($pointsAfterSum, 2) ?></td>
+                                        <td style="border: 1px solid #000;">---</td>
+                                        <td style="border: 1px solid #000; font-family: 'Outfit';"><?= number_format($avgAfterResult, 2) ?></td>
+                                        <td style="border: 1px solid #000; font-family: 'Outfit';"><?= $coefSum ?></td>
+                                        <td colspan="2" style="border: 1px solid #000;">---</td>
+                                    </tr>
+                                <?php endif; ?>
                             <?php endif; ?>
                         </tbody>
                     </table>

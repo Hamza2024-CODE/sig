@@ -3102,51 +3102,49 @@ class ModulesController extends Controller {
                     $stmtM->execute([(int)$userId, $semId]);
                     $rawMarks = $stmtM->fetchAll(PDO::FETCH_ASSOC);
 
-                    if (empty($rawMarks)) {
-                        continue;
-                    }
-
                     $semMarks = [];
                     $semPoints = 0;
                     $semCoefs = 0;
 
-                    foreach ($rawMarks as $rm) {
-                        $coef = (float)$rm['coefficient'];
-                        $avg = $rm['average'];
-                        if ($avg === null) {
-                            $cc1 = $rm['cc1'] !== null ? (float)$rm['cc1'] : null;
-                            $cc2 = $rm['cc2'] !== null ? (float)$rm['cc2'] : null;
-                            $exam = $rm['exam'] !== null ? (float)$rm['exam'] : null;
-                            
-                            if ($cc1 !== null && $cc2 !== null && $exam !== null) {
-                                $avg = ($cc1 + $cc2 + $exam * 2) / 4;
-                            } elseif ($cc1 !== null && $exam !== null) {
-                                $avg = ($cc1 + $exam * 2) / 3;
-                            } elseif ($exam !== null) {
-                                $avg = $exam;
+                    if (!empty($rawMarks)) {
+                        foreach ($rawMarks as $rm) {
+                            $coef = (float)$rm['coefficient'];
+                            $avg = $rm['average'];
+                            if ($avg === null) {
+                                $cc1 = $rm['cc1'] !== null ? (float)$rm['cc1'] : null;
+                                $cc2 = $rm['cc2'] !== null ? (float)$rm['cc2'] : null;
+                                $exam = $rm['exam'] !== null ? (float)$rm['exam'] : null;
+                                
+                                if ($cc1 !== null && $cc2 !== null && $exam !== null) {
+                                    $avg = ($cc1 + $cc2 + $exam * 2) / 4;
+                                } elseif ($cc1 !== null && $exam !== null) {
+                                    $avg = ($cc1 + $exam * 2) / 3;
+                                } elseif ($exam !== null) {
+                                    $avg = $exam;
+                                } else {
+                                    $avg = null;
+                                }
                             } else {
-                                $avg = null;
+                                $avg = (float)$avg;
                             }
-                        } else {
-                            $avg = (float)$avg;
-                        }
 
-                        $semMarks[] = [
-                            'module_nom' => $rm['module_nom'],
-                            'coefficient' => $coef,
-                            'cc1' => $rm['cc1'],
-                            'cc2' => $rm['cc2'],
-                            'exam' => $rm['exam'],
-                            'resit' => $rm['resit'],
-                            'average_before' => $rm['average_before'],
-                            'average' => $avg,
-                            'exis_c1' => $rm['exis_c1'],
-                            'exis_cs' => $rm['exis_cs']
-                        ];
+                            $semMarks[] = [
+                                'module_nom' => $rm['module_nom'],
+                                'coefficient' => $coef,
+                                'cc1' => $rm['cc1'],
+                                'cc2' => $rm['cc2'],
+                                'exam' => $rm['exam'],
+                                'resit' => $rm['resit'],
+                                'average_before' => $rm['average_before'],
+                                'average' => $avg,
+                                'exis_c1' => $rm['exis_c1'],
+                                'exis_cs' => $rm['exis_cs']
+                            ];
 
-                        if ($avg !== null) {
-                            $semPoints += $avg * $coef;
-                            $semCoefs += $coef;
+                            if ($avg !== null) {
+                                $semPoints += $avg * $coef;
+                                $semCoefs += $coef;
+                            }
                         }
                     }
 
@@ -3154,7 +3152,8 @@ class ModulesController extends Controller {
                     
                     // Fetch decision and observation
                     $stmtAss = $this->db->prepare("
-                        SELECT ass.IDapprenant_Section_semstre, ass.Obs as observation, de.Nom as decision_nom
+                        SELECT ass.IDapprenant_Section_semstre, ass.Obs as observation, de.Nom as decision_nom,
+                               COALESCE(ass.MoyApr, ass.MoyAvr) as semester_avg
                         FROM apprenant_section_semstre ass
                         LEFT JOIN decision_evals de ON ass.IDDecision_evals = de.IDDecision_evals
                         WHERE ass.IDSection_Semestre = ? AND ass.IDapprenant = ?
@@ -3162,6 +3161,10 @@ class ModulesController extends Controller {
                     ");
                     $stmtAss->execute([$semId, (int)$userId]);
                     $assRow = $stmtAss->fetch(PDO::FETCH_ASSOC) ?: [];
+                    
+                    if ($semAvg == 0 && !empty($assRow)) {
+                        $semAvg = (float)($assRow['semester_avg'] ?? 0);
+                    }
                     
                     $totalAbsences = 0;
                     $justifiedAbsences = 0;
