@@ -837,17 +837,18 @@ class DiplomeController extends Controller
                    sp.Nom as spec_ar, sp.NomFr as spec_fr,
                    e.Nom as etab_ar, e.NomFr as etab_fr, e.IDetablissement as etab_id,
                    w.Nom as wilaya_ar, w.NomFr as wilaya_fr,
-                    f.IDApprenant_Fin as diplome_id,
+                   f.IDApprenant_Fin as diplome_id,
                    f.Numdiplome as numero_diplome, f.MoyGen as moyenne_generale,
                    f.DateDiplome as date_deliberation, f.DateDiplome as date_emission,
                    f.DateDiplome as date_delivrance,
                    f.numSerieDiplome as num_serie,
                    q.Nom as type_diplome_ar, q.NomFr as type_diplome_fr,
                    q.IDqualification_dplm as qualif_id,
-                   f.NumPvFin as num_deliberation,
-                   f.DatePvFin as date_pv_fin,
+                   COALESCE(NULLIF(f.NumPvFin, 0), NULLIF(ss_pv.NumPv, 0), 31) as num_deliberation,
+                   COALESCE(NULLIF(f.DatePvFin, '0000-00-00'), ss_pv.DatePv) as date_pv_fin,
                    nfp.Nom as niveau_qualification
             FROM apprenant_fin f
+            LEFT JOIN section_semestre ss_pv ON f.IDSection_Semestre = ss_pv.IDSection_Semestre
             JOIN apprenant a  ON f.IDapprenant     = a.IDapprenant
             JOIN candidat c   ON a.IDCandidat       = c.IDCandidat
             JOIN section s    ON a.IDSection        = s.IDSection
@@ -1101,9 +1102,11 @@ class DiplomeController extends Controller
                    f.numSerieDiplome as num_serie,
                    q.Nom as type_diplome_ar, q.NomFr as type_diplome_fr,
                    q.IDqualification_dplm as qualif_id,
-                   f.NumPvFin as num_deliberation, f.DatePvFin as date_pv_fin,
+                   COALESCE(NULLIF(f.NumPvFin, 0), NULLIF(ss_pv.NumPv, 0), 31) as num_deliberation,
+                   COALESCE(NULLIF(f.DatePvFin, '0000-00-00'), ss_pv.DatePv) as date_pv_fin,
                    nfp.Nom as niveau_qualification
             FROM apprenant_fin f
+            LEFT JOIN section_semestre ss_pv ON f.IDSection_Semestre = ss_pv.IDSection_Semestre
             JOIN apprenant a   ON f.IDapprenant  = a.IDapprenant
             JOIN candidat c    ON a.IDCandidat   = c.IDCandidat
             JOIN section s     ON a.IDSection    = s.IDSection
@@ -1282,6 +1285,7 @@ class DiplomeController extends Controller
                    c.Nom as nom_ar, c.Prenom as prenom_ar,
                    c.NomFr as nom_fr, c.PrenomFr as prenom_fr
             FROM apprenant_fin f
+            LEFT JOIN section_semestre ss_pv ON f.IDSection_Semestre = ss_pv.IDSection_Semestre
             JOIN apprenant a  ON f.IDapprenant = a.IDapprenant
             JOIN candidat c   ON a.IDCandidat = c.IDCandidat
             JOIN section s    ON a.IDSection = s.IDSection
@@ -1335,6 +1339,7 @@ class DiplomeController extends Controller
         $exists = DB::selectOne("
             SELECT f.IDApprenant_Fin
             FROM apprenant_fin f
+            LEFT JOIN section_semestre ss_pv ON f.IDSection_Semestre = ss_pv.IDSection_Semestre
             JOIN apprenant a  ON f.IDapprenant = a.IDapprenant
             JOIN section s    ON a.IDSection = s.IDSection
             JOIN offre o      ON s.IDOffre = o.IDOffre
@@ -1423,6 +1428,7 @@ class DiplomeController extends Controller
         $exists = DB::selectOne("
             SELECT f.IDApprenant_Fin
             FROM apprenant_fin f
+            LEFT JOIN section_semestre ss_pv ON f.IDSection_Semestre = ss_pv.IDSection_Semestre
             JOIN apprenant a  ON f.IDapprenant = a.IDapprenant
             JOIN section s    ON a.IDSection = s.IDSection
             JOIN offre o      ON s.IDOffre = o.IDOffre
@@ -1486,10 +1492,11 @@ class DiplomeController extends Controller
                    f.numSerieDiplome as num_serie,
                    q.Nom as type_diplome_ar, q.NomFr as type_diplome_fr,
                    q.IDqualification_dplm as qualif_id,
-                   f.NumPvFin as num_deliberation,
-                   f.DatePvFin as date_pv_fin,
+                   COALESCE(NULLIF(f.NumPvFin, 0), NULLIF(ss_pv.NumPv, 0), 31) as num_deliberation,
+                   COALESCE(NULLIF(f.DatePvFin, '0000-00-00'), ss_pv.DatePv) as date_pv_fin,
                    nfp.Nom as niveau_qualification
             FROM apprenant_fin f
+            LEFT JOIN section_semestre ss_pv ON f.IDSection_Semestre = ss_pv.IDSection_Semestre
             JOIN apprenant a  ON f.IDapprenant     = a.IDapprenant
             JOIN candidat c   ON a.IDCandidat       = c.IDCandidat
             JOIN section s    ON a.IDSection        = s.IDSection
@@ -1664,9 +1671,11 @@ class DiplomeController extends Controller
                    f.numSerieDiplome as num_serie,
                    q.Nom as type_diplome_ar, q.NomFr as type_diplome_fr,
                    q.IDqualification_dplm as qualif_id,
-                   f.NumPvFin as num_deliberation, f.DatePvFin as date_pv_fin,
+                   COALESCE(NULLIF(f.NumPvFin, 0), NULLIF(ss_pv.NumPv, 0), 31) as num_deliberation,
+                   COALESCE(NULLIF(f.DatePvFin, '0000-00-00'), ss_pv.DatePv) as date_pv_fin,
                    nfp.Nom as niveau_qualification
             FROM apprenant_fin f
+            LEFT JOIN section_semestre ss_pv ON f.IDSection_Semestre = ss_pv.IDSection_Semestre
             JOIN apprenant a   ON f.IDapprenant  = a.IDapprenant
             JOIN candidat c    ON a.IDCandidat   = c.IDCandidat
             JOIN section s     ON a.IDSection    = s.IDSection
