@@ -335,7 +335,19 @@ $titleFr = $titles[$docType]['fr'] ?? 'Document Administratif';
                         <div>الاسم واللقب : <span style="border-bottom: 1px dotted #000; padding: 0 8px;"><?= htmlspecialchars($nomAr) ?></span></div>
                         <div>رقم التسجيل : <span style="font-family: 'Outfit'; border-bottom: 1px dotted #000; padding: 0 8px;"><?= htmlspecialchars($matricule) ?></span></div>
                         <div style="grid-column: span 2;">الاختصاص : <span style="border-bottom: 1px dotted #000; padding: 0 8px;"><?= htmlspecialchars($specAr) ?></span></div>
-                        <div>المستوى : <span style="font-family: 'Outfit'; border-bottom: 1px dotted #000; padding: 0 8px;"><?= htmlspecialchars($details['spec_niveau'] ?? '3') ?></span></div>
+                        <?php
+                        $niveauLabels = [
+                            1 => 'تكوين شبه متخصص (TSP)',
+                            2 => 'التحكم المهني (TC)',
+                            3 => 'التقني (T)',
+                            4 => 'تقني سامي (TS)',
+                            5 => 'مرتقي في التكوين المهني (RFP)',
+                            6 => 'تقني سامي - تكوين عالي متخصص (TSHS)',
+                        ];
+                        $niveauRaw = $details['spec_niveau'] ?? '';
+                        $niveauDisplay = $niveauLabels[(int)$niveauRaw] ?? ($niveauRaw ?: '---');
+                        ?>
+                        <div>المستوى : <span style="font-family: 'Outfit'; border-bottom: 1px dotted #000; padding: 0 8px;"><?= htmlspecialchars($niveauDisplay) ?></span></div>
                         <div>الشهادة : <span style="border-bottom: 1px dotted #000; padding: 0 8px;"><?= htmlspecialchars($details['dplm_nom'] ?? 'شهادة التحكم المهني') ?></span></div>
                         
                         <?php
@@ -545,7 +557,19 @@ $titleFr = $titles[$docType]['fr'] ?? 'Document Administratif';
                 تابع (ت) تكوينا في اختصاص : <span style="font-weight: 700; border-bottom: 1px dotted #000; padding-bottom: 2px;"><?= htmlspecialchars($specAr) ?></span>
                 <br>
                 مدة التكوين : <span style="font-weight: 700; font-family: 'Outfit'; border-bottom: 1px dotted #000; padding-bottom: 2px;"><?= htmlspecialchars($details['spec_duree'] ?? '36') ?></span> شهرا
-                &nbsp;&nbsp; مستوى التأهيل : <span style="font-weight: 700; font-family: 'Outfit'; border-bottom: 1px dotted #000; padding-bottom: 2px;"><?= htmlspecialchars($details['spec_niveau'] ?? '4') ?></span>
+                <?php
+                $niveauLabelsDec = [
+                    1 => 'تكوين شبه متخصص (TSP)',
+                    2 => 'التحكم المهني (TC)',
+                    3 => 'التقني (T)',
+                    4 => 'تقني سامي (TS)',
+                    5 => 'مرتقي في التكوين المهني (RFP)',
+                    6 => 'تقني سامي - تكوين عالي متخصص (TSHS)',
+                ];
+                $nRaw = $details['spec_niveau'] ?? '';
+                $nDisplay = $niveauLabelsDec[(int)$nRaw] ?? ($nRaw ?: '---');
+                ?>
+                &nbsp;&nbsp; مستوى التأهيل : <span style="font-weight: 700; font-family: 'Outfit'; border-bottom: 1px dotted #000; padding-bottom: 2px;"><?= htmlspecialchars($nDisplay) ?></span>
                 <br>
                 بداية التكوين : <span style="font-weight: 700; font-family: 'Outfit'; border-bottom: 1px dotted #000; padding-bottom: 2px;"><?= !empty($details['date_debut']) ? date('Y/m/d', strtotime($details['date_debut'])) : '---' ?></span>
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; تاريخ الفصل : <span style="font-weight: 700; font-family: 'Outfit'; color: #000; border-bottom: 1px dotted #000; padding-bottom: 2px;"><?= !empty($details['date_exclusion']) ? htmlspecialchars($details['date_exclusion']) : '---' ?></span>

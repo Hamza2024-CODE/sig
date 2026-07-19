@@ -2872,6 +2872,12 @@ class ModulesController extends Controller {
             $dfepId = (int)($user['iddfep'] ?? $user['IDDFEP'] ?? 0);
             $userSessionId = (int)($user['id'] ?? 0);
 
+            // If user belongs to a DFEP (no specific establishment) but has dfepId,
+            // promote them to dfep-level access regardless of their role label.
+            if ($dfepId > 0 && $etabId === 0 && in_array($role, ['directeur', 'employee', 'employee_dep', 'etablissement', 'formateur'])) {
+                $role = 'dfep';
+            }
+
             if ($role !== 'admin') {
                 if ($isEmploye) {
                     $empEtab = \Illuminate\Support\Facades\DB::table('encadrement')
