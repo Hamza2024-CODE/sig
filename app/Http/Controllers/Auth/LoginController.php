@@ -413,55 +413,11 @@ class LoginController extends Controller
                     $stmtUsers = $db->prepare("SELECT * FROM utilisateur WHERE IDNature = ?");
                     $stmtUsers->execute([$etab['nature_id']]);
                     $natureUsers = $stmtUsers->fetchAll(\PDO::FETCH_ASSOC);
-
-                    // Find the manager user (admin = 1) for fallback if no secret code or manager code is specified
-                    $managerUser = null;
-                    foreach ($natureUsers as $nu) {
-                        if ((int)($nu['admin'] ?? 0) === 1) {
-                            $managerUser = $nu;
-                            break;
-                        }
-                    }
  
-                    if (!$isEtabPasswordValid) {
-                        // FALLBACK: Check if the entered password itself is a department secret code
-                        foreach ($natureUsers as $nu) {
-                            if (password_verify($password, $nu['MotPass']) || $password === $nu['MotPass']) {
-                                $isEtabPasswordValid = true;
-                                $isSecretCodeValid = true;
-                                $matchedUtilisateur = $nu;
-                                if (in_array(strtolower($nu['NomUser']), ['sdtpa', 'sdtpap'])) {
-                                    $isApprenLogin = true;
-                                }
-                                break;
-                            }
-                        }
-
-                        // Check if password matches apprenticeship head code
-                        if (!$isSecretCodeValid) {
-                            $etabId = $etab['IDetablissement'];
-                            $empHead = DB::table('encadrement')
-                                ->where(function($q) use ($etabId) {
-                                    $q->where('IDEts_Form', $etabId)
-                                      ->orWhere('IDetablissement', $etabId);
-                                })
-                                ->where('TachesPrincipale', 'LIKE', '%رئيس مصلحة التمهين%')
-                                ->first();
-
-                            if ($empHead) {
-                                if (password_verify($password, $empHead->MotDePass) || $password === $empHead->MotDePass || $password === "dry:@{$empHead->IDEncadrement}@:{$empHead->IDEncadrement}") {
-                                    $isEtabPasswordValid = true;
-                                    $isSecretCodeValid = true;
-                                    $isApprenLogin = true;
-                                }
-                            }
-                        }
-                    } else {
-                        // If establishment password is valid, check the secretCode field
+                    if ($isEtabPasswordValid) {
                         if (empty($secretCode)) {
-                            // If empty, default to Manager (admin = 1)
-                            $isSecretCodeValid = true;
-                            $matchedUtilisateur = $managerUser;
+                            // If empty, do NOT log in (prevent automatic login as manager)
+                            $isSecretCodeValid = false;
                         } else {
                             foreach ($natureUsers as $nu) {
                                 if (password_verify($secretCode, $nu['MotPass']) || $secretCode === $nu['MotPass']) {
