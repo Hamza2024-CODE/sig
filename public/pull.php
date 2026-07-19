@@ -56,12 +56,10 @@ use Illuminate\Support\Facades\Artisan;
 echo "<h1>Auto-Updating All Modified Files...</h1>";
 
 $files = [
-    'app/Domains/Academic/Repositories/OffresRepository.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Domains/Academic/Repositories/OffresRepository.php',
-    'app/Domains/Academic/Services/OffresService.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Domains/Academic/Services/OffresService.php',
-    'public/report_private_offers.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/report_private_offers.php',
     'app/Http/Controllers/Admin/ModulesController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/ModulesController.php',
-    'app/Http/Controllers/Auth/LoginController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Auth/LoginController.php',
-    'resources/views/auth/login.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/auth/login.blade.php'
+    'resources/views/admin/modules/documents.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/modules/documents.blade.php',
+    'resources/views/admin/modules/print_template.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/modules/print_template.blade.php',
+    'resources/views/layouts/main.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/layouts/main.blade.php'
 ];
 
 foreach ($files as $localPath => $remoteUrl) {

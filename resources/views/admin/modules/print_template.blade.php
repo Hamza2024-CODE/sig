@@ -32,7 +32,7 @@ $titles = [
     'attestation_stage'       => ['ar' => 'شـهادة تـربـص',          'fr' => 'Attestation de Stage'],
     'attestation_travail'     => ['ar' => 'شـهادة عـمـل',           'fr' => 'Attestation de Travail'],
     'bulletin_notes'          => ['ar' => 'كشـف النـقاط السـداسي',  'fr' => 'Bulletin de Notes'],
-    'decision_isqat'          => ['ar' => 'قـرار إسـقاط بـيـداغـوجـي', 'fr' => 'Décision d\'Exclusion Pédagogique'],
+    'decision_isqat'          => ['ar' => 'شـهادة تـكويـن - مـفـصـولـيـن', 'fr' => 'Certificat de Formation - Exclus'],
     'basma_mouahada'          => ['ar' => 'بـطاقـة البـصمـة المـوحـدة', 'fr' => 'Fiche d\'Empreinte Unifiée'],
     'fiche_paie'              => ['ar' => 'كشـف الـراتب الشـهري',   'fr' => 'Bulletin de Paie Mensuel'],
 ];
@@ -147,35 +147,59 @@ $titleFr = $titles[$docType]['fr'] ?? 'Document Administratif';
 </div>
 
 <div class="print-container">
+    <?php if ($docType === 'decision_isqat'): ?>
+        <div style="border: 2px dashed #000; border-radius: 15px; padding: 25px; min-height: 270mm;">
+    <?php endif; ?>
 
-    <!-- ── Republic Header ── -->
-    <div class="rep-header">
-        الجمهورية الجزائرية الديمقراطية الشعبية<br>
-        وزارة التكوين والتعليم المهنيين
-    </div>
-    <hr class="rep-divider">
-
-    <!-- ── Establishment band ── -->
-    <div class="etab-band">
-        <div>
-            <div style="font-size:13px; font-weight:700;">مديرية التكوين والتعليم المهنيين لولاية <?= htmlspecialchars($details['wilaya_nom'] ?? 'سعيدة') ?></div>
-            <div><?= htmlspecialchars($etabNom) ?></div>
+    <?php if ($docType !== 'bulletin_notes'): ?>
+        <!-- ── Republic Header ── -->
+        <div class="rep-header">
+            الجمهورية الجزائرية الديمقراطية الشعبية<br>
+            وزارة التكوين والتعليم المهنيين
         </div>
-        <div style="text-align:left; font-family:'Outfit',sans-serif; color:#64748b;">
-            <div>Direction de la Formation Professionnelle de <?= htmlspecialchars($details['wilaya_nom_fr'] ?? 'Saida') ?></div>
-            <div><?= htmlspecialchars($etabFr) ?></div>
+        <?php if ($docType !== 'decision_isqat'): ?>
+            <hr class="rep-divider">
+        <?php endif; ?>
+
+        <!-- ── Establishment band ── -->
+        <?php if ($docType === 'decision_isqat'): ?>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; font-size: 13px; font-weight: 700; margin-top: 15px; margin-bottom: 40px; direction: rtl; color: #000;">
+                <div style="text-align: right; line-height: 1.8;">
+                    مديرية التكوين والتعليم المهنيين لولاية <?= htmlspecialchars($details['wilaya_nom'] ?? 'سطيف') ?><br>
+                    <?= htmlspecialchars($etabNom) ?><br>
+                    الرقم: ........................
+                </div>
+                <div style="text-align: left; line-height: 1.8;">
+                    رقم التسجيل : <?= htmlspecialchars($matricule) ?>
+                </div>
+            </div>
+        <?php else: ?>
+            <div class="etab-band">
+                <div>
+                    <div style="font-size:13px; font-weight:700;">مديرية التكوين والتعليم المهنيين لولاية <?= htmlspecialchars($details['wilaya_nom'] ?? 'سعيدة') ?></div>
+                    <div><?= htmlspecialchars($etabNom) ?></div>
+                </div>
+                <div style="text-align:left; font-family:'Outfit',sans-serif; color:#64748b;">
+                    <div>Direction de la Formation Professionnelle de <?= htmlspecialchars($details['wilaya_nom_fr'] ?? 'Saida') ?></div>
+                    <div><?= htmlspecialchars($etabFr) ?></div>
+                </div>
+            </div>
+        <?php endif; ?>
+
+        <!-- ── Document Title ── -->
+        <div class="doc-title-wrap" style="<?= $docType === 'decision_isqat' ? 'margin-top: 30px; margin-bottom: 40px;' : '' ?>">
+            <div class="doc-title-ar" style="<?= $docType === 'decision_isqat' ? 'font-size: 42px; font-weight: 800; color: #000; letter-spacing: 2px;' : '' ?>">
+                <?= ($docType === 'decision_isqat') ? 'شـهادة تـكويـن' : $titleAr ?>
+            </div>
+            <?php if ($docType !== 'decision_isqat'): ?>
+                <div class="doc-title-fr"><?= $titleFr ?></div>
+                <div class="title-underline"></div>
+            <?php endif; ?>
         </div>
-    </div>
 
-    <!-- ── Document Title ── -->
-    <div class="doc-title-wrap">
-        <div class="doc-title-ar"><?= $titleAr ?></div>
-        <div class="doc-title-fr"><?= $titleFr ?></div>
-        <div class="title-underline"></div>
-    </div>
-
-    <!-- ── Document Body ── -->
-    <div class="doc-body">
+        <!-- ── Document Body ── -->
+        <div class="doc-body">
+    <?php endif; ?>
 
         <?php if ($docType === 'attestation_stage'): ?>
             إن مدير (ة) المؤسسة يشهد أن المتكون (ة) :
@@ -270,253 +294,249 @@ $titleFr = $titles[$docType]['fr'] ?? 'Document Administratif';
             يمارس مهامه بصفة منتظمة ومستمرة. سُلمت هذه الشهادة بناءً على طلبه لتقديمها لمن يهمه الأمر.
 
         <?php elseif ($docType === 'bulletin_notes'): ?>
-            كشف نقاط تفصيلي للمسار البيداغوجي للمتربص(ة):
-            <br>
-            &nbsp;&nbsp;&nbsp;الاسم واللقب: <span class="v"><?= htmlspecialchars($nomAr) ?></span>
-            &nbsp;| رقم التسجيل: <span class="v" style="font-family:'Outfit';"><?= htmlspecialchars($matricule) ?></span>
-            <br>
-            &nbsp;&nbsp;&nbsp;التخصص: <span class="v"><?= htmlspecialchars($specAr) ?></span>
-            <br>
-            <table class="notes-table" style="margin-top:20px;">
-                <thead>
-                    <tr>
-                        <th>المقياس الدراسي</th>
-                        <th>النوع</th>
-                        <th>المعامل</th>
-                        <th>العلامة</th>
-                        <th>التقدير</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php 
-                    $semNames = [
-                        1 => 'السداسي الأول',
-                        2 => 'السداسي الثاني',
-                        3 => 'السداسي الثالث',
-                        4 => 'السداسي الرابع',
-                        5 => 'السداسي الخامس',
-                    ];
-                    ?>
-                    <?php if (!empty($semestersData)): ?>
-                        <?php foreach ($semestersData as $sem): 
-                            $numSem = (int)$sem['num_sem'];
-                            $semName = $semNames[$numSem] ?? ('السداسي ' . $numSem);
-                            $semAvg = (float)($sem['average'] ?? 0.0);
-                            
-                            $semStatus = '---';
-                            $semColor = '#64748b';
-                            if ($semAvg > 0) {
-                                $semColor = $semAvg >= 10 ? '#10b981' : '#ef4444';
-                                if ($semAvg >= 16) {
-                                    $semStatus = 'ناجح بامتياز';
-                                } elseif ($semAvg >= 14) {
-                                    $semStatus = 'ناجح بجيد جداً';
-                                } elseif ($semAvg >= 12) {
-                                    $semStatus = 'ناجح بجيد';
-                                } elseif ($semAvg >= 10) {
-                                    $semStatus = 'ناجح مقبول';
-                                } else {
-                                    $semStatus = 'مستدرك';
-                                }
+            <?php foreach ($semestersData as $index => $sem): ?>
+                <?php if ($index > 0): ?>
+                    <div style="page-break-before: always;"></div>
+                <?php endif; ?>
+                
+                <div style="font-family: 'Cairo', sans-serif; color: #000; background: #fff; padding: 10px; direction: rtl; min-height: 275mm; position: relative;">
+                    
+                    <!-- Republic Header -->
+                    <div style="text-align: center; font-size: 13.5px; font-weight: 700; line-height: 1.6; margin-bottom: 5px;">
+                        الجمهورية الجزائرية الديمقراطية الشعبية<br>
+                        وزارة التكوين والتعليم المهنيين
+                    </div>
+                    
+                    <!-- Header Etab/Wilaya Info -->
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; font-size: 12.5px; font-weight: 700; margin-bottom: 25px;">
+                        <div style="text-align: right; line-height: 1.8;">
+                            ولاية <?= htmlspecialchars($details['wilaya_nom'] ?? 'سطيف') ?><br>
+                            مديرية التكوين والتعليم المهنيين<br>
+                            <?= htmlspecialchars($etabNom) ?><br>
+                            رقم: ........................
+                        </div>
+                        <div style="text-align: left; line-height: 1.8; font-family: 'Outfit'; visibility: hidden;">
+                            <!-- Spacer -->
+                        </div>
+                    </div>
+                    
+                    <!-- Center Title -->
+                    <div style="text-align: center; margin-bottom: 25px;">
+                        <span style="font-size: 26px; font-weight: 800; border-bottom: 2px solid #000; padding-bottom: 4px;">كشـف النـقاط</span>
+                    </div>
+                    
+                    <!-- Trainee Details Grid -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px 40px; font-size: 14px; font-weight: 700; margin-bottom: 25px; line-height: 2;">
+                        <div>الاسم واللقب : <span style="border-bottom: 1px dotted #000; padding: 0 8px;"><?= htmlspecialchars($nomAr) ?></span></div>
+                        <div>رقم التسجيل : <span style="font-family: 'Outfit'; border-bottom: 1px dotted #000; padding: 0 8px;"><?= htmlspecialchars($matricule) ?></span></div>
+                        <div style="grid-column: span 2;">الاختصاص : <span style="border-bottom: 1px dotted #000; padding: 0 8px;"><?= htmlspecialchars($specAr) ?></span></div>
+                        <div>المستوى : <span style="font-family: 'Outfit'; border-bottom: 1px dotted #000; padding: 0 8px;"><?= htmlspecialchars($details['spec_niveau'] ?? '3') ?></span></div>
+                        <div>الشهادة : <span style="border-bottom: 1px dotted #000; padding: 0 8px;"><?= htmlspecialchars($details['dplm_nom'] ?? 'شهادة التحكم المهني') ?></span></div>
+                        
+                        <?php
+                        $formatToSlashYMD = function($dateStr) {
+                            if (empty($dateStr)) return '---';
+                            $dateStr = str_replace('-', '/', $dateStr);
+                            if (preg_match('/^(\d{2})\/(\d{2})\/(\d{4})$/', $dateStr, $m)) {
+                                return "{$m[3]}/{$m[2]}/{$m[1]}";
                             }
+                            return $dateStr;
+                        };
                         ?>
-                            <!-- Semester Header Row -->
-                            <tr style="background-color: #f8fafc; font-weight: bold; text-align: right;">
-                                <td colspan="5" style="color: #482b8f; font-size: 14px; padding: 10px 12px; border-bottom: 2px solid #cbd5e1; border-top: 2px solid #cbd5e1;">
-                                    <i class="fa-solid fa-graduation-cap me-1"></i> <?= htmlspecialchars($semName) ?>
-                                </td>
+                        
+                        <div>فترة التكوين من : <span style="font-family: 'Outfit';"><?= !empty($details['date_debut']) ? date('Y/m/d', strtotime($details['date_debut'])) : '---' ?></span> إلى : <span style="font-family: 'Outfit';"><?= !empty($details['date_fin']) ? date('Y/m/d', strtotime($details['date_fin'])) : '---' ?></span></div>
+                        <div>السداسي : <span style="font-family: 'Outfit';"><?= $sem['num_sem'] ?></span> من : <span style="font-family: 'Outfit';"><?= !empty($sem['date_d']) ? date('Y/m/d', strtotime($sem['date_d'])) : '---' ?></span> إلى : <span style="font-family: 'Outfit';"><?= !empty($sem['date_f']) ? date('Y/m/d', strtotime($sem['date_f'])) : '---' ?></span></div>
+                    </div>
+                    
+                    <!-- Grades Table -->
+                    <table style="width: 100%; border-collapse: collapse; font-size: 11.5px; border: 1.5px solid #000; text-align: center; margin-bottom: 25px; color: #000;">
+                        <thead>
+                            <tr style="border-bottom: 1.5px solid #000; font-weight: 700; height: 35px; background: #f5f5f5;">
+                                <th style="border: 1px solid #000; width: 45px;">الرقم</th>
+                                <th style="border: 1px solid #000; text-align: right; padding-right: 8px;">المادة</th>
+                                <th style="border: 1px solid #000; width: 60px;">مراقبة 1</th>
+                                <th style="border: 1px solid #000; width: 60px;">مراقبة 2</th>
+                                <th style="border: 1px solid #000; width: 80px;">الامتحان الشامل</th>
+                                <th style="border: 1px solid #000; width: 90px;">معدل المادة قبل</th>
+                                <th style="border: 1px solid #000; width: 70px;">الاستدراك</th>
+                                <th style="border: 1px solid #000; width: 90px;">المعدل النهائي</th>
+                                <th style="border: 1px solid #000; width: 55px;">المعامل</th>
+                                <th style="border: 1px solid #000; width: 60px;">الاقصائية</th>
+                                <th style="border: 1px solid #000; width: 110px;">ملاحظة</th>
                             </tr>
-
-                            <!-- Semester Modules -->
-                            <?php foreach ($sem['marks'] as $m): 
-                                $isGradeNull = ($m['average'] === null);
-                                $avgVal = $isGradeNull ? 0.00 : (float)$m['average'];
+                        </thead>
+                        <tbody>
+                            <?php 
+                            $coefSum = 0;
+                            $pointsBeforeSum = 0;
+                            $pointsAfterSum = 0;
+                            $hasResit = false;
+                            
+                            foreach ($sem['marks'] as $mIdx => $m): 
+                                $coef = (float)$m['coefficient'];
+                                $coefSum += $coef;
                                 
-                                // Determine appreciation
-                                if ($isGradeNull) {
+                                $avgBefore = $m['average_before'] !== null ? (float)$m['average_before'] : (float)$m['average'];
+                                $pointsBeforeSum += $avgBefore * $coef;
+                                
+                                $avgAfter = $m['average'] !== null ? (float)$m['average'] : $avgBefore;
+                                $pointsAfterSum += $avgAfter * $coef;
+                                
+                                if ($m['resit'] !== null) {
+                                    $hasResit = true;
+                                }
+                                
+                                // Determine appreciation/remark
+                                if ($m['average'] === null) {
                                     $appText = '---';
-                                    $appColor = '#64748b';
-                                } elseif ($avgVal >= 18) {
+                                } elseif ($m['average'] >= 18) {
                                     $appText = 'ممتاز جداً';
-                                    $appColor = '#10b981';
-                                } elseif ($avgVal >= 16) {
+                                } elseif ($m['average'] >= 16) {
                                     $appText = 'ممتاز';
-                                    $appColor = '#10b981';
-                                } elseif ($avgVal >= 14) {
+                                } elseif ($m['average'] >= 14) {
                                     $appText = 'جيد جداً';
-                                    $appColor = '#10b981';
-                                } elseif ($avgVal >= 12) {
+                                } elseif ($m['average'] >= 12) {
                                     $appText = 'جيد';
-                                    $appColor = '#2563eb';
-                                } elseif ($avgVal >= 10) {
+                                } elseif ($m['average'] >= 10) {
                                     $appText = 'قريب من الحسن';
-                                    $appColor = '#f59e0b';
                                 } else {
                                     $appText = 'دون الوسط';
-                                    $appColor = '#ef4444';
                                 }
                                 
-                                // Determine type dynamically based on exis_c1/exis_cs
-                                $typeText = 'تطبيقي ونظري';
-                                if (isset($m['exis_c1']) && isset($m['exis_cs'])) {
-                                    if ($m['exis_c1'] == 0 && $m['exis_cs'] > 0) {
-                                        $typeText = 'نظري';
-                                    } elseif ($m['exis_c1'] > 0 && $m['exis_cs'] == 0) {
-                                        $typeText = 'تطبيقي';
-                                    }
-                                }
+                                $elimText = ($avgAfter < 5.0 && $m['average'] !== null) ? 'قصية' : '0,00';
                             ?>
-                                <tr>
-                                    <td style="text-align:right;font-weight:600;"><?= htmlspecialchars($m['module_nom']) ?></td>
-                                    <td><?= htmlspecialchars($typeText) ?></td>
-                                    <td><?= htmlspecialchars($m['coefficient']) ?></td>
-                                    <td style="font-family:'Outfit'; font-weight:700;"><?= number_format($avgVal, 2) ?></td>
-                                    <td style="color:<?= $appColor ?>;font-weight:700;"><?= htmlspecialchars($appText) ?></td>
+                                <tr style="height: 28px;">
+                                    <td style="border: 1px solid #000; font-family: 'Outfit';"><?= $mIdx + 1 ?></td>
+                                    <td style="border: 1px solid #000; text-align: right; padding-right: 8px; font-weight: 700;"><?= htmlspecialchars($m['module_nom']) ?></td>
+                                    <td style="border: 1px solid #000; font-family: 'Outfit';"><?= $m['cc1'] !== null ? number_format($m['cc1'], 2) : '---' ?></td>
+                                    <td style="border: 1px solid #000; font-family: 'Outfit';"><?= $m['cc2'] !== null ? number_format($m['cc2'], 2) : '---' ?></td>
+                                    <td style="border: 1px solid #000; font-family: 'Outfit';"><?= $m['exam'] !== null ? number_format($m['exam'], 2) : '---' ?></td>
+                                    <td style="border: 1px solid #000; font-family: 'Outfit';"><?= $m['average_before'] !== null ? number_format($m['average_before'], 2) : number_format($avgBefore, 2) ?></td>
+                                    <td style="border: 1px solid #000; font-family: 'Outfit';"><?= $m['resit'] !== null ? number_format($m['resit'], 2) : '---' ?></td>
+                                    <td style="border: 1px solid #000; font-family: 'Outfit'; font-weight: 700;"><?= number_format($avgAfter, 2) ?></td>
+                                    <td style="border: 1px solid #000; font-family: 'Outfit';"><?= $coef ?></td>
+                                    <td style="border: 1px solid #000; font-family: 'Outfit'; color: <?= $elimText === 'إقصائية' || $elimText === 'قصية' ? 'red' : '#000' ?>;"><?= $elimText ?></td>
+                                    <td style="border: 1px solid #000; font-weight: 700;"><?= htmlspecialchars($appText) ?></td>
                                 </tr>
                             <?php endforeach; ?>
-
-                            <!-- Semester Subtotal Row -->
-                            <tr style="background-color: #f1f5f9; font-weight: bold;">
-                                <td colspan="3" style="text-align:left; color:#482b8f; font-weight: 700;">
-                                    معدل <?= htmlspecialchars($semName) ?>:
-                                </td>
-                                <td style="font-family:'Outfit'; color:#482b8f; font-weight:800;">
-                                    <?= number_format($semAvg, 2) ?> / 20
-                                </td>
-                                <td style="color:<?= $semColor ?>; font-weight:800;">
-                                    <?= htmlspecialchars($semStatus) ?>
-                                </td>
+                            
+                            <?php
+                            $avgBeforeResult = $coefSum > 0 ? round($pointsBeforeSum / $coefSum, 2) : 0;
+                            $avgAfterResult = $coefSum > 0 ? round($pointsAfterSum / $coefSum, 2) : 0;
+                            ?>
+                            
+                            <!-- Subtotal row 1: مع قبل -->
+                            <tr style="height: 30px; font-weight: 700; background: #fafafa;">
+                                <td colspan="5" style="border: 1px solid #000; text-align: left; padding-left: 10px;">مع قبل</td>
+                                <td style="border: 1px solid #000; font-family: 'Outfit';"><?= number_format($pointsBeforeSum, 2) ?></td>
+                                <td style="border: 1px solid #000;">---</td>
+                                <td style="border: 1px solid #000; font-family: 'Outfit';"><?= number_format($avgBeforeResult, 2) ?></td>
+                                <td style="border: 1px solid #000; font-family: 'Outfit';"><?= $coefSum ?></td>
+                                <td colspan="2" style="border: 1px solid #000;">---</td>
                             </tr>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <!-- Fallback to static mock data -->
-                        <tr>
-                            <td style="text-align:right;font-weight:600;">الخوارزميات وهياكل البيانات</td>
-                            <td>تطبيقي ونظري</td><td>3</td>
-                            <td style="font-family:'Outfit'; font-weight:700;">16.50</td>
-                            <td style="color:#10b981;font-weight:700;">ممتاز</td>
-                        </tr>
-                        <tr>
-                            <td style="text-align:right;font-weight:600;">تطوير تطبيقات الويب</td>
-                            <td>تطبيقي</td><td>4</td>
-                            <td style="font-family:'Outfit'; font-weight:700;">18.00</td>
-                            <td style="color:#10b981;font-weight:700;">ممتاز جداً</td>
-                        </tr>
-                        <tr>
-                            <td style="text-align:right;font-weight:600;">إدارة قواعد البيانات (MySQL)</td>
-                            <td>تطبيقي</td><td>3</td>
-                            <td style="font-family:'Outfit'; font-weight:700;">15.00</td>
-                            <td style="color:#10b981;font-weight:700;">جيد جداً</td>
-                        </tr>
-                        <tr>
-                            <td style="text-align:right;font-weight:600;">تصميم الشبكات المحلية</td>
-                            <td>نظري</td><td>2</td>
-                            <td style="font-family:'Outfit'; font-weight:700;">14.00</td>
-                            <td style="color:#2563eb;font-weight:700;">جيد</td>
-                        </tr>
-                    <?php endif; ?>
-
-                    <!-- Graduation Thesis (NoteMemoire) Row at the end of tbody -->
-                    <?php 
-                    if (!$isEmploye && array_key_exists('noteMemoire', get_defined_vars())):
-                        $isMemoNull = ($noteMemoire === null);
-                        $memoVal = $isMemoNull ? 0.00 : (float)$noteMemoire;
+                            
+                            <!-- Subtotal row 2: مع بعد (only shown if there is a resit or different values) -->
+                            <?php if ($hasResit || $pointsAfterSum !== $pointsBeforeSum): ?>
+                                <tr style="height: 30px; font-weight: 700; background: #fafafa;">
+                                    <td colspan="5" style="border: 1px solid #000; text-align: left; padding-left: 10px;">مع بعد</td>
+                                    <td style="border: 1px solid #000; font-family: 'Outfit';"><?= number_format($pointsAfterSum, 2) ?></td>
+                                    <td style="border: 1px solid #000;">---</td>
+                                    <td style="border: 1px solid #000; font-family: 'Outfit';"><?= number_format($avgAfterResult, 2) ?></td>
+                                    <td style="border: 1px solid #000; font-family: 'Outfit';"><?= $coefSum ?></td>
+                                    <td colspan="2" style="border: 1px solid #000;">---</td>
+                                </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                    
+                    <!-- Bottom Committee Decision & Summary Panel -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; font-size: 13px; font-weight: 700; margin-bottom: 30px; line-height: 1.8; color: #000;">
+                        <div style="border: 1px solid #000; padding: 12px; border-radius: 8px;">
+                            <div>معدل السداسي : <span style="font-family: 'Outfit'; border: 1px solid #000; padding: 2px 15px; border-radius: 4px; margin-right: 8px;"><?= number_format($avgAfterResult, 2) ?></span></div>
+                            <div style="margin-top: 8px;">قرار اللجنة : <span style="border: 1px solid #000; padding: 2px 15px; border-radius: 4px; margin-right: 8px;"><?= htmlspecialchars($sem['decision_nom']) ?></span></div>
+                        </div>
                         
-                        // Determine appreciation
-                        if ($isMemoNull) {
-                            $memoAppText = '---';
-                            $memoAppColor = '#64748b';
-                        } elseif ($memoVal >= 18) {
-                            $memoAppText = 'ممتاز جداً';
-                            $memoAppColor = '#10b981';
-                        } elseif ($memoVal >= 16) {
-                            $memoAppText = 'ممتاز';
-                            $memoAppColor = '#10b981';
-                        } elseif ($memoVal >= 14) {
-                            $memoAppText = 'جيد جداً';
-                            $memoAppColor = '#10b981';
-                        } elseif ($memoVal >= 12) {
-                            $memoAppText = 'جيد';
-                            $memoAppColor = '#2563eb';
-                        } elseif ($memoVal >= 10) {
-                            $memoAppText = 'قريب من الحسن';
-                            $memoAppColor = '#f59e0b';
-                        } else {
-                            $memoAppText = 'دون الوسط';
-                            $memoAppColor = '#ef4444';
-                        }
-                    ?>
-                        <tr style="background-color: #f0fdf4; font-weight: bold; border-top: 2px solid #cbd5e1;">
-                            <td style="text-align:right; font-weight:700; color: #15803d;">
-                                <i class="fa-solid fa-book me-1"></i> مذكرة التخرج (Projet de Fin d'Études)
-                            </td>
-                            <td style="color: #15803d;">تطبيقي</td>
-                            <td style="color: #15803d;">1</td>
-                            <td style="font-family:'Outfit'; font-weight:700; color: #15803d;">
-                                <?= number_format($memoVal, 2) ?>
-                            </td>
-                            <td style="color:<?= $memoAppColor ?>; font-weight:700;">
-                                <?= htmlspecialchars($memoAppText) ?>
-                            </td>
-                        </tr>
-                    <?php endif; ?>
-                </tbody>
-                <tfoot>
-                    <tr>
-                        <td colspan="3" style="text-align:left;color:#482b8f;font-weight:800;font-size:15px;">المعدل العام للمسار البيداغوجي (Moyenne Générale)</td>
-                        <td style="font-size:17px;color:#482b8f;font-family:'Outfit';font-weight:800;">
-                            <?php if (!empty($semestersData)): ?>
-                                <?= number_format((float)($semesterAverage ?? 0.0), 2) ?> / 20
-                            <?php else: ?>
-                                16.15 / 20
-                            <?php endif; ?>
-                        </td>
-                        <td style="color:<?= (float)($semesterAverage ?? 0.0) >= 10 ? '#10b981' : '#ef4444' ?>;font-weight:800;">
-                            <?php if (!empty($semestersData)): 
-                                $avgVal = (float)($semesterAverage ?? 0.0);
-                                if ($avgVal >= 16) {
-                                    echo 'ناجح بامتياز';
-                                } elseif ($avgVal >= 14) {
-                                    echo 'ناجح بجيد جداً';
-                                } elseif ($avgVal >= 12) {
-                                    echo 'ناجح بجيد';
-                                } elseif ($avgVal >= 10) {
-                                    echo 'ناجح مقبول';
+                        <div style="border: 1px solid #000; padding: 12px; border-radius: 8px;">
+                            <div>ملاحظة اللجنة : <span style="border: 1px solid #000; padding: 2px 15px; border-radius: 4px; margin-right: 8px;"><?= !empty($sem['observation']) ? htmlspecialchars($sem['observation']) : 'لاشيء' ?></span></div>
+                            <div style="margin-top: 8px;">عدد الغيابات : <span style="font-family: 'Outfit'; border: 1px solid #000; padding: 2px 10px; border-radius: 4px; margin-right: 8px;"><?= $sem['total_abs'] ?></span> &nbsp;&nbsp;&nbsp; منها مبررة : <span style="font-family: 'Outfit'; border: 1px solid #000; padding: 2px 10px; border-radius: 4px; margin-right: 8px;"><?= $sem['justified_abs'] ?></span></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Footer Release & Signatures -->
+                    <div style="display: flex; justify-content: space-between; align-items: flex-end; font-size: 13.5px; font-weight: 700; color: #000;">
+                        <!-- QR Code & Barcode on Left side of footer -->
+                        <div style="display: flex; flex-direction: column; gap: 8px; align-items: flex-start;">
+                            <!-- QR Code -->
+                            <div style="border: 1px solid #000; padding: 5px; border-radius: 6px; background: #fff;">
+                                @php
+                                     $verificationUrl = url('/verify?code=' . urlencode($codeVer));
+                                     $qrCodeUrl = url('/api/qrcode?data=' . urlencode($verificationUrl));
+                                @endphp
+                                <img src="{{ $qrCodeUrl }}" alt="رمز التحقق الرقمي" style="width: 55px; height: 55px; display: block;" />
+                            </div>
+                            <!-- Barcode look-alike -->
+                            <div style="display: flex; gap: 1px; align-items: stretch; height: 28px; width: 120px; border: 1px solid #000; padding: 2px; background: #fff;">
+                                <?php for ($i=0; $i<28; $i++): ?>
+                                    <div style="width: <?= rand(1, 3) ?>px; background: #000;"></div>
+                                    <div style="width: <?= rand(1, 2) ?>px; background: transparent;"></div>
+                                <?php endfor; ?>
+                            </div>
+                        </div>
+                        
+                        <!-- City and Signature on Right side -->
+                        <div style="text-align: right; line-height: 2;">
+                            <?php
+                            $city = '';
+                            if (!empty($details['etab_nom'])) {
+                                if (preg_match('/العلمة/u', $details['etab_nom'])) {
+                                    $city = 'العلمة';
+                                } elseif (preg_match('/يوب/u', $details['etab_nom'])) {
+                                    $city = 'يوب';
                                 } else {
-                                    echo 'مستدرك';
+                                    $words = explode(' ', trim($details['etab_nom']));
+                                    $city = end($words);
                                 }
-                            else: ?>
-                                ناجح بامتياز
-                            <?php endif; ?>
-                        </td>
-                    </tr>
-                </tfoot>
-            </table>
+                            }
+                            $wilaya = $details['wilaya_nom'] ?? '';
+                            $issuePlace = trim($city . '_' . $wilaya, '_');
+                            ?>
+                            حرر بـ : <strong><?= htmlspecialchars($issuePlace) ?></strong> في : <strong><?= date('Y/m/d', strtotime($docDate)) ?></strong>
+                            <br>
+                            <div style="text-align: center; margin-top: 10px; font-weight: 700; width: 180px;">
+                                مدير (ة) المؤسسة
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+            <?php endforeach; ?>
         <?php elseif ($docType === 'decision_isqat'): ?>
-            إن مدير <span class="v"><?= htmlspecialchars($etabNom) ?></span>،
-            <br>
-            - بمقتضى القانون رقم 08-07 المؤرخ في 23 فيفري 2008 المتضمن القانون التوجيهي للتربية الوطنية؛
-            <br>
-            - وبمقتضى القرار الوزاري المتضمن نظام الجماعات التربوية في قطاع التكوين والتعليم المهنيين؛
-            <br>
-            - وبناءً على محاضر المجلس التأديبي للمؤسسة والتقارير البيداغوجية المرفوعة؛
-            <br>
-            - ونظراً للغيابات المتكررة وغير المبررة للمتربص(ة) المعني أدناه وتجاوز الغياب للمدة المقررة قانوناً:
-            <br><br>
-            <div style="font-weight: 700; border-right: 4px solid #ef4444; background: #fef2f2; border-radius: 8px; padding: 16px 24px; margin-bottom: 24px;">
-                &nbsp;&nbsp;&nbsp;السيد(ة) / الآنسة: <span class="v"><?= htmlspecialchars($nomAr) ?></span>
+            <?php
+            $formatToSlashYMD = function($dateStr) {
+                if (empty($dateStr)) return '---';
+                $dateStr = str_replace('-', '/', $dateStr);
+                if (preg_match('/^(\d{2})\/(\d{2})\/(\d{4})$/', $dateStr, $m)) {
+                    return "{$m[3]}/{$m[2]}/{$m[1]}";
+                }
+                return $dateStr;
+            };
+            ?>
+            <div style="font-size: 17.5px; line-height: 2.8; margin-top: 40px; font-family: 'Cairo', sans-serif; color: #000; text-align: right; padding: 0 10px; direction: rtl;">
+                إن مدير : <span style="font-weight: 700; border-bottom: 1px dotted #000; padding-bottom: 2px;"><?= htmlspecialchars($etabNom) ?></span>
                 <br>
-                &nbsp;&nbsp;&nbsp;المولود(ة) بتاريخ: <span class="v"><?= htmlspecialchars($dateNais) ?></span>
-                بـ: <span class="v"><?= htmlspecialchars($lieu) ?></span>
+                يشهد أن السيد(ة) : <span style="font-weight: 700; border-bottom: 1px dotted #000; padding-bottom: 2px;"><?= htmlspecialchars($nomAr) ?></span>
                 <br>
-                &nbsp;&nbsp;&nbsp;رقم التسجيل: <span class="v" style="font-family:'Outfit';"><?= htmlspecialchars($matricule) ?></span>
+                المولود(ة) بتاريخ : <span style="font-weight: 700; font-family: 'Outfit'; border-bottom: 1px dotted #000; padding-bottom: 2px;"><?= $formatToSlashYMD($dateNais) ?></span>
+                &nbsp;&nbsp; بـ: <span style="font-weight: 700; border-bottom: 1px dotted #000; padding-bottom: 2px;"><?= htmlspecialchars($lieu) ?></span>
                 <br>
-                &nbsp;&nbsp;&nbsp;القسم التكويني والتخصص: <span class="v"><?= htmlspecialchars($specAr) ?></span>
+                تابع (ت) تكوينا في اختصاص : <span style="font-weight: 700; border-bottom: 1px dotted #000; padding-bottom: 2px;"><?= htmlspecialchars($specAr) ?></span>
+                <br>
+                مدة التكوين : <span style="font-weight: 700; font-family: 'Outfit'; border-bottom: 1px dotted #000; padding-bottom: 2px;"><?= htmlspecialchars($details['spec_duree'] ?? '36') ?></span> شهرا
+                &nbsp;&nbsp; مستوى التأهيل : <span style="font-weight: 700; font-family: 'Outfit'; border-bottom: 1px dotted #000; padding-bottom: 2px;"><?= htmlspecialchars($details['spec_niveau'] ?? '4') ?></span>
+                <br>
+                بداية التكوين : <span style="font-weight: 700; font-family: 'Outfit'; border-bottom: 1px dotted #000; padding-bottom: 2px;"><?= !empty($details['date_debut']) ? date('Y/m/d', strtotime($details['date_debut'])) : '---' ?></span>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; تاريخ الفصل : <span style="font-weight: 700; font-family: 'Outfit'; color: #000; border-bottom: 1px dotted #000; padding-bottom: 2px;"><?= !empty($details['date_exclusion']) ? htmlspecialchars($details['date_exclusion']) : '---' ?></span>
             </div>
-            <h5 class="fw-bold text-danger mb-2" style="font-family:'Cairo'; text-decoration: underline;"><i class="fa-solid fa-gavel me-1"></i> يـقـرر مـا يـلـي:</h5>
-            <strong>المادة الأولى:</strong> يُشطب ويُسقط بصفة نهائية المتربص(ة) المذكور(ة) أعلاه من قوائم المؤسسة.
-            <br>
-            <strong>المادة الثانية:</strong> يُسرح المعني رسمياً ويلغى تسجيله من تاريخ صدور هذا القرار، ولا يمكنه إعادة الالتحاق إلا وفق الشروط البيداغوجية المنظمة.
 
         <?php elseif ($docType === 'basma_mouahada'): ?>
             بناءً على تفعيل نظام الرقمنة والتحقق البيومتري الموحد لقطاع التكوين والتعليم المهنيين، تشهد الإدارة ببيانات البصمة الرقمية الآتية:
@@ -638,34 +658,75 @@ $titleFr = $titles[$docType]['fr'] ?? 'Document Administratif';
     </div>
 
     <!-- ── Footer ── -->
-    <div class="doc-footer">
-        <!-- Verification badge with dynamic QR Code -->
-        <div class="qr-badge">
-            @php
-                 $verificationUrl = url('/verify?code=' . urlencode($codeVer));
-                 $qrCodeUrl = url('/api/qrcode?data=' . urlencode($verificationUrl));
-            @endphp
-            <div>
-                <img src="{{ $qrCodeUrl }}" alt="رمز التحقق الرقمي" />
+    <?php if ($docType === 'decision_isqat'): ?>
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 50px; padding-top: 20px; font-family:'Cairo'; font-size: 14px; color: #000; direction: rtl;">
+            <div class="qr-badge" style="border: 1px dashed #cbd5e1; background: #f8fafc; padding: 6px 12px; border-radius: 8px; display: flex; align-items: center; gap: 8px; box-shadow: none;">
+                @php
+                     $verificationUrl = url('/verify?code=' . urlencode($codeVer));
+                     $qrCodeUrl = url('/api/qrcode?data=' . urlencode($verificationUrl));
+                @endphp
+                <img src="{{ $qrCodeUrl }}" alt="رمز التحقق الرقمي" style="width: 50px; height: 50px; border-radius: 4px; border: 1px solid #cbd5e1;" />
+                <div style="text-align: right;">
+                    <div style="font-weight:700; font-size:9px; color:#475569;">كود التحقق: <?= htmlspecialchars($codeVer) ?></div>
+                </div>
             </div>
-            <div style="text-align: right; flex: 1;">
-                <div style="font-weight:800; color:#15803d; margin-bottom:4px; font-size:12px;">بوابة التحقق الرقمي</div>
-                <div style="font-size:10px; color:#475569;">امسح الرمز أو أدخل الكود في البوابة للتحقق من صحة وموثوقية الوثيقة.</div>
-                <div>
-                    <span class="code-ver"><?= htmlspecialchars($codeVer) ?></span>
+            
+            <div style="text-align: right; line-height: 2.2;">
+                <?php
+                $city = '';
+                if (!empty($details['etab_nom'])) {
+                    if (preg_match('/العلمة/u', $details['etab_nom'])) {
+                        $city = 'العلمة';
+                    } elseif (preg_match('/يوب/u', $details['etab_nom'])) {
+                        $city = 'يوب';
+                    } else {
+                        $words = explode(' ', trim($details['etab_nom']));
+                        $city = end($words);
+                    }
+                }
+                $wilaya = $details['wilaya_nom'] ?? '';
+                $issuePlace = trim($city . '_' . $wilaya, '_');
+                ?>
+                حرر بـ : <strong><?= htmlspecialchars($issuePlace) ?></strong> في : <strong><?= date('Y/m/d', strtotime($docDate)) ?></strong>
+                <br>
+                <div style="text-align: center; margin-top: 10px; font-weight: 700; width: 200px;">
+                    مدير (ة) المؤسسة
                 </div>
             </div>
         </div>
+    <?php else: ?>
+        <div class="doc-footer">
+            <!-- Verification badge with dynamic QR Code -->
+            <div class="qr-badge">
+                @php
+                     $verificationUrl = url('/verify?code=' . urlencode($codeVer));
+                     $qrCodeUrl = url('/api/qrcode?data=' . urlencode($verificationUrl));
+                @endphp
+                <div>
+                    <img src="{{ $qrCodeUrl }}" alt="رمز التحقق الرقمي" />
+                </div>
+                <div style="text-align: right; flex: 1;">
+                    <div style="font-weight:800; color:#15803d; margin-bottom:4px; font-size:12px;">بوابة التحقق الرقمي</div>
+                    <div style="font-size:10px; color:#475569;">امسح الرمز أو أدخل الكود في البوابة للتحقق من صحة وموثوقية الوثيقة.</div>
+                    <div>
+                        <span class="code-ver"><?= htmlspecialchars($codeVer) ?></span>
+                    </div>
+                </div>
+            </div>
 
-        <!-- Signature -->
-        <div class="sig-block">
-            <div>حرر بتاريخ: <strong><?= date('d/m/Y', strtotime($docDate)) ?></strong></div>
-            <div class="sig-line"></div>
-            <div>توقيع وختم المدير</div>
-            <div style="font-size:11px; color:#94a3b8; margin-top:4px; font-family:'Outfit';">Signature &amp; Cachet du Directeur</div>
+            <!-- Signature -->
+            <div class="sig-block">
+                <div>حرر بتاريخ: <strong><?= date('d/m/Y', strtotime($docDate)) ?></strong></div>
+                <div class="sig-line"></div>
+                <div>توقيع وختم المدير</div>
+                <div style="font-size:11px; color:#94a3b8; margin-top:4px; font-family:'Outfit';">Signature &amp; Cachet du Directeur</div>
+            </div>
         </div>
-    </div>
+    <?php endif; ?>
 
+    <?php if ($docType === 'decision_isqat'): ?>
+        </div>
+    <?php endif; ?>
 </div>
 
 <script>

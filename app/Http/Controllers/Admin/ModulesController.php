@@ -2970,6 +2970,8 @@ class ModulesController extends Controller {
                            c.LieuNais as lieu_naissance,
                            c.Adres as adresse_ar,
                            sp.Nom as spec_ar, sp.NomFr as spec_fr, sp.CodeSpec as spec_code,
+                           sp.dureeM as spec_duree, sp.IDNiveau_Fp as spec_niveau,
+                           qd.Nom as dplm_nom,
                            ef.Nom as etab_nom, ef.NomFr as etab_fr,
                            w.Nom as wilaya_nom, w.NomFr as wilaya_nom_fr,
                            a.statut as statut_apprenant,
@@ -2979,11 +2981,13 @@ class ModulesController extends Controller {
                            DATE_FORMAT(o.DateF, '%d/%m/%Y') as date_fin_formatted,
                            mf.Nom as mode_formation_ar,
                            o.IDMode_formation as mode_formation_id,
-                           ss.NumSem as semestre_num
+                           ss.NumSem as semestre_num,
+                           (SELECT DATE_FORMAT(DateAbdech, '%Y/%m/%d') FROM apprenant_section_semstre WHERE IDapprenant = a.IDapprenant AND DateAbdech IS NOT NULL AND DateAbdech != '0000-00-00' ORDER BY IDapprenant_Section_semstre DESC LIMIT 1) as date_exclusion
                     FROM apprenant a
                     JOIN candidat c ON a.IDCandidat = c.IDCandidat
                     LEFT JOIN offre o ON c.IDOffre = o.IDOffre
                     LEFT JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
+                    LEFT JOIN qualification_dplm qd ON sp.IDqualification_dplm = qd.IDqualification_dplm
                     LEFT JOIN etablissement ef ON o.IDEts_Form = ef.IDEts_Form
                     LEFT JOIN dfep d ON ef.IDDFEP = d.IDDFEP
                     LEFT JOIN wilaya w ON d.IDWilayaa = w.IDWilayaa
@@ -3065,7 +3069,7 @@ class ModulesController extends Controller {
             try {
                 // Retrieve all semesters of the student's section chronologically
                 $stmtSems = $this->db->prepare("
-                    SELECT ss.IDSection_Semestre, ss.NumSem
+                    SELECT ss.IDSection_Semestre, ss.NumSem, ss.DateD as date_d, ss.DateF as date_f
                     FROM section_semestre ss
                     JOIN apprenant a ON a.IDSection = ss.IDSection
                     WHERE a.IDapprenant = ?
@@ -3080,12 +3084,15 @@ class ModulesController extends Controller {
                 foreach ($sectionSemesters as $sem) {
                     $semId = (int)$sem['IDSection_Semestre'];
                     $numSem = (int)$sem['NumSem'];
+                    $dateD = $sem['date_d'];
+                    $dateF = $sem['date_f'];
 
                     $stmtM = $this->db->prepare("
                         SELECT ssm.NomMdl as module_nom, COALESCE(ssm.coef, 1) as coefficient,
                                 ssm.ExisC1 as exis_c1, ssm.ExisCs as exis_cs,
                                 assm.NoteC1 as cc1, assm.NoteC2 as cc2, assm.NoteCs as exam, assm.NoteR as resit,
-                                COALESCE(assm.MoyApr, assm.MoyAvr) as average
+                                ass.MoyAvr as average_before, ass.MoyApr as average_final,
+                                COALESCE(ass.MoyApr, ass.MoyAvr) as average
                         FROM section_semestre_module ssm
                         LEFT JOIN apprenant_section_semstre ass ON ass.IDSection_Semestre = ssm.IDSection_Semestre AND ass.IDapprenant = ?
                         LEFT JOIN apprenant_section_semstre_module assm ON ass.IDapprenant_Section_semstre = assm.IDapprenant_Section_semstre AND ssm.IDsection_semestre_Module = assm.IDsection_semestre_Module
@@ -3128,7 +3135,10 @@ class ModulesController extends Controller {
                             'module_nom' => $rm['module_nom'],
                             'coefficient' => $coef,
                             'cc1' => $rm['cc1'],
+                            'cc2' => $rm['cc2'],
                             'exam' => $rm['exam'],
+                            'resit' => $rm['resit'],
+                            'average_before' => $rm['average_before'],
                             'average' => $avg,
                             'exis_c1' => $rm['exis_c1'],
                             'exis_cs' => $rm['exis_cs']
@@ -3142,11 +3152,54 @@ class ModulesController extends Controller {
 
                     $semAvg = ($semCoefs > 0) ? ($semPoints / $semCoefs) : 0;
                     
+                    // Fetch decision and observation
+                    $stmtAss = $this->db->prepare("
+                        SELECT ass.IDapprenant_Section_semstre, ass.Obs as observation, de.Nom as decision_nom
+                        FROM apprenant_section_semstre ass
+                        LEFT JOIN decision_evals de ON ass.IDDecision_evals = de.IDDecision_evals
+                        WHERE ass.IDSection_Semestre = ? AND ass.IDapprenant = ?
+                        LIMIT 1
+                    ");
+                    $stmtAss->execute([$semId, (int)$userId]);
+                    $assRow = $stmtAss->fetch(PDO::FETCH_ASSOC) ?: [];
+                    
+                    $totalAbsences = 0;
+                    $justifiedAbsences = 0;
+                    $unjustifiedAbsences = 0;
+                    
+                    if (!empty($assRow)) {
+                        $assId = (int)$assRow['IDapprenant_Section_semstre'];
+                        $stmtAbs = $this->db->prepare("
+                            SELECT 
+                                SUM(CASE WHEN Type = 1 THEN 1 ELSE 0 END) as unjustified,
+                                SUM(CASE WHEN Type = 0 OR Type IS NULL THEN 1 ELSE 0 END) as justified,
+                                COUNT(*) as total
+                            FROM apprenant_absence 
+                            WHERE IDapprenant_Section_semstre = ?
+                        ");
+                        $stmtAbs->execute([$assId]);
+                        $absRow = $stmtAbs->fetch(PDO::FETCH_ASSOC);
+                        if ($absRow) {
+                            $unjustifiedAbsences = (int)($absRow['unjustified'] ?? 0);
+                            $justifiedAbsences = (int)($absRow['justified'] ?? 0);
+                            $totalAbsences = (int)($absRow['total'] ?? 0);
+                        }
+                    }
+                    
                     $semestersData[] = [
                         'num_sem' => $numSem,
                         'sem_id' => $semId,
+                        'date_d' => $dateD,
+                        'date_f' => $dateF,
                         'marks' => $semMarks,
-                        'average' => $semAvg
+                        'average' => $semAvg,
+                        'points_total' => $semPoints,
+                        'coefs_total' => $semCoefs,
+                        'observation' => $assRow['observation'] ?? '',
+                        'decision_nom' => $assRow['decision_nom'] ?? '---',
+                        'total_abs' => $totalAbsences,
+                        'justified_abs' => $justifiedAbsences,
+                        'unjustified_abs' => $unjustifiedAbsences
                     ];
 
                     if ($semAvg > 0) {

@@ -33,7 +33,7 @@ if ($isApprenticeshipDept || in_array($username, ['sdtpa', 'sdtpas'])) {
     $dept = 'diplomes';
 } elseif (in_array($username, ['sdtpp', 'sdtpps', 'sdtpc', 'sdtpcs'])) {
     $dept = 'pedagogie';
-} elseif (in_array($username, ['admfine', 'admfines', 'samf', 'samfs', 'sdafm', 'sdsafms', 'sdarh', 'sdarhs'])) {
+} elseif (in_array($username, ['admfine', 'admfines', 'samf', 'samfs', 'sdafm', 'sdsafms', 'sdarh', 'sdarhs', 'samrh', 'ssip'])) {
     $dept = 'administration';
 }
 // if ($roleCode === 'employee') { $roleCode = 'formateur'; }
@@ -918,7 +918,7 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
             </a>
 
             <!-- Category: Digital Cards (بطاقات التكوين المهني) -->
-            @if (in_array($roleCode, ['admin', 'dfep', 'central', 'etablissement', 'directeur']) && (int)(session('user.IDMode_formation') ?? 0) !== 10 && $dept !== 'diplomes' && !$isDfmUser && !$isDrhUser && !$isDepUser && !$isDeohUser && !$isDosfpUser && !$isDfcriUser)
+            @if (in_array($roleCode, ['admin', 'dfep', 'central', 'etablissement', 'directeur']) && (int)(session('user.IDMode_formation') ?? 0) !== 10 && $dept !== 'diplomes' && $dept !== 'administration' && !$isDfmUser && !$isDrhUser && !$isDepUser && !$isDeohUser && !$isDosfpUser && !$isDfcriUser)
                 <div class="sidebar-dropdown">
                     <button type="button" class="sidebar-item {{ $isActive('/dashboard/digital-cards') ? 'active' : '' }}" onclick="toggleSidebarDropdown(this)" title="بطاقات التكوين المهني">
                         <i class="fa-solid fa-id-card-clip text-primary"></i>
@@ -1151,8 +1151,8 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
                         <a href="{{ url('dashboard/documents') }}" class="sidebar-subitem {{ ($isActive('/dashboard/documents', true) && !request('focus')) ? 'active' : '' }}" title="بوابة استخراج الوثائق">
                             <i class="fa-solid fa-print text-primary"></i> <span>بوابة استخراج الوثائق</span>
                         </a>
-                        <a href="{{ url('dashboard/documents?focus=isqat') }}" class="sidebar-subitem {{ (request('focus') === 'isqat') ? 'active' : '' }}" title="قرار إسقاط بيداغوجي">
-                            <i class="fa-solid fa-user-slash text-danger"></i> <span>قرار إسقاط بيداغوجي</span>
+                        <a href="{{ url('dashboard/documents?focus=isqat') }}" class="sidebar-subitem {{ (request('focus') === 'isqat') ? 'active' : '' }}" title="شهادة تكوين - مفصولين">
+                            <i class="fa-solid fa-user-slash text-danger"></i> <span>شهادة تكوين - مفصولين</span>
                         </a>
                         <a href="{{ url('dashboard/documents?focus=basma') }}" class="sidebar-subitem {{ (request('focus') === 'basma') ? 'active' : '' }}" title="البصمة الرقمية الموحدة">
                             <i class="fa-solid fa-fingerprint text-info"></i> <span>البصمة الرقمية الموحدة</span>

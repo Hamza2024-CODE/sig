@@ -93,7 +93,7 @@ $category = $category ?? 'all';
                                     <option value="certificat_scolaire" class="stag-doc d-none">شهادة مدرسية (Certificat Scolaire)</option>
                                     <option value="attestation_inscription" class="stag-doc d-none">شهادة تسجيل (Attestation Inscription)</option>
                                     <option value="bulletin_notes" class="stag-doc d-none">كشف النقاط السداسي (Bulletin de Notes)</option>
-                                    <option value="decision_isqat" class="stag-doc d-none">قرار إسقاط بيداغوجي (Décision d'Exclusion)</option>
+                                    <option value="decision_isqat" class="stag-doc d-none">شهادة تكوين - مفصولين (Certificat de Formation)</option>
                                     <option value="basma_mouahada" class="stag-doc d-none">البصمة الرقمية الموحدة (Empreinte Digitale)</option>
                                     <option value="attestation_travail" class="emp-doc d-none">شهادة عمل (Attestation de Travail)</option>
                                 </select>
@@ -443,7 +443,7 @@ $category = $category ?? 'all';
                                             <?php 
                                             switch($doc['document_type']) {
                                                 case 'certificat_scolaire': echo 'شهادة مدرسية'; break;
-                                                case 'decision_isqat': echo 'قرار إسقاط بيداغوجي'; break;
+                                                case 'decision_isqat': echo 'شهادة تكوين - مفصولين'; break;
                                                 case 'basma_mouahada': echo 'البصمة الرقمية الموحدة'; break;
                                                 case 'attestation_inscription': echo 'شهادة التسجيل'; break;
                                                 case 'attestation_travail': echo 'شهادة عمل'; break;
