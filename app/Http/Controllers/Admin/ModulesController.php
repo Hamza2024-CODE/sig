@@ -1811,8 +1811,15 @@ class ModulesController extends Controller {
             try {
                 // Count current enrolled apprenants from offers for speed
                 $stmtT = $this->db->prepare("
-                    SELECT IFNULL(SUM(o.NbrInscr), 0)
-                    FROM offre o
+                    SELECT COUNT(*)
+                    FROM apprenant a
+                    JOIN candidat c ON a.IDCandidat = c.IDCandidat
+                    LEFT JOIN offre o ON c.IDOffre = o.IDOffre
+                    LEFT JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
+                    LEFT JOIN qualification_dplm qd ON sp.IDqualification_dplm = qd.IDqualification_dplm
+                    LEFT JOIN etablissement ef ON o.IDEts_Form = ef.IDetablissement
+                    LEFT JOIN dfep d ON ef.IDDFEP = d.IDDFEP
+                    LEFT JOIN wilaya w ON d.IDWilayaa = w.IDWilayaa
                     WHERE $ofWhere
                 ");
                 $stmtT->execute($params);
@@ -3009,7 +3016,7 @@ class ModulesController extends Controller {
                     LEFT JOIN offre o ON c.IDOffre = o.IDOffre
                     LEFT JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
                     LEFT JOIN qualification_dplm qd ON sp.IDqualification_dplm = qd.IDqualification_dplm
-                    LEFT JOIN ets_form ef ON o.IDEts_Form = ef.IDEts_Form
+                    LEFT JOIN etablissement ef ON o.IDEts_Form = ef.IDetablissement
                     LEFT JOIN dfep d ON ef.IDDFEP = d.IDDFEP
                     LEFT JOIN wilaya w ON d.IDWilayaa = w.IDWilayaa
                     LEFT JOIN session se ON o.IDSession = se.IDSession
