@@ -2906,6 +2906,21 @@ class ModulesController extends Controller {
                         ->select('offre.IDEts_Form', 'etablissement.IDDFEP', 'apprenant.IDapprenant')
                         ->first();
 
+                    // Fallback for dismissed trainees (decision_isqat): offre may be null
+                    // Try to find establishment via section table
+                    if (!$traineeEtab || (!$traineeEtab->IDEts_Form && !$traineeEtab->IDDFEP)) {
+                        $traineeEtabFallback = \Illuminate\Support\Facades\DB::table('apprenant')
+                            ->join('candidat', 'apprenant.IDCandidat', '=', 'candidat.IDCandidat')
+                            ->leftJoin('section', 'candidat.IDSection', '=', 'section.IDSection')
+                            ->leftJoin('etablissement', 'section.IDEts_Form', '=', 'etablissement.IDetablissement')
+                            ->where('apprenant.IDapprenant', $userId)
+                            ->select(\Illuminate\Support\Facades\DB::raw('COALESCE(section.IDEts_Form, 0) as IDEts_Form'), 'etablissement.IDDFEP', 'apprenant.IDapprenant')
+                            ->first();
+                        if ($traineeEtabFallback && ($traineeEtabFallback->IDEts_Form || $traineeEtabFallback->IDDFEP)) {
+                            $traineeEtab = $traineeEtabFallback;
+                        }
+                    }
+
                     if (!$traineeEtab) {
                         abort(404, 'المتربص غير موجود / Trainee not found');
                     }
