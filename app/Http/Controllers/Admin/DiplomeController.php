@@ -304,6 +304,13 @@ class DiplomeController extends Controller
             $etablissements = \App\Services\ReferenceCache::etablissementsForDfep($dfep_id);
         }
 
+        if ($filterQualif === 11 || $filterQualif === 12) {
+            $etablissements = array_filter($etablissements, function($etab) {
+                $name = $etab['nom_ar'] ?? $etab['Nom'] ?? '';
+                return str_contains($name, 'التعليم المهني') || str_contains($name, 'تعليم مهني');
+            });
+        }
+
         $modes = \App\Services\ReferenceCache::modesFormation();
         $annees = \App\Services\ReferenceCache::anneesFormation();
         $specialites = \App\Services\ReferenceCache::specialites();
