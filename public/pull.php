@@ -1,4 +1,5 @@
 <?php
+// SIG Auto-Update Script v1011 - Cleaned
 require __DIR__.'/../vendor/autoload.php';
 ini_set('user_agent', 'PHP');
 $app = require_once __DIR__.'/../bootstrap/app.php';
