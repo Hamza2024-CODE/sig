@@ -57,6 +57,10 @@ echo "<h1>Auto-Updating All Modified Files...</h1>";
 
 $files = [
     'app/Http/Controllers/Admin/GradesController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/GradesController.php',
+    'resources/views/admin/grades/index.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/grades/index.blade.php',
+    'resources/views/admin/grades/input.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/grades/input.blade.php',
+    'app/Domains/Academic/Services/GradingSystemService.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Domains/Academic/Services/GradingSystemService.php',
+    'app/Domains/Academic/Services/OffresService.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Domains/Academic/Services/OffresService.php'
 ];
 
 foreach ($files as $localPath => $remoteUrl) {
@@ -230,3 +234,13 @@ try {
 }
 
 echo "<br><h3 style='color:green;'>All updates completed successfully!</h3>";
+
+echo "<h2>Latest Server Log Entries (laravel.log):</h2>";
+$logFile = __DIR__ . '/../storage/logs/laravel.log';
+if (file_exists($logFile)) {
+    $lines = file($logFile);
+    $lastLines = array_slice($lines, -40);
+    echo "<pre style='background:#1e1e1e;color:#00ff00;padding:10px;border-radius:6px;max-height:350px;overflow:auto;font-family:monospace;font-size:12px;'>" . htmlspecialchars(implode("", $lastLines)) . "</pre>";
+} else {
+    echo "<i>No laravel.log file found.</i>";
+}
