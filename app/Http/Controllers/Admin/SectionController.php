@@ -134,7 +134,12 @@ class SectionController extends Controller
             ->select('offre.IDOffre as id', 'specialite.Nom as spec_ar', 'specialite.NomFr as spec_fr', 'etablissement.Nom as etab_ar', 'offre.IDSession as session_id', 'offre.DateD as date_debut', 'offre.DateF as date_fin', DB::raw('COALESCE(NULLIF(specialite.dureeM, 0), specialite.NbrSem * 6, 24) as duree'))
             ->where('offre.IDSession', '=', $filterSession);
 
-        if ($dfepId > 0) {
+        if (in_array($role, ['admin', 'central', 'high_admin', 'secretaire_general', 'ministre'])) {
+            // Admins can see all or filtered
+            if ($filterEtab > 0) {
+                $offersQuery->where('offre.IDEts_Form', $filterEtab);
+            }
+        } elseif ($role === 'dfep' && $dfepId > 0) {
             $offersQuery->whereIn('offre.IDEts_Form', function($q) use ($dfepId) {
                 $q->select('IDetablissement')->from('etablissement')->where('IDDFEP', $dfepId);
             });
