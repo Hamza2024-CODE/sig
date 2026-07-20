@@ -322,50 +322,70 @@ try {
     }
 } catch (\Exception $ex) {}
 
-// 4. Fetch exam sessions
-$cacheKeySessions = 'exam_sessions_list_v2_w_' . ($selWilaya ?: 'all') . '_e_' . ($selEtab ?: 'all') . '_m_' . ($selMode ?: 'all');
+// 4. Fetch exam sessions (v3 optimized cache key)
+$cacheKeySessions = 'exam_sessions_list_v3_w_' . ($selWilaya ?: 'all') . '_e_' . ($selEtab ?: 'all') . '_m_' . ($selMode ?: 'all');
 
-$sessionsList = Cache::remember($cacheKeySessions, 600, function() use ($selWilaya, $selEtab, $selMode) {
+$sessionsList = Cache::remember($cacheKeySessions, 1800, function() use ($selWilaya, $selEtab, $selMode) {
     $list = [];
     try {
-        $rawSessions = DB::select("SELECT IDSession, Nom as name, NomFr as name_fr, DateD as date_start, Encour as is_current FROM session ORDER BY IDSession DESC LIMIT 5");
-        foreach ($rawSessions as $rs) {
-            $statusText  = $rs->is_current == 1 ? 'جارية حالياً' : 'مكتملة وموزعة';
-            $statusClass = $rs->is_current == 1 ? 'bg-warning-subtle text-warning' : 'bg-success-subtle text-success';
-
-            $sessCandidates = 1240;
-            try {
+        if (!empty($selWilaya) || !empty($selEtab) || !empty($selMode)) {
+            $rawSessions = DB::select("SELECT IDSession, Nom as name, NomFr as name_fr, DateD as date_start, Encour as is_current FROM session ORDER BY IDSession DESC LIMIT 5");
+            foreach ($rawSessions as $rs) {
+                $statusText  = $rs->is_current == 1 ? 'جارية حالياً' : 'مكتملة وموزعة';
+                $statusClass = $rs->is_current == 1 ? 'bg-warning-subtle text-warning' : 'bg-success-subtle text-success';
                 $whereSess = ["o.IDSession = ?"]; $paramsSess = [$rs->IDSession];
                 if (!empty($selWilaya)) { $whereSess[] = "e.IDDFEP = ?"; $paramsSess[] = $selWilaya; }
                 if (!empty($selEtab))   { $whereSess[] = "o.IDEts_Form = ?"; $paramsSess[] = $selEtab; }
                 if (!empty($selMode))   { $whereSess[] = "o.IDMode_formation = ?"; $paramsSess[] = $selMode; }
                 $rSess = DB::selectOne("SELECT COUNT(*) as c FROM candidat c INNER JOIN offre o ON c.IDOffre = o.IDOffre INNER JOIN etablissement e ON o.IDEts_Form = e.IDetablissement WHERE " . implode(" AND ", $whereSess), $paramsSess);
-                if ($rSess && (int)$rSess->c > 0) $sessCandidates = (int)$rSess->c;
-            } catch (\Exception $ex) {}
-
-            $list[] = [
-                'name'           => $rs->name ?: ('دورة امتحانات ' . ($rs->name_fr ?: 'الوطنية')),
-                'level'          => 'تكوين مهني / تمهين',
-                'candidates'     => $sessCandidates,
-                'rate'           => $rs->is_current == 1 ? '65%' : '100%',
-                'rate_val'       => $rs->is_current == 1 ? 65 : 100,
-                'progress_class' => $rs->is_current == 1 ? 'bg-warning' : 'bg-success',
-                'status_text'    => $statusText,
-                'status_class'   => $statusClass
-            ];
+                $sessCandidates = $rSess ? (int)$rSess->c : 0;
+                $list[] = [
+                    'name'           => $rs->name ?: ('دورة ' . ($rs->name_fr ?: 'الوطنية')),
+                    'level'          => 'تكوين مهني / تمهين',
+                    'candidates'     => $sessCandidates,
+                    'rate'           => $rs->is_current == 1 ? '65%' : '100%',
+                    'rate_val'       => $rs->is_current == 1 ? 65 : 100,
+                    'progress_class' => $rs->is_current == 1 ? 'bg-warning' : 'bg-success',
+                    'status_text'    => $statusText,
+                    'status_class'   => $statusClass
+                ];
+            }
+        } else {
+            $rawSessions = DB::select("
+                SELECT o.IDSession, sess.Nom as name, sess.NomFr as name_fr, sess.Encour as is_current, COUNT(c.IDCandidat) as candidates
+                FROM candidat c
+                JOIN offre o ON c.IDOffre = o.IDOffre
+                JOIN session sess ON o.IDSession = sess.IDSession
+                GROUP BY o.IDSession, sess.Nom, sess.NomFr, sess.Encour
+                ORDER BY o.IDSession DESC
+                LIMIT 5
+            ");
+            foreach ($rawSessions as $rs) {
+                $statusText  = $rs->is_current == 1 ? 'جارية حالياً' : 'مكتملة وموزعة';
+                $statusClass = $rs->is_current == 1 ? 'bg-warning-subtle text-warning' : 'bg-success-subtle text-success';
+                $list[] = [
+                    'name'           => $rs->name ?: ('دورة ' . ($rs->name_fr ?: 'الوطنية')),
+                    'level'          => 'تكوين مهني / تمهين',
+                    'candidates'     => (int)$rs->candidates,
+                    'rate'           => $rs->is_current == 1 ? '65%' : '100%',
+                    'rate_val'       => $rs->is_current == 1 ? 65 : 100,
+                    'progress_class' => $rs->is_current == 1 ? 'bg-warning' : 'bg-success',
+                    'status_text'    => $statusText,
+                    'status_class'   => $statusClass
+                ];
+            }
         }
     } catch (\Exception $e) {}
     return $list;
 });
 
-
 if (empty($sessionsList)) {
     $sessionsList = [];
 }
 
-// 5. Fetch Wilaya-level Exam Stats
-$cacheKeyWilayaExamStats = 'exam_wilaya_stats_v2_w_' . ($selWilaya ?: 'all') . '_e_' . ($selEtab ?: 'all');
-$wilayaStats = Cache::remember($cacheKeyWilayaExamStats, 600, function() use ($selWilaya, $selEtab) {
+// 5. Fetch Wilaya-level Exam Stats (v3 optimized)
+$cacheKeyWilayaExamStats = 'exam_wilaya_stats_v3_w_' . ($selWilaya ?: 'all') . '_e_' . ($selEtab ?: 'all');
+$wilayaStats = Cache::remember($cacheKeyWilayaExamStats, 1800, function() use ($selWilaya, $selEtab) {
     try {
         $where = [];
         $params = [];
@@ -379,20 +399,25 @@ $wilayaStats = Cache::remember($cacheKeyWilayaExamStats, 600, function() use ($s
         }
         $whereSQL = !empty($where) ? " WHERE " . implode(" AND ", $where) : "";
         
-        return DB::select("
+        $rows = DB::select("
             SELECT 
                 w.Nom as wilaya_nom, 
-                COUNT(DISTINCT e.IDetablissement) as centers_count, 
                 COUNT(c.IDCandidat) as candidates_count
             FROM wilaya w
-            LEFT JOIN etablissement e ON e.IDDFEP = w.IDWilayaa
-            LEFT JOIN offre o ON o.IDEts_Form = e.IDetablissement
-            LEFT JOIN candidat c ON c.IDOffre = o.IDOffre
+            JOIN dfep d ON w.IDWilayaa = d.IDWilayaa
+            JOIN etablissement e ON e.IDDFEP = d.IDDFEP
+            JOIN offre o ON o.IDEts_Form = e.IDetablissement
+            JOIN candidat c ON c.IDOffre = o.IDOffre
             $whereSQL
             GROUP BY w.IDWilayaa, w.Nom
             ORDER BY candidates_count DESC
-            LIMIT 10
+            LIMIT 7
         ", $params);
+
+        foreach ($rows as $r) {
+            $r->wilaya_nom = preg_replace('/\s+/', ' ', trim($r->wilaya_nom));
+        }
+        return $rows;
     } catch (\Exception $e) {
         return [];
     }
