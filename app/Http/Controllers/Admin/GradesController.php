@@ -26,7 +26,7 @@ class GradesController extends Controller
         $user = session('user');
         $role = strtolower($user['role_code'] ?? '');
         $etabId = (int)($user['etablissement_id'] ?? 0);
-        $dfepId = (int)($user['iddfep'] ?? 0);
+        $dfepId = (int)($user['iddfep'] ?? $user['IDDFEP'] ?? 0);
 
         // 1. Semester Validation
         $maxSem = (int)($offre['duree_semestres'] ?? 4);
@@ -34,8 +34,8 @@ class GradesController extends Controller
             abort(403, 'السداسي المحدد غير صالح لهذا التخصص.');
         }
 
-        // Check if previous semester is validated
-        if ($semestre > 1) {
+        // Check if previous semester is validated (only enforce on formateur/employee roles)
+        if ($semestre > 1 && in_array($role, ['formateur', 'employee'])) {
             $prevSem = $semestre - 1;
             $isPrevVal = DB::selectOne("
                 SELECT 1 FROM section_semestre ss
@@ -53,22 +53,21 @@ class GradesController extends Controller
         // 2. Role-based Scope Validation
         if (in_array($role, ['admin', 'central', 'high_admin', 'secretaire_general', 'ministre'])) {
             // Admins can access all
-        } elseif ($role === 'dfep' && $dfepId > 0) {
-            if ((int)$offre['dfep_id'] !== $dfepId) {
+        } elseif ($role === 'dfep') {
+            if ($dfepId > 0 && (int)($offre['dfep_id'] ?? 0) > 0 && (int)$offre['dfep_id'] !== $dfepId) {
                 abort(403, 'غير مصرح لك بالوصول لبيانات ولاية أخرى.');
             }
-        } else {
-            // Etablissement / Directeur / Employee / Formateur
-            if ($etabId > 0 && (int)$offre['etablissement_id'] !== $etabId) {
+        } elseif (in_array($role, ['etablissement', 'directeur', 'employee', 'formateur'])) {
+            if ($etabId > 0 && (int)($offre['etablissement_id'] ?? 0) !== $etabId) {
                 abort(403, 'غير مصرح لك بالوصول لبيانات مؤسسة أخرى.');
             }
         }
 
         // 3. Mode Validation
         $isMode10 = ((int)($user['IDMode_formation'] ?? 0) === 10 || strtolower($user['role_fr'] ?? '') === 'apprentissage');
-        if ($isMode10 && (int)$offre['mode_formation'] !== 10) {
+        if ($isMode10 && (int)($offre['mode_formation'] ?? 0) !== 10) {
             abort(403, 'غير مصرح لك بالوصول لغير نمط التمهين.');
-        } elseif (strtolower($user['username'] ?? '') === 'sdtpp' && (int)$offre['mode_formation'] === 10) {
+        } elseif (strtolower($user['username'] ?? '') === 'sdtpp' && (int)($offre['mode_formation'] ?? 0) === 10) {
             abort(403, 'غير مصرح لك بالوصول لنمط التمهين.');
         }
     }
@@ -714,123 +713,129 @@ class GradesController extends Controller
      */
     public function input(): mixed
     {
-        $rawOffreId = request()->all()['offre_id'] ?? '';
-        $offreId   = is_numeric($rawOffreId) ? (int)$rawOffreId : (\App\Helpers\SecureIdHelper::decrypt($rawOffreId) ?? 0);
-        $rawSemestre = request()->all()['semestre'] ?? '';
-        $semestre  = is_numeric($rawSemestre) ? (int)$rawSemestre : (\App\Helpers\SecureIdHelper::decrypt($rawSemestre) ?? 1);
-        $matiereId = (int)(request()->all()['matiere_id'] ?? 0);
+        try {
+            $rawOffreId = request()->all()['offre_id'] ?? '';
+            $offreId   = is_numeric($rawOffreId) ? (int)$rawOffreId : (\App\Helpers\SecureIdHelper::decrypt($rawOffreId) ?? 0);
+            $rawSemestre = request()->all()['semestre'] ?? '';
+            $semestre  = is_numeric($rawSemestre) ? (int)$rawSemestre : (\App\Helpers\SecureIdHelper::decrypt($rawSemestre) ?? 1);
+            $matiereId = (int)(request()->all()['matiere_id'] ?? 0);
 
-        if (!$offreId) {
-            return $this->redirect('/dashboard/grades');
-        }
-
-        // Offre metadata
-        $offre = (array) DB::selectOne("
-            SELECT o.IDOffre as id, s.Nom as spec_ar, s.NbrSem as duree_semestres,
-                   e.Nom as etab_nom, o.IDMode_formation as mode_formation,
-                   o.IDEts_Form as etablissement_id, e.IDDFEP as dfep_id
-            FROM offre o
-            JOIN specialite s ON o.IDSpecialite = s.IDSpecialite
-            JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
-            WHERE o.IDOffre = ?
-        ", [$offreId]);
-
-        if (empty($offre)) {
-            return $this->redirect('/dashboard/grades');
-        }
-
-        $this->validateOffreAccess($offre, $semestre);
-
-        $user = session('user');
-        $role = strtolower($user['role_code'] ?? '');
-
-        // Dynamically ensure section semesters and modules exist
-        $this->service->ensureSectionSemestreModules($offreId, $semestre);
-
-        // Fetch dynamic modules
-        $isTeacher = in_array($role, ['formateur', 'employee']);
-        $teacherFilterId = $isTeacher ? (int)$user['id'] : 0;
-        
-        $matieres = array_map(fn($item) => (array)$item, DB::select("
-            SELECT DISTINCT 
-                ssm.IDsection_semestre_Module as id,
-                ssm.IDModule as module_id,
-                ssm.NomMdl as libelle_ar,
-                ssm.NomFrMdl as libelle_fr,
-                ssm.coef as coefficient,
-                CASE 
-                    WHEN ssm.NomMdl LIKE '%تربص%' OR ssm.NomFrMdl LIKE '%stage%' OR ssm.NomMdl LIKE '%ميداني%' THEN 'stage_pratique'
-                    WHEN ssm.NomMdl LIKE '%مذكرة%' OR ssm.NomFrMdl LIKE '%memoire%' OR ssm.NomMdl LIKE '%تخرج%' THEN 'memoire'
-                    ELSE 'theorique'
-                END as type_matiere
-            FROM section_semestre_module ssm
-            JOIN section_semestre ss ON ssm.IDSection_Semestre = ss.IDSection_Semestre
-            JOIN section sec ON ss.IDSection = sec.IDSection
-            WHERE sec.IDOffre = ? AND ss.NumSem = ?
-              AND (? = 0 OR ssm.IDEncadrement = ?)
-        ", [$offreId, $semestre, $teacherFilterId, $teacherFilterId]));
-
-        // Fallback placeholders if DB is empty
-        if (empty($matieres)) {
-            $matieres = [
-                ['id' => 1, 'code' => 'M01', 'libelle_ar' => 'وحدة تعليمية 1', 'libelle_fr' => 'Module 1', 'coefficient' => 2, 'type_matiere' => 'theorique'],
-                ['id' => 2, 'code' => 'M02', 'libelle_ar' => 'وحدة تعليمية 2', 'libelle_fr' => 'Module 2', 'coefficient' => 3, 'type_matiere' => 'theorique'],
-                ['id' => 3, 'code' => 'M03', 'libelle_ar' => 'تطبيق مهني',     'libelle_fr' => 'Pratique',  'coefficient' => 4, 'type_matiere' => 'pratique'],
-            ];
-        }
-
-        // Validate selected matiere_id
-        $isValidMatiere = false;
-        foreach ($matieres as $m) {
-            if ($m['id'] == $matiereId) {
-                $isValidMatiere = true;
-                break;
+            if (!$offreId) {
+                return $this->redirect('/dashboard/grades');
             }
+
+            // Offre metadata
+            $offre = (array) DB::selectOne("
+                SELECT o.IDOffre as id, s.Nom as spec_ar, s.NbrSem as duree_semestres,
+                       e.Nom as etab_nom, o.IDMode_formation as mode_formation,
+                       o.IDEts_Form as etablissement_id, e.IDDFEP as dfep_id
+                FROM offre o
+                JOIN specialite s ON o.IDSpecialite = s.IDSpecialite
+                JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
+                WHERE o.IDOffre = ?
+            ", [$offreId]);
+
+            if (empty($offre)) {
+                return $this->redirect('/dashboard/grades');
+            }
+
+            $this->validateOffreAccess($offre, $semestre);
+
+            $user = session('user');
+            $role = strtolower($user['role_code'] ?? '');
+
+            // Dynamically ensure section semesters and modules exist
+            $this->service->ensureSectionSemestreModules($offreId, $semestre);
+
+            // Fetch dynamic modules
+            $isTeacher = in_array($role, ['formateur', 'employee']);
+            $teacherFilterId = $isTeacher ? (int)$user['id'] : 0;
+            
+            $matieres = array_map(fn($item) => (array)$item, DB::select("
+                SELECT DISTINCT 
+                    ssm.IDsection_semestre_Module as id,
+                    ssm.IDModule as module_id,
+                    ssm.NomMdl as libelle_ar,
+                    ssm.NomFrMdl as libelle_fr,
+                    ssm.coef as coefficient,
+                    CASE 
+                        WHEN ssm.NomMdl LIKE '%تربص%' OR ssm.NomFrMdl LIKE '%stage%' OR ssm.NomMdl LIKE '%ميداني%' THEN 'stage_pratique'
+                        WHEN ssm.NomMdl LIKE '%مذكرة%' OR ssm.NomFrMdl LIKE '%memoire%' OR ssm.NomMdl LIKE '%تخرج%' THEN 'memoire'
+                        ELSE 'theorique'
+                    END as type_matiere
+                FROM section_semestre_module ssm
+                JOIN section_semestre ss ON ssm.IDSection_Semestre = ss.IDSection_Semestre
+                JOIN section sec ON ss.IDSection = sec.IDSection
+                WHERE sec.IDOffre = ? AND ss.NumSem = ?
+                  AND (? = 0 OR ssm.IDEncadrement = ?)
+            ", [$offreId, $semestre, $teacherFilterId, $teacherFilterId]));
+
+            // Fallback placeholders if DB is empty
+            if (empty($matieres)) {
+                $matieres = [
+                    ['id' => 1, 'code' => 'M01', 'libelle_ar' => 'وحدة تعليمية 1', 'libelle_fr' => 'Module 1', 'coefficient' => 2, 'type_matiere' => 'theorique'],
+                    ['id' => 2, 'code' => 'M02', 'libelle_ar' => 'وحدة تعليمية 2', 'libelle_fr' => 'Module 2', 'coefficient' => 3, 'type_matiere' => 'theorique'],
+                    ['id' => 3, 'code' => 'M03', 'libelle_ar' => 'تطبيق مهني',     'libelle_fr' => 'Pratique',  'coefficient' => 4, 'type_matiere' => 'pratique'],
+                ];
+            }
+
+            // Validate selected matiere_id
+            $isValidMatiere = false;
+            foreach ($matieres as $m) {
+                if ($m['id'] == $matiereId) {
+                    $isValidMatiere = true;
+                    break;
+                }
+            }
+            if ((!$matiereId || !$isValidMatiere) && count($matieres) > 0) {
+                $matiereId = $matieres[0]['id'];
+            }
+
+            $matiere  = array_values(array_filter($matieres, fn($m) => $m['id'] == $matiereId))[0] ?? null;
+            
+            $employeurId = isset(request()->all()['employeur_id']) && request()->all()['employeur_id'] !== '' ? (int)request()->all()['employeur_id'] : null;
+            
+            // Retrieve trainees
+            $students = $this->service->getTraineesWithGrades($offreId, $matiereId, $employeurId);
+
+            // Fetch active employers for apprenticeship offers
+            $employeurs = [];
+            if ((int)$offre['mode_formation'] === 10) {
+                $employeurs = array_map(fn($item) => (array)$item, DB::select("
+                    SELECT DISTINCT e.IDEmployeur as id, e.Nom as nom, e.NomFr as nom_fr
+                    FROM employeur e
+                    JOIN apprenant a ON a.IDEmployeur = e.IDEmployeur
+                    JOIN section s ON a.IDSection = s.IDSection
+                    WHERE s.IDOffre = ? AND a.statut = 'actif'
+                    ORDER BY e.Nom
+                ", [$offreId]));
+            }
+
+            // Read dynamic configuration
+            $config = \App\Helpers\GradingConfigHelper::read();
+
+            // Check if grade entry is locked using GradeWindowService
+            $windowAccess = \App\Domains\Academic\Services\GradeWindowService::checkAccess($user, $offreId, $semestre);
+            $is_locked = !$windowAccess['allow_edit'];
+
+            return $this->render('admin/grades/input', [
+                'title'    => 'رصد نقاط المتربصين - السداسي ' . $semestre,
+                'offre'    => $offre,
+                'config'   => $config,
+                'matieres' => $matieres,
+                'matiere'  => $matiere,
+                'students' => $students,
+                'semestre' => $semestre,
+                'is_locked' => $is_locked,
+                'windowAccess' => $windowAccess,
+                'employeurs' => $employeurs,
+                'employeur_id' => $employeurId
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('GradesController input error: ' . $e->getMessage());
+            session(['flash_error' => 'تعذر استظهار النقاط: ' . $e->getMessage()]);
+            return $this->redirect('/dashboard/grades');
         }
-        if ((!$matiereId || !$isValidMatiere) && count($matieres) > 0) {
-            $matiereId = $matieres[0]['id'];
-        }
-
-        $matiere  = array_values(array_filter($matieres, fn($m) => $m['id'] == $matiereId))[0] ?? null;
-        
-        $employeurId = isset(request()->all()['employeur_id']) && request()->all()['employeur_id'] !== '' ? (int)request()->all()['employeur_id'] : null;
-        
-        // Retrieve trainees
-        $students = $this->service->getTraineesWithGrades($offreId, $matiereId, $employeurId);
-
-        // Fetch active employers for apprenticeship offers
-        $employeurs = [];
-        if ((int)$offre['mode_formation'] === 10) {
-            $employeurs = array_map(fn($item) => (array)$item, DB::select("
-                SELECT DISTINCT e.IDEmployeur as id, e.Nom as nom, e.NomFr as nom_fr
-                FROM employeur e
-                JOIN apprenant a ON a.IDEmployeur = e.IDEmployeur
-                JOIN section s ON a.IDSection = s.IDSection
-                WHERE s.IDOffre = ? AND a.statut = 'actif'
-                ORDER BY e.Nom
-            ", [$offreId]));
-        }
-
-        // Read dynamic configuration
-        $config = \App\Helpers\GradingConfigHelper::read();
-
-        // Check if grade entry is locked using GradeWindowService
-        $windowAccess = \App\Domains\Academic\Services\GradeWindowService::checkAccess($user, $offreId, $semestre);
-        $is_locked = !$windowAccess['allow_edit'];
-
-        return $this->render('admin/grades/input', [
-            'title'    => 'رصد نقاط المتربصين - السداسي ' . $semestre,
-            'offre'    => $offre,
-            'config'   => $config,
-            'matieres' => $matieres,
-            'matiere'  => $matiere,
-            'students' => $students,
-            'semestre' => $semestre,
-            'is_locked' => $is_locked,
-            'windowAccess' => $windowAccess,
-            'employeurs' => $employeurs,
-            'employeur_id' => $employeurId
-        ]);
     }
 
     /**
