@@ -258,355 +258,97 @@ class GradesController extends Controller
             }
         }
 
-        if ($statsFilter) {
-            $cacheKey = 'filtered_grades_stats_' . md5($statsFilter . serialize($statsParams));
-            $stats = \App\Services\CacheService::remember($cacheKey, 600, function() use ($statsFilter, $statsParams) {
-                $stmtStg = null; $notesActive = null; $notesFin = null; $valActive = null; $valFin = null; $stmtPvs = null;
+        $stats = ['total_stagiaires' => 0, 'total_notes' => 0, 'resultats_valides' => 0, 'pvs_approuves' => 0];
 
-                try {
-                    $stmtStg = DB::selectOne("
-                        SELECT COUNT(*) as total_stagiaires 
-                        FROM apprenant a
-                        JOIN section s ON a.IDSection = s.IDSection
-                        JOIN offre o ON s.IDOffre = o.IDOffre
-                        JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
-                        JOIN session sess ON s.IDSession = sess.IDSession
-                        JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
-                        WHERE a.statut = 'actif' AND $statsFilter
-                    ", $statsParams);
-                } catch (\Throwable $e) {}
+        try {
+            if ($statsFilter) {
+                $cacheKey = 'filtered_grades_stats_' . md5($statsFilter . serialize($statsParams));
+                $stats = \App\Services\CacheService::remember($cacheKey, 600, function() use ($statsFilter, $statsParams) {
+                    $stmtStg = null; $stmtPvs = null;
+                    try {
+                        $stmtStg = DB::selectOne("
+                            SELECT COUNT(*) as total_stagiaires 
+                            FROM apprenant a
+                            JOIN section s ON a.IDSection = s.IDSection
+                            JOIN offre o ON s.IDOffre = o.IDOffre
+                            JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
+                            JOIN session sess ON s.IDSession = sess.IDSession
+                            JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
+                            WHERE a.statut = 'actif' AND $statsFilter
+                        ", $statsParams);
+                    } catch (\Throwable $e) {}
 
-                try {
-                    $notesActive = DB::selectOne("
-                        SELECT COUNT(*) as cnt
-                        FROM apprenant_section_semstre_module assm
-                        JOIN apprenant_section_semstre ass ON assm.IDapprenant_Section_semstre = ass.IDapprenant_Section_semstre
-                        JOIN apprenant a ON ass.IDapprenant = a.IDapprenant
-                        JOIN section s ON a.IDSection = s.IDSection
-                        JOIN offre o ON s.IDOffre = o.IDOffre
-                        JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
-                        JOIN session sess ON s.IDSession = sess.IDSession
-                        JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
-                        WHERE $statsFilter
-                    ", $statsParams);
-                } catch (\Throwable $e) {}
+                    try {
+                        $stmtPvs = DB::selectOne("
+                            SELECT COUNT(*) as pvs_approuves 
+                            FROM section_semestre ss
+                            JOIN section s ON ss.IDSection = s.IDSection
+                            JOIN offre o ON s.IDOffre = o.IDOffre
+                            JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
+                            JOIN session sess ON s.IDSession = sess.IDSession
+                            JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
+                            WHERE (ss.NumPv IS NOT NULL AND ss.NumPv != '' OR ss.visaevaldir = 1 OR ss.visaevaldfep = 1) AND $statsFilter
+                        ", $statsParams);
+                    } catch (\Throwable $e) {}
 
-                try {
-                    $notesFin = DB::selectOne("
-                        SELECT COUNT(*) as cnt
-                        FROM apprenant_section_semstre_module assm
-                        JOIN apprenant_fin af ON assm.IDapprenant_Section_semstre = af.IDapprenant_Section_semstre
-                        JOIN apprenant a ON af.IDapprenant = a.IDapprenant
-                        JOIN section s ON a.IDSection = s.IDSection
-                        JOIN offre o ON s.IDOffre = o.IDOffre
-                        JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
-                        JOIN session sess ON s.IDSession = sess.IDSession
-                        JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
-                        WHERE $statsFilter
-                    ", $statsParams);
-                } catch (\Throwable $e) {}
-
-                $total_notes = (int)($notesActive->cnt ?? 0) + (int)($notesFin->cnt ?? 0);
-
-                try {
-                    $valActive = DB::selectOne("
-                        SELECT COUNT(*) as cnt
-                        FROM apprenant_section_semstre ass
-                        JOIN apprenant a ON ass.IDapprenant = a.IDapprenant
-                        JOIN section s ON a.IDSection = s.IDSection
-                        JOIN offre o ON s.IDOffre = o.IDOffre
-                        JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
-                        JOIN session sess ON s.IDSession = sess.IDSession
-                        JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
-                        WHERE (ass.MoyApr > 0 OR ass.MoyAvr > 0) AND $statsFilter
-                    ", $statsParams);
-                } catch (\Throwable $e) {}
-
-                try {
-                    $valFin = DB::selectOne("
-                        SELECT COUNT(*) as cnt
-                        FROM apprenant_fin af
-                        JOIN apprenant a ON af.IDapprenant = a.IDapprenant
-                        JOIN section s ON a.IDSection = s.IDSection
-                        JOIN offre o ON s.IDOffre = o.IDOffre
-                        JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
-                        JOIN session sess ON s.IDSession = sess.IDSession
-                        JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
-                        WHERE (af.MoyFinForm > 0 OR af.MoyGen > 0) AND $statsFilter
-                    ", $statsParams);
-                } catch (\Throwable $e) {}
-
-                $resultats_valides = (int)($valActive->cnt ?? 0) + (int)($valFin->cnt ?? 0);
-
-                try {
-                    $stmtPvs = DB::selectOne("
-                        SELECT COUNT(*) as pvs_approuves 
-                        FROM section_semestre ss
-                        JOIN section s ON ss.IDSection = s.IDSection
-                        JOIN offre o ON s.IDOffre = o.IDOffre
-                        JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
-                        JOIN session sess ON s.IDSession = sess.IDSession
-                        JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
-                        WHERE (ss.NumPv IS NOT NULL AND ss.NumPv != '' OR ss.visaevaldir = 1 OR ss.visaevaldfep = 1) AND $statsFilter
-                    ", $statsParams);
-                } catch (\Throwable $e) {}
-
-                return [
-                    'total_stagiaires' => (int)($stmtStg->total_stagiaires ?? 0),
-                    'total_notes' => $total_notes,
-                    'resultats_valides' => $resultats_valides,
-                    'pvs_approuves' => (int)($stmtPvs->pvs_approuves ?? 0)
-                ];
-            });
-        } else {
-            // No filter, fall back to role-scoped cached query
-            if (in_array($role, ['admin', 'central', 'high_admin', 'secretaire_general', 'ministre'])) {
-                $cacheKey = 'admin_grades_stats' . ($isMode10 ? '_mode10' : '');
-                $stats = \App\Services\CacheService::remember($cacheKey, 600, function() use ($isMode10) {
-                    if ($isMode10) {
-                        return (array) DB::selectOne("
-                            SELECT
-                                (SELECT COUNT(*) FROM apprenant a JOIN section sec ON a.IDSection = sec.IDSection JOIN offre o ON sec.IDOffre = o.IDOffre WHERE a.statut = 'actif' AND o.IDMode_formation = 10) as total_stagiaires,
-                                (SELECT COUNT(*) FROM apprenant_section_semstre_module assm JOIN apprenant_section_semstre ass ON assm.IDapprenant_Section_semstre = ass.IDapprenant_Section_semstre JOIN apprenant a ON ass.IDapprenant = a.IDapprenant JOIN section sec ON a.IDSection = sec.IDSection JOIN offre o ON sec.IDOffre = o.IDOffre WHERE o.IDMode_formation = 10) as total_notes,
-                                (
-                                    SELECT (SELECT COUNT(*) FROM apprenant_section_semstre ass JOIN apprenant a ON ass.IDapprenant = a.IDapprenant JOIN section sec ON a.IDSection = sec.IDSection JOIN offre o ON sec.IDOffre = o.IDOffre WHERE (ass.MoyApr > 0 OR ass.MoyAvr > 0) AND o.IDMode_formation = 10) +
-                                           (SELECT COUNT(*) FROM apprenant_fin af JOIN apprenant a ON af.IDapprenant = a.IDapprenant JOIN section sec ON a.IDSection = sec.IDSection JOIN offre o ON sec.IDOffre = o.IDOffre WHERE (af.MoyFinForm > 0 OR af.MoyGen > 0) AND o.IDMode_formation = 10)
-                                ) as resultats_valides,
-                                (SELECT COUNT(*) FROM section_semestre ss JOIN section sec ON ss.IDSection = sec.IDSection JOIN offre o ON sec.IDOffre = o.IDOffre WHERE (ss.NumPv IS NOT NULL AND ss.NumPv != '' OR ss.visaevaldir = 1 OR ss.visaevaldfep = 1) AND o.IDMode_formation = 10) as pvs_approuves
-                        ");
-                    }
-                    return (array) DB::selectOne("
-                        SELECT
-                            (SELECT COUNT(*) FROM apprenant WHERE statut = 'actif') as total_stagiaires,
-                            (SELECT COUNT(*) FROM apprenant_section_semstre_module) as total_notes,
-                            (
-                                SELECT (SELECT COUNT(*) FROM apprenant_section_semstre WHERE MoyApr > 0 OR MoyAvr > 0) +
-                                       (SELECT COUNT(*) FROM apprenant_fin WHERE MoyFinForm > 0 OR MoyGen > 0)
-                            ) as resultats_valides,
-                            (SELECT COUNT(*) FROM section_semestre WHERE NumPv IS NOT NULL AND NumPv != '' OR visaevaldir = 1 OR visaevaldfep = 1) as pvs_approuves
-                    ");
+                    return [
+                        'total_stagiaires' => (int)($stmtStg->total_stagiaires ?? 0),
+                        'total_notes' => 0,
+                        'resultats_valides' => 0,
+                        'pvs_approuves' => (int)($stmtPvs->pvs_approuves ?? 0)
+                    ];
                 });
-            } elseif ($role === 'dfep' && $dfepId) {
+            } elseif ($role === 'dfep' && $dfepId > 0) {
                 $cacheKey = 'dfep_grades_stats_' . $dfepId . ($isMode10 ? '_mode10' : '');
                 $stats = \App\Services\CacheService::remember($cacheKey, 600, function() use ($dfepId, $isMode10) {
+                    $stgWhere = "e.IDDFEP = ? AND a.statut = 'actif'";
+                    $pvWhere = "e.IDDFEP = ? AND (ss.NumPv IS NOT NULL AND ss.NumPv != '' OR ss.visaevaldir = 1 OR ss.visaevaldfep = 1)";
                     if ($isMode10) {
-                        return (array) DB::selectOne("
-                            SELECT
-                                (SELECT COUNT(*) FROM apprenant a
-                                 JOIN section sec ON a.IDSection = sec.IDSection
-                                 JOIN offre o ON sec.IDOffre = o.IDOffre
-                                 WHERE sec.IDDFEP = :dfepId1 AND a.statut = 'actif' AND o.IDMode_formation = 10) as total_stagiaires,
-                                 
-                                (
-                                    (SELECT COUNT(*)
-                                     FROM apprenant_section_semstre_module assm
-                                     JOIN apprenant_section_semstre ass ON assm.IDapprenant_Section_semstre = ass.IDapprenant_Section_semstre
-                                     JOIN apprenant a ON ass.IDapprenant = a.IDapprenant
-                                     JOIN section sec ON a.IDSection = sec.IDSection
-                                     JOIN offre o ON sec.IDOffre = o.IDOffre
-                                     WHERE sec.IDDFEP = :dfepId2 AND o.IDMode_formation = 10)
-                                    +
-                                    (SELECT COUNT(*)
-                                     FROM apprenant_section_semstre_module assm
-                                     JOIN apprenant_fin af ON assm.IDapprenant_Section_semstre = af.IDapprenant_Section_semstre
-                                     JOIN apprenant a ON af.IDapprenant = a.IDapprenant
-                                     JOIN section sec ON a.IDSection = sec.IDSection
-                                     JOIN offre o ON sec.IDOffre = o.IDOffre
-                                     WHERE sec.IDDFEP = :dfepId3 AND o.IDMode_formation = 10)
-                                ) as total_notes,
-                                
-                                (
-                                    (SELECT COUNT(*)
-                                     FROM apprenant_section_semstre ass
-                                     JOIN apprenant a ON ass.IDapprenant = a.IDapprenant
-                                     JOIN section sec ON a.IDSection = sec.IDSection
-                                     JOIN offre o ON sec.IDOffre = o.IDOffre
-                                     WHERE sec.IDDFEP = :dfepId4 AND (ass.MoyApr > 0 OR ass.MoyAvr > 0) AND o.IDMode_formation = 10)
-                                    +
-                                    (SELECT COUNT(*)
-                                     FROM apprenant_fin af
-                                     JOIN apprenant a ON af.IDapprenant = a.IDapprenant
-                                     JOIN section sec ON a.IDSection = sec.IDSection
-                                     JOIN offre o ON sec.IDOffre = o.IDOffre
-                                     WHERE sec.IDDFEP = :dfepId5 AND (af.MoyFinForm > 0 OR af.MoyGen > 0) AND o.IDMode_formation = 10)
-                                ) as resultats_valides,
-                                
-                                (SELECT COUNT(*) FROM section_semestre ss
-                                 JOIN section sec ON ss.IDSection = sec.IDSection
-                                 JOIN offre o ON sec.IDOffre = o.IDOffre
-                                 WHERE sec.IDDFEP = :dfepId6 AND (ss.NumPv IS NOT NULL AND ss.NumPv != '' OR ss.visaevaldir = 1 OR ss.visaevaldfep = 1) AND o.IDMode_formation = 10) as pvs_approuves
-                        ", [
-                            'dfepId1' => $dfepId,
-                            'dfepId2' => $dfepId,
-                            'dfepId3' => $dfepId,
-                            'dfepId4' => $dfepId,
-                            'dfepId5' => $dfepId,
-                            'dfepId6' => $dfepId,
-                        ]);
+                        $stgWhere .= " AND o.IDMode_formation = 10";
+                        $pvWhere .= " AND o.IDMode_formation = 10";
                     }
-                    return (array) DB::selectOne("
-                        SELECT
-                            (SELECT COUNT(*) FROM apprenant a
-                             JOIN section sec ON a.IDSection = sec.IDSection
-                             WHERE sec.IDDFEP = :dfepId1 AND a.statut = 'actif') as total_stagiaires,
-                             
-                            (
-                                (SELECT COUNT(*)
-                                 FROM apprenant_section_semstre_module assm
-                                 JOIN apprenant_section_semstre ass ON assm.IDapprenant_Section_semstre = ass.IDapprenant_Section_semstre
-                                 JOIN apprenant a ON ass.IDapprenant = a.IDapprenant
-                                 JOIN section sec ON a.IDSection = sec.IDSection
-                                 WHERE sec.IDDFEP = :dfepId2)
-                                +
-                                (SELECT COUNT(*)
-                                 FROM apprenant_section_semstre_module assm
-                                 JOIN apprenant_fin af ON assm.IDapprenant_Section_semstre = af.IDapprenant_Section_semstre
-                                 JOIN apprenant a ON af.IDapprenant = a.IDapprenant
-                                 JOIN section sec ON a.IDSection = sec.IDSection
-                                 WHERE sec.IDDFEP = :dfepId3)
-                            ) as total_notes,
-                            
-                            (
-                                (SELECT COUNT(*)
-                                 FROM apprenant_section_semstre ass
-                                 JOIN apprenant a ON ass.IDapprenant = a.IDapprenant
-                                 JOIN section sec ON a.IDSection = sec.IDSection
-                                 WHERE sec.IDDFEP = :dfepId4 AND (ass.MoyApr > 0 OR ass.MoyAvr > 0))
-                                +
-                                (SELECT COUNT(*)
-                                 FROM apprenant_fin af
-                                 JOIN apprenant a ON af.IDapprenant = a.IDapprenant
-                                 JOIN section sec ON a.IDSection = sec.IDSection
-                                 WHERE sec.IDDFEP = :dfepId5 AND (af.MoyFinForm > 0 OR af.MoyGen > 0))
-                            ) as resultats_valides,
-                            
-                            (SELECT COUNT(*) FROM section_semestre ss
-                             JOIN section sec ON ss.IDSection = sec.IDSection
-                             WHERE sec.IDDFEP = :dfepId6 AND (ss.NumPv IS NOT NULL AND ss.NumPv != '' OR ss.visaevaldir = 1 OR ss.visaevaldfep = 1)) as pvs_approuves
-                    ", [
-                        'dfepId1' => $dfepId,
-                        'dfepId2' => $dfepId,
-                        'dfepId3' => $dfepId,
-                        'dfepId4' => $dfepId,
-                        'dfepId5' => $dfepId,
-                        'dfepId6' => $dfepId,
-                    ]);
+
+                    $stg = DB::selectOne("
+                        SELECT COUNT(*) as total_stagiaires
+                        FROM apprenant a
+                        JOIN section sec ON a.IDSection = sec.IDSection
+                        JOIN offre o ON sec.IDOffre = o.IDOffre
+                        JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
+                        WHERE $stgWhere
+                    ", [$dfepId]);
+
+                    $pvs = DB::selectOne("
+                        SELECT COUNT(*) as pvs_approuves
+                        FROM section_semestre ss
+                        JOIN section sec ON ss.IDSection = sec.IDSection
+                        JOIN offre o ON sec.IDOffre = o.IDOffre
+                        JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
+                        WHERE $pvWhere
+                    ", [$dfepId]);
+
+                    return [
+                        'total_stagiaires' => (int)($stg->total_stagiaires ?? 0),
+                        'total_notes' => 0,
+                        'resultats_valides' => 0,
+                        'pvs_approuves' => (int)($pvs->pvs_approuves ?? 0)
+                    ];
                 });
-            } elseif ($etabId) {
-                $cacheKey = 'etab_grades_stats_' . $etabId . ($isMode10 ? '_mode10' : '');
-                $stats = \App\Services\CacheService::remember($cacheKey, 600, function() use ($etabId, $isMode10) {
-                    if ($isMode10) {
-                        return (array) DB::selectOne("
-                            SELECT
-                                (SELECT COUNT(*) FROM apprenant a
-                                 JOIN section sec ON a.IDSection = sec.IDSection
-                                 JOIN offre o ON sec.IDOffre = o.IDOffre
-                                 WHERE o.IDEts_Form = :etabId1 AND a.statut = 'actif' AND o.IDMode_formation = 10) as total_stagiaires,
-                                 
-                                (
-                                    (SELECT COUNT(*)
-                                     FROM apprenant_section_semstre_module assm
-                                     JOIN apprenant_section_semstre ass ON assm.IDapprenant_Section_semstre = ass.IDapprenant_Section_semstre
-                                     JOIN apprenant a ON ass.IDapprenant = a.IDapprenant
-                                     JOIN section sec ON a.IDSection = sec.IDSection
-                                     JOIN offre o ON sec.IDOffre = o.IDOffre
-                                     WHERE o.IDEts_Form = :etabId2 AND o.IDMode_formation = 10)
-                                    +
-                                    (SELECT COUNT(*)
-                                     FROM apprenant_section_semstre_module assm
-                                     JOIN apprenant_fin af ON assm.IDapprenant_Section_semstre = af.IDapprenant_Section_semstre
-                                     JOIN apprenant a ON af.IDapprenant = a.IDapprenant
-                                     JOIN section sec ON a.IDSection = sec.IDSection
-                                     JOIN offre o ON sec.IDOffre = o.IDOffre
-                                     WHERE o.IDEts_Form = :etabId3 AND o.IDMode_formation = 10)
-                                ) as total_notes,
-                                
-                                (
-                                    (SELECT COUNT(*)
-                                     FROM apprenant_section_semstre ass
-                                     JOIN apprenant a ON ass.IDapprenant = a.IDapprenant
-                                     JOIN section sec ON a.IDSection = sec.IDSection
-                                     JOIN offre o ON sec.IDOffre = o.IDOffre
-                                     WHERE o.IDEts_Form = :etabId4 AND (ass.MoyApr > 0 OR ass.MoyAvr > 0) AND o.IDMode_formation = 10)
-                                    +
-                                    (SELECT COUNT(*)
-                                     FROM apprenant_fin af
-                                     JOIN apprenant a ON af.IDapprenant = a.IDapprenant
-                                     JOIN section sec ON a.IDSection = sec.IDSection
-                                     JOIN offre o ON sec.IDOffre = o.IDOffre
-                                     WHERE o.IDEts_Form = :etabId5 AND (af.MoyFinForm > 0 OR af.MoyGen > 0) AND o.IDMode_formation = 10)
-                                ) as resultats_valides,
-                                
-                                (SELECT COUNT(*) FROM section_semestre ss
-                                 JOIN section sec ON ss.IDSection = sec.IDSection
-                                 JOIN offre o ON sec.IDOffre = o.IDOffre
-                                 WHERE o.IDEts_Form = :etabId6 AND (ss.NumPv IS NOT NULL AND ss.NumPv != '' OR ss.visaevaldir = 1 OR ss.visaevaldfep = 1) AND o.IDMode_formation = 10) as pvs_approuves
-                        ", [
-                            'etabId1' => $etabId,
-                            'etabId2' => $etabId,
-                            'etabId3' => $etabId,
-                            'etabId4' => $etabId,
-                            'etabId5' => $etabId,
-                            'etabId6' => $etabId,
-                        ]);
-                    }
-                    return (array) DB::selectOne("
-                        SELECT
-                            (SELECT COUNT(*) FROM apprenant a
-                             JOIN section sec ON a.IDSection = sec.IDSection
-                             JOIN offre o ON sec.IDOffre = o.IDOffre
-                             WHERE o.IDEts_Form = :etabId1 AND a.statut = 'actif') as total_stagiaires,
-                             
-                            (
-                                (SELECT COUNT(*)
-                                 FROM apprenant_section_semstre_module assm
-                                 JOIN apprenant_section_semstre ass ON assm.IDapprenant_Section_semstre = ass.IDapprenant_Section_semstre
-                                 JOIN apprenant a ON ass.IDapprenant = a.IDapprenant
-                                 JOIN section sec ON a.IDSection = sec.IDSection
-                                 JOIN offre o ON sec.IDOffre = o.IDOffre
-                                 WHERE o.IDEts_Form = :etabId2)
-                                +
-                                (SELECT COUNT(*)
-                                 FROM apprenant_section_semstre_module assm
-                                 JOIN apprenant_fin af ON assm.IDapprenant_Section_semstre = af.IDapprenant_Section_semstre
-                                 JOIN apprenant a ON af.IDapprenant = a.IDapprenant
-                                 JOIN section sec ON a.IDSection = sec.IDSection
-                                 JOIN offre o ON sec.IDOffre = o.IDOffre
-                                 WHERE o.IDEts_Form = :etabId3)
-                            ) as total_notes,
-                            
-                            (
-                                (SELECT COUNT(*)
-                                 FROM apprenant_section_semstre ass
-                                 JOIN apprenant a ON ass.IDapprenant = a.IDapprenant
-                                 JOIN section sec ON a.IDSection = sec.IDSection
-                                 JOIN offre o ON sec.IDOffre = o.IDOffre
-                                 WHERE o.IDEts_Form = :etabId4 AND (ass.MoyApr > 0 OR ass.MoyAvr > 0))
-                                +
-                                (SELECT COUNT(*)
-                                 FROM apprenant_fin af
-                                 JOIN apprenant a ON af.IDapprenant = a.IDapprenant
-                                 JOIN section sec ON a.IDSection = sec.IDSection
-                                 JOIN offre o ON sec.IDOffre = o.IDOffre
-                                 WHERE o.IDEts_Form = :etabId5 AND (af.MoyFinForm > 0 OR af.MoyGen > 0))
-                            ) as resultats_valides,
-                            
-                            (SELECT COUNT(*) FROM section_semestre ss
-                             JOIN section sec ON ss.IDSection = sec.IDSection
-                             JOIN offre o ON sec.IDOffre = o.IDOffre
-                             WHERE o.IDEts_Form = :etabId6 AND (ss.NumPv IS NOT NULL AND ss.NumPv != '' OR ss.visaevaldir = 1 OR ss.visaevaldfep = 1)) as pvs_approuves
-                    ", [
-                        'etabId1' => $etabId,
-                        'etabId2' => $etabId,
-                        'etabId3' => $etabId,
-                        'etabId4' => $etabId,
-                        'etabId5' => $etabId,
-                        'etabId6' => $etabId,
-                    ]);
+            } elseif (in_array($role, ['admin', 'central', 'high_admin', 'secretaire_general', 'ministre'])) {
+                $cacheKey = 'admin_grades_stats' . ($isMode10 ? '_mode10' : '');
+                $stats = \App\Services\CacheService::remember($cacheKey, 600, function() use ($isMode10) {
+                    $stg = DB::selectOne("SELECT COUNT(*) as total_stagiaires FROM apprenant WHERE statut = 'actif'");
+                    $pvs = DB::selectOne("SELECT COUNT(*) as pvs_approuves FROM section_semestre WHERE NumPv IS NOT NULL AND NumPv != '' OR visaevaldir = 1 OR visaevaldfep = 1");
+                    return [
+                        'total_stagiaires' => (int)($stg->total_stagiaires ?? 0),
+                        'total_notes' => 0,
+                        'resultats_valides' => 0,
+                        'pvs_approuves' => (int)($pvs->pvs_approuves ?? 0)
+                    ];
                 });
-            } else {
-                $stats = ['total_stagiaires' => 0, 'total_notes' => 0, 'resultats_valides' => 0, 'pvs_approuves' => 0];
             }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('GradesController stats error: ' . $e->getMessage());
+            $stats = ['total_stagiaires' => 0, 'total_notes' => 0, 'resultats_valides' => 0, 'pvs_approuves' => 0];
         }
 
         $now = date('Y-m-d H:i:s');
