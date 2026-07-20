@@ -525,10 +525,25 @@ function loadTargetEtablissements(wilayaId) {
         .then(res => res.json())
         .then(data => {
             etabSelect.innerHTML = '<option value="">اختر المؤسسة التكوينية...</option>';
-            data.forEach(e => {
-                etabSelect.innerHTML += `<option value="${e.id}">${e.nom}</option>`;
-            });
-            etabSelect.disabled = false;
+            if (!data || data.length === 0) {
+                etabSelect.innerHTML = '<option value="">لا توجد مؤسسات تكوينية في هذه الولاية</option>';
+                etabSelect.disabled = true;
+                const wilayaName = document.getElementById('targetWilaya').options[document.getElementById('targetWilaya').selectedIndex]?.text || 'الولاية المحددة';
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'تنبيه عدم توفر مؤسسات',
+                        html: `تنبيه: الولاية المستهدفة (<strong>${wilayaName}</strong>) لا تحتوي حالياً على مؤسسات تكوينية متاحة للتحويل.`,
+                        confirmButtonText: 'موافق',
+                        confirmButtonColor: '#f59e0b'
+                    });
+                }
+            } else {
+                data.forEach(e => {
+                    etabSelect.innerHTML += `<option value="${e.id}">${e.nom}</option>`;
+                });
+                etabSelect.disabled = false;
+            }
         })
         .catch(err => {
             console.error("Error loading etablissements", err);
@@ -550,8 +565,24 @@ function loadTargetSections(etabId) {
         .then(res => res.json())
         .then(data => {
             sectionSelect.innerHTML = '<option value="">اختر الفوج / القسم المستهدف...</option>';
-            if (data.length === 0) {
+            if (!data || data.length === 0) {
                 sectionSelect.innerHTML = '<option value="">لا توجد أقسام متوفرة في هذه المؤسسة لهذا التخصص</option>';
+                sectionSelect.disabled = true;
+                
+                const specialtyName = document.getElementById('modalTraineeSpecialty').textContent || 'هذا التخصص';
+                const etabName = document.getElementById('targetEtab').options[document.getElementById('targetEtab').selectedIndex]?.text || 'المؤسسة المحددة';
+                
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'تنبيه عدم توفر التخصص أو القسم',
+                        html: `تنبيه: المؤسسة المستهدفة (<strong>${etabName}</strong>) لا تحتوي حالياً على قسم أو تخصص مفتوح مطابق لتخصص المتربص الحالي (<strong>${specialtyName}</strong>).`,
+                        confirmButtonText: 'موافق',
+                        confirmButtonColor: '#f59e0b'
+                    });
+                } else {
+                    alert(`تنبيه: المؤسسة المستهدفة لا تحتوي حالياً على قسم مفتوح لنفس التخصص التكويني.`);
+                }
             } else {
                 data.forEach(s => {
                     sectionSelect.innerHTML += `<option value="${s.IDSection}">${s.Nom}</option>`;

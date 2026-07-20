@@ -3318,24 +3318,23 @@ class ModulesController extends Controller {
         $wilayaId = (int)request()->query('wilaya_id', 0);
         
         try {
-            if (in_array($scope['role'], ['etablissement', 'directeur', 'employee', 'formateur']) && $scope['etabId']) {
+            if ($wilayaId > 0) {
+                $stmt = $this->db->prepare("
+                    SELECT ef.IDetablissement as id, ef.Nom as nom, ef.NomFr as nom_fr 
+                    FROM etablissement ef 
+                    LEFT JOIN dfep d ON ef.IDDFEP = d.IDDFEP
+                    WHERE d.IDWilayaa = ? OR ef.IDDFEP = ? 
+                    ORDER BY ef.Nom ASC
+                ");
+                $stmt->execute([$wilayaId, $wilayaId]);
+            } else if (in_array($scope['role'], ['etablissement', 'directeur', 'employee', 'formateur']) && $scope['etabId']) {
                 $stmt = $this->db->prepare("SELECT IDetablissement as id, Nom as nom, NomFr as nom_fr FROM etablissement WHERE IDetablissement = ? LIMIT 1");
                 $stmt->execute([$scope['etabId']]);
             } else if ($scope['role'] === 'dfep' && $scope['iddfep']) {
                 $stmt = $this->db->prepare("SELECT IDetablissement as id, Nom as nom, NomFr as nom_fr FROM etablissement WHERE IDDFEP = ? ORDER BY Nom ASC");
                 $stmt->execute([$scope['iddfep']]);
             } else {
-                if ($wilayaId > 0) {
-                    $stmt = $this->db->prepare("
-                        SELECT ef.IDetablissement as id, ef.Nom as nom, ef.NomFr as nom_fr 
-                        FROM etablissement ef 
-                        WHERE ef.IDDFEP = ? 
-                        ORDER BY ef.Nom ASC
-                    ");
-                    $stmt->execute([$wilayaId]);
-                } else {
-                    $stmt = $this->db->query("SELECT IDetablissement as id, Nom as nom, NomFr as nom_fr FROM etablissement ORDER BY Nom ASC LIMIT 200");
-                }
+                $stmt = $this->db->query("SELECT IDetablissement as id, Nom as nom, NomFr as nom_fr FROM etablissement ORDER BY Nom ASC LIMIT 300");
             }
             $etabs = $stmt ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
             return response()->json($etabs);
