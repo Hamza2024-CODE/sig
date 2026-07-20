@@ -1,37 +1,98 @@
 <?php
-// SIG Auto-Update Deployment Script - Clean Build 2026-07-20
-require __DIR__ . '/../vendor/autoload.php';
+// SIG Auto-Update Script v1011 - Cleaned
+require __DIR__.'/../vendor/autoload.php';
 ini_set('user_agent', 'PHP');
-$app = require_once __DIR__ . '/../bootstrap/app.php';
+$app = require_once __DIR__.'/../bootstrap/app.php';
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
 
+if (isset($_GET['debug_db'])) {
+    header('Content-Type: text/plain; charset=utf-8');
+    try {
+        $db = \App\Core\Database::getInstance()->getConnection();
+        
+        $t0 = microtime(true);
+        $db->query("SELECT COUNT(*) FROM branche")->fetchColumn();
+        $t1 = microtime(true);
+        echo "1. branche count: " . round(($t1 - $t0) * 1000, 1) . " ms\n";
+
+        $t0 = microtime(true);
+        $db->query("SELECT COUNT(*) FROM specialite")->fetchColumn();
+        $t1 = microtime(true);
+        echo "2. specialite count: " . round(($t1 - $t0) * 1000, 1) . " ms\n";
+
+        $t0 = microtime(true);
+        $db->query("SELECT COUNT(*) FROM section")->fetchColumn();
+        $t1 = microtime(true);
+        echo "3. section count: " . round(($t1 - $t0) * 1000, 1) . " ms\n";
+
+        $t0 = microtime(true);
+        $db->query("SELECT IDetablissement, Nom, Abr, NomFr FROM etablissement")->fetchAll(PDO::FETCH_ASSOC);
+        $t1 = microtime(true);
+        echo "4. etablissement describe/fetch: " . round(($t1 - $t0) * 1000, 1) . " ms\n";
+
+        $t0 = microtime(true);
+        $db->query("SELECT IDBranche, Code, Nom, NomFr FROM branche")->fetchAll(PDO::FETCH_ASSOC);
+        $t1 = microtime(true);
+        echo "5. branch fetch: " . round(($t1 - $t0) * 1000, 1) . " ms\n";
+
+        $t0 = microtime(true);
+        $db->query("SELECT IDSpecialite, IDBranche FROM specialite")->fetchAll(PDO::FETCH_ASSOC);
+        $t1 = microtime(true);
+        echo "6. specialite fetch: " . round(($t1 - $t0) * 1000, 1) . " ms\n";
+
+        $t0 = microtime(true);
+        $db->query("SELECT IDEts_Form, IDSpecialite, NbrInscr, NbrInscrf FROM offre")->fetchAll(PDO::FETCH_ASSOC);
+        $t1 = microtime(true);
+        echo "7. offre fetch (full): " . round(($t1 - $t0) * 1000, 1) . " ms\n";
+
+    } catch (\Throwable $e) {
+        echo "ERROR: " . $e->getMessage() . "\n";
+    }
+    exit;
+}
+
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\DB;
 
 echo "<h1>Auto-Updating All Modified Files...</h1>";
 
 $files = [
-    'resources/views/layouts/main.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/layouts/main.blade.php',
-    'resources/views/admin/settings/index.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/settings/index.blade.php',
-    'app/Http/Controllers/DashboardController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/DashboardController.php',
-    'app/Http/Controllers/Admin/SettingsController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/SettingsController.php'
+    'app/Http/Controllers/Admin/GradesController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/GradesController.php',
+    'resources/views/admin/grades/index.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/grades/index.blade.php',
+    'resources/views/admin/grades/input.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/grades/input.blade.php',
+    'app/Domains/Academic/Services/GradingSystemService.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Domains/Academic/Services/GradingSystemService.php',
+    'app/Domains/Academic/Services/OffresService.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Domains/Academic/Services/OffresService.php',
+    'app/Http/Controllers/Admin/SectionController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/SectionController.php',
+    'resources/views/admin/sections/index.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/sections/index.blade.php',
+    'resources/views/admin/candidates.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/candidates.blade.php',
+    'app/Http/Controllers/Admin/CandidatController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/CandidatController.php',
+    'app/Domains/Academic/Repositories/CandidatRepository.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Domains/Academic/Repositories/CandidatRepository.php',
+    'app/Http/Controllers/Admin/ApprenantController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/ApprenantController.php',
+    'app/Http/Controllers/Admin/ModulesController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/ModulesController.php',
+    'resources/views/admin/modules/reconduits_details.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/modules/reconduits_details.blade.php',
+    'resources/views/dashboard/departments/exam.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/dashboard/departments/exam.blade.php',
+    'app/Services/KpiCache.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Services/KpiCache.php'
 ];
 
 foreach ($files as $localPath => $remoteUrl) {
     $fullPath = __DIR__ . '/../' . $localPath;
+    
+    // Create directory if it doesn't exist
     $dir = dirname($fullPath);
     if (!is_dir($dir)) {
         mkdir($dir, 0755, true);
     }
     
     try {
-        $content = @file_get_contents($remoteUrl . '?ts=' . microtime(true));
+        $content = @file_get_contents($remoteUrl . '?v=' . time());
         if ($content !== false) {
             file_put_contents($fullPath, $content);
             clearstatcache(true, $fullPath);
             if (function_exists('opcache_invalidate')) {
                 @opcache_invalidate($fullPath, true);
+            }
+            if (function_exists('opcache_reset')) {
+                @opcache_reset();
             }
             echo "✓ Updated: $localPath (" . strlen($content) . " bytes)<br>";
         } else {
@@ -44,6 +105,7 @@ foreach ($files as $localPath => $remoteUrl) {
 
 echo "<h2>Clearing Laravel Cache and Views...</h2>";
 
+// Helper function to recursively empty directories
 $clearDir = function($dir) {
     if (!is_dir($dir)) return;
     try {
@@ -63,12 +125,14 @@ $clearDir = function($dir) {
 };
 
 // 1. Clear view cache via filesystem
-$clearDir(__DIR__ . '/../storage/framework/views');
-echo "✓ View Cache Cleared<br>";
+$viewCacheDir = __DIR__ . '/../storage/framework/views';
+$clearDir($viewCacheDir);
+echo "✓ View Cache Cleared (Filesystem Traversal)<br>";
 
 // 2. Clear application cache via filesystem
-$clearDir(__DIR__ . '/../storage/framework/cache/data');
-echo "✓ Application Cache Cleared<br>";
+$appCacheDir = __DIR__ . '/../storage/framework/cache/data';
+$clearDir($appCacheDir);
+echo "✓ Application Cache Cleared (Filesystem Traversal)<br>";
 
 try {
     \Illuminate\Support\Facades\Cache::flush();
@@ -77,7 +141,7 @@ try {
     echo "✗ Direct Cache::flush() failed: " . $ex->getMessage() . "<br>";
 }
 
-// 3. Clear bootstrap cache
+// 3. Clear bootstrap cache (services.php, packages.php)
 $bootstrapCacheDir = __DIR__ . '/../bootstrap/cache';
 if (is_dir($bootstrapCacheDir)) {
     foreach (glob($bootstrapCacheDir . '/*.php') as $f) {
@@ -86,26 +150,45 @@ if (is_dir($bootstrapCacheDir)) {
     echo "✓ Bootstrap Cache files Cleared<br>";
 }
 
-// 4. Try Artisan commands
+// 4. Try Artisan commands individually as optional fallback
 try {
     @Artisan::call('view:clear');
     @Artisan::call('cache:clear');
     @Artisan::call('route:clear');
     echo "✓ Optional Artisan Cache Commands invoked<br>";
-} catch (\Throwable $e) {}
+} catch (\Throwable $e) {
+    echo "<i>Note: Artisan command skipped/failed (" . $e->getMessage() . ") - Filesystem cleaning used instead.</i><br>";
+}
 
 if (function_exists('opcache_reset')) {
     @opcache_reset();
     echo "✓ OPCache Cleared!<br>";
 }
 
+// Clean up temporary check_index.php if it exists
+$checkIndexPath = __DIR__ . '/check_index.php';
+if (file_exists($checkIndexPath)) {
+    @unlink($checkIndexPath);
+    echo "✓ Diagnostic check_index.php cleaned up.<br>";
+}
+
+// Clean up temporary diagnose_users.php if it exists
+$diagnoseUsersPath = __DIR__ . '/diagnose_users.php';
+if (file_exists($diagnoseUsersPath)) {
+    @unlink($diagnoseUsersPath);
+    echo "✓ Diagnostic diagnose_users.php cleaned up.<br>";
+}
+
 echo "<h2>Running View Compilation Diagnostics...</h2>";
 try {
+    // Attempt compile-rendering department views to check for syntax/variable errors
     $html = view('dashboard.departments.exam')->render();
     echo "✓ SUCCESS: Exam view compiled and rendered fine!<br>";
 } catch (\Throwable $e) {
     echo "<span style='color:red;font-weight:bold;'>[DIAGNOSTICS EXCEPTION]: " . get_class($e) . "</span><br>";
     echo "<span style='color:red;'>MESSAGE: " . $e->getMessage() . "</span><br>";
+    echo "<span style='color:red;'>FILE: " . $e->getFile() . "</span><br>";
+    echo "<span style='color:red;'>LINE: " . $e->getLine() . "</span><br>";
 }
 
 echo "<br><h3 style='color:green;'>All updates completed successfully!</h3>";
