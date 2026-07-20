@@ -805,6 +805,9 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
 
         <!-- Sidebar Menu -->
         <nav class="sidebar-menu">
+            @php
+                $isLocalEnv = in_array(request()->getHost(), ['localhost', '127.0.0.1', '::1']) || str_contains(request()->getHost(), '192.168.') || str_contains(request()->getHost(), 'local') || app()->environment('local');
+            @endphp
             @if ($roleCode === 'apprenant')
                 <!-- ══ فضاء المتربص ══ -->
                 <div class="sidebar-section-label"><span>فضاء المتربص</span></div>
@@ -974,10 +977,12 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
                     <i class="fa-solid fa-user-shield text-danger"></i>
                     <span>إدارة سياسات الـ MFA</span>
                 </a>
-                <a href="{{ request()->is('sig/*') ? url('sig/dashboard/sync-files') : url('dashboard/sync-files') }}" class="sidebar-item {{ $isActive('/dashboard/sync-files') }}" title="مزامنة ملفات HFSQL">
-                    <i class="fa-solid fa-database text-success"></i>
-                    <span>مزامنة صور HFSQL</span>
-                </a>
+                @if ($isLocalEnv)
+                    <a href="{{ request()->is('sig/*') ? url('sig/dashboard/sync-files') : url('dashboard/sync-files') }}" class="sidebar-item {{ $isActive('/dashboard/sync-files') }}" title="مزامنة ملفات HFSQL">
+                        <i class="fa-solid fa-database text-success"></i>
+                        <span>مزامنة صور HFSQL</span>
+                    </a>
+                @endif
             @endif
 
             <!-- ══ Section 2: الشؤون البيداغوجية والتعليم ══ -->
@@ -1264,10 +1269,12 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
                         <i class="fa-solid fa-chevron-down ms-auto dropdown-chevron" style="font-size: 0.7rem;"></i>
                     </button>
                     <div class="sidebar-submenu {{ ($isActive('/dashboard/sync') || $isActive('/dashboard/database') || $isActive('/dashboard/import') || $isActive('/dashboard/hfsql-export') || $isActive('/dashboard/audit-logs')) ? 'open' : '' }}">
-                        <a href="{{ url('dashboard/sync') }}" class="sidebar-subitem {{ $isActive('/dashboard/sync') }}" title="مزامنة البيانات (HFSQL)"><i class="fa-solid fa-server text-success"></i> <span>مزامنة البيانات (HFSQL)</span></a>
-                        <a href="{{ url('dashboard/hfsql-export') }}" class="sidebar-subitem {{ $isActive('/dashboard/hfsql-export') }}" title="مزامنة HFSQL &larr; MySQL"><i class="fa-solid fa-arrows-rotate text-info"></i> <span>مزامنة الصادرات</span></a>
-                        <a href="{{ url('dashboard/database') }}" class="sidebar-subitem {{ $isActive('/dashboard/database') }}" title="إدارة قاعدة البيانات"><i class="fa-solid fa-screwdriver-wrench text-warning"></i> <span>إدارة قاعدة البيانات</span></a>
-                        <a href="{{ url('dashboard/import') }}" class="sidebar-subitem {{ $isActive('/dashboard/import') }}" title="استيراد وتصدير البيانات"><i class="fa-solid fa-file-import text-primary"></i> <span>استيراد وتصدير البيانات</span></a>
+                        @if ($isLocalEnv)
+                            <a href="{{ url('dashboard/sync') }}" class="sidebar-subitem {{ $isActive('/dashboard/sync') }}" title="مزامنة البيانات (HFSQL)"><i class="fa-solid fa-server text-success"></i> <span>مزامنة البيانات (HFSQL)</span></a>
+                            <a href="{{ url('dashboard/hfsql-export') }}" class="sidebar-subitem {{ $isActive('/dashboard/hfsql-export') }}" title="مزامنة HFSQL &larr; MySQL"><i class="fa-solid fa-arrows-rotate text-info"></i> <span>مزامنة الصادرات</span></a>
+                            <a href="{{ url('dashboard/database') }}" class="sidebar-subitem {{ $isActive('/dashboard/database') }}" title="إدارة قاعدة البيانات"><i class="fa-solid fa-screwdriver-wrench text-warning"></i> <span>إدارة قاعدة البيانات</span></a>
+                            <a href="{{ url('dashboard/import') }}" class="sidebar-subitem {{ $isActive('/dashboard/import') }}" title="استيراد وتصدير البيانات"><i class="fa-solid fa-file-import text-primary"></i> <span>استيراد وتصدير البيانات</span></a>
+                        @endif
                         <a href="{{ url('dashboard/audit-logs') }}" class="sidebar-subitem {{ $isActive('/dashboard/audit-logs') }}" title="سجل العمليات"><i class="fa-solid fa-list-check text-secondary"></i> <span>سجل العمليات</span></a>
                     </div>
                 </div>
@@ -1286,7 +1293,9 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
                         <a href="{{ url('dashboard/reports') }}" class="sidebar-subitem {{ $isActive('/dashboard/reports') }}" title="منشئ التقارير"><i class="fa-solid fa-chart-bar text-warning"></i> <span>منشئ التقارير</span></a>
                         <a href="{{ url('dashboard/builder') }}" class="sidebar-subitem {{ $isActive('/dashboard/builder') }}" title="منشئ لوحات التحكم"><i class="fa-solid fa-compass-drafting text-danger"></i> <span>منشئ لوحات التحكم</span></a>
                         <a href="{{ url('dashboard/api-center') }}" class="sidebar-subitem {{ $isActive('/dashboard/api-center') }}" title="مركز الاتصال الرقمي"><i class="fa-solid fa-satellite-dish text-info"></i> <span>مركز الاتصال الرقمي</span></a>
-                        <a href="{{ url('dashboard/archive') }}" class="sidebar-subitem {{ $isActive('/dashboard/archive') }}" title="بوابة الأرشيف (HFSQL)"><i class="fa-solid fa-box-archive text-secondary"></i> <span>بوابة الأرشيف (HFSQL)</span></a>
+                        @if ($isLocalEnv)
+                            <a href="{{ url('dashboard/archive') }}" class="sidebar-subitem {{ $isActive('/dashboard/archive') }}" title="بوابة الأرشيف (HFSQL)"><i class="fa-solid fa-box-archive text-secondary"></i> <span>بوابة الأرشيف (HFSQL)</span></a>
+                        @endif
                     </div>
                 </div>
             @endif
