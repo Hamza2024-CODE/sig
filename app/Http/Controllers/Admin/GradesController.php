@@ -202,7 +202,12 @@ class GradesController extends Controller
             ";
         }
 
-        $offres = array_map(fn($item) => (array)$item, DB::select($sql, $bindings));
+        try {
+            $offres = array_map(fn($item) => (array)$item, DB::select($sql, $bindings));
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('GradesController index offres query error: ' . $e->getMessage());
+            $offres = [];
+        }
 
         // Stats — role-scoped quick counts or dynamic filtering
         $statsWhere = [];
@@ -236,81 +241,95 @@ class GradesController extends Controller
         if ($statsFilter) {
             $cacheKey = 'filtered_grades_stats_' . md5($statsFilter . serialize($statsParams));
             $stats = \App\Services\CacheService::remember($cacheKey, 600, function() use ($statsFilter, $statsParams) {
-                $stmtStg = DB::selectOne("
-                    SELECT COUNT(*) as total_stagiaires 
-                    FROM apprenant a
-                    JOIN section s ON a.IDSection = s.IDSection
-                    JOIN offre o ON s.IDOffre = o.IDOffre
-                    JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
-                    JOIN session sess ON s.IDSession = sess.IDSession
-                    JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
-                    WHERE a.statut = 'actif' AND $statsFilter
-                ", $statsParams);
+                $stmtStg = null; $notesActive = null; $notesFin = null; $valActive = null; $valFin = null; $stmtPvs = null;
 
-                $notesActive = DB::selectOne("
-                    SELECT COUNT(*) as cnt
-                    FROM apprenant_section_semstre_module assm
-                    JOIN apprenant_section_semstre ass ON assm.IDapprenant_Section_semstre = ass.IDapprenant_Section_semstre
-                    JOIN apprenant a ON ass.IDapprenant = a.IDapprenant
-                    JOIN section s ON a.IDSection = s.IDSection
-                    JOIN offre o ON s.IDOffre = o.IDOffre
-                    JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
-                    JOIN session sess ON s.IDSession = sess.IDSession
-                    JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
-                    WHERE $statsFilter
-                ", $statsParams);
+                try {
+                    $stmtStg = DB::selectOne("
+                        SELECT COUNT(*) as total_stagiaires 
+                        FROM apprenant a
+                        JOIN section s ON a.IDSection = s.IDSection
+                        JOIN offre o ON s.IDOffre = o.IDOffre
+                        JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
+                        JOIN session sess ON s.IDSession = sess.IDSession
+                        JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
+                        WHERE a.statut = 'actif' AND $statsFilter
+                    ", $statsParams);
+                } catch (\Throwable $e) {}
 
-                $notesFin = DB::selectOne("
-                    SELECT COUNT(*) as cnt
-                    FROM apprenant_section_semstre_module assm
-                    JOIN apprenant_fin af ON assm.IDapprenant_Section_semstre = af.IDapprenant_Section_semstre
-                    JOIN apprenant a ON af.IDapprenant = a.IDapprenant
-                    JOIN section s ON a.IDSection = s.IDSection
-                    JOIN offre o ON s.IDOffre = o.IDOffre
-                    JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
-                    JOIN session sess ON s.IDSession = sess.IDSession
-                    JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
-                    WHERE $statsFilter
-                ", $statsParams);
+                try {
+                    $notesActive = DB::selectOne("
+                        SELECT COUNT(*) as cnt
+                        FROM apprenant_section_semstre_module assm
+                        JOIN apprenant_section_semstre ass ON assm.IDapprenant_Section_semstre = ass.IDapprenant_Section_semstre
+                        JOIN apprenant a ON ass.IDapprenant = a.IDapprenant
+                        JOIN section s ON a.IDSection = s.IDSection
+                        JOIN offre o ON s.IDOffre = o.IDOffre
+                        JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
+                        JOIN session sess ON s.IDSession = sess.IDSession
+                        JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
+                        WHERE $statsFilter
+                    ", $statsParams);
+                } catch (\Throwable $e) {}
+
+                try {
+                    $notesFin = DB::selectOne("
+                        SELECT COUNT(*) as cnt
+                        FROM apprenant_section_semstre_module assm
+                        JOIN apprenant_fin af ON assm.IDapprenant_Section_semstre = af.IDapprenant_Section_semstre
+                        JOIN apprenant a ON af.IDapprenant = a.IDapprenant
+                        JOIN section s ON a.IDSection = s.IDSection
+                        JOIN offre o ON s.IDOffre = o.IDOffre
+                        JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
+                        JOIN session sess ON s.IDSession = sess.IDSession
+                        JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
+                        WHERE $statsFilter
+                    ", $statsParams);
+                } catch (\Throwable $e) {}
 
                 $total_notes = (int)($notesActive->cnt ?? 0) + (int)($notesFin->cnt ?? 0);
 
-                $valActive = DB::selectOne("
-                    SELECT COUNT(*) as cnt
-                    FROM apprenant_section_semstre ass
-                    JOIN apprenant a ON ass.IDapprenant = a.IDapprenant
-                    JOIN section s ON a.IDSection = s.IDSection
-                    JOIN offre o ON s.IDOffre = o.IDOffre
-                    JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
-                    JOIN session sess ON s.IDSession = sess.IDSession
-                    JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
-                    WHERE (ass.MoyApr > 0 OR ass.MoyAvr > 0) AND $statsFilter
-                ", $statsParams);
+                try {
+                    $valActive = DB::selectOne("
+                        SELECT COUNT(*) as cnt
+                        FROM apprenant_section_semstre ass
+                        JOIN apprenant a ON ass.IDapprenant = a.IDapprenant
+                        JOIN section s ON a.IDSection = s.IDSection
+                        JOIN offre o ON s.IDOffre = o.IDOffre
+                        JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
+                        JOIN session sess ON s.IDSession = sess.IDSession
+                        JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
+                        WHERE (ass.MoyApr > 0 OR ass.MoyAvr > 0) AND $statsFilter
+                    ", $statsParams);
+                } catch (\Throwable $e) {}
 
-                $valFin = DB::selectOne("
-                    SELECT COUNT(*) as cnt
-                    FROM apprenant_fin af
-                    JOIN apprenant a ON af.IDapprenant = a.IDapprenant
-                    JOIN section s ON a.IDSection = s.IDSection
-                    JOIN offre o ON s.IDOffre = o.IDOffre
-                    JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
-                    JOIN session sess ON s.IDSession = sess.IDSession
-                    JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
-                    WHERE (af.MoyFinForm > 0 OR af.MoyGen > 0) AND $statsFilter
-                ", $statsParams);
+                try {
+                    $valFin = DB::selectOne("
+                        SELECT COUNT(*) as cnt
+                        FROM apprenant_fin af
+                        JOIN apprenant a ON af.IDapprenant = a.IDapprenant
+                        JOIN section s ON a.IDSection = s.IDSection
+                        JOIN offre o ON s.IDOffre = o.IDOffre
+                        JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
+                        JOIN session sess ON s.IDSession = sess.IDSession
+                        JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
+                        WHERE (af.MoyFinForm > 0 OR af.MoyGen > 0) AND $statsFilter
+                    ", $statsParams);
+                } catch (\Throwable $e) {}
 
                 $resultats_valides = (int)($valActive->cnt ?? 0) + (int)($valFin->cnt ?? 0);
 
-                $stmtPvs = DB::selectOne("
-                    SELECT COUNT(*) as pvs_approuves 
-                    FROM section_semestre ss
-                    JOIN section s ON ss.IDSection = s.IDSection
-                    JOIN offre o ON s.IDOffre = o.IDOffre
-                    JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
-                    JOIN session sess ON s.IDSession = sess.IDSession
-                    JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
-                    WHERE (ss.NumPv IS NOT NULL AND ss.NumPv != '' OR ss.visaevaldir = 1 OR ss.visaevaldfep = 1) AND $statsFilter
-                ", $statsParams);
+                try {
+                    $stmtPvs = DB::selectOne("
+                        SELECT COUNT(*) as pvs_approuves 
+                        FROM section_semestre ss
+                        JOIN section s ON ss.IDSection = s.IDSection
+                        JOIN offre o ON s.IDOffre = o.IDOffre
+                        JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
+                        JOIN session sess ON s.IDSession = sess.IDSession
+                        JOIN etablissement e ON s.IDEts_Form = e.IDetablissement
+                        WHERE (ss.NumPv IS NOT NULL AND ss.NumPv != '' OR ss.visaevaldir = 1 OR ss.visaevaldfep = 1) AND $statsFilter
+                    ", $statsParams);
+                } catch (\Throwable $e) {}
 
                 return [
                     'total_stagiaires' => (int)($stmtStg->total_stagiaires ?? 0),
