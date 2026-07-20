@@ -1,4 +1,4 @@
-﻿@extends('layouts.main')
+@extends('layouts.main')
 @section('title', 'إعدادات المنصة الشاملة — SGFEP')
 
 @section('styles')
@@ -121,8 +121,9 @@ $portal_pages           = $portal_pages ?? [];
 $ministry               = $ministry ?? null;
 $allSemesters           = $allSemesters ?? [];
 $currentSemesterId      = $currentSemesterId ?? 1;
-?>
-
+@php
+    $isLocalEnv = in_array(request()->getHost(), ['localhost', '127.0.0.1', '::1']) || str_contains(request()->getHost(), '192.168.') || str_contains(request()->getHost(), 'local') || app()->environment('local');
+@endphp
 <div class="animate__animated animate__fadeIn">
 
     <!-- Page Header -->
@@ -161,9 +162,11 @@ $currentSemesterId      = $currentSemesterId ?? 1;
                     <button class="settings-nav-item <?= $active_tab==='performance' ? 'active':'' ?>" onclick="switchTab('performance', this)">
                         <i class="fa-solid fa-gauge-high"></i> الأداء والكاش
                     </button>
-                    <button class="settings-nav-item <?= $active_tab==='database' ? 'active':'' ?>" onclick="switchTab('database', this)">
-                        <i class="fa-solid fa-database"></i> قاعدة البيانات
-                    </button>
+                    @if ($isLocalEnv)
+                        <button class="settings-nav-item <?= $active_tab==='database' ? 'active':'' ?>" onclick="switchTab('database', this)">
+                            <i class="fa-solid fa-database"></i> قاعدة البيانات
+                        </button>
+                    @endif
                     <button class="settings-nav-item <?= $active_tab==='api' ? 'active':'' ?>" onclick="switchTab('api', this)">
                         <i class="fa-solid fa-plug-circle-bolt"></i> Takwin API
                     </button>
@@ -176,9 +179,11 @@ $currentSemesterId      = $currentSemesterId ?? 1;
                     <button class="settings-nav-item <?= $active_tab==='documents' ? 'active':'' ?>" onclick="switchTab('documents', this)">
                         <i class="fa-solid fa-folder-open"></i> إدارة الوثائق والملفات
                     </button>
-                    <button class="settings-nav-item <?= $active_tab==='backup' ? 'active':'' ?>" onclick="switchTab('backup', this)">
-                        <i class="fa-solid fa-file-zipper"></i> النسخ الاحتياطي لقاعدة البيانات
-                    </button>
+                    @if ($isLocalEnv)
+                        <button class="settings-nav-item <?= $active_tab==='backup' ? 'active':'' ?>" onclick="switchTab('backup', this)">
+                            <i class="fa-solid fa-file-zipper"></i> النسخ الاحتياطي لقاعدة البيانات
+                        </button>
+                    @endif
                     <button class="settings-nav-item <?= $active_tab==='sovereign' ? 'active':'' ?>" onclick="switchTab('sovereign', this)">
                         <i class="fa-solid fa-shield-halved"></i> الترخيص ودرع الحماية
                     </button>
@@ -188,9 +193,11 @@ $currentSemesterId      = $currentSemesterId ?? 1;
                     <button class="settings-nav-item <?= $active_tab==='requests' ? 'active':'' ?>" onclick="switchTab('requests', this)">
                         <i class="fa-solid fa-clipboard-list"></i> إدارة طلبات الموظفين
                     </button>
-                    <button class="settings-nav-item <?= $active_tab==='ministry' ? 'active':'' ?>" onclick="switchTab('ministry', this)">
-                        <i class="fa-solid fa-server"></i> إعدادات خوادم ومزامنة الوزارة
-                    </button>
+                    @if ($isLocalEnv)
+                        <button class="settings-nav-item <?= $active_tab==='ministry' ? 'active':'' ?>" onclick="switchTab('ministry', this)">
+                            <i class="fa-solid fa-server"></i> إعدادات خوادم ومزامنة الوزارة
+                        </button>
+                    @endif
                     <button class="settings-nav-item <?= $active_tab==='landing' ? 'active':'' ?>" onclick="switchTab('landing', this)">
                         <i class="fa-solid fa-palette"></i> إعدادات المظهر والواجهة
                     </button>
@@ -216,12 +223,14 @@ $currentSemesterId      = $currentSemesterId ?? 1;
                     <a href="{{ url('dashboard/users') }}" class="settings-nav-item">
                         <i class="fa-solid fa-users-gear"></i> إدارة الحسابات
                     </a>
-                    <a href="{{ url('dashboard/sync') }}" class="settings-nav-item">
-                        <i class="fa-solid fa-rotate"></i> مزامنة HFSQL
-                    </a>
-                    <a href="{{ url('dashboard/database') }}" class="settings-nav-item">
-                        <i class="fa-solid fa-table"></i> مدير قاعدة البيانات
-                    </a>
+                    @if ($isLocalEnv)
+                        <a href="{{ url('dashboard/sync') }}" class="settings-nav-item">
+                            <i class="fa-solid fa-rotate"></i> مزامنة HFSQL
+                        </a>
+                        <a href="{{ url('dashboard/database') }}" class="settings-nav-item">
+                            <i class="fa-solid fa-table"></i> مدير قاعدة البيانات
+                        </a>
+                    @endif
                 </nav>
             </div>
         </div>
@@ -253,8 +262,10 @@ $currentSemesterId      = $currentSemesterId ?? 1;
                             <div class="info-row"><span class="label">إصدار Laravel</span><span class="value"><?= htmlspecialchars($platform_info['laravel_ver'] ?? '—') ?></span></div>
                         </div>
                         <div class="col-md-6">
-                            <div class="info-row"><span class="label">قاعدة البيانات</span><span class="value"><?= htmlspecialchars($platform_info['db_name'] ?? '—') ?></span></div>
-                            <div class="info-row"><span class="label">خادم DB</span><span class="value"><?= htmlspecialchars($platform_info['db_host'] ?? '—') ?></span></div>
+                            @if ($isLocalEnv)
+                                <div class="info-row"><span class="label">قاعدة البيانات</span><span class="value"><?= htmlspecialchars($platform_info['db_name'] ?? '—') ?></span></div>
+                                <div class="info-row"><span class="label">خادم DB</span><span class="value"><?= htmlspecialchars($platform_info['db_host'] ?? '—') ?></span></div>
+                            @endif
                             <div class="info-row"><span class="label">محرك الكاش</span><span class="value"><?= htmlspecialchars($platform_info['cache_driver'] ?? '—') ?></span></div>
                             <div class="info-row"><span class="label">محرك الجلسة</span><span class="value"><?= htmlspecialchars($platform_info['session_drv'] ?? '—') ?></span></div>
                             <div class="info-row"><span class="label">Sentry Monitoring</span><span class="value"><?= htmlspecialchars($platform_info['sentry_dsn'] ?? '—') ?></span></div>
@@ -277,13 +288,15 @@ $currentSemesterId      = $currentSemesterId ?? 1;
                         $quickLinks = [
                             ['url' => url('dashboard/users'),       'icon' => 'fa-users-gear',   'label' => 'إدارة الحسابات',       'color' => 'blue'],
                             ['url' => url('dashboard/roles'),       'icon' => 'fa-user-shield',  'label' => 'الأدوار والصلاحيات',   'color' => 'gold'],
-                            ['url' => url('dashboard/sync'),        'icon' => 'fa-rotate',       'label' => 'مزامنة HFSQL',         'color' => 'green'],
-                            ['url' => url('dashboard/database'),    'icon' => 'fa-database',     'label' => 'مدير قاعدة البيانات',  'color' => 'blue'],
-                            ['url' => url('dashboard/import'),      'icon' => 'fa-file-import',  'label' => 'استيراد البيانات',     'color' => 'gold'],
-                            ['url' => url('dashboard/archive'),     'icon' => 'fa-box-archive',  'label' => 'بوابة الأرشيف',        'color' => 'green'],
-                            ['url' => url('dashboard/api-center'),  'icon' => 'fa-satellite-dish', 'label' => 'مركز الاتصال الرقمي (APIs)', 'color' => 'gold'],
-                            ['url' => url('dashboard/settings?tab=sovereign'), 'icon' => 'fa-shield-halved', 'label' => 'إعدادات درع الحماية والترخيص', 'color' => 'blue'],
                         ];
+                        if ($isLocalEnv) {
+                            $quickLinks[] = ['url' => url('dashboard/sync'),        'icon' => 'fa-rotate',       'label' => 'مزامنة HFSQL',         'color' => 'green'];
+                            $quickLinks[] = ['url' => url('dashboard/database'),    'icon' => 'fa-database',     'label' => 'مدير قاعدة البيانات',  'color' => 'blue'];
+                            $quickLinks[] = ['url' => url('dashboard/import'),      'icon' => 'fa-file-import',  'label' => 'استيراد البيانات',     'color' => 'gold'];
+                            $quickLinks[] = ['url' => url('dashboard/archive'),     'icon' => 'fa-box-archive',  'label' => 'بوابة الأرشيف',        'color' => 'green'];
+                        }
+                        $quickLinks[] = ['url' => url('dashboard/api-center'),  'icon' => 'fa-satellite-dish', 'label' => 'مركز الاتصال الرقمي (APIs)', 'color' => 'gold'];
+                        $quickLinks[] = ['url' => url('dashboard/settings?tab=sovereign'), 'icon' => 'fa-shield-halved', 'label' => 'إعدادات درع الحماية والترخيص', 'color' => 'blue'];
                         @endphp
                         @foreach ($quickLinks as $link)
                         <div class="col-6 col-md-4">
@@ -389,6 +402,7 @@ $currentSemesterId      = $currentSemesterId ?? 1;
             </div>
 
             <!-- ═══ TAB: قاعدة البيانات ═══ -->
+            @if ($isLocalEnv)
             <div class="settings-panel <?= $active_tab==='database' ? 'active':'' ?>" id="tab-database">
                 <div class="glass-panel p-4 mb-4">
                     <h5 class="fw-black mb-3" style="font-family:'Cairo';border-right:3px solid var(--electric);padding-right:.6rem;">
@@ -455,6 +469,7 @@ $currentSemesterId      = $currentSemesterId ?? 1;
                     </div>
                 </div>
             </div>
+            @endif
 
             <!-- ═══ TAB: Takwin API ═══ -->
             <div class="settings-panel <?= $active_tab==='api' ? 'active':'' ?>" id="tab-api">
@@ -1025,6 +1040,7 @@ $currentSemesterId      = $currentSemesterId ?? 1;
             </div>
 
             <!-- ═══ TAB: النسخ الاحتياطي لقاعدة البيانات ═══ -->
+            @if ($isLocalEnv)
             <div class="settings-panel <?= $active_tab==='backup' ? 'active':'' ?>" id="tab-backup">
                 <div class="glass-panel p-4 mb-4">
                     <h5 class="fw-black mb-3" style="font-family:'Cairo';border-right:3px solid var(--electric);padding-right:.6rem;">
@@ -1101,6 +1117,7 @@ $currentSemesterId      = $currentSemesterId ?? 1;
                     </div>
                 </div>
             </div>
+            @endif
 
             <!-- ═══ TAB: التحكم في الترخيص ═══ -->
             <div class="settings-panel <?= $active_tab==='sovereign' ? 'active':'' ?>" id="tab-sovereign">
@@ -1736,6 +1753,7 @@ $currentSemesterId      = $currentSemesterId ?? 1;
             </div>
 
             <!-- ═══ TAB: إعدادات خوادم الوزارة والمزامنة ═══ -->
+            @if ($isLocalEnv)
             <div class="settings-panel <?= $active_tab==='ministry' ? 'active':'' ?>" id="tab-ministry">
                 <div class="glass-panel p-4 mb-4">
                     <h5 class="fw-black mb-3" style="font-family:'Cairo';border-right:3px solid var(--electric);padding-right:.6rem;">
@@ -1836,6 +1854,7 @@ $currentSemesterId      = $currentSemesterId ?? 1;
                     </form>
                 </div>
             </div>
+            @endif
 
             <!-- ═══ TAB: إعدادات المظهر والواجهة ═══ -->
             <div class="settings-panel <?= $active_tab==='landing' ? 'active':'' ?>" id="tab-landing">
@@ -2151,7 +2170,8 @@ $currentSemesterId      = $currentSemesterId ?? 1;
                             'icon'    => 'fa-images',
                             'color'   => '#fd7e14',
                         ],
-                        [
+                    if ($isLocalEnv) {
+                        $featureToggles[] = [
                             'key'     => 'feature_background_sync_enabled',
                             'section' => 'feature_sync_toggle',
                             'label'   => 'المزامنة الخلفية مع خادم HFSQL (Background Sync)',
@@ -2159,7 +2179,8 @@ $currentSemesterId      = $currentSemesterId ?? 1;
                             'value'   => $feature_background_sync_enabled,
                             'icon'    => 'fa-rotate',
                             'color'   => '#20c997',
-                        ],
+                        ];
+                    }
                         [
                             'key'     => 'feature_large_memos_query_enabled',
                             'section' => 'feature_memos_toggle',
