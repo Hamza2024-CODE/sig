@@ -527,7 +527,7 @@ class SettingsController extends Controller
             $driver = config('cache.default', 'file');
             return [
                 'driver'        => $driver,
-                'file_count'    => 'نشط',
+                'file_count'    => 100,
                 'size_kb'       => 0,
                 'ref_warmed'    => \Illuminate\Support\Facades\Cache::has('sgfep:ref:wilayas'),
                 'kpi_warmed'    => \Illuminate\Support\Facades\Cache::has('sgfep:kpi:admin'),
