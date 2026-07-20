@@ -26,7 +26,9 @@ $files = [
     'app/Http/Controllers/Admin/ModulesController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/ModulesController.php',
     'resources/views/admin/modules/reconduits_details.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/modules/reconduits_details.blade.php',
     'resources/views/dashboard/departments/exam.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/dashboard/departments/exam.blade.php',
-    'app/Services/KpiCache.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Services/KpiCache.php'
+    'app/Services/KpiCache.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Services/KpiCache.php',
+    'app/Http/Controllers/Admin/SettingsController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/SettingsController.php',
+    'resources/views/admin/settings/index.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/settings/index.blade.php'
 ];
 
 foreach ($files as $localPath => $remoteUrl) {
