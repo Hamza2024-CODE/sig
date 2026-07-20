@@ -69,7 +69,8 @@ $files = [
     'app/Http/Controllers/Admin/ApprenantController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/ApprenantController.php',
     'app/Http/Controllers/Admin/ModulesController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/ModulesController.php',
     'resources/views/admin/modules/reconduits_details.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/modules/reconduits_details.blade.php',
-    'resources/views/dashboard/departments/exam.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/dashboard/departments/exam.blade.php'
+    'resources/views/dashboard/departments/exam.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/dashboard/departments/exam.blade.php',
+    'app/Services/KpiCache.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Services/KpiCache.php'
 ];
 
 foreach ($files as $localPath => $remoteUrl) {
@@ -160,53 +161,7 @@ try {
 
 if (function_exists('opcache_reset')) {
     opcache_reset();
-    echo "✓ OPCache Cleared!<br>";
-}
-
-echo "<h2>Running Global Terminology Replacements on Server...</h2>";
-try {
-    $targetDirs = [
-        __DIR__ . '/../resources/views',
-        __DIR__ . '/../app/Http/Controllers'
-    ];
-
-    $replacements = [
-        '/(?<!\\p{L})المتربصين والطلاب(?!\\p{L})/u' => 'المتربصين',
-        '/(?<!\\p{L})إحصائيات المتربصين والطلاب(?!\\p{L})/u' => 'إحصائيات المتربصين',
-        '/(?<!\\p{L})تقرير المتربصين والطلاب(?!\\p{L})/u' => 'تقرير المتربصين',
-        '/(?<!\\p{L})الطلاب(?!\\p{L})/u' => 'المتربصين',
-        '/(?<!\\p{L})الطلبة(?!\\p{L})/u' => 'المتربصين',
-        '/(?<!\\p{L})طلاب(?!\\p{L})/u' => 'متربصين',
-        '/(?<!\\p{L})طالبي التكوين(?!\\p{L})/u' => 'متربصي التكوين',
-        '/(?<!\\p{L})طالبي(?!\\p{L})/u' => 'متربصي',
-        '/(?<!\\p{L})طالبين(?!\\p{L})/u' => 'متربصين',
-        '/(?<!\\p{L})طالبان(?!\\p{L})/u' => 'متربصان',
-        '/(?<!\\p{L})طالبون(?!\\p{L})/u' => 'متربصون',
-        '/(?<!\\p{L})طالباً(?!\\p{L})/u' => 'متربصاً',
-        '/(?<!\\p{L})الطالبات(?!\\p{L})/u' => 'المتربصات',
-        '/(?<!\\p{L})طالبة(?!\\p{L})/u' => 'متربصة',
-        '/(?<!\\p{L})طالب(?!\\p{L})/u' => 'متربص'
-    ];
-
-    $modifiedCount = 0;
-    foreach ($targetDirs as $dir) {
-        if (!is_dir($dir)) continue;
-        $it = new RecursiveDirectoryIterator($dir);
-        $display = new RecursiveIteratorIterator($it);
-        foreach ($display as $file) {
-            if ($file->isFile()) {
-                $ext = pathinfo($file->getPathname(), PATHINFO_EXTENSION);
-                if (in_array($ext, ['php', 'html'])) {
-                    $filePath = $file->getPathname();
-                    $content = file_get_contents($filePath);
-                    $original = $content;
-                    foreach ($replacements as $pattern => $replacement) {
-                        $content = preg_replace($pattern, $replacement, $content);
-                    }
-                    if ($content !== $original) {
-                        file_put_contents($filePath, $content);
-                        $modifiedCount++;
-                    }
+    echo "✓ OPCache C// Terminology updates are handled in git repository source directly              }
                 }
             }
         }
