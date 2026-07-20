@@ -1904,22 +1904,33 @@ class ModulesController extends Controller {
         [$ofWhere, $params] = $this->offreWhere($scope, 'o');
 
         // Filter establishments by scope
-        $etabWhere = '1=1';
+        $etabWhere = 'ef.activee = 0'; // Only active institutions
         $etabParams = [];
         if ($scope['role'] === 'dfep' && $scope['iddfep']) {
-            $etabWhere = "ef.IDDFEP = ?";
+            $etabWhere = "ef.activee = 0 AND ef.IDDFEP = ?";
             $etabParams[] = (int)$scope['iddfep'];
         } elseif (in_array($scope['role'], ['etablissement', 'directeur', 'employee', 'formateur']) && $scope['etabId']) {
-            $etabWhere = "ef.IDetablissement = ?";
+            $etabWhere = "ef.activee = 0 AND ef.IDetablissement = ?";
             $etabParams[] = (int)$scope['etabId'];
         }
 
-        $cacheKey = 'distribution_globale_data_' . md5($ofWhere . serialize($params) . $etabWhere . serialize($etabParams));
+        $cacheKey = 'distribution_globale_v2_' . md5($ofWhere . serialize($params) . $etabWhere . serialize($etabParams));
 
         try {
-            $cachedData = \Illuminate\Support\Facades\Cache::remember($cacheKey, 900, function() use ($ofWhere, $params, $etabWhere, $etabParams) {
+            $cachedData = \Illuminate\Support\Facades\Cache::remember($cacheKey, 600, function() use ($ofWhere, $params, $etabWhere, $etabParams) {
                 $stmt = $this->db->prepare("
-                    SELECT ef.IDetablissement as id, ef.Nom as nom_ar, ef.NomFr as nom_fr, ef.code, ef.IDNature_etsF,
+                    SELECT ef.IDetablissement as id,
+                           ef.Nom as nom_ar,
+                           ef.NomFr as nom_fr,
+                           ef.code,
+                           ef.IDNature_etsF,
+                           ef.IDDFEP,
+                           ef.activee,
+                           n.Nom as nature_nom,
+                           IFNULL(dfep_e.Nom, '') as dfep_nom,
+                           IFNULL(dfep_e.NomFr, '') as dfep_nom_fr,
+                           IFNULL(w.Nom, '') as wilaya_nom,
+                           IFNULL(d.IDWilayaa, 0) as wilaya_id,
                            IFNULL(agg.nb_sections, 0) as nb_sections,
                            IFNULL(agg.total_inscrits, 0) as total_inscrits,
                            IFNULL(agg.femmes, 0) as femmes,
@@ -1927,6 +1938,10 @@ class ModulesController extends Controller {
                            IFNULL(agg.diplomes, 0) as diplomes,
                            IFNULL(cap.total_capacite, 0) as total_capacite
                     FROM etablissement ef
+                    LEFT JOIN nature_etsf n ON ef.IDNature_etsF = n.IDNature_etsF
+                    LEFT JOIN dfep d ON ef.IDDFEP = d.IDDFEP
+                    LEFT JOIN wilaya w ON d.IDWilayaa = w.IDWilayaa
+                    LEFT JOIN etablissement dfep_e ON dfep_e.IDDFEP = ef.IDDFEP AND dfep_e.IDNature_etsF = 5
                     LEFT JOIN (
                         SELECT o.IDEts_Form,
                                COUNT(s.IDSection) as nb_sections,
@@ -1945,42 +1960,79 @@ class ModulesController extends Controller {
                         GROUP BY o.IDEts_Form
                     ) cap ON ef.IDetablissement = cap.IDEts_Form
                     WHERE $etabWhere
-                    ORDER BY total_inscrits DESC
+                    ORDER BY ef.IDDFEP ASC, ef.IDNature_etsF ASC, ef.Nom ASC
                 ");
                 $stmt->execute(array_merge($params, $params, $etabParams));
-                $list = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                $rawList = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+                // Group by DFEP
+                $grouped = [];
                 $stats = ['centres' => 0, 'sections' => 0, 'total_inscrits' => 0, 'insfp' => 0, 'capacite' => 0];
-                $stats['centres'] = count($list);
 
-                foreach ($list as &$item) {
+                foreach ($rawList as &$item) {
                     $nature = (int)($item['IDNature_etsF'] ?? 0);
-                    // Institutes: 300 capacity, Centers: 250 capacity
+                    // Skip DFEP directorate rows (nature=5) from training center list
+                    // but use them as group headers
+                    if ($nature === 5) {
+                        $dfepId = (int)$item['IDDFEP'];
+                        if (!isset($grouped[$dfepId])) {
+                            $grouped[$dfepId] = [
+                                'dfep_id'      => $dfepId,
+                                'dfep_nom'     => $item['nom_ar'],
+                                'dfep_nom_fr'  => $item['nom_fr'],
+                                'wilaya_nom'   => $item['wilaya_nom'],
+                                'wilaya_id'    => (int)$item['wilaya_id'],
+                                'institutions' => [],
+                            ];
+                        }
+                        continue; // Skip adding DFEP itself to the institution list
+                    }
+
+                    $dfepId = (int)$item['IDDFEP'];
+                    if (!isset($grouped[$dfepId])) {
+                        $grouped[$dfepId] = [
+                            'dfep_id'      => $dfepId,
+                            'dfep_nom'     => $item['dfep_nom'] ?: ('مديرية DFEP ' . $dfepId),
+                            'dfep_nom_fr'  => $item['dfep_nom_fr'] ?: ('DFEP ' . $dfepId),
+                            'wilaya_nom'   => $item['wilaya_nom'],
+                            'wilaya_id'    => (int)$item['wilaya_id'],
+                            'institutions' => [],
+                        ];
+                    }
+
+                    // Capacity: INSFP=300, CFPA=250
                     $item['total_capacite'] = in_array($nature, [4, 6, 7, 11, 13]) ? 300 : 250;
+                    $item['is_insfp']       = in_array($nature, [6, 4, 7, 11, 13]);
+                    $item['nature_nom']     = $item['nature_nom'] ?? '';
+
+                    $grouped[$dfepId]['institutions'][] = $item;
 
                     $stats['total_inscrits'] += (int)$item['total_inscrits'];
                     $stats['capacite']       += (int)$item['total_capacite'];
                     $stats['sections']       += (int)$item['nb_sections'];
-                    if ($nature === 6) {
+                    $stats['centres']++;
+                    if (in_array($nature, [6, 4, 7])) {
                         $stats['insfp']++;
                     }
                 }
                 unset($item);
 
-                return compact('stats', 'list');
+                return compact('stats', 'grouped');
             });
 
-            $stats = $cachedData['stats'];
-            $list = $cachedData['list'];
+            $stats  = $cachedData['stats'];
+            $grouped = $cachedData['grouped'];
 
         } catch (\Exception $e) {
-            $stats = ['centres' => 0, 'sections' => 0, 'total_inscrits' => 0, 'insfp' => 0, 'capacite' => 0];
-            $list = [];
+            $stats   = ['centres' => 0, 'sections' => 0, 'total_inscrits' => 0, 'insfp' => 0, 'capacite' => 0];
+            $grouped = [];
         }
 
         return $this->render('admin/modules/distribution_globale', [
-            'title' => 'مخطط التوزيع العام للمتربصين',
-            'stats' => $stats, 'list' => $list,
+            'title'   => 'مخطط التوزيع العام للمتربصين',
+            'stats'   => $stats,
+            'grouped' => $grouped,
+            'list'    => [], // kept for backward compat
         ]);
     }
 
