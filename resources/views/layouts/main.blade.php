@@ -1262,22 +1262,27 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
                 </div>
 
                 <!-- Menu 2: Database & System Tools -->
-                <div class="sidebar-dropdown">
-                    <button type="button" class="sidebar-item {{ ($isActive('/dashboard/sync') || $isActive('/dashboard/database') || $isActive('/dashboard/import') || $isActive('/dashboard/hfsql-export') || $isActive('/dashboard/audit-logs')) ? 'active' : '' }}" onclick="toggleSidebarDropdown(this)" title="أدوات وقواعد البيانات">
-                        <i class="fa-solid fa-database text-success"></i>
-                        <span>أدوات وقواعد البيانات</span>
-                        <i class="fa-solid fa-chevron-down ms-auto dropdown-chevron" style="font-size: 0.7rem;"></i>
-                    </button>
-                    <div class="sidebar-submenu {{ ($isActive('/dashboard/sync') || $isActive('/dashboard/database') || $isActive('/dashboard/import') || $isActive('/dashboard/hfsql-export') || $isActive('/dashboard/audit-logs')) ? 'open' : '' }}">
-                        @if ($isLocalEnv)
+                @if ($isLocalEnv)
+                    <div class="sidebar-dropdown">
+                        <button type="button" class="sidebar-item {{ ($isActive('/dashboard/sync') || $isActive('/dashboard/database') || $isActive('/dashboard/import') || $isActive('/dashboard/hfsql-export') || $isActive('/dashboard/audit-logs')) ? 'active' : '' }}" onclick="toggleSidebarDropdown(this)" title="أدوات وقواعد البيانات">
+                            <i class="fa-solid fa-database text-success"></i>
+                            <span>أدوات وقواعد البيانات</span>
+                            <i class="fa-solid fa-chevron-down ms-auto dropdown-chevron" style="font-size: 0.7rem;"></i>
+                        </button>
+                        <div class="sidebar-submenu {{ ($isActive('/dashboard/sync') || $isActive('/dashboard/database') || $isActive('/dashboard/import') || $isActive('/dashboard/hfsql-export') || $isActive('/dashboard/audit-logs')) ? 'open' : '' }}">
                             <a href="{{ url('dashboard/sync') }}" class="sidebar-subitem {{ $isActive('/dashboard/sync') }}" title="مزامنة البيانات (HFSQL)"><i class="fa-solid fa-server text-success"></i> <span>مزامنة البيانات (HFSQL)</span></a>
                             <a href="{{ url('dashboard/hfsql-export') }}" class="sidebar-subitem {{ $isActive('/dashboard/hfsql-export') }}" title="مزامنة HFSQL &larr; MySQL"><i class="fa-solid fa-arrows-rotate text-info"></i> <span>مزامنة الصادرات</span></a>
                             <a href="{{ url('dashboard/database') }}" class="sidebar-subitem {{ $isActive('/dashboard/database') }}" title="إدارة قاعدة البيانات"><i class="fa-solid fa-screwdriver-wrench text-warning"></i> <span>إدارة قاعدة البيانات</span></a>
                             <a href="{{ url('dashboard/import') }}" class="sidebar-subitem {{ $isActive('/dashboard/import') }}" title="استيراد وتصدير البيانات"><i class="fa-solid fa-file-import text-primary"></i> <span>استيراد وتصدير البيانات</span></a>
-                        @endif
-                        <a href="{{ url('dashboard/audit-logs') }}" class="sidebar-subitem {{ $isActive('/dashboard/audit-logs') }}" title="سجل العمليات"><i class="fa-solid fa-list-check text-secondary"></i> <span>سجل العمليات</span></a>
+                            <a href="{{ url('dashboard/audit-logs') }}" class="sidebar-subitem {{ $isActive('/dashboard/audit-logs') }}" title="سجل العمليات"><i class="fa-solid fa-list-check text-secondary"></i> <span>سجل العمليات</span></a>
+                        </div>
                     </div>
-                </div>
+                @else
+                    <a href="{{ url('dashboard/audit-logs') }}" class="sidebar-item {{ $isActive('/dashboard/audit-logs') }}" title="سجل العمليات">
+                        <i class="fa-solid fa-list-check text-secondary"></i>
+                        <span>سجل العمليات</span>
+                    </a>
+                @endif
 
                 <!-- Menu 3: Advanced Settings & APIs -->
                 <div class="sidebar-dropdown">
