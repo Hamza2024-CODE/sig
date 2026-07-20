@@ -43,6 +43,7 @@ class UtilisateursController extends Controller
             $dfepId = (int)($user['iddfep'] ?? $user['IDDFEP'] ?? $user['wilaya_id'] ?? $user['IDWilayaa'] ?? 0);
             $selWilaya = (int)$request->input('wilaya_id', 0);
             $selEtab   = (int)$request->input('etablissement_id', 0);
+            $selStatus = trim($request->input('status', '')); // 'active', 'suspended' or ''
 
             if ($role_code === 'dfep' && $dfepId > 0) {
                 $selWilaya = $dfepId;
@@ -62,6 +63,11 @@ class UtilisateursController extends Controller
             if ($selEtab > 0) {
                 $whereU[] = "u.IDBureau = ?";
                 $paramsU[] = $selEtab;
+            }
+            if ($selStatus === 'active') {
+                $whereU[] = "u.activee = 0";
+            } elseif ($selStatus === 'suspended') {
+                $whereU[] = "u.activee = 1";
             }
             $matchingUserIds = [0];
             if ($search !== '') {
@@ -103,6 +109,11 @@ class UtilisateursController extends Controller
                 $whereE[] = "e.IDetablissement = ?";
                 $paramsE[] = $selEtab;
             }
+            if ($selStatus === 'active') {
+                $whereE[] = "e.activee = 0";
+            } elseif ($selStatus === 'suspended') {
+                $whereE[] = "e.activee = 1";
+            }
             if ($search !== '') {
                 $whereE[] = "(e.nomUser LIKE ? OR e.Nom LIKE ?)";
                 $paramsE[] = "%{$search}%";
@@ -128,6 +139,9 @@ class UtilisateursController extends Controller
             if ($selEtab > 0) {
                 $whereEnc[] = "enc.IDetablissement = ?";
                 $paramsEnc[] = $selEtab;
+            }
+            if ($selStatus === 'suspended') {
+                $whereEnc[] = "1=0";
             }
             $matchingEncIds = [0];
             if ($search !== '') {
@@ -350,6 +364,7 @@ class UtilisateursController extends Controller
             'wilayas'        => $wilayas,
             'sel_wilaya'     => $selWilaya ?? 0,
             'sel_etab'       => $selEtab ?? 0,
+            'sel_status'     => $selStatus ?? '',
             'departments'    => [],
             'total_count'    => $totalCount,
             'page'           => $page,

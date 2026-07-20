@@ -156,7 +156,7 @@ foreach ($etablissements as $et) {
     <div class="card border-0 shadow-sm p-3 mb-4 no-print" style="border-radius:16px;background:var(--card-bg);border:1px solid var(--card-border)!important;">
         <form method="GET" action="{{ url('dashboard/users') }}" class="row g-2 align-items-end">
             {{-- بحث نصي --}}
-            <div class="col-12 col-md-4">
+            <div class="col-12 col-md-3">
                 <label class="form-label small fw-bold text-muted mb-1"><i class="fa-solid fa-magnifying-glass me-1"></i> بحث نصي</label>
                 <div class="input-group">
                     <input type="text" name="search" value="<?= htmlspecialchars($search ?? '') ?>"
@@ -179,7 +179,7 @@ foreach ($etablissements as $et) {
             </div>
 
             {{-- تصفية حسب المؤسسة --}}
-            <div class="col-12 col-md-3">
+            <div class="col-12 col-md-2">
                 <label class="form-label small fw-bold text-muted mb-1"><i class="fa-solid fa-school me-1"></i> المؤسسة التكوينية</label>
                 <select name="etablissement_id" class="form-select border-0 rounded-3" style="background:var(--input-bg,#f8f9fa);font-size:0.88rem;" onchange="this.form.submit()">
                     <option value="">جميع المؤسسات</option>
@@ -188,6 +188,16 @@ foreach ($etablissements as $et) {
                             <?= htmlspecialchars($et['nom_ar']) ?>
                         </option>
                     <?php endforeach; ?>
+                </select>
+            </div>
+
+            {{-- تصفية حسب حالة التفعيل --}}
+            <div class="col-12 col-md-2">
+                <label class="form-label small fw-bold text-muted mb-1"><i class="fa-solid fa-toggle-on me-1"></i> حالة الحساب</label>
+                <select name="status" class="form-select border-0 rounded-3" style="background:var(--input-bg,#f8f9fa);font-size:0.88rem;" onchange="this.form.submit()">
+                    <option value="">جميع الحالات</option>
+                    <option value="active" <?= (isset($sel_status) && $sel_status === 'active') ? 'selected' : '' ?>>مفعل / نشط</option>
+                    <option value="suspended" <?= (isset($sel_status) && $sel_status === 'suspended') ? 'selected' : '' ?>>موقوف / غير مفعل</option>
                 </select>
             </div>
 
