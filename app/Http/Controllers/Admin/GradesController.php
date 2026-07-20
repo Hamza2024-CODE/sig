@@ -79,9 +79,9 @@ class GradesController extends Controller
     {
         set_time_limit(300); // Allow up to 5 minutes for this heavy stats page
         $user    = session('user');
-        $etabId  = $user['etablissement_id'] ?? null;
+        $etabId  = $user['etablissement_id'] ?? $user['IDetablissement'] ?? null;
         $role    = strtolower($user['role_code'] ?? '');
-        $dfepId  = $user['iddfep'] ?? null;
+        $dfepId  = $user['iddfep'] ?? $user['IDDFEP'] ?? null;
 
         $modeId = (int)($user['IDMode_formation'] ?? 0);
         if (request('force_mode_10')) {
