@@ -140,6 +140,7 @@ class GradesController extends Controller
                 SELECT DISTINCT o.IDOffre as id, o.IDMode_formation as mode_formation,
                        s.Nom as spec_ar, s.CodeSpec as spec_code,
                        s.NbrSem as duree_semestres,
+                       qd.Nom as diplome_exact,
                        CASE
                            WHEN s.NbrSem >= 5 THEN 'BTS'
                            WHEN s.NbrSem = 4 THEN 'BTS'
@@ -157,6 +158,7 @@ class GradesController extends Controller
                 JOIN section sec ON ss.IDSection = sec.IDSection
                 JOIN offre o ON sec.IDOffre = o.IDOffre
                 JOIN specialite s ON o.IDSpecialite = s.IDSpecialite
+                LEFT JOIN qualification_dplm qd ON s.IDqualification_dplm = qd.IDqualification_dplm
                 JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
                 JOIN session sess ON o.IDSession = sess.IDSession
                 WHERE " . implode(" AND ", $whereClauses) . "
@@ -179,6 +181,7 @@ class GradesController extends Controller
                 SELECT o.IDOffre as id, o.IDMode_formation as mode_formation,
                        s.Nom as spec_ar, s.CodeSpec as spec_code,
                        s.NbrSem as duree_semestres,
+                       qd.Nom as diplome_exact,
                        CASE
                            WHEN s.NbrSem >= 5 THEN 'BTS'
                            WHEN s.NbrSem = 4 THEN 'BTS'
@@ -194,6 +197,7 @@ class GradesController extends Controller
                         WHERE sec2.IDOffre = o.IDOffre AND a.statut = 'actif') as nb_actifs
                 FROM offre o
                 JOIN specialite s ON o.IDSpecialite = s.IDSpecialite
+                LEFT JOIN qualification_dplm qd ON s.IDqualification_dplm = qd.IDqualification_dplm
                 JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
                 JOIN session sess ON o.IDSession = sess.IDSession
                 WHERE " . implode(" AND ", $whereClauses) . "

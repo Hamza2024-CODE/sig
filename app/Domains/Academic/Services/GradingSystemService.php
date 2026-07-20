@@ -84,7 +84,8 @@ class GradingSystemService
             $ccAvg = $cc2;
         }
 
-        $examVal = $exam !== null ? $exam : 0.0;
+        $examVal = $exam !== null ? ($exam > 20 ? $exam / 2.0 : $exam) : 0.0;
+        $rattVal = $ratt !== null ? ($ratt > 20 ? $ratt / 2.0 : $ratt) : null;
 
         // Calculate average before remedial
         $moyAvr = (($ccAvg * $ccWeight) + ($examVal * $examWeight)) / $divisor;
@@ -92,8 +93,8 @@ class GradingSystemService
 
         // Calculate average after remedial
         $bestExam = $examVal;
-        if ($ratt !== null) {
-            $bestExam = max($examVal, $ratt);
+        if ($rattVal !== null) {
+            $bestExam = max($examVal, $rattVal);
         }
 
         $moyApr = (($ccAvg * $ccWeight) + ($bestExam * $examWeight)) / $divisor;

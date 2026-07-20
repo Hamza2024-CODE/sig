@@ -163,7 +163,8 @@ unset($_SESSION['success'], $_SESSION['error']);
         </div>
     <?php else: ?>
 
-    <!-- ===== معلومات الصيغة الرسمية ===== -->
+    <!-- ===== معلومات الصيغة الرسمية (تظهر فقط للأدمن) ===== -->
+    <?php if (in_array(strtolower(session('user')['role_code'] ?? ''), ['admin', 'high_admin'])): ?>
     <div class="alert border-0 rounded-4 mb-3 p-3"
          style="background:rgba(2,132,199,0.05); border-right: 4px solid #0284c7 !important;">
         <div class="row align-items-center">
@@ -192,6 +193,7 @@ unset($_SESSION['success'], $_SESSION['error']);
             </div>
         </div>
     </div>
+    <?php endif; ?>
 
     <!-- ===== إشعار حالة فترة رصد النقاط ===== -->
     <?php if (!empty($is_locked)): ?>
@@ -260,11 +262,11 @@ unset($_SESSION['success'], $_SESSION['error']);
                                 <?php if (in_array((int)$offre['mode_formation'], [18, 21])): ?>
                                     <th>نقطة التفاعل<br><small class="text-muted">/20</small></th>
                                     <th>الفروض<br><small class="text-muted">/20</small></th>
-                                    <th>الامتحان التجمعي<br><small class="text-muted">/20</small></th>
+                                    <th>الامتحان التجمعي<br><small class="text-muted">/40</small></th>
                                 <?php else: ?>
                                     <th>المراقبة 1<br><small class="text-muted">/20</small></th>
                                     <th>المراقبة 2<br><small class="text-muted">/20</small></th>
-                                    <th>الامتحان الشامل<br><small class="text-muted">/20</small></th>
+                                    <th>الامتحان الشامل<br><small class="text-muted">/40</small></th>
                                 <?php endif; ?>
                                 <th>استدراكي<br><small class="text-muted">/20</small></th>
                             <?php elseif ($matiere['type_matiere'] === 'stage_pratique'): ?>

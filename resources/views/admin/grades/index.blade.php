@@ -203,6 +203,7 @@ for ($i = 1; $i <= 6; $i++) {
         <?php foreach ($offres as $o):
             $diplome    = $o['diplome_vise'] ?? 'CAP';
             $diplomeInfo= $diplomeLabels[$diplome] ?? ['label'=>$diplome,'color'=>'#64748b','bg'=>'#f8fafc'];
+            $diplomeText = !empty($o['diplome_exact']) ? $o['diplome_exact'] : $diplomeInfo['label'];
             $maxSem     = max(1, (int)($o['duree_semestres'] ?? 1));
             $isMode10   = ((int)$o['mode_formation'] === 10);
             $encId      = \App\Helpers\SecureIdHelper::encrypt($o['id']);
@@ -219,7 +220,7 @@ for ($i = 1; $i <= 6; $i++) {
                     {{-- header --}}
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <span class="badge fw-bold px-3 py-1 rounded-pill" style="background:<?= $diplomeInfo['bg'] ?>;color:<?= $diplomeInfo['color'] ?>;font-size:.78rem;">
-                            <?= htmlspecialchars($diplomeInfo['label']) ?>
+                            <?= htmlspecialchars($diplomeText) ?>
                         </span>
                         <span class="badge bg-light text-muted small fw-bold px-2 py-1" style="font-family:'Outfit';">
                             <?= $isMode10 ? '<i class="fa-solid fa-building me-1"></i>تمهين' : '<i class="fa-solid fa-school me-1"></i>حضوري' ?>
