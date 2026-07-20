@@ -267,23 +267,6 @@ $sitFamilleMap = [
                                                 </div>
                                             </td>
                                             <td>
-                                                <div class="fw-bold text-dark text-truncate" style="max-width: 250px;" title="<?= htmlspecialchars($emp['etab_nom'] ?? '') ?>">
-                                                    <?= htmlspecialchars($emp['etab_nom'] ?? 'غير محدد') ?>
-                                                </div>
-                                                <div class="text-muted small mt-1">
-                                                    <i class="fa-solid fa-location-dot text-secondary me-1"></i>
-                                                    <?= htmlspecialchars($emp['wilaya_nom'] ?? 'ولاية غير محددة') ?>
-                                                    
-                                                    <?php if ($empType === 'directorate'): ?>
-                                                        <span class="badge bg-success-subtle text-success ms-1" style="font-size:0.65rem;">المديرية</span>
-                                                    <?php elseif ($empType === 'institute'): ?>
-                                                        <span class="badge bg-purple-subtle text-purple ms-1" style="font-size:0.65rem;">المعهد</span>
-                                                    <?php elseif ($empType === 'centre'): ?>
-                                                        <span class="badge bg-blue-subtle text-blue ms-1" style="font-size:0.65rem;">المركز</span>
-                                                    <?php elseif ($empType === 'private'): ?>
-                                                        <span class="badge bg-warning-subtle text-warning ms-1" style="font-size:0.65rem;">خاصة</span>
-                                                    <?php endif; ?>
-                                                </div>
                                             </td>
                                             <td>
                                                 <div class="fw-semibold text-dark text-truncate" style="max-width: 200px; font-size:0.82rem;" title="<?= htmlspecialchars($emp['TachesPrincipale'] ?? '') ?>">

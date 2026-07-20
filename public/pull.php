@@ -14,7 +14,10 @@ echo "<h1>Auto-Updating All Modified Files...</h1>";
 $files = [
 
     'app/Http/Controllers/Admin/ModulesController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/ModulesController.php',
-    'resources/views/admin/modules/distribution_globale.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/modules/distribution_globale.blade.php'
+    'resources/views/admin/modules/distribution_globale.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/modules/distribution_globale.blade.php',
+    'app/Services/Employee/EmployeeScopeService.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Services/Employee/EmployeeScopeService.php',
+    'app/Services/Employee/EmployeeQueryService.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Services/Employee/EmployeeQueryService.php',
+    'resources/views/admin/espace-employe/index.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/espace-employe/index.blade.php'
 ];
 
 foreach ($files as $localPath => $remoteUrl) {
