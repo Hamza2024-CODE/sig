@@ -188,13 +188,6 @@ class GradesController extends Controller
                 ORDER BY s.Nom
             ";
         } else {
-            $whereClauses[] = "EXISTS (
-                SELECT 1 
-                FROM section sec 
-                JOIN apprenant a ON a.IDSection = sec.IDSection 
-                WHERE sec.IDOffre = o.IDOffre AND a.statut = 'actif'
-            )";
-
             $limitStr = "";
             if (in_array($role, ['admin', 'central', 'high_admin', 'secretaire_general', 'ministre'])) {
                 $limitStr = " LIMIT 100";
@@ -214,16 +207,16 @@ class GradesController extends Controller
                            ELSE 'CAP'
                        END as diplome_vise,
                        e.Nom as etab_nom,
-                       (SELECT COUNT(*) 
-                        FROM apprenant a 
-                        JOIN section sec2 ON a.IDSection = sec2.IDSection 
-                        WHERE sec2.IDOffre = o.IDOffre AND a.statut = 'actif') as nb_actifs
+                       COUNT(DISTINCT a.IDapprenant) as nb_actifs
                 FROM offre o
                 JOIN specialite s ON o.IDSpecialite = s.IDSpecialite
                 LEFT JOIN qualification_dplm qd ON s.IDqualification_dplm = qd.IDqualification_dplm
                 JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
                 JOIN session sess ON o.IDSession = sess.IDSession
+                JOIN section sec ON sec.IDOffre = o.IDOffre
+                JOIN apprenant a ON a.IDSection = sec.IDSection AND a.statut = 'actif'
                 WHERE " . implode(" AND ", $whereClauses) . "
+                GROUP BY o.IDOffre, o.IDMode_formation, s.Nom, s.CodeSpec, s.NbrSem, qd.Nom, e.Nom
                 ORDER BY s.Nom
                 $limitStr
             ";
