@@ -25,8 +25,20 @@ class GradesController extends Controller
     {
         $user = session('user');
         $role = strtolower($user['role_code'] ?? '');
-        $etabId = (int)($user['etablissement_id'] ?? 0);
+        $etabId = (int)($user['etablissement_id'] ?? $user['IDetablissement'] ?? 0);
         $dfepId = (int)($user['iddfep'] ?? $user['IDDFEP'] ?? 0);
+
+        // Promote DFEP directorate accounts (e.g. IDNature_etsF = 5) to dfep role
+        if ($etabId > 0 && !in_array($role, ['admin', 'central', 'high_admin'])) {
+            $isDfepEtab = DB::selectOne("SELECT 1 FROM etablissement WHERE IDetablissement = ? AND (IDNature_etsF = 5 OR IDetablissement = 308)", [$etabId]) !== null;
+            if ($isDfepEtab) {
+                $role = 'dfep';
+                if ($dfepId <= 0) {
+                    $rowD = DB::selectOne("SELECT IDDFEP FROM etablissement WHERE IDetablissement = ?", [$etabId]);
+                    $dfepId = (int)($rowD->IDDFEP ?? 0);
+                }
+            }
+        }
 
         // 1. Semester Validation
         $maxSem = (int)($offre['duree_semestres'] ?? 4);
@@ -79,9 +91,21 @@ class GradesController extends Controller
     {
         set_time_limit(300); // Allow up to 5 minutes for this heavy stats page
         $user    = session('user');
-        $etabId  = $user['etablissement_id'] ?? $user['IDetablissement'] ?? null;
+        $etabId  = (int)($user['etablissement_id'] ?? $user['IDetablissement'] ?? 0);
         $role    = strtolower($user['role_code'] ?? '');
-        $dfepId  = $user['iddfep'] ?? $user['IDDFEP'] ?? null;
+        $dfepId  = (int)($user['iddfep'] ?? $user['IDDFEP'] ?? 0);
+
+        // Promote DFEP directorate accounts (e.g. IDNature_etsF = 5) to dfep role
+        if ($etabId > 0 && !in_array($role, ['admin', 'central', 'high_admin'])) {
+            $isDfepEtab = DB::selectOne("SELECT 1 FROM etablissement WHERE IDetablissement = ? AND (IDNature_etsF = 5 OR IDetablissement = 308)", [$etabId]) !== null;
+            if ($isDfepEtab) {
+                $role = 'dfep';
+                if ($dfepId <= 0) {
+                    $rowD = DB::selectOne("SELECT IDDFEP FROM etablissement WHERE IDetablissement = ?", [$etabId]);
+                    $dfepId = (int)($rowD->IDDFEP ?? 0);
+                }
+            }
+        }
 
         $modeId = (int)($user['IDMode_formation'] ?? 0);
         if (request('force_mode_10')) {
@@ -96,7 +120,7 @@ class GradesController extends Controller
         if (in_array($role, ['admin', 'central', 'high_admin', 'secretaire_general', 'ministre'])) {
             $selectedWilaya = request('filter_wilaya') ? (int)request('filter_wilaya') : null;
             $selectedEtab = request('filter_etab') ? (int)request('filter_etab') : null;
-        } elseif ($role === 'dfep' && $dfepId) {
+        } elseif ($role === 'dfep' && $dfepId > 0) {
             $selectedWilaya = $dfepId;
             $selectedEtab = request('filter_etab') ? (int)request('filter_etab') : null;
         } else {
