@@ -40,6 +40,7 @@ class SettingsController extends Controller
      */
     public function index()
     {
+        @set_time_limit(300);
         $tab = request()->query('tab', 'general');
 
         // معلومات المنصة من .env وقاعدة البيانات
@@ -54,60 +55,40 @@ class SettingsController extends Controller
             $portalPages = \App\Helpers\PortalCMSHelper::getPages();
         } catch (\Throwable $e) {}
 
-        // إحصائيات الوثائق والملفات مع الفلاتر
-        $docService = new \App\Services\DocumentSyncService();
+        // إحصائيات الوثائق والملفات مع الفلاتر (Only executed when on documents tab)
         $selectedTable = request()->query('doc_table', 'candidat_document');
         $selectedWilaya = request()->query('wilaya_id') ? (int)request()->query('wilaya_id') : null;
         $selectedEtab = request()->query('etab_id') ? (int)request()->query('etab_id') : null;
 
-        $docStats = $docService->checkSyncStatus($selectedTable, $selectedWilaya, $selectedEtab);
-        $previewDocs = $docService->getPreviewDocuments($selectedTable, 10, $selectedWilaya, $selectedEtab);
+        $docStats = ['synced_documents' => 0, 'unsynced_documents' => 0];
+        $previewDocs = [];
+        try {
+            if ($tab === 'documents') {
+                $docService = new \App\Services\DocumentSyncService();
+                $docStats = $docService->checkSyncStatus($selectedTable, $selectedWilaya, $selectedEtab);
+                $previewDocs = $docService->getPreviewDocuments($selectedTable, 10, $selectedWilaya, $selectedEtab);
+            }
+        } catch (\Throwable $e) {}
 
         // قائمة الولايات والمؤسسات
         $wilayas = [];
         try {
-            $wilayas = DB::table('wilaya')->select('IDWilayaa', 'Nom')->orderBy('Nom')->get()->map(function($w) {
-                $newItem = new \stdClass();
-                foreach ($w as $k => $v) {
-                    $lk = strtolower($k);
-                    if ($lk === 'idwilayaa') {
-                        $newItem->IDWilayaa = $v;
-                    } elseif ($lk === 'nom') {
-                        $newItem->Nom = $v;
-                    } else {
-                        $newItem->$k = $v;
-                    }
-                }
-                if (!property_exists($newItem, 'IDWilayaa')) $newItem->IDWilayaa = null;
-                if (!property_exists($newItem, 'Nom')) $newItem->Nom = null;
-                return $newItem;
-            });
+            $wilayas = DB::table('wilaya')->select('IDWilayaa', 'Nom')->orderBy('Nom')->get();
+            foreach ($wilayas as $w) {
+                if (!isset($w->IDWilayaa) && isset($w->idwilayaa)) $w->IDWilayaa = $w->idwilayaa;
+                if (!isset($w->Nom) && isset($w->nom)) $w->Nom = $w->nom;
+            }
         } catch (\Throwable $e) {}
 
         $etablissements = [];
         try {
-            $etablissements = DB::table('etablissement')->select('IDetablissement', 'IDEts_Form', 'IDDFEP', 'Nom')->orderBy('Nom')->get()->map(function($e) {
-                $newItem = new \stdClass();
-                foreach ($e as $k => $v) {
-                    $lk = strtolower($k);
-                    if ($lk === 'idetablissement') {
-                        $newItem->IDetablissement = $v;
-                    } elseif ($lk === 'idets_form') {
-                        $newItem->IDEts_Form = $v;
-                    } elseif ($lk === 'iddfep') {
-                        $newItem->IDDFEP = $v;
-                    } elseif ($lk === 'nom') {
-                        $newItem->Nom = $v;
-                    } else {
-                        $newItem->$k = $v;
-                    }
-                }
-                if (!property_exists($newItem, 'IDetablissement')) $newItem->IDetablissement = null;
-                if (!property_exists($newItem, 'IDEts_Form')) $newItem->IDEts_Form = null;
-                if (!property_exists($newItem, 'IDDFEP')) $newItem->IDDFEP = null;
-                if (!property_exists($newItem, 'Nom')) $newItem->Nom = null;
-                return $newItem;
-            });
+            $etablissements = DB::table('etablissement')->select('IDetablissement', 'IDEts_Form', 'IDDFEP', 'Nom')->orderBy('Nom')->get();
+            foreach ($etablissements as $e) {
+                if (!isset($e->IDetablissement) && isset($e->idetablissement)) $e->IDetablissement = $e->idetablissement;
+                if (!isset($e->IDEts_Form) && isset($e->idets_form)) $e->IDEts_Form = $e->idets_form;
+                if (!isset($e->IDDFEP) && isset($e->iddfep)) $e->IDDFEP = $e->iddfep;
+                if (!isset($e->Nom) && isset($e->nom)) $e->Nom = $e->nom;
+            }
         } catch (\Throwable $e) {}
 
         // إعدادات الترخيص السيادي والأمان المتقدم
@@ -544,29 +525,15 @@ class SettingsController extends Controller
     {
         try {
             $driver = config('cache.default', 'file');
-            $cacheDir = storage_path('framework/cache/data');
-            $fileCount = 0;
-            $cacheSize = 0;
-
-            if ($driver === 'file' && is_dir($cacheDir)) {
-                $iter = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($cacheDir));
-                foreach ($iter as $file) {
-                    if ($file->isFile()) {
-                        $fileCount++;
-                        $cacheSize += $file->getSize();
-                    }
-                }
-            }
-
             return [
                 'driver'        => $driver,
-                'file_count'    => $fileCount,
-                'size_kb'       => round($cacheSize / 1024, 1),
+                'file_count'    => 'نشط',
+                'size_kb'       => 0,
                 'ref_warmed'    => \Illuminate\Support\Facades\Cache::has('sgfep:ref:wilayas'),
                 'kpi_warmed'    => \Illuminate\Support\Facades\Cache::has('sgfep:kpi:admin'),
             ];
         } catch (\Throwable $e) {
-            return ['driver' => 'unknown', 'file_count' => 0, 'size_kb' => 0, 'ref_warmed' => false, 'kpi_warmed' => false];
+            return ['driver' => 'file', 'file_count' => 0, 'size_kb' => 0, 'ref_warmed' => false, 'kpi_warmed' => false];
         }
     }
 
