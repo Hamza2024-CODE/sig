@@ -9,9 +9,6 @@
                 <p class="text-muted mb-0">مراجعة والتحقق من ملفات التسجيل الأولي للمتربصين واتخاذ القرارات الإدارية</p>
             </div>
             <div class="d-flex gap-2">
-                <button class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#addCandidateModal">
-                    <i class="fa-solid fa-user-plus me-1"></i> تسجيل مترشح جديد
-                </button>
                 <a href="/dashboard" class="btn btn-outline-secondary px-4" style="border-radius: 8px;">
                     <i class="fa-solid fa-arrow-left me-1"></i> العودة للوحة القيادة
                 </a>
