@@ -30,6 +30,14 @@ class CandidatController extends Controller
         $dfepId       = (int)($user['iddfep'] ?? $user['IDDFEP'] ?? 0);
         $etabId       = (int)($user['etablissement_id'] ?? $user['IDEts_Form'] ?? 0);
 
+        if ($etabId > 0 && !in_array($role, ['admin', 'central', 'high_admin', 'dfep'])) {
+            $isDfepEtab = DB::selectOne("SELECT 1 FROM etablissement WHERE IDetablissement = ? AND (IDNature_etsF = 5 OR IDetablissement = 308)", [$etabId]) !== null;
+            if ($isDfepEtab) {
+                $role = 'dfep';
+                $user['role_code'] = 'dfep';
+            }
+        }
+
         $filters = [
             'search'           => $request->query('search', ''),
             'wilaya_id'        => $request->query('wilaya_id', ''),
@@ -80,13 +88,21 @@ class CandidatController extends Controller
                 ->get();
         }
 
-        // Fetch reference data for Add/Edit Candidate Modals
+        // Fetch reference data for Add/Edit Candidate Modals and Filter Bar
         $offersQuery = DB::table('offre')
             ->join('specialite', 'offre.IDSpecialite', '=', 'specialite.IDSpecialite')
             ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDetablissement')
             ->select('offre.IDOffre as id', 'specialite.Nom as spec_ar', 'etablissement.Nom as etab_ar');
 
-        if ($dfepId > 0) {
+        if ($filters['etablissement_id'] !== '') {
+            $offersQuery->where('offre.IDEts_Form', (int)$filters['etablissement_id']);
+        } elseif ($filters['wilaya_id'] !== '') {
+            $offersQuery->whereIn('offre.IDEts_Form', function($q) use ($filters) {
+                $q->select('IDetablissement')->from('etablissement')->whereIn('IDDFEP', function($q2) use ($filters) {
+                    $q2->select('IDDFEP')->from('dfep')->where('IDWilayaa', (int)$filters['wilaya_id']);
+                });
+            });
+        } elseif ($role === 'dfep' && $dfepId > 0) {
             $offersQuery->whereIn('offre.IDEts_Form', function($q) use ($dfepId) {
                 $q->select('IDetablissement')->from('etablissement')->where('IDDFEP', $dfepId);
             });
@@ -94,13 +110,15 @@ class CandidatController extends Controller
             $offersQuery->where('offre.IDEts_Form', $etabId);
         }
 
-        if ((int)($user['IDMode_formation'] ?? 0) === 10) {
+        if ($filters['mode_id'] !== '') {
+            $offersQuery->where('offre.IDMode_formation', (int)$filters['mode_id']);
+        } elseif ((int)($user['IDMode_formation'] ?? 0) === 10) {
             $offersQuery->where('offre.IDMode_formation', 10);
         } elseif (strtolower($user['username'] ?? '') === 'sdtpp') {
             $offersQuery->where('offre.IDMode_formation', '!=', 10);
         }
 
-        $offers = $offersQuery->limit(200)->get()->toArray();
+        $offers = $offersQuery->limit(300)->get()->toArray();
 
         return $this->render('admin/candidates', [
             'title'            => 'إدارة ملفات المترشحين - SGFEP',

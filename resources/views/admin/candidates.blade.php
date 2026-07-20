@@ -113,7 +113,7 @@
                 <!-- Training Mode -->
                 <div class="col-md-2">
                     <label class="form-label fw-bold text-secondary small">نمط التكوين</label>
-                    <select name="mode_id" class="form-select filter-select" style="background:var(--input-bg,#f8f9fa); font-size:0.88rem;">
+                    <select name="mode_id" class="form-select filter-select" onchange="this.form.submit()" style="background:var(--input-bg,#f8f9fa); font-size:0.88rem;">
                         <option value="">كل الأنماط</option>
                         @foreach($modes as $m)
                             <option value="{{ $m->id }}" {{ ($filters['mode_id'] ?? '') == $m->id ? 'selected' : '' }}>{{ $m->name }}</option>
@@ -124,7 +124,7 @@
                 <!-- Offre -->
                 <div class="col-md-9">
                     <label class="form-label fw-bold text-secondary small">العرض التكويني (التخصص)</label>
-                    <select name="offre_id" class="form-select filter-select" style="background:var(--input-bg,#f8f9fa); font-size:0.88rem;">
+                    <select name="offre_id" class="form-select filter-select" onchange="this.form.submit()" style="background:var(--input-bg,#f8f9fa); font-size:0.88rem;">
                         <option value="">كل العروض التكوينية</option>
                         @foreach($offers as $of)
                             <option value="{{ $of->id }}" {{ ($filters['offre_id'] ?? '') == $of->id ? 'selected' : '' }}>{{ $of->spec_ar }} — {{ $of->etab_ar }}</option>

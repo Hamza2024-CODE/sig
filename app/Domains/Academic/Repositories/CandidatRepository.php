@@ -62,9 +62,7 @@ class CandidatRepository
             JOIN specialite s ON o.IDSpecialite = s.IDSpecialite
             JOIN etablissement ef ON o.IDEts_Form = ef.IDetablissement
             JOIN session sess ON o.IDSession = sess.IDSession
-            JOIN semestre_formation sf ON sess.IDSemestre_formation = sf.IDSemestre_formation
             WHERE 1=1
-              AND sf.IDAnnee_Formation >= 19
             {$extraWhere}
             {$statusWhere}
             ORDER BY c.IDCandidat DESC
