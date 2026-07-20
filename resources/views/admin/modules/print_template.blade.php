@@ -170,7 +170,7 @@ $titleFr = $titles[$docType]['fr'] ?? 'Document Administratif';
         <?php if ($docType === 'decision_isqat'): ?>
             <div style="display: flex; justify-content: space-between; align-items: flex-start; font-size: 13px; font-weight: 700; margin-top: 15px; margin-bottom: 40px; direction: rtl; color: #000;">
                 <div style="text-align: right; line-height: 1.8;">
-                    مديرية التكوين والتعليم المهنيين لولاية <?= htmlspecialchars($details['wilaya_nom'] ?? 'سطيف') ?><br>
+                    مديرية التكوين والتعليم المهنيين لولاية <?= htmlspecialchars($details['wilaya_nom'] ?? '') ?><br>
                     <?= htmlspecialchars($etabNom) ?><br>
                     الرقم: ........................
                 </div>
@@ -181,11 +181,11 @@ $titleFr = $titles[$docType]['fr'] ?? 'Document Administratif';
         <?php else: ?>
             <div class="etab-band">
                 <div>
-                    <div style="font-size:13px; font-weight:700;">مديرية التكوين والتعليم المهنيين لولاية <?= htmlspecialchars($details['wilaya_nom'] ?? 'سعيدة') ?></div>
+                    <div style="font-size:13px; font-weight:700;">مديرية التكوين والتعليم المهنيين لولاية <?= htmlspecialchars($details['wilaya_nom'] ?? '') ?></div>
                     <div><?= htmlspecialchars($etabNom) ?></div>
                 </div>
                 <div style="text-align:left; font-family:'Outfit',sans-serif; color:#64748b;">
-                    <div>Direction de la Formation Professionnelle de <?= htmlspecialchars($details['wilaya_nom_fr'] ?? 'Saida') ?></div>
+                    <div>Direction de la Formation Professionnelle de <?= htmlspecialchars($details['wilaya_nom_fr'] ?? '') ?></div>
                     <div><?= htmlspecialchars($etabFr) ?></div>
                 </div>
             </div>

@@ -3060,8 +3060,8 @@ class ModulesController extends Controller {
             }
         }
 
-        // Detect and override Wilaya matching the establishment's physical location/name
-        if (!empty($details) && !empty($details['etab_nom'])) {
+        // Fallback to keyword detection only if wilaya_nom is empty from DB join
+        if (!empty($details) && empty($details['wilaya_nom']) && !empty($details['etab_nom'])) {
             $detected = \App\Helpers\TakwinHelper::detectWilayaFromEtab($details['etab_nom']);
             $details['wilaya_nom'] = $detected['ar'];
             $details['wilaya_nom_fr'] = $detected['fr'];
