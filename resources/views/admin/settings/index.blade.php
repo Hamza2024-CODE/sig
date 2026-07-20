@@ -310,7 +310,7 @@ $currentSemesterId      = $currentSemesterId ?? 1;
                         <div class="col-6 col-md-3">
                             <div class="glass-panel p-3 text-center">
                                 <div style="font-size:1.6rem;font-weight:900;font-family:'Outfit';color:var(--electric);">
-                                    <?= is_numeric($cache_stats['file_count'] ?? 0) ? number_format((float)($cache_stats['file_count'] ?? 0)) : htmlspecialchars($cache_stats['file_count'] ?? '0') ?>
+                                    <?= number_format($cache_stats['file_count'] ?? 0) ?>
                                 </div>
                                 <div style="font-size:.78rem;font-weight:700;color:var(--tx-2);font-family:'Cairo';">ملفات الكاش</div>
                             </div>
@@ -318,7 +318,7 @@ $currentSemesterId      = $currentSemesterId ?? 1;
                         <div class="col-6 col-md-3">
                             <div class="glass-panel p-3 text-center">
                                 <div style="font-size:1.6rem;font-weight:900;font-family:'Outfit';color:var(--green);">
-                                    <?= is_numeric($cache_stats['size_kb'] ?? 0) ? number_format((float)($cache_stats['size_kb'] ?? 0)) : htmlspecialchars($cache_stats['size_kb'] ?? '0') ?> KB
+                                    <?= number_format($cache_stats['size_kb'] ?? 0) ?> KB
                                 </div>
                                 <div style="font-size:.78rem;font-weight:700;color:var(--tx-2);font-family:'Cairo';">حجم الكاش</div>
                             </div>
