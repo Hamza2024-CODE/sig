@@ -321,6 +321,46 @@ for ($i = 1; $i <= 6; $i++) {
     <?php endif; ?>
     </div>
 
+    <!-- ===== Pagination Controls ===== -->
+    <?php if (isset($lastPage) && $lastPage > 1): ?>
+    <div class="d-flex justify-content-between align-items-center mt-4 p-3 bg-white rounded-4 shadow-sm border">
+        <div class="small text-muted fw-bold">
+            عرض <?= (($currentPage - 1) * $perPage) + 1 ?> إلى <?= min($currentPage * $perPage, $totalOffres) ?> من إجمالي <?= $totalOffres ?> عرض
+        </div>
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                <?php if ($currentPage > 1): ?>
+                    <li class="page-item">
+                        <a class="page-link rounded-2 px-3 fw-bold ms-1" href="?<?= http_build_query(array_merge(request()->all(), ['page' => $currentPage - 1])) ?>">
+                            <i class="fa-solid fa-chevron-right me-1"></i> السابقة
+                        </a>
+                    </li>
+                <?php endif; ?>
+
+                <?php 
+                $startP = max(1, $currentPage - 2);
+                $endP   = min($lastPage, $currentPage + 2);
+                for ($p = $startP; $p <= $endP; $p++): 
+                ?>
+                    <li class="page-item <?= $p === $currentPage ? 'active' : '' ?>">
+                        <a class="page-link rounded-2 fw-bold mx-1" href="?<?= http_build_query(array_merge(request()->all(), ['page' => $p])) ?>">
+                            <?= $p ?>
+                        </a>
+                    </li>
+                <?php endfor; ?>
+
+                <?php if ($currentPage < $lastPage): ?>
+                    <li class="page-item">
+                        <a class="page-link rounded-2 px-3 fw-bold me-1" href="?<?= http_build_query(array_merge(request()->all(), ['page' => $currentPage + 1])) ?>">
+                            التالية <i class="fa-solid fa-chevron-left ms-1"></i>
+                        </a>
+                    </li>
+                <?php endif; ?>
+            </ul>
+        </nav>
+    </div>
+    <?php endif; ?>
+
 </div>
 
 <script>

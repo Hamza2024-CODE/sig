@@ -218,9 +218,44 @@ class GradesController extends Controller
                 WHERE " . implode(" AND ", $whereClauses) . "
                 GROUP BY o.IDOffre, o.IDMode_formation, s.Nom, s.CodeSpec, s.NbrSem, qd.Nom, e.Nom
                 ORDER BY s.Nom
-                $limitStr
             ";
         }
+
+        $page = max(1, (int)request('page', 1));
+        $perPage = 20;
+        $offset = ($page - 1) * $perPage;
+
+        $totalCount = 0;
+        try {
+            if ($role === 'formateur' || $role === 'employee') {
+                $countSql = "
+                    SELECT COUNT(DISTINCT o.IDOffre) as total
+                    FROM section_semestre_module ssm
+                    JOIN section_semestre ss ON ssm.IDSection_Semestre = ss.IDSection_Semestre
+                    JOIN section sec ON ss.IDSection = sec.IDSection
+                    JOIN offre o ON sec.IDOffre = o.IDOffre
+                    JOIN specialite s ON o.IDSpecialite = s.IDSpecialite
+                    JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
+                    JOIN session sess ON o.IDSession = sess.IDSession
+                    WHERE " . implode(" AND ", $whereClauses) . "
+                ";
+            } else {
+                $countSql = "
+                    SELECT COUNT(DISTINCT o.IDOffre) as total
+                    FROM offre o
+                    JOIN specialite s ON o.IDSpecialite = s.IDSpecialite
+                    JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
+                    JOIN session sess ON o.IDSession = sess.IDSession
+                    JOIN section sec ON sec.IDOffre = o.IDOffre
+                    JOIN apprenant a ON a.IDSection = sec.IDSection AND a.statut = 'actif'
+                    WHERE " . implode(" AND ", $whereClauses) . "
+                ";
+            }
+            $resCount = DB::selectOne($countSql, $bindings);
+            $totalCount = (int)($resCount->total ?? 0);
+        } catch (\Throwable $e) {}
+
+        $sql .= " LIMIT {$perPage} OFFSET {$offset}";
 
         try {
             $offres = array_map(fn($item) => (array)$item, DB::select($sql, $bindings));
@@ -395,6 +430,10 @@ class GradesController extends Controller
             'selected_year' => $selectedYear,
             'hasActiveWindow' => $hasActiveWindow,
             'validatedSemesters' => $validatedSemesters,
+            'currentPage' => $page,
+            'perPage' => $perPage,
+            'totalOffres' => $totalCount,
+            'lastPage' => max(1, (int)ceil($totalCount / $perPage))
         ]);
     }
 
