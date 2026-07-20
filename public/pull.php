@@ -160,15 +160,8 @@ try {
 }
 
 if (function_exists('opcache_reset')) {
-    opcache_reset();
-    echo "✓ OPCache C// Terminology updates are handled in git repository source directly              }
-                }
-            }
-        }
-    }
-    echo "✓ Global Terminology Update: modified $modifiedCount files.<br>";
-} catch (\Throwable $e) {
-    echo "<span style='color:red;'>Error running terminology replacement: " . $e->getMessage() . "</span><br>";
+    @opcache_reset();
+    echo "✓ OPCache Cleared!<br>";
 }
 
 // Clean up temporary check_index.php if it exists
