@@ -40,7 +40,6 @@ class SettingsController extends Controller
      */
     public function index()
     {
-        @set_time_limit(300);
         $tab = request()->query('tab', 'general');
 
         // معلومات المنصة من .env وقاعدة البيانات
@@ -55,20 +54,14 @@ class SettingsController extends Controller
             $portalPages = \App\Helpers\PortalCMSHelper::getPages();
         } catch (\Throwable $e) {}
 
-        // إحصائيات الوثائق والملفات مع الفلاتر (Only executed when on documents tab)
+        // إحصائيات الوثائق والملفات مع الفلاتر
+        $docService = new \App\Services\DocumentSyncService();
         $selectedTable = request()->query('doc_table', 'candidat_document');
         $selectedWilaya = request()->query('wilaya_id') ? (int)request()->query('wilaya_id') : null;
         $selectedEtab = request()->query('etab_id') ? (int)request()->query('etab_id') : null;
 
-        $docStats = ['synced_documents' => 0, 'unsynced_documents' => 0];
-        $previewDocs = [];
-        try {
-            if ($tab === 'documents') {
-                $docService = new \App\Services\DocumentSyncService();
-                $docStats = $docService->checkSyncStatus($selectedTable, $selectedWilaya, $selectedEtab);
-                $previewDocs = $docService->getPreviewDocuments($selectedTable, 10, $selectedWilaya, $selectedEtab);
-            }
-        } catch (\Throwable $e) {}
+        $docStats = $docService->checkSyncStatus($selectedTable, $selectedWilaya, $selectedEtab);
+        $previewDocs = $docService->getPreviewDocuments($selectedTable, 10, $selectedWilaya, $selectedEtab);
 
         // قائمة الولايات والمؤسسات
         $wilayas = [];
@@ -551,15 +544,29 @@ class SettingsController extends Controller
     {
         try {
             $driver = config('cache.default', 'file');
+            $cacheDir = storage_path('framework/cache/data');
+            $fileCount = 0;
+            $cacheSize = 0;
+
+            if ($driver === 'file' && is_dir($cacheDir)) {
+                $iter = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($cacheDir));
+                foreach ($iter as $file) {
+                    if ($file->isFile()) {
+                        $fileCount++;
+                        $cacheSize += $file->getSize();
+                    }
+                }
+            }
+
             return [
                 'driver'        => $driver,
-                'file_count'    => 100,
-                'size_kb'       => 0,
+                'file_count'    => $fileCount,
+                'size_kb'       => round($cacheSize / 1024, 1),
                 'ref_warmed'    => \Illuminate\Support\Facades\Cache::has('sgfep:ref:wilayas'),
                 'kpi_warmed'    => \Illuminate\Support\Facades\Cache::has('sgfep:kpi:admin'),
             ];
         } catch (\Throwable $e) {
-            return ['driver' => 'file', 'file_count' => 0, 'size_kb' => 0, 'ref_warmed' => false, 'kpi_warmed' => false];
+            return ['driver' => 'unknown', 'file_count' => 0, 'size_kb' => 0, 'ref_warmed' => false, 'kpi_warmed' => false];
         }
     }
 
