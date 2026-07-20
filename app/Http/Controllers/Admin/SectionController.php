@@ -99,6 +99,8 @@ class SectionController extends Controller
                         sec.DateFF as date_fin,
                         sec.Duree as duree,
                         sec.Groupe as groupe,
+                        sec.SectionPourRoudoub,
+                        sec.Obs,
                         sp.Nom as spec_ar,
                         sp.NomFr as spec_fr,
                         et.Nom as etab_ar,
@@ -213,6 +215,8 @@ class SectionController extends Controller
             'duree' => 'required|numeric',
             'groupe' => 'required|integer',
             'encadrement_id' => 'nullable|integer',
+            'is_roudoub' => 'nullable|integer',
+            'num_sem' => 'nullable|integer',
         ]);
 
         try {
@@ -226,6 +230,10 @@ class SectionController extends Controller
             DB::transaction(function () use ($validated, $offre) {
                 $maxId = (int)DB::table('section')->lockForUpdate()->max('IDSection');
                 $newId = max(1, $maxId + 1);
+
+                $isRoudoub = !empty($validated['is_roudoub']) ? 1 : 0;
+                $numSem = !empty($validated['num_sem']) ? (int)$validated['num_sem'] : 1;
+                $obs = $isRoudoub ? "قسم معيدين - السداسي {$numSem}" : null;
 
                 DB::table('section')->insert([
                     'IDSection' => $newId,
@@ -242,9 +250,23 @@ class SectionController extends Controller
                     'IDSpecialite' => $offre->IDSpecialite,
                     'IDMode_formation' => $offre->IDMode_formation,
                     'IDDFEP' => DB::table('etablissement')->where('IDetablissement', $offre->IDEts_Form)->value('IDDFEP') ?: 0,
+                    'SectionPourRoudoub' => $isRoudoub,
+                    'Obs' => $obs,
                     'Validation' => 0,
                     'visadfep' => 0,
                     'visadir' => 0,
+                ]);
+
+                // Create initial section_semestre record with the specified semester
+                $maxSemId = (int)DB::table('section_semestre')->max('IDSection_Semestre');
+                DB::table('section_semestre')->insert([
+                    'IDSection_Semestre' => max(1, $maxSemId + 1),
+                    'IDSection' => $newId,
+                    'NumSem' => $numSem,
+                    'DateD' => $validated['date_debut'],
+                    'DateF' => $validated['date_fin'],
+                    'Groupe' => $validated['groupe'],
+                    'Duree' => $validated['duree'],
                 ]);
 
                 DB::table('offre')

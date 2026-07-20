@@ -162,6 +162,9 @@ $to   = min($page * $per_page, $total_count);
                             <a href="javascript:void(0)" class="fw-bold text-primary show-trainees-btn" style="font-size:0.85rem;text-decoration:none;" data-id="<?= $sec['id'] ?>">
                                 <i class="fa-solid fa-list-check me-1"></i> <?= htmlspecialchars($sec['nom_ar']) ?>
                             </a>
+                            <?php if (!empty($sec['SectionPourRoudoub'])): ?>
+                                <span class="badge bg-warning text-dark ms-1" style="font-size:0.7rem;"><i class="fa-solid fa-user-clock me-1"></i> معيدين</span>
+                            <?php endif; ?>
                             <div class="text-muted" style="font-size:0.72rem;font-family:'Outfit';"><?= htmlspecialchars($sec['nom_fr']) ?></div>
                         </td>
                         <td>
@@ -329,6 +332,36 @@ $to   = min($page * $per_page, $total_count);
                                 <option value="<?= $t->id ?>"><?= htmlspecialchars($t->prenom . ' ' . $t->nom) ?></option>
                                 <?php endforeach; ?>
                             </select>
+                        </div>
+
+                        <!-- Repeater Section Options (خاص بالمعيدين / المعاهد الوطنية) -->
+                        <div class="col-12 mt-3">
+                            <div class="p-3 rounded-3" style="background-color: #f8fafc; border: 1px dashed #cbd5e1;">
+                                <div class="form-check form-switch d-flex align-items-center gap-2 mb-2">
+                                    <input class="form-check-input" type="checkbox" name="is_roudoub" id="is_roudoub_check" value="1" onchange="toggleRepeaterOptions(this.checked)">
+                                    <label class="form-check-label fw-bold text-dark mb-0" for="is_roudoub_check" style="font-size:0.88rem;">
+                                        <i class="fa-solid fa-user-clock text-warning me-1"></i> فتح قسم خاص بالمعيدين (خاص بالمعاهد الوطنية / الإعادة)
+                                    </label>
+                                </div>
+                                <div id="repeater_semester_div" class="mt-2 row g-2 align-items-center" style="display: none;">
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold text-secondary mb-1">السداسي المحدد للمعيدين *</label>
+                                        <select name="num_sem" id="num_sem_select" class="form-select form-select-sm shadow-sm" style="font-size:0.88rem;">
+                                            <option value="1">السداسي الأول (S1)</option>
+                                            <option value="2">السداسي الثاني (S2)</option>
+                                            <option value="3" selected>السداسي الثالث (S3)</option>
+                                            <option value="4">السداسي الرابع (S4)</option>
+                                            <option value="5">السداسي الخامس (S5)</option>
+                                            <option value="6">السداسي السادس (S6)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="small text-muted p-2 rounded bg-white border" style="font-size:0.78rem;">
+                                            <i class="fa-solid fa-circle-info text-primary me-1"></i> سيتم تسجيل هذا القسم كـ "قسم معيدين" وربطه بيداغوجياً بالسداسي المختار.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -737,6 +770,13 @@ $to   = min($page * $per_page, $total_count);
 <script>
 let currentSectionData = null;
 let currentSectionId = null;
+
+function toggleRepeaterOptions(checked) {
+    const div = document.getElementById('repeater_semester_div');
+    if (div) {
+        div.style.display = checked ? 'flex' : 'none';
+    }
+}
 
 document.addEventListener('DOMContentLoaded', function() {
     const viewTraineesModalEl = document.getElementById('viewTraineesModal');
