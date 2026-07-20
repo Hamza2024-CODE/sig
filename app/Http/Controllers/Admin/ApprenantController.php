@@ -19,6 +19,14 @@ class ApprenantController extends Controller
         $etabId = (int)($user['etablissement_id'] ?? $user['IDEts_Form'] ?? 0);
         $dfepId = (int)($user['iddfep'] ?? $user['IDDFEP'] ?? 0);
 
+        if ($etabId > 0 && !in_array($role, ['admin', 'central', 'high_admin', 'dfep'])) {
+            $isDfepEtab = DB::selectOne("SELECT 1 FROM etablissement WHERE IDetablissement = ? AND (IDNature_etsF = 5 OR IDetablissement = 308)", [$etabId]) !== null;
+            if ($isDfepEtab) {
+                $role = 'dfep';
+                $user['role_code'] = 'dfep';
+            }
+        }
+
         $etabScopeIds = $etabId > 0 ? \App\Support\EtablissementScope::resolve($etabId) : [];
 
         // ── build filters ────────────────────────────────────────────
@@ -177,16 +185,18 @@ class ApprenantController extends Controller
 
         // ── Reference Data ───────────────────────────────────────────────
         $wilayas = \App\Services\ReferenceCache::wilayas();
+        
         $etablissements = match(true) {
-            $dfepId > 0  => \App\Services\ReferenceCache::etablissementsForDfep($dfepId),
-            $etabId > 0  => DB::table('etablissement')
-                                ->whereIn('IDetablissement', $etabScopeIds)
-                                ->select('IDetablissement as id', 'Code as code', 'Nom as nom_ar', 'NomFr as nom_fr', 'IDDFEP as wilaya_id')
-                                ->orderBy('Nom', 'ASC')
-                                ->get()
-                                ->map(fn($r) => (array)$r)
-                                ->toArray(),
-            default      => \App\Services\ReferenceCache::etablissements(),
+            in_array($role, ['admin', 'central', 'high_admin']) => \App\Services\ReferenceCache::etablissements(),
+            $role === 'dfep' && $dfepId > 0                     => \App\Services\ReferenceCache::etablissementsForDfep($dfepId),
+            !empty($etabScopeIds)                               => DB::table('etablissement')
+                                                                    ->whereIn('IDetablissement', $etabScopeIds)
+                                                                    ->select('IDetablissement as id', 'Code as code', 'Nom as nom_ar', 'NomFr as nom_fr', 'IDDFEP as wilaya_id')
+                                                                    ->orderBy('Nom', 'ASC')
+                                                                    ->get()
+                                                                    ->map(fn($r) => (array)$r)
+                                                                    ->toArray(),
+            default                                             => [],
         };
 
         // Available sections
@@ -195,21 +205,30 @@ class ApprenantController extends Controller
             ->join('specialite', 'offre.IDSpecialite', '=', 'specialite.IDSpecialite')
             ->select('section.IDSection as id', 'section.Nom as nom_ar', 'specialite.Nom as spec_ar', 'offre.IDEts_Form as etab_id');
 
-        if ($dfepId > 0) {
-            $sectionsQuery->whereIn('offre.IDEts_Form', function($q) use ($dfepId) {
-                $q->select('IDetablissement')->from('etablissement')->where('IDDFEP', $dfepId);
-            });
-        } elseif (!empty($etabScopeIds)) {
-            $sectionsQuery->whereIn('section.IDEts_Form', $etabScopeIds);
-        } elseif ($filterEtab > 0) {
-            $sectionsQuery->where('offre.IDEts_Form', $filterEtab);
-        } else {
-            // High-level user without filtering by establishment:
-            // Prevent loading 150k sections by limiting to the selected section or returning a small subset (100)
-            if ($filterSection > 0) {
-                $sectionsQuery->where('section.IDSection', $filterSection);
+        if (!in_array($role, ['admin', 'central', 'high_admin', 'dfep']) && !empty($etabScopeIds)) {
+            // Establishment user: ONLY sections belonging to their establishment scope
+            if ($filterEtab > 0 && in_array($filterEtab, $etabScopeIds)) {
+                $sectionsQuery->where('offre.IDEts_Form', $filterEtab);
             } else {
-                $sectionsQuery->limit(100);
+                $sectionsQuery->whereIn('offre.IDEts_Form', $etabScopeIds);
+            }
+        } elseif ($role === 'dfep' && $dfepId > 0) {
+            if ($filterEtab > 0) {
+                $sectionsQuery->where('offre.IDEts_Form', $filterEtab);
+            } else {
+                $sectionsQuery->whereIn('offre.IDEts_Form', function($q) use ($dfepId) {
+                    $q->select('IDetablissement')->from('etablissement')->where('IDDFEP', $dfepId);
+                });
+            }
+        } else {
+            if ($filterEtab > 0) {
+                $sectionsQuery->where('offre.IDEts_Form', $filterEtab);
+            } else {
+                if ($filterSection > 0) {
+                    $sectionsQuery->where('section.IDSection', $filterSection);
+                } else {
+                    $sectionsQuery->limit(200);
+                }
             }
         }
 

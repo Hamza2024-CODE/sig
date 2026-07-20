@@ -65,7 +65,8 @@ $files = [
     'resources/views/admin/sections/index.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/sections/index.blade.php',
     'resources/views/admin/candidates.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/candidates.blade.php',
     'app/Http/Controllers/Admin/CandidatController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/CandidatController.php',
-    'app/Domains/Academic/Repositories/CandidatRepository.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Domains/Academic/Repositories/CandidatRepository.php'
+    'app/Domains/Academic/Repositories/CandidatRepository.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Domains/Academic/Repositories/CandidatRepository.php',
+    'app/Http/Controllers/Admin/ApprenantController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/ApprenantController.php'
 ];
 
 foreach ($files as $localPath => $remoteUrl) {
