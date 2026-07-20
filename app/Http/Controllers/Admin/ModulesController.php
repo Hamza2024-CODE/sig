@@ -1903,18 +1903,18 @@ class ModulesController extends Controller {
         $scope = $this->getScope();
         [$ofWhere, $params] = $this->offreWhere($scope, 'o');
 
-        // Filter establishments by scope
-        $etabWhere = 'ef.activee = 0'; // Only active institutions
+        // Filter establishments by scope: activee = 0 AND in-service (IDEtablissement_Enservice = 1)
+        $etabWhere = 'ef.activee = 0 AND (ef.IDEtablissement_Enservice = 1 OR ef.IDEtablissement_Enservice IS NULL)';
         $etabParams = [];
         if ($scope['role'] === 'dfep' && $scope['iddfep']) {
-            $etabWhere = "ef.activee = 0 AND ef.IDDFEP = ?";
+            $etabWhere = "ef.activee = 0 AND (ef.IDEtablissement_Enservice = 1 OR ef.IDEtablissement_Enservice IS NULL) AND ef.IDDFEP = ?";
             $etabParams[] = (int)$scope['iddfep'];
         } elseif (in_array($scope['role'], ['etablissement', 'directeur', 'employee', 'formateur']) && $scope['etabId']) {
-            $etabWhere = "ef.activee = 0 AND ef.IDetablissement = ?";
+            $etabWhere = "ef.activee = 0 AND (ef.IDEtablissement_Enservice = 1 OR ef.IDEtablissement_Enservice IS NULL) AND ef.IDetablissement = ?";
             $etabParams[] = (int)$scope['etabId'];
         }
 
-        $cacheKey = 'distribution_globale_v2_' . md5($ofWhere . serialize($params) . $etabWhere . serialize($etabParams));
+        $cacheKey = 'distribution_globale_v3_' . md5($ofWhere . serialize($params) . $etabWhere . serialize($etabParams));
 
         try {
             $cachedData = \Illuminate\Support\Facades\Cache::remember($cacheKey, 600, function() use ($ofWhere, $params, $etabWhere, $etabParams) {
