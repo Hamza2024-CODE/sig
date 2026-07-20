@@ -40,18 +40,28 @@ class UtilisateursController extends Controller
         $search = trim($request->input('search', ''));
 
         try {
-            $dfepId = (int)($user['iddfep'] ?? $user['IDDFEP'] ?? 0);
+            $dfepId = (int)($user['iddfep'] ?? $user['IDDFEP'] ?? $user['wilaya_id'] ?? $user['IDWilayaa'] ?? 0);
+            $selWilaya = (int)$request->input('wilaya_id', 0);
+            $selEtab   = (int)$request->input('etablissement_id', 0);
+
+            if ($role_code === 'dfep' && $dfepId > 0) {
+                $selWilaya = $dfepId;
+            }
 
             // ── 1. Count uQuery (utilisateur table) — not accessible to etab roles ──
             $whereU = [];
             $paramsU = [];
             if ($isEtabRole) {
                 $whereU[] = '1=0'; // etab role doesn't manage utilisateur table
-            } elseif ($role_code === 'dfep' && $dfepId > 0) {
-                $whereU[] = "(u.Code = ? AND u.IDNature = 4) OR (u.IDBureau = ? AND u.IDNature = 4) OR (e.IDDFEP = ?)";
-                $paramsU[] = $dfepId;
-                $paramsU[] = $dfepId;
-                $paramsU[] = $dfepId;
+            } elseif ($selWilaya > 0) {
+                $whereU[] = "((u.Code = ? AND u.IDNature = 4) OR (u.IDBureau = ? AND u.IDNature = 4) OR (e.IDDFEP = ?))";
+                $paramsU[] = $selWilaya;
+                $paramsU[] = $selWilaya;
+                $paramsU[] = $selWilaya;
+            }
+            if ($selEtab > 0) {
+                $whereU[] = "u.IDBureau = ?";
+                $paramsU[] = $selEtab;
             }
             $matchingUserIds = [0];
             if ($search !== '') {
@@ -85,9 +95,13 @@ class UtilisateursController extends Controller
             $paramsE = [];
             if ($isEtabRole) {
                 $whereE[] = '1=0'; // etab role doesn't manage etablissement accounts
-            } elseif ($role_code === 'dfep' && $dfepId > 0) {
+            } elseif ($selWilaya > 0) {
                 $whereE[] = "e.IDDFEP = ?";
-                $paramsE[] = $dfepId;
+                $paramsE[] = $selWilaya;
+            }
+            if ($selEtab > 0) {
+                $whereE[] = "e.IDetablissement = ?";
+                $paramsE[] = $selEtab;
             }
             if ($search !== '') {
                 $whereE[] = "(e.nomUser LIKE ? OR e.Nom LIKE ?)";
@@ -107,9 +121,13 @@ class UtilisateursController extends Controller
             if ($isEtabRole && $etabId > 0) {
                 $whereEnc[] = "enc.IDetablissement = ?";
                 $paramsEnc[] = $etabId;
-            } elseif ($role_code === 'dfep' && $dfepId > 0) {
+            } elseif ($selWilaya > 0) {
                 $whereEnc[] = "e.IDDFEP = ?";
-                $paramsEnc[] = $dfepId;
+                $paramsEnc[] = $selWilaya;
+            }
+            if ($selEtab > 0) {
+                $whereEnc[] = "enc.IDetablissement = ?";
+                $paramsEnc[] = $selEtab;
             }
             $matchingEncIds = [0];
             if ($search !== '') {
@@ -330,6 +348,8 @@ class UtilisateursController extends Controller
             ],
             'etablissements' => $etablissements,
             'wilayas'        => $wilayas,
+            'sel_wilaya'     => $selWilaya ?? 0,
+            'sel_etab'       => $selEtab ?? 0,
             'departments'    => [],
             'total_count'    => $totalCount,
             'page'           => $page,

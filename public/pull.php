@@ -16,7 +16,8 @@ $files = [
     'app/Http/Controllers/Admin/TakwinSettingsController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/TakwinSettingsController.php',
     'resources/views/admin/settings/index.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/settings/index.blade.php',
     'resources/views/admin/settings/takwin.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/settings/takwin.blade.php',
-    'resources/views/admin/settings/diplome.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/settings/diplome.blade.php'
+    'app/Http/Controllers/Admin/UtilisateursController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/UtilisateursController.php',
+    'resources/views/admin/users/index.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/users/index.blade.php'
 ];
 
 foreach ($files as $localPath => $remoteUrl) {

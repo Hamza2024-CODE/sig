@@ -156,25 +156,48 @@ foreach ($etablissements as $et) {
     <div class="card border-0 shadow-sm p-3 mb-4 no-print" style="border-radius:16px;background:var(--card-bg);border:1px solid var(--card-border)!important;">
         <form method="GET" action="{{ url('dashboard/users') }}" class="row g-2 align-items-end">
             {{-- بحث نصي --}}
-            <div class="col-12 col-md-8">
-                <label class="form-label small fw-bold text-muted mb-1">بحث باسم المستخدم أو الاسم الكامل للموظف</label>
+            <div class="col-12 col-md-4">
+                <label class="form-label small fw-bold text-muted mb-1"><i class="fa-solid fa-magnifying-glass me-1"></i> بحث نصي</label>
                 <div class="input-group">
-                    <span class="input-group-text border-0" style="background:var(--input-bg,#f8f9fa);">
-                        <i class="fa-solid fa-magnifying-glass text-muted small"></i>
-                    </span>
                     <input type="text" name="search" value="<?= htmlspecialchars($search ?? '') ?>"
-                           class="form-control border-0 rounded-end" placeholder="اسم المستخدم، الاسم الكامل للموظف أو المؤسسة..."
+                           class="form-control border-0 rounded-3" placeholder="اسم المستخدم، الاسم الكامل للموظف..."
                            style="background:var(--input-bg,#f8f9fa);font-size:0.88rem;">
                 </div>
             </div>
 
-            <div class="col-12 col-md-4 d-flex gap-2">
-                <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold" style="background: linear-gradient(135deg, #003870 0%, #0284c7 100%); border: none; font-size:0.88rem;">
-                    <i class="fa-solid fa-filter me-1"></i> تصفية البحث
+            {{-- تصفية حسب الولاية / مديرية التكوين --}}
+            <div class="col-12 col-md-3">
+                <label class="form-label small fw-bold text-muted mb-1"><i class="fa-solid fa-building-user me-1"></i> الولاية / مديرية التكوين</label>
+                <select name="wilaya_id" class="form-select border-0 rounded-3" style="background:var(--input-bg,#f8f9fa);font-size:0.88rem;" onchange="this.form.submit()">
+                    <option value="">جميع الولايات والمديريات الولائية</option>
+                    <?php foreach ($wilayas as $w): ?>
+                        <option value="<?= $w['id'] ?>" <?= (isset($sel_wilaya) && (int)$sel_wilaya === (int)$w['id']) ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($w['nom_ar']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            {{-- تصفية حسب المؤسسة --}}
+            <div class="col-12 col-md-3">
+                <label class="form-label small fw-bold text-muted mb-1"><i class="fa-solid fa-school me-1"></i> المؤسسة التكوينية</label>
+                <select name="etablissement_id" class="form-select border-0 rounded-3" style="background:var(--input-bg,#f8f9fa);font-size:0.88rem;" onchange="this.form.submit()">
+                    <option value="">جميع المؤسسات</option>
+                    <?php foreach ($etablissements as $et): ?>
+                        <option value="<?= $et['id'] ?>" <?= (isset($sel_etab) && (int)$sel_etab === (int)$et['id']) ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($et['nom_ar']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <div class="col-12 col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-primary rounded-pill w-100 fw-bold" style="background: linear-gradient(135deg, #003870 0%, #0284c7 100%); border: none; font-size:0.85rem;">
+                    <i class="fa-solid fa-filter me-1"></i> تصفية
                 </button>
                 <a href="{{ url('dashboard/users') }}" class="btn btn-outline-secondary rounded-pill px-3 fw-bold"
-                   style="font-size:0.88rem;">
-                    <i class="fa-solid fa-rotate-right me-1"></i> إعادة تعيين
+                   style="font-size:0.85rem;" title="إعادة تعيين">
+                    <i class="fa-solid fa-rotate-right"></i>
                 </a>
             </div>
         </form>
