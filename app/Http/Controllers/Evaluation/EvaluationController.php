@@ -120,14 +120,14 @@ class EvaluationController extends Controller {
         if (in_array($role, ['admin', 'central', 'high_admin', 'secretaire_general', 'ministre'])) {
             if ($selectedWilaya > 0) {
                 $etablissements = \Illuminate\Support\Facades\Cache::remember("filter_etabs_wilaya_{$selectedWilaya}", 3600, function() use ($selectedWilaya) {
-                    $stmt = $this->db->prepare("SELECT IDetablissement as id, Nom as nom, IDDFEP FROM etablissement WHERE IDDFEP = ? AND (activee = 1 OR activee IS NULL) AND (IDEtablissement_Enservice = 1 OR IDEtablissement_Enservice IS NULL) ORDER BY Nom");
+                    $stmt = $this->db->prepare("SELECT IDetablissement as id, Nom as nom, IDDFEP FROM etablissement WHERE IDDFEP = ? ORDER BY Nom");
                     $stmt->execute([$selectedWilaya]);
                     return $stmt->fetchAll(PDO::FETCH_ASSOC);
                 });
             }
         } elseif ($role === 'dfep' && $dfepId > 0) {
             $etablissements = \Illuminate\Support\Facades\Cache::remember("filter_etabs_wilaya_{$dfepId}", 3600, function() use ($dfepId) {
-                $stmt = $this->db->prepare("SELECT IDetablissement as id, Nom as nom, IDDFEP FROM etablissement WHERE IDDFEP = ? AND (activee = 1 OR activee IS NULL) AND (IDEtablissement_Enservice = 1 OR IDEtablissement_Enservice IS NULL) ORDER BY Nom");
+                $stmt = $this->db->prepare("SELECT IDetablissement as id, Nom as nom, IDDFEP FROM etablissement WHERE IDDFEP = ? ORDER BY Nom");
                 $stmt->execute([$dfepId]);
                 return $stmt->fetchAll(PDO::FETCH_ASSOC);
             });

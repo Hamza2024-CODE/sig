@@ -490,12 +490,12 @@ class GradesController extends Controller
         if (in_array($role, ['admin', 'central', 'high_admin', 'secretaire_general', 'ministre'])) {
             if ($selectedWilaya > 0) {
                 $etablissements = \Illuminate\Support\Facades\Cache::remember("filter_etabs_wilaya_{$selectedWilaya}", 3600, function() use ($selectedWilaya) {
-                    return array_map(fn($item) => (array)$item, DB::select("SELECT IDetablissement as id, Nom as nom, IDDFEP FROM etablissement WHERE IDDFEP = ? AND (activee = 1 OR activee IS NULL) AND (IDEtablissement_Enservice = 1 OR IDEtablissement_Enservice IS NULL) ORDER BY Nom", [$selectedWilaya]));
+                    return array_map(fn($item) => (array)$item, DB::select("SELECT IDetablissement as id, Nom as nom, IDDFEP FROM etablissement WHERE IDDFEP = ? ORDER BY Nom", [$selectedWilaya]));
                 });
             }
         } elseif ($role === 'dfep' && $dfepId > 0) {
             $etablissements = \Illuminate\Support\Facades\Cache::remember("filter_etabs_wilaya_{$dfepId}", 3600, function() use ($dfepId) {
-                return array_map(fn($item) => (array)$item, DB::select("SELECT IDetablissement as id, Nom as nom, IDDFEP FROM etablissement WHERE IDDFEP = ? AND (activee = 1 OR activee IS NULL) AND (IDEtablissement_Enservice = 1 OR IDEtablissement_Enservice IS NULL) ORDER BY Nom", [$dfepId]));
+                return array_map(fn($item) => (array)$item, DB::select("SELECT IDetablissement as id, Nom as nom, IDDFEP FROM etablissement WHERE IDDFEP = ? ORDER BY Nom", [$dfepId]));
             });
         } else {
             if ($etabId > 0) {
