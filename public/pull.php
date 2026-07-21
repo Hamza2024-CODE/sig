@@ -20,16 +20,27 @@ $files = [
     'resources/views/admin/grades/semestre_setup.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/grades/semestre_setup.blade.php',
 ];
 
-foreach ($files as $localPath => $remoteUrl) {
-    $fullPath = __DIR__ . '/../' . $localPath;
-    $dir = dirname($fullPath);
+$makeWritable = function($path) {
+    if (file_exists($path)) {
+        @chmod($path, 0777);
+    }
+    $dir = is_dir($path) ? $path : dirname($path);
     if (!is_dir($dir)) {
         @mkdir($dir, 0777, true);
     }
-    @chmod($dir, 0777);
-    if (file_exists($fullPath)) {
-        @chmod($fullPath, 0777);
+    while ($dir && strlen($dir) > 15 && is_dir($dir)) {
+        @chmod($dir, 0777);
+        $dir = dirname($dir);
     }
+    if (function_exists('exec')) {
+        @exec('chmod 777 ' . escapeshellarg($path) . ' 2>&1');
+        @exec('chmod 777 ' . escapeshellarg(dirname($path)) . ' 2>&1');
+    }
+};
+
+foreach ($files as $localPath => $remoteUrl) {
+    $fullPath = __DIR__ . '/../' . $localPath;
+    $makeWritable($fullPath);
     
     try {
         $content = @file_get_contents($remoteUrl . '?ts=' . microtime(true));
