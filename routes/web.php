@@ -406,6 +406,7 @@ Route::middleware('check.session')->group(function () {
         Route::post('/store',               [\App\Http\Controllers\Admin\GradesController::class, 'store'])->name('grades.store');
         Route::get('/transcript/{id}',      [\App\Http\Controllers\Admin\GradesController::class, 'transcript'])->name('grades.transcript');
         Route::get('/deliberation',         [\App\Http\Controllers\Admin\GradesController::class, 'deliberation'])->name('grades.deliberation');
+        Route::get('/pv-print',             [\App\Http\Controllers\Admin\GradesController::class, 'pvPrint'])->name('grades.pv-print');
         Route::post('/deliberation/confirm', [\App\Http\Controllers\Admin\GradesController::class, 'confirmDeliberation'])->name('grades.deliberation.confirm');
         Route::get('/semestre-setup',       [\App\Http\Controllers\Admin\GradesController::class, 'semestreSetup'])->name('grades.semestre-setup');
         Route::post('/semestre-setup/save',  [\App\Http\Controllers\Admin\GradesController::class, 'saveSemestreSetup'])->name('grades.semestre-setup.save');
@@ -882,6 +883,7 @@ Route::prefix('sig')->middleware('check.session')->group(function () {
         Route::post('/store',          [\App\Http\Controllers\Admin\GradesController::class, 'store']);
         Route::get('/transcript/{id}', [\App\Http\Controllers\Admin\GradesController::class, 'transcript']);
         Route::get('/deliberation',    [\App\Http\Controllers\Admin\GradesController::class, 'deliberation']);
+        Route::get('/pv-print',        [\App\Http\Controllers\Admin\GradesController::class, 'pvPrint']);
         Route::get('/progress',        [\App\Http\Controllers\Admin\GradesController::class, 'progress']);
         Route::get('/get-employeurs',  [\App\Http\Controllers\Admin\GradesController::class, 'getEmployeurs']);
         Route::get('/control',         [\App\Http\Controllers\Admin\GradesController::class, 'gradingControl']);

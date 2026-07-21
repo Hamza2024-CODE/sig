@@ -881,6 +881,301 @@ class GradesController extends Controller
         ]);
     }
 
+    /**
+     * Official 2-Page Deliberation PV Print View (Before / After Resit)
+     */
+    public function pvPrint(): mixed
+    {
+        $rawOffreId = request()->all()['offre_id'] ?? '';
+        $offreId = is_numeric($rawOffreId) ? (int)$rawOffreId : (\App\Helpers\SecureIdHelper::decrypt($rawOffreId) ?? 0);
+        $rawSemestre = request()->all()['semestre'] ?? '';
+        $semestre = is_numeric($rawSemestre) ? (int)$rawSemestre : (\App\Helpers\SecureIdHelper::decrypt($rawSemestre) ?? 1);
+        $type = request('type', 'avant'); // 'avant' (قبل الاستدراك) or 'apres' (بعد الاستدراك)
+
+        if (!$offreId) {
+            return $this->redirect('/dashboard/grades');
+        }
+
+        // Fetch offer and establishment details
+        $offre = (array) DB::selectOne("
+            SELECT o.IDOffre as id, s.Nom as spec_ar, s.NomFr as spec_fr, s.CodeSpec as spec_code,
+                   s.NbrSem as duree_semestres, s.IDNiveau_Fp as niveau_qualification,
+                   CASE
+                       WHEN s.NbrSem >= 5 THEN 'BTS'
+                       WHEN s.NbrSem = 4 THEN 'BTS'
+                       WHEN s.NbrSem = 3 THEN 'TS'
+                       WHEN s.NbrSem = 2 THEN 'CMP'
+                       WHEN s.NbrSem = 1 THEN 'Qualifiant'
+                       ELSE 'CAP'
+                   END as diplome_vise,
+                   e.IDetablissement as etablissement_id, e.Nom as etab_ar, e.NomFr as etab_fr,
+                   w.Nom as wilaya_ar, w.NomFr as wilaya_fr,
+                   o.IDMode_formation as mode_id, mf.Nom as mode_ar,
+                   o.DateD as date_debut, o.DateF as date_fin
+            FROM offre o
+            JOIN specialite s ON o.IDSpecialite = s.IDSpecialite
+            JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
+            LEFT JOIN dfep d ON e.IDDFEP = d.IDDFEP
+            LEFT JOIN wilaya w ON d.IDWilayaa = w.IDWilayaa
+            LEFT JOIN mode_formation mf ON o.IDMode_formation = mf.IDMode_formation
+            WHERE o.IDOffre = ?
+        ", [$offreId]);
+
+        if (empty($offre)) {
+            return $this->redirect('/dashboard/grades');
+        }
+
+        $this->validateOffreAccess($offre, $semestre);
+
+        // Fetch section details for semester start/end dates
+        $sectionSemRow = DB::selectOne("
+            SELECT ss.IDSection_Semestre, ss.DateD as sem_date_d, ss.DateF as sem_date_f, sec.CodeSection as section_code
+            FROM section_semestre ss
+            JOIN section sec ON ss.IDSection = sec.IDSection
+            WHERE sec.IDOffre = ? AND ss.NumSem = ?
+            LIMIT 1
+        ", [$offreId, $semestre]);
+
+        $sectionCode = $sectionSemRow->section_code ?? ($offre['spec_code'] . '-' . $semestre);
+        $semDateD = !empty($sectionSemRow->sem_date_d) && $sectionSemRow->sem_date_d !== '0000-00-00' ? date('Y/m/d', strtotime($sectionSemRow->sem_date_d)) : date('Y/m/d', strtotime($offre['date_debut']));
+        $semDateF = !empty($sectionSemRow->sem_date_f) && $sectionSemRow->sem_date_f !== '0000-00-00' ? date('Y/m/d', strtotime($sectionSemRow->sem_date_f)) : date('Y/m/d', strtotime($offre['date_fin']));
+
+        // Fetch modules with assigned teachers
+        $matieres = array_map(fn($item) => (array)$item, DB::select("
+            SELECT DISTINCT 
+                ssm.IDsection_semestre_Module as id,
+                ssm.IDModule as module_id,
+                ssm.NomMdl as libelle_ar,
+                ssm.NomFrMdl as libelle_fr,
+                ssm.coef as coefficient,
+                ssm.NomMdl as code,
+                CONCAT(enc.Nom, ' ', enc.Prenom) as teacher_name,
+                enc.Specialite as teacher_grade
+            FROM section_semestre_module ssm
+            JOIN section_semestre ss ON ssm.IDSection_Semestre = ss.IDSection_Semestre
+            JOIN section sec ON ss.IDSection = sec.IDSection
+            LEFT JOIN encadrement enc ON ssm.IDEncadrement = enc.IDEncadrement
+            WHERE sec.IDOffre = ? AND ss.NumSem = ?
+            ORDER BY ssm.NumOrd, ssm.IDsection_semestre_Module
+        ", [$offreId, $semestre]));
+
+        // Fetch trainees
+        $trainees = array_map(fn($item) => (array)$item, DB::select("
+            SELECT a.IDapprenant as id, a.Nccp as matricule, 
+                   c.Nom as nom_ar, c.Prenom as prenom_ar, c.Civ as sexe,
+                   c.Nationalite as nationalite,
+                   COALESCE(ass.IDapprenant_Section_semstre, af.IDapprenant_Section_semstre) as ass_id,
+                   COALESCE(ass.NoteStage, 0) as note_stage,
+                   COALESCE(ass.NoteMemoire, 0) as note_memoire,
+                   COALESCE(ass.NoteSoutenance, 0) as note_soutenance,
+                   ass.DateAbdech as date_abandon,
+                   ass.IDDecision_evals as decision_evals
+            FROM apprenant a
+            LEFT JOIN candidat c ON a.IDCandidat = c.IDCandidat
+            JOIN section s ON a.IDSection = s.IDSection
+            JOIN section_semestre ss ON s.IDSection = ss.IDSection
+            LEFT JOIN apprenant_section_semstre ass ON a.IDapprenant = ass.IDapprenant AND ass.IDSection_Semestre = ss.IDSection_Semestre
+            LEFT JOIN apprenant_fin af ON a.IDapprenant = af.IDapprenant AND af.IDSection_Semestre = ss.IDSection_Semestre
+            WHERE s.IDOffre = ? AND ss.NumSem = ? AND a.statut = 'actif'
+            ORDER BY c.Nom, c.Prenom
+        ", [$offreId, $semestre]));
+
+        $config = \App\Helpers\GradingConfigHelper::read();
+        $gradingService = new \App\Domains\Academic\Services\GradingSystemService();
+
+        $rows = [];
+        $stats = [
+            'total' => count($trainees),
+            'filles' => 0,
+            'handicapes' => 0,
+            'etrangers' => 0,
+            'admis' => ['total' => 0, 'filles' => 0, 'handicapes' => 0, 'etrangers' => 0],
+            'ajournes' => ['total' => 0, 'filles' => 0, 'handicapes' => 0, 'etrangers' => 0],
+            'exclus' => ['total' => 0, 'filles' => 0, 'handicapes' => 0, 'etrangers' => 0],
+        ];
+
+        $rang = 1;
+        foreach ($trainees as $stg) {
+            $isFemale = (in_array(strtolower(trim($stg['sexe'] ?? '')), ['2', 'أنثى', 'f']));
+            $isEtranger = ((int)($stg['nationalite'] ?? 1) > 1);
+            $isHandicape = false;
+
+            if ($isFemale) $stats['filles']++;
+            if ($isEtranger) $stats['etrangers']++;
+
+            $assId = (int)($stg['ass_id'] ?? 0);
+            $marks = [];
+            $modulesForGpa = [];
+
+            $gradesBySsm = [];
+            if ($assId > 0) {
+                $gradesList = array_map(fn($item) => (array)$item, DB::select("
+                    SELECT IDsection_semestre_Module as ssm_id, NoteC1 as cc1, NoteC2 as cc2, NoteCs as exam, NoteR as rattrapage
+                    FROM apprenant_section_semstre_module
+                    WHERE IDapprenant_Section_semstre = ?
+                ", [$assId]));
+                foreach ($gradesList as $gl) {
+                    $gradesBySsm[$gl['ssm_id']] = $gl;
+                }
+            }
+
+            $hasElimination = false;
+            $totalPoints = 0;
+            $totalCoefs = 0;
+
+            foreach ($matieres as $m) {
+                $g = $gradesBySsm[$m['id']] ?? null;
+                $typeM = (strpos(strtolower($m['libelle_ar']), 'stage') !== false) ? 'stage_pratique' :
+                         ((strpos(strtolower($m['libelle_ar']), 'memoire') !== false) ? 'memoire' : 'theorique');
+
+                $rattrapageVal = ($type === 'apres') ? ($g['rattrapage'] ?? null) : null;
+
+                $calc = $gradingService->calculateModuleGrade([
+                    'type_matiere' => $typeM,
+                    'cc1' => $g['cc1'] ?? null,
+                    'cc2' => $g['cc2'] ?? null,
+                    'exam' => $g['exam'] ?? null,
+                    'rattrapage' => $rattrapageVal,
+                    'stage' => $stg['note_stage'] ?? null,
+                    'memoire' => $stg['note_memoire'] ?? null,
+                    'soutenance' => $stg['note_soutenance'] ?? null,
+                ], $config, (int)$offre['mode_id']);
+
+                $noteFinal = ($type === 'apres') ? $calc['moy_apr'] : $calc['moy_avr'];
+                $marks[$m['id']] = $noteFinal;
+
+                if ($calc['is_eliminated']) {
+                    $hasElimination = true;
+                }
+
+                $coef = (float)($m['coefficient'] ?? 1);
+                if ($noteFinal !== null) {
+                    $totalPoints += $noteFinal * $coef;
+                    $totalCoefs += $coef;
+                }
+
+                $modulesForGpa[] = [
+                    'coefficient' => $m['coefficient'],
+                    'note_avr' => $calc['moy_avr'],
+                    'note_apr' => $calc['moy_apr']
+                ];
+            }
+
+            $semCalc = $gradingService->calculateSemesterGpa($modulesForGpa, $stg['note_stage'], $offre['mode_id'], $config);
+            $gpa = ($type === 'apres') ? $semCalc['gpa_apr'] : $semCalc['gpa_avr'];
+
+            // Decision logic
+            $decisionEvals = (int)($stg['decision_evals'] ?? 0);
+            if ($decisionEvals === 6 || !empty($stg['date_abandon'])) {
+                $decision = 'متخلي';
+                $cat = 'exclus';
+            } elseif ($decisionEvals === 8 || $hasElimination) {
+                $decision = 'مفصول';
+                $cat = 'exclus';
+            } elseif ($gpa >= 10.00) {
+                $decision = 'ناجح';
+                $cat = 'admis';
+            } elseif ($type === 'avant') {
+                $decision = 'مستدرك';
+                $cat = 'ajournes';
+            } else {
+                $decision = 'راسب';
+                $cat = 'ajournes';
+            }
+
+            $stats[$cat]['total']++;
+            if ($isFemale) $stats[$cat]['filles']++;
+            if ($isHandicape) $stats[$cat]['handicapes']++;
+            if ($isEtranger) $stats[$cat]['etrangers']++;
+
+            $rows[] = [
+                'id' => $stg['id'],
+                'rang' => $rang++,
+                'matricule' => $stg['matricule'],
+                'nom' => $stg['nom_ar'],
+                'prenom' => $stg['prenom_ar'],
+                'sexe' => $isFemale ? 'أ' : 'ذ',
+                'marks' => $marks,
+                'points' => $totalPoints,
+                'average' => $gpa,
+                'decision' => $decision
+            ];
+        }
+
+        // Jury members fetching
+        $etabId = (int)$offre['etablissement_id'];
+        $staffList = DB::select("
+            SELECT enc.Nom as nom, enc.Prenom as prenom, enc.Specialite as specialite,
+                   f.Nom as fonction_nom, enc.TachesPrincipale as taches
+            FROM encadrement enc
+            LEFT JOIN fonctions f ON enc.IDFonctions = f.IDFonctions
+            WHERE enc.IDetablissement = ?
+            LIMIT 15
+        ", [$etabId]);
+
+        $juryMembers = [];
+        $director = null;
+        $pedagoDirector = null;
+        $teachers = [];
+
+        foreach ($staffList as $st) {
+            $fullName = trim($st->nom . ' ' . $st->prenom);
+            $fonc = $st->fonction_nom ?: $st->specialite;
+            $taches = mb_strtolower($st->taches ?? '');
+
+            if (mb_strpos($taches, 'مدير مؤسسة') !== false || mb_strpos($taches, 'مدير المعهد') !== false || mb_strpos(mb_strtolower($fonc), 'مدير') !== false) {
+                if (!$director) $director = ['nom_complet' => $fullName, 'fonction' => 'مدير مؤسسة', 'role' => 'رئيس'];
+            } elseif (mb_strpos($taches, 'دراسات') !== false || mb_strpos($taches, 'بيداغوج') !== false || mb_strpos(mb_strtolower($fonc), 'فرعي') !== false) {
+                if (!$pedagoDirector) $pedagoDirector = ['nom_complet' => $fullName, 'fonction' => $fonc ?: 'مديرة فرعية للتنمشين و التكوين المتواصل', 'role' => 'عضو'];
+            } else {
+                $teachers[] = ['nom_complet' => $fullName, 'fonction' => $fonc ?: 'أستاذ متخصص في التكوين و التعليم المهنيين', 'role' => 'عضو'];
+            }
+        }
+
+        if ($director) $juryMembers[] = $director;
+        else $juryMembers[] = ['nom_complet' => 'زروالي عبد المالك', 'fonction' => 'مدير مؤسسة', 'role' => 'رئيس'];
+
+        if ($pedagoDirector) $juryMembers[] = $pedagoDirector;
+        else $juryMembers[] = ['nom_complet' => 'حنيش رشيدة', 'fonction' => 'مديرة فرعية للتنمشين و التكوين المتواصل', 'role' => 'عضو'];
+
+        // Add module teachers to jury members
+        $addedTeachers = [];
+        foreach ($matieres as $m) {
+            if (!empty($m['teacher_name']) && !in_array($m['teacher_name'], $addedTeachers)) {
+                $addedTeachers[] = $m['teacher_name'];
+                $juryMembers[] = [
+                    'nom_complet' => $m['teacher_name'],
+                    'fonction' => 'أستاذ متخصص في التكوين و التعليم المهنيين مكلف بالهندسة البيداغوجية',
+                    'role' => 'عضو'
+                ];
+            }
+        }
+
+        if (count($juryMembers) < 4) {
+            foreach ($teachers as $t) {
+                if (count($juryMembers) >= 8) break;
+                if (!in_array($t['nom_complet'], array_column($juryMembers, 'nom_complet'))) {
+                    $juryMembers[] = $t;
+                }
+            }
+        }
+
+        return $this->render('admin/grades/pv_print', [
+            'offre' => $offre,
+            'semestre' => $semestre,
+            'type' => $type,
+            'sectionCode' => $sectionCode,
+            'semDateD' => $semDateD,
+            'semDateF' => $semDateF,
+            'pvNumber' => $semestre . '0' . substr($offreId, -2),
+            'pvDate' => date('Y/m/d'),
+            'matieres' => $matieres,
+            'rows' => $rows,
+            'stats' => $stats,
+            'juryMembers' => $juryMembers,
+        ], 'empty');
+    }
+
     public function progress(): mixed
     {
         $user = session('user');
@@ -1452,17 +1747,19 @@ class GradesController extends Controller
         });
 
         $successMsg = 'تم المصادقة على نتائج المداولات وتثبيتها بنجاح ونقل المتربصين للسداسي الموالي!';
+        $secureOffreId = \App\Helpers\SecureIdHelper::encrypt($offreId);
         session([
             'success' => $successMsg,
-            'flash_success' => $successMsg
+            'flash_success' => $successMsg,
+            'pv_confirm_offre' => $secureOffreId,
+            'pv_confirm_semestre' => $semestre
         ]);
 
         if ($nextSem <= $specMaxSem) {
-            $secureOffreId = \App\Helpers\SecureIdHelper::encrypt($offreId);
-            return $this->redirect("/dashboard/grades/semestre-setup?offre_id={$secureOffreId}&semestre={$nextSem}");
+            return $this->redirect("/dashboard/grades/semestre-setup?offre_id={$secureOffreId}&semestre={$nextSem}&pv_ready=1&prev_sem={$semestre}");
         }
 
-        return $this->redirect('/dashboard/grades');
+        return $this->redirect("/dashboard/grades/deliberation?offre_id={$secureOffreId}&semestre={$semestre}&pv_ready=1");
     }
 
     /**

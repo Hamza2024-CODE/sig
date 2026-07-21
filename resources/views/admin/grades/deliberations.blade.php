@@ -169,22 +169,41 @@ body { font-family:'Cairo',sans-serif; background:#f8fafc; color:#0f172a; direct
         <a href="/dashboard/grades" class="btn btn-secondary">
             ← العودة للوحة البيداغوجية
         </a>
-        <div style="display:flex;gap:0.5rem;align-items:center;">
+        <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
             <a href="/dashboard/grades/input?offre_id=<?= $offre['id'] ?>&semestre=<?= $semestre ?>" class="btn btn-secondary">تعديل النقاط</a>
+            <a href="/dashboard/grades/pv-print?offre_id=<?= \App\Helpers\SecureIdHelper::encrypt($offre['id']) ?>&semestre=<?= $semestre ?>&type=avant" target="_blank" class="btn btn-print">
+                🖨️ محضر قبل الاستدراك
+            </a>
+            <a href="/dashboard/grades/pv-print?offre_id=<?= \App\Helpers\SecureIdHelper::encrypt($offre['id']) ?>&semestre=<?= $semestre ?>&type=apres" target="_blank" class="btn btn-print" style="color:#d97706 !important; border-color:#d97706 !important;">
+                🖨️ محضر بعد الاستدراك
+            </a>
             <button onclick="exportTableToExcel('delibTable', 'proces_verbal_deliberation.xls')" class="btn btn-secondary" style="border: 1px solid #cbd5e1;">
                 Excel
-            </button>
-            <button onclick="exportTableToCSV('delibTable', 'proces_verbal_deliberation.csv')" class="btn btn-secondary" style="border: 1px solid #cbd5e1;">
-                CSV
-            </button>
-            <button onclick="window.print()" class="btn btn-print">
-                🖨️ طباعة محضر المداولات
             </button>
             <button type="submit" class="btn btn-primary">
                 <i class="fa-solid fa-check-double"></i> مصادقة وترقية المتربصين
             </button>
         </div>
     </div>
+
+    @if(session('flash_success') || session('success') || request('pv_ready'))
+    <div class="no-print" style="background:#f0fdf4; border:2px solid #22c55e; border-radius:12px; padding:1rem 1.5rem; margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center;">
+        <div>
+            <h5 class="fw-bold text-success mb-1" style="font-size:1.05rem;">
+                <i class="fa-solid fa-circle-check me-2"></i> تم المصادقة على نتائج المداولات وتثبيتها بنجاح!
+            </h5>
+            <p class="text-muted mb-0 small">يمكنك الآن استخراج وتوليد محضر المداولات الرسمي المكون من صفحتين بصيغتي قبل وبعد الاستدراك:</p>
+        </div>
+        <div style="display:flex; gap:0.6rem;">
+            <a href="/dashboard/grades/pv-print?offre_id=<?= \App\Helpers\SecureIdHelper::encrypt($offre['id']) ?>&semestre=<?= $semestre ?>&type=avant" target="_blank" class="btn btn-primary" style="background:#16a34a; border:none;">
+                📄 محضر قبل الاستدراك
+            </a>
+            <a href="/dashboard/grades/pv-print?offre_id=<?= \App\Helpers\SecureIdHelper::encrypt($offre['id']) ?>&semestre=<?= $semestre ?>&type=apres" target="_blank" class="btn btn-primary" style="background:#0284c7; border:none;">
+                📄 محضر بعد الاستدراك
+            </a>
+        </div>
+    </div>
+    @endif
 
     <!-- Flag Stripe -->
     <div class="flag-stripe"></div>

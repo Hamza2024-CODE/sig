@@ -20,6 +20,31 @@
             </div>
 
             <!-- Flash Messages -->
+            @if(request('pv_ready') || session('pv_confirm_offre'))
+                <?php 
+                    $prevSem = request('prev_sem') ?: (session('pv_confirm_semestre') ?: ($semestre - 1));
+                    $secureOffreId = \App\Helpers\SecureIdHelper::encrypt($offre['id']);
+                ?>
+                <div class="alert alert-success border-0 shadow-sm rounded-4 p-4 mb-4" style="background:#f0fdf4; border-right:5px solid #22c55e !important;">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                        <div>
+                            <h5 class="fw-bold text-success mb-1">
+                                <i class="fa-solid fa-circle-check me-2"></i> تم المصادقة على نتائج المداولات السابقة (السداسي {{ $prevSem }}) بنجاح!
+                            </h5>
+                            <p class="text-muted mb-0 small">يمكنك استخراج وتوليد محضر المداولات الرسمي المكون من صفحتين (قبل وبعد الاستدراك):</p>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <a href="/dashboard/grades/pv-print?offre_id=<?= $secureOffreId ?>&semestre=<?= $prevSem ?>&type=avant" target="_blank" class="btn btn-sm btn-success rounded-pill px-3 fw-bold">
+                                📄 محضر قبل الاستدراك
+                            </a>
+                            <a href="/dashboard/grades/pv-print?offre_id=<?= $secureOffreId ?>&semestre=<?= $prevSem ?>&type=apres" target="_blank" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold">
+                                📄 محضر بعد الاستدراك
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             @if(session('flash_success'))
                 <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm rounded-3 mb-4" role="alert">
                     <i class="fa-solid fa-circle-check me-2"></i> {{ session('flash_success') }}
