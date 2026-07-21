@@ -2746,12 +2746,11 @@ class ModulesController extends Controller {
                                WHERE $ofWhere";
             }
             $innerSql .= " ORDER BY a2.IDapprenant DESC LIMIT 150";
-
             $stmtA = $this->db->prepare("
                 SELECT a.id, a.numero_matricule,
                        c.Nom as nom_ar, c.Prenom as prenom_ar,
                        c.NomFr as nom_fr, c.PrenomFr as prenom_fr,
-                       '2000-01-01' as date_naissance, 'الجزائر' as lieu_naissance,
+                       DATE_FORMAT(c.DateNais, '%d/%m/%Y') as date_naissance, COALESCE(NULLIF(c.LieuNais, ''), 'الجزائر') as lieu_naissance,
                        sp.Nom as spec_ar, sp.NomFr as spec_fr, sp.CodeSpec as spec_code,
                        ef.Nom as etab_nom, ef.NomFr as etab_fr,
                        'apprenant' as user_type
@@ -3083,8 +3082,8 @@ class ModulesController extends Controller {
                            enc.nin as numero_matricule,
                            enc.Nom as nom_ar, enc.Prenom as prenom_ar,
                            enc.NomFr as nom_fr, enc.PrenomFr as prenom_fr,
-                           DATE_FORMAT(enc.DateNais, '%d/%m/%Y') as date_naissance,
-                           'الجزائر' as lieu_naissance,
+                           enc.DateNais as raw_date_naissance,
+                           enc.LieuNais as lieu_naissance,
                            enc.Specialite as spec_ar, enc.Specialite as spec_fr, '' as spec_code,
                            ef.Nom as etab_nom, ef.NomFr as etab_fr,
                            w.Nom as wilaya_nom, w.NomFr as wilaya_nom_fr,
@@ -3163,6 +3162,51 @@ class ModulesController extends Controller {
             } catch (\Exception $e) {
                 // Keep as is if already plaintext
             }
+        }
+
+        // Process & Decrypt DateNais / LieuNais
+        if ($isEmploye) {
+            if (!empty($details['raw_date_naissance'])) {
+                $rawDate = $details['raw_date_naissance'];
+                if (str_starts_with($rawDate, 'eyJ') || str_contains($rawDate, 'value')) {
+                    try {
+                        $rawDate = \Illuminate\Support\Facades\Crypt::decryptString($rawDate);
+                    } catch (\Exception $ex) {}
+                }
+                if (!empty($rawDate)) {
+                    $cleanDate = str_replace('/', '-', trim($rawDate));
+                    $ts = strtotime($cleanDate);
+                    if ($ts && strlen(trim($rawDate)) > 4) {
+                        $details['date_naissance'] = date('d-m-Y', $ts);
+                    } else {
+                        $details['date_naissance'] = trim($rawDate);
+                    }
+                }
+            }
+            if (empty($details['date_naissance'])) {
+                $details['date_naissance'] = '---';
+            }
+            if (empty($details['lieu_naissance'])) {
+                $details['lieu_naissance'] = 'الجزائر';
+            }
+            // Format recruitment date if present
+            if (!empty($details['date_recrutement']) && $details['date_recrutement'] !== '0000-00-00') {
+                $tsRec = strtotime($details['date_recrutement']);
+                if ($tsRec) {
+                    $details['date_recrutement'] = date('d-m-Y', $tsRec);
+                }
+            }
+        } else {
+            if (empty($details['lieu_naissance'])) {
+                $details['lieu_naissance'] = 'الجزائر';
+            }
+            if (empty($details['date_naissance'])) {
+                $details['date_naissance'] = '---';
+            }
+        }
+
+        if (!empty($details['lieu_naissance'])) {
+            $details['lieu_naissance'] = str_replace('الجزا ئر', 'الجزائر', trim(preg_replace('/\s+/', ' ', $details['lieu_naissance'])));
         }
 
         // Transliterate names to French if database values are empty
