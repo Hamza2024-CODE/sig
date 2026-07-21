@@ -1234,7 +1234,6 @@ class ModulesController extends Controller {
         if ($etabFilterId > 0) {
             $efClauses[] = "ef.IDetablissement = " . $etabFilterId;
         }
-        $efClauses[] = "(ef.activee = 1 OR ef.activee IS NULL) AND (ef.IDEtablissement_Enservice = 1 OR ef.IDEtablissement_Enservice IS NULL)";
         $efWhere = implode(' AND ', $efClauses);
 
         // Secure cache key using role scope configurations
