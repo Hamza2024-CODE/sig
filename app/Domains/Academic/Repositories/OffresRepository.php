@@ -325,7 +325,7 @@ class OffresRepository
     public function getModalEtablissements(string $roleCode, int $etabId, int $dfepId): array
     {
         if (in_array($roleCode, ['etablissement', 'directeur', 'formateur', 'employee']) && $etabId > 0) {
-            $etabScopeIds = \App\Support\EtablissementScope::resolve($etabId);
+            $etabScopeIds = array_filter(\App\Support\EtablissementScope::resolve($etabId), fn($id) => (int)$id !== 1323);
             if (empty($etabScopeIds)) {
                 return [];
             }
@@ -333,17 +333,17 @@ class OffresRepository
             $stmt = $this->db->prepare("
                 SELECT IDetablissement as id, Nom as nom_ar 
                 FROM etablissement 
-                WHERE IDetablissement IN ($placeholders) 
+                WHERE IDetablissement IN ($placeholders) AND IDetablissement != 1323 AND Nom NOT LIKE '%الياسين%'
                 ORDER BY Nom ASC
             ");
-            $stmt->execute($etabScopeIds);
+            $stmt->execute(array_values($etabScopeIds));
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } elseif ($roleCode === 'dfep' && $dfepId > 0) {
-            $stmt = $this->db->prepare("SELECT IDetablissement as id, Nom as nom_ar FROM etablissement WHERE IDDFEP = ? ORDER BY Nom ASC");
+            $stmt = $this->db->prepare("SELECT IDetablissement as id, Nom as nom_ar FROM etablissement WHERE IDDFEP = ? AND IDetablissement != 1323 AND Nom NOT LIKE '%الياسين%' ORDER BY Nom ASC");
             $stmt->execute([$dfepId]);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } else {
-            return $this->db->query("SELECT IDetablissement as id, Nom as nom_ar FROM etablissement ORDER BY Nom ASC")->fetchAll(PDO::FETCH_ASSOC);
+            return $this->db->query("SELECT IDetablissement as id, Nom as nom_ar FROM etablissement WHERE IDetablissement != 1323 AND Nom NOT LIKE '%الياسين%' ORDER BY Nom ASC")->fetchAll(PDO::FETCH_ASSOC);
         }
     }
 

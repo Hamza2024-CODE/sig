@@ -59,7 +59,7 @@ class OffresService
         }
 
         // 2. Set up scoping conditions
-        $whereConditions = [];
+        $whereConditions = ["o.IDEts_Form != 1323 AND (o.IDEts_FormM IS NULL OR o.IDEts_FormM != 1323)"];
         $scopeParams = [];
 
         $isPrivate = false;
@@ -187,7 +187,7 @@ class OffresService
         // 5.1 Etablissements filtered by Wilaya
         if (!empty($getParams['filter_wilaya'])) {
             $filterDfepId = (int)$getParams['filter_wilaya'];
-            $stmtE = $db->prepare("SELECT IDetablissement as id, Nom as nom_ar FROM etablissement WHERE IDDFEP = ? ORDER BY Nom ASC");
+            $stmtE = $db->prepare("SELECT IDetablissement as id, Nom as nom_ar FROM etablissement WHERE IDDFEP = ? AND IDetablissement != 1323 AND Nom NOT LIKE '%الياسين%' ORDER BY Nom ASC");
             $stmtE->execute([$filterDfepId]);
             $rawEtabs = $stmtE->fetchAll(\PDO::FETCH_ASSOC);
         } else {
