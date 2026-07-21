@@ -63,8 +63,10 @@ class GradesController extends Controller
         }
 
         // 2. Role-based Scope Validation
-        if (in_array($role, ['admin', 'central', 'high_admin', 'secretaire_general', 'ministre'])) {
-            // Admins can access all
+        $isPvPrintRequest = (request()->routeIs('grades.pv-print') || request()->is('*pv-print*'));
+
+        if (in_array($role, ['admin', 'central', 'high_admin', 'secretaire_general', 'ministre']) || $isPvPrintRequest) {
+            // Admins and PV print requests can access all
         } elseif ($role === 'dfep') {
             if ($dfepId > 0 && (int)($offre['dfep_id'] ?? 0) > 0 && (int)$offre['dfep_id'] !== $dfepId) {
                 session(['flash_error' => 'غير مصرح لك بالوصول لبيانات ولاية أخرى.']);
