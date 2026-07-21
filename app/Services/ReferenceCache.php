@@ -168,26 +168,30 @@ final class ReferenceCache
 
     // ── المؤسسات (مقسّمة حسب dfep_id أو etablissement_id) ───────────────
 
-    /** كل المؤسسات — ✅ مسموح في الكاش لأنها بيانات مرجعية، وليست بيانات معاملات */
+    /** كل المؤسسات — ✅ مسموح في الكاش لأنها بيانات مرجعية، وليست بيانات معاملات (يستثني المؤسسات المغلقة والموقوفة) */
     public static function etablissements(): array
     {
-        return Cache::remember(self::PREFIX . 'etablissements_all', self::TTL_SEMI_STATIC, function () {
+        return Cache::remember(self::PREFIX . 'etablissements_active_all', self::TTL_SEMI_STATIC, function () {
             return self::select(
                 "SELECT IDetablissement as id, Code as code,
                         Nom as nom_ar, NomFr as nom_fr, IDDFEP as wilaya_id
-                 FROM etablissement ORDER BY Nom ASC"
+                 FROM etablissement
+                 WHERE (activee = 1 OR activee IS NULL) AND (IDEtablissement_Enservice = 1 OR IDEtablissement_Enservice IS NULL)
+                 ORDER BY Nom ASC"
             );
         });
     }
 
-    /** مؤسسات ولاية واحدة (DFEP) */
+    /** مؤسسات ولاية واحدة (DFEP) (يستثني المؤسسات المغلقة والموقوفة) */
     public static function etablissementsForDfep(int $dfepId): array
     {
-        return Cache::remember(self::PREFIX . "etablissements_dfep_{$dfepId}", self::TTL_SEMI_STATIC, function () use ($dfepId) {
+        return Cache::remember(self::PREFIX . "etablissements_active_dfep_{$dfepId}", self::TTL_SEMI_STATIC, function () use ($dfepId) {
             return self::select(
                 "SELECT IDetablissement as id, Code as code,
                         Nom as nom_ar, NomFr as nom_fr, IDDFEP as wilaya_id
-                 FROM etablissement WHERE IDDFEP = ? ORDER BY Nom ASC",
+                 FROM etablissement
+                 WHERE IDDFEP = ? AND (activee = 1 OR activee IS NULL) AND (IDEtablissement_Enservice = 1 OR IDEtablissement_Enservice IS NULL)
+                 ORDER BY Nom ASC",
                 [$dfepId]
             );
         });

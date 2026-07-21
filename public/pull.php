@@ -12,12 +12,10 @@ use Illuminate\Support\Facades\DB;
 echo "<h1>Auto-Updating All Modified Files...</h1>";
 
 $files = [
-    'app/Http/Controllers/Admin/ModulesController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/ModulesController.php',
+    'app/Services/ReferenceCache.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Services/ReferenceCache.php',
+    'app/Http/Controllers/Evaluation/EvaluationController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Evaluation/EvaluationController.php',
     'app/Http/Controllers/Admin/GradesController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/GradesController.php',
-    'routes/web.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/routes/web.php',
-    'resources/views/admin/grades/deliberations.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/grades/deliberations.blade.php',
     'resources/views/admin/modules/pv_print.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/modules/pv_print.blade.php',
-    'resources/views/admin/grades/semestre_setup.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/grades/semestre_setup.blade.php',
 ];
 
 $makeWritable = function($path) {
@@ -146,6 +144,7 @@ if (file_exists($logFile)) {
         if (preg_match('/\[\d{4}-\d{2}-\d{2}.*\]|ERROR|Exception|Error|Stack trace|#0 /i', $l)) {
             $filtered[] = $l;
         }
+
     }
     echo "<pre style='background:#1e1e1e;color:#00ff00;padding:10px;border-radius:6px;max-height:450px;overflow:auto;font-family:monospace;font-size:12px;'>" . htmlspecialchars(implode("", $filtered ?: $lastLines)) . "</pre>";
 } else {
