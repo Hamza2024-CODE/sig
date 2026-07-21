@@ -55,7 +55,8 @@ class ApprenantService
         if (in_array($roleCode, ['admin', 'central'])) {
             // unrestricted
         } elseif ($roleCode === 'dfep' && $dfepId > 0) {
-            $extraWhere = " AND {$prefix}.IDDFEP = ?";
+            $extraWhere = " AND ({$prefix}.IDDFEP = ? OR {$prefix}.IDOffre IN (SELECT IDOffre FROM offre WHERE IDEts_Form IN (SELECT IDetablissement FROM etablissement WHERE IDDFEP = ?)))";
+            $params[]   = $dfepId;
             $params[]   = $dfepId;
         } elseif ($etabId > 0) {
             $extraWhere = " AND {$prefix}.IDOffre IN (SELECT IDOffre FROM offre WHERE IDEts_Form = ?)";

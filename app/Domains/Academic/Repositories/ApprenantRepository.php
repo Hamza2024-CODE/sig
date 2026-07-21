@@ -588,8 +588,8 @@ class ApprenantRepository
         $stmt = $this->db->prepare("
             SELECT COUNT(*)
             FROM apprenant a
-            LEFT JOIN section s ON a.IDSection = s.IDSection
-            WHERE 1=1 {$extraWhere}
+            JOIN section s ON a.IDSection = s.IDSection
+            WHERE a.statut = 'actif' {$extraWhere}
         ");
         $stmt->execute($params);
         return (int)$stmt->fetchColumn();
