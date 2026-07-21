@@ -140,8 +140,14 @@ echo "<h2>Latest Server Log Entries (laravel.log):</h2>";
 $logFile = __DIR__ . '/../storage/logs/laravel.log';
 if (file_exists($logFile)) {
     $lines = file($logFile);
-    $lastLines = array_slice($lines, -40);
-    echo "<pre style='background:#1e1e1e;color:#00ff00;padding:10px;border-radius:6px;max-height:350px;overflow:auto;font-family:monospace;font-size:12px;'>" . htmlspecialchars(implode("", $lastLines)) . "</pre>";
+    $lastLines = array_slice($lines, -120);
+    $filtered = [];
+    foreach ($lastLines as $l) {
+        if (preg_match('/\[\d{4}-\d{2}-\d{2}.*\]|ERROR|Exception|Error|Stack trace|#0 /i', $l)) {
+            $filtered[] = $l;
+        }
+    }
+    echo "<pre style='background:#1e1e1e;color:#00ff00;padding:10px;border-radius:6px;max-height:450px;overflow:auto;font-family:monospace;font-size:12px;'>" . htmlspecialchars(implode("", $filtered ?: $lastLines)) . "</pre>";
 } else {
     echo "<i>No laravel.log file found.</i>";
 }
