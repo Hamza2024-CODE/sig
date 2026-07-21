@@ -1201,6 +1201,97 @@ class DashboardController extends Controller
             );
             $data['total_garcons'] = max(0, $data['total_stagiaires'] - $data['total_filles']);
 
+            // ── Disciplinary and Evaluation Status Counts (المفصولين، الراسبين، المستدركين) ──
+            $data['total_mafsouls'] = \Illuminate\Support\Facades\Cache::remember(
+                "sgfep:kpi:active_mafsouls:" . (int)$selWilaya . ":" . (int)$selEtab . ":" . (int)$selMode,
+                900,
+                function() use ($selWilaya, $selEtab, $selMode) {
+                    try {
+                        $q = DB::table('apprenant_section_semstre as ass')
+                            ->join('apprenant as a', 'ass.IDapprenant', '=', 'a.IDapprenant')
+                            ->join('section as s', 'a.IDSection', '=', 's.IDSection')
+                            ->join('offre as o', 's.IDOffre', '=', 'o.IDOffre')
+                            ->where('ass.IDDecision_evals', 8);
+
+                        if (!empty($selEtab)) {
+                            $q->where('o.IDEts_Form', (int)$selEtab);
+                        } elseif (!empty($selWilaya)) {
+                            $q->join('etablissement as e', 'o.IDEts_Form', '=', 'e.IDetablissement')
+                              ->whereIn('e.IDDFEP', function($sub) use ($selWilaya) {
+                                  $sub->select('IDDFEP')->from('dfep')->where('IDWilayaa', (int)$selWilaya);
+                              });
+                        }
+                        if (!empty($selMode)) {
+                            $q->where('o.IDMode_formation', (int)$selMode);
+                        }
+
+                        return $q->count(DB::raw('DISTINCT ass.IDapprenant'));
+                    } catch (\Throwable $e) {
+                        return 0;
+                    }
+                }
+            );
+
+            $data['total_rasiboun'] = \Illuminate\Support\Facades\Cache::remember(
+                "sgfep:kpi:active_rasiboun:" . (int)$selWilaya . ":" . (int)$selEtab . ":" . (int)$selMode,
+                900,
+                function() use ($selWilaya, $selEtab, $selMode) {
+                    try {
+                        $q = DB::table('apprenant_section_semstre as ass')
+                            ->join('apprenant as a', 'ass.IDapprenant', '=', 'a.IDapprenant')
+                            ->join('section as s', 'a.IDSection', '=', 's.IDSection')
+                            ->join('offre as o', 's.IDOffre', '=', 'o.IDOffre')
+                            ->where('ass.IDDecision_evals', 4);
+
+                        if (!empty($selEtab)) {
+                            $q->where('o.IDEts_Form', (int)$selEtab);
+                        } elseif (!empty($selWilaya)) {
+                            $q->join('etablissement as e', 'o.IDEts_Form', '=', 'e.IDetablissement')
+                              ->whereIn('e.IDDFEP', function($sub) use ($selWilaya) {
+                                  $sub->select('IDDFEP')->from('dfep')->where('IDWilayaa', (int)$selWilaya);
+                              });
+                        }
+                        if (!empty($selMode)) {
+                            $q->where('o.IDMode_formation', (int)$selMode);
+                        }
+
+                        return $q->count(DB::raw('DISTINCT ass.IDapprenant'));
+                    } catch (\Throwable $e) {
+                        return 0;
+                    }
+                }
+            );
+
+            $data['total_mostadraks'] = \Illuminate\Support\Facades\Cache::remember(
+                "sgfep:kpi:active_mostadraks:" . (int)$selWilaya . ":" . (int)$selEtab . ":" . (int)$selMode,
+                900,
+                function() use ($selWilaya, $selEtab, $selMode) {
+                    try {
+                        $q = DB::table('apprenant_section_semstre as ass')
+                            ->join('apprenant as a', 'ass.IDapprenant', '=', 'a.IDapprenant')
+                            ->join('section as s', 'a.IDSection', '=', 's.IDSection')
+                            ->join('offre as o', 's.IDOffre', '=', 'o.IDOffre')
+                            ->where('ass.IDDecision_evals', 2);
+
+                        if (!empty($selEtab)) {
+                            $q->where('o.IDEts_Form', (int)$selEtab);
+                        } elseif (!empty($selWilaya)) {
+                            $q->join('etablissement as e', 'o.IDEts_Form', '=', 'e.IDetablissement')
+                              ->whereIn('e.IDDFEP', function($sub) use ($selWilaya) {
+                                  $sub->select('IDDFEP')->from('dfep')->where('IDWilayaa', (int)$selWilaya);
+                              });
+                        }
+                        if (!empty($selMode)) {
+                            $q->where('o.IDMode_formation', (int)$selMode);
+                        }
+
+                        return $q->count(DB::raw('DISTINCT ass.IDapprenant'));
+                    } catch (\Throwable $e) {
+                        return 0;
+                    }
+                }
+            );
+
             // Fetch local_stagiaires for the establishment (directeur, etablissement, employee, formateur)
             $localStagiaires = [];
             if ($etabId > 0) {

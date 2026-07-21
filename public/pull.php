@@ -30,6 +30,8 @@ $files = [
     'app/Http/Controllers/Admin/UtilisateursController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/UtilisateursController.php',
     // 2026-07-21 — dashboard reconduits: expelled/failed/remedial + public/private stats
     'resources/views/admin/modules/reconduits.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/modules/reconduits.blade.php',
+    'app/Http/Controllers/DashboardController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/DashboardController.php',
+    'resources/views/dashboard/index.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/dashboard/index.blade.php',
 ];
 
 foreach ($files as $localPath => $remoteUrl) {

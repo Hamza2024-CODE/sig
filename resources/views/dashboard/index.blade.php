@@ -806,6 +806,33 @@ $isDfepRole = ($role === 'dfep');
             </div>
             <div class="bento-2">
                 <?php renderComponent('KpiCard', [
+                    'label'     => 'المتربصين المفصولين',
+                    'value'     => number_format($total_mafsouls ?? 0),
+                    'icon'      => 'fa-solid fa-user-slash',
+                    'iconType'  => 'red',
+                    'subtitle'  => 'المطرودون / قرار فصل'
+                ]); ?>
+            </div>
+            <div class="bento-2">
+                <?php renderComponent('KpiCard', [
+                    'label'     => 'المتربصين الراسبين',
+                    'value'     => number_format($total_rasiboun ?? 0),
+                    'icon'      => 'fa-solid fa-xmark',
+                    'iconType'  => 'orange',
+                    'subtitle'  => 'الراسبون في التقييم'
+                ]); ?>
+            </div>
+            <div class="bento-2">
+                <?php renderComponent('KpiCard', [
+                    'label'     => 'المتربصين المستدركين',
+                    'value'     => number_format($total_mostadraks ?? 0),
+                    'icon'      => 'fa-solid fa-rotate',
+                    'iconType'  => 'navy',
+                    'subtitle'  => 'ناجحون بعد الاستدراك'
+                ]); ?>
+            </div>
+            <div class="bento-2">
+                <?php renderComponent('KpiCard', [
                     'label'     => 'عروض التكوين المفتوحة',
                     'value'     => number_format($total_offres ?? 0),
                     'icon'      => 'fa-solid fa-briefcase',
