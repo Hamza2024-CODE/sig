@@ -1242,7 +1242,9 @@ class ModulesController extends Controller {
 
         try {
             $cachedData = \Illuminate\Support\Facades\Cache::remember($cacheKey, 900, function() use ($ofWhere, $efWhere, $params) {
-                $stats = ['total' => 0, 'femmes' => 0, 'hommes' => 0, 'centres' => 0];
+                $stats = ['total' => 0, 'femmes' => 0, 'hommes' => 0, 'centres' => 0,
+                          'mafsouls' => 0, 'rasiboun' => 0, 'mostadraks' => 0,
+                          'public_total' => 0, 'prive_total' => 0];
                 $list  = [];
 
                 // Count active trainees — use o.IDEts_Form directly
@@ -1270,23 +1272,74 @@ class ModulesController extends Controller {
                 $stats['hommes']  = max(0, $stats['total'] - $stats['femmes']);
                 $stats['centres'] = (int)($row['centres'] ?? 0);
 
-                // Per-center list — use o.IDEts_Form directly (no ets_form mapping needed)
+                // Count expelled (مفصولين): IDDecision_evals = 8
+                try {
+                    $stmtExp = $this->db->prepare("
+                        SELECT COUNT(DISTINCT ass.IDapprenant) AS cnt
+                        FROM apprenant_section_semstre ass
+                        JOIN apprenant a ON ass.IDapprenant = a.IDapprenant
+                        JOIN section s ON a.IDSection = s.IDSection
+                        JOIN offre o ON s.IDOffre = o.IDOffre
+                        WHERE ass.IDDecision_evals = 8
+                          AND $ofWhere
+                    ");
+                    $stmtExp->execute($params);
+                    $stats['mafsouls'] = (int)$stmtExp->fetchColumn();
+
+                    // Count failed (راسبون): IDDecision_evals = 4
+                    $stmtFail = $this->db->prepare("
+                        SELECT COUNT(DISTINCT ass.IDapprenant) AS cnt
+                        FROM apprenant_section_semstre ass
+                        JOIN apprenant a ON ass.IDapprenant = a.IDapprenant
+                        JOIN section s ON a.IDSection = s.IDSection
+                        JOIN offre o ON s.IDOffre = o.IDOffre
+                        WHERE ass.IDDecision_evals = 4
+                          AND $ofWhere
+                    ");
+                    $stmtFail->execute($params);
+                    $stats['rasiboun'] = (int)$stmtFail->fetchColumn();
+
+                    // Count remedial/catch-up (مستدركون): IDDecision_evals = 2
+                    $stmtRem = $this->db->prepare("
+                        SELECT COUNT(DISTINCT ass.IDapprenant) AS cnt
+                        FROM apprenant_section_semstre ass
+                        JOIN apprenant a ON ass.IDapprenant = a.IDapprenant
+                        JOIN section s ON a.IDSection = s.IDSection
+                        JOIN offre o ON s.IDOffre = o.IDOffre
+                        WHERE ass.IDDecision_evals = 2
+                          AND $ofWhere
+                    ");
+                    $stmtRem->execute($params);
+                    $stats['mostadraks'] = (int)$stmtRem->fetchColumn();
+                } catch (\Exception $e) {}
+
+                // Per-center list — with expelled/failed/remedial counts and public/private type
                 $stmt = $this->db->prepare("
                     SELECT ef.IDetablissement AS id_etab,
                            ef.Nom             AS etab_nom,
                            ef.NomFr           AS etab_fr,
                            ef.IDDFEP          AS id_dfep,
+                           ef.IDNature_etsF   AS nature_id,
+                           nf.Nom             AS nature_nom,
+                           CASE WHEN ef.IDNature_etsF = 12 THEN 'prive' ELSE 'public' END AS secteur,
                            w.Nom              AS wilaya_nom,
                            w.IDWilayaa        AS id_wilaya,
                            IFNULL(agg.total, 0)              AS total,
                            IFNULL(agg.femmes, 0)             AS femmes,
-                           IFNULL(agg.total - agg.femmes, 0) AS hommes
+                           IFNULL(agg.total - agg.femmes, 0) AS hommes,
+                           IFNULL(agg.mafsouls, 0)           AS mafsouls,
+                           IFNULL(agg.rasiboun, 0)           AS rasiboun,
+                           IFNULL(agg.mostadraks, 0)         AS mostadraks
                     FROM etablissement ef
                     LEFT JOIN wilaya w ON ef.IDDFEP = w.IDWilayaa
+                    LEFT JOIN nature_etsf nf ON ef.IDNature_etsF = nf.IDNature_etsF
                     LEFT JOIN (
                         SELECT o.IDEts_Form AS etab_id,
                                COUNT(DISTINCT a.IDapprenant) AS total,
-                               COUNT(DISTINCT CASE WHEN c.Civ = 2 THEN a.IDapprenant END) AS femmes
+                               COUNT(DISTINCT CASE WHEN c.Civ = 2 THEN a.IDapprenant END) AS femmes,
+                               COUNT(DISTINCT CASE WHEN ass2.IDDecision_evals = 8 THEN ass2.IDapprenant END) AS mafsouls,
+                               COUNT(DISTINCT CASE WHEN ass2.IDDecision_evals = 4 THEN ass2.IDapprenant END) AS rasiboun,
+                               COUNT(DISTINCT CASE WHEN ass2.IDDecision_evals = 2 THEN ass2.IDapprenant END) AS mostadraks
                         FROM apprenant a
                         INNER JOIN section s   ON a.IDSection  = s.IDSection
                         INNER JOIN offre o     ON s.IDOffre    = o.IDOffre
@@ -1294,6 +1347,7 @@ class ModulesController extends Controller {
                         INNER JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
                         LEFT  JOIN candidat c  ON a.IDCandidat = c.IDCandidat
                         LEFT  JOIN apprenant_fin af ON a.IDapprenant = af.IDapprenant
+                        LEFT  JOIN apprenant_section_semstre ass2 ON ass2.IDapprenant = a.IDapprenant
                         WHERE a.statut = 'actif'
                           AND af.IDapprenant IS NULL
                           AND DATE_ADD(sess.DateD, INTERVAL COALESCE(NULLIF(sp.dureeM, 0), sp.NbrSem * 6, 24) MONTH) >= CURRENT_DATE()
@@ -1305,6 +1359,15 @@ class ModulesController extends Controller {
                 ");
                 $stmt->execute($params);
                 $list = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                // Compute public/private totals
+                foreach ($list as $row) {
+                    if (($row['secteur'] ?? 'public') === 'prive') {
+                        $stats['prive_total'] += (int)$row['total'];
+                    } else {
+                        $stats['public_total'] += (int)$row['total'];
+                    }
+                }
 
                 return compact('stats', 'list');
             });
