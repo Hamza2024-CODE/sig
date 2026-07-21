@@ -34,14 +34,27 @@ class AbsencesController extends Controller
      */
     public function index(): mixed
     {
-        $stats = $this->service->getAbsenceDashboardStats(session('user'));
+        $filters = [
+            'section_id'   => request()->query('section_id'),
+            'specialite_id'=> request()->query('specialite_id'),
+            'trainee_type' => request()->query('trainee_type', 'all'),
+            'search'       => request()->query('search'),
+        ];
+
+        $data = $this->service->getAttendancePageData(session('user'), $filters);
 
         return $this->render('admin/absences/index', [
-            'title'    => 'مراقبة الحضور والغيابات - SGFEP',
-            'tCount'   => $stats['total_trainees'],
-            'aCount'   => $stats['total_absences'],
-            'wCount'   => $stats['total_warnings'],
-            'absences' => $stats['recent_absences'],
+            'title'               => 'مراقبة الحضور والغيابات البيداغوجية - SGFEP',
+            'tCount'              => $data['stats']['total_trainees'],
+            'aCount'              => $data['stats']['total_absences'],
+            'wCount'              => $data['stats']['total_warnings'],
+            'absences'            => $data['stats']['recent_absences'],
+            'sections'            => $data['sections'],
+            'specialites'         => $data['specialites'],
+            'trainees'            => $data['trainees'],
+            'displayed_new'       => $data['displayed_new'],
+            'displayed_continuing'=> $data['displayed_continuing'],
+            'filters'             => $data['selected_filters'],
         ]);
     }
 
@@ -71,19 +84,31 @@ class AbsencesController extends Controller
                 return $this->redirect('/dashboard/absences');
             }
 
-            if (isset(request()->all()['absent_students'])) {
-                $absentIds = (array)request()->all()['absent_students'];
-                $date      = request()->all()['date_absence'] ?? date('Y-m-d');
-                $heure     = request()->all()['heure'] ?? '08:00:00';
+            $input = request()->all();
+            $date  = $input['date_absence'] ?? date('Y-m-d');
+            $heure = $input['heure'] ?? '08:00:00';
 
+            // Support new detailed attendance array format: attendance[apprenant_id] = 'absent'|'justified'|'present'|'late'
+            $absentIds = [];
+            if (isset($input['attendance']) && is_array($input['attendance'])) {
+                foreach ($input['attendance'] as $apprenantId => $status) {
+                    if (in_array($status, ['absent', 'justified', '1', 1])) {
+                        $absentIds[] = (int)$apprenantId;
+                    }
+                }
+            } elseif (isset($input['absent_students'])) {
+                $absentIds = (array)$input['absent_students'];
+            }
+
+            if (!empty($absentIds)) {
                 try {
                     $count = $this->service->recordAbsences(session('user'), $absentIds, $date, $heure);
-                    session(['success' => "تم تسجيل قائمة الغيابات لليوم بنجاح وتحديث السجلات الكلية للطلبة."]);
+                    session(['success' => "تم تسجيل وحفظ الغيابات والحضور لليوم بنجاح لـ ({$count}) متربص."]);
                 } catch (\Exception $e) {
-                    session(['error' => 'حدث خطأ أثناء حفظ الغيابات: ' . $e->getMessage()]);
+                    session(['error' => 'حدث خطأ أثناء حفظ الحضور والغيابات: ' . $e->getMessage()]);
                 }
             } else {
-                session(['success' => 'تم تأكيد حضور جميع متربصي الفوج بالكامل لليوم.']);
+                session(['success' => 'تم تأكيد حضور جميع المتربصين بالكامل لليوم المحدد.']);
             }
         }
 

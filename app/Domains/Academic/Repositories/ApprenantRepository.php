@@ -63,6 +63,124 @@ class ApprenantRepository
     }
 
     /**
+     * Fetch list of sections with new (S1) vs continuing (S2+) trainee counts for dropdown filters.
+     */
+    public function findSectionsForAttendance(string $extraWhere, array $params): array
+    {
+        $sql = "
+            SELECT s.IDSection as id, s.Nom as section_nom, s.Groupe as groupe, s.CodeSectionEtat,
+                   sp.IDSpecialite as specialite_id, sp.Nom as specialite_ar,
+                   COALESCE(ss.NumSem, 1) as num_semestre,
+                   COUNT(a.IDapprenant) as total_apprenants,
+                   SUM(CASE WHEN COALESCE(ss.NumSem, 1) = 1 THEN 1 ELSE 0 END) as count_nouveaux,
+                   SUM(CASE WHEN COALESCE(ss.NumSem, 1) > 1 THEN 1 ELSE 0 END) as count_continus
+            FROM section s
+            JOIN offre o ON s.IDOffre = o.IDOffre
+            LEFT JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
+            LEFT JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
+            LEFT JOIN section_semestre ss ON s.IDSection = ss.IDSection AND ss.Dernier = 1
+            LEFT JOIN apprenant a ON s.IDSection = a.IDSection AND a.statut = 'actif'
+            WHERE 1=1 {$extraWhere}
+            GROUP BY s.IDSection, s.Nom, s.Groupe, s.CodeSectionEtat, sp.IDSpecialite, sp.Nom, ss.NumSem
+            HAVING total_apprenants > 0
+            ORDER BY sp.Nom ASC, s.Nom ASC
+        ";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Fetch list of specialties/branches for dropdown filters.
+     */
+    public function findSpecialitesForAttendance(string $extraWhere, array $params): array
+    {
+        $sql = "
+            SELECT DISTINCT sp.IDSpecialite as id, sp.Nom as specialite_ar, sp.CodeSpec as code
+            FROM section s
+            JOIN offre o ON s.IDOffre = o.IDOffre
+            JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
+            LEFT JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
+            WHERE 1=1 {$extraWhere}
+            ORDER BY sp.Nom ASC
+        ";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Fetch trainees for attendance recording with filters for section, specialty, trainee type (new vs continuing), and search.
+     */
+    public function findTraineesForAttendance(
+        string $extraWhere,
+        array $params,
+        ?int $sectionId = null,
+        ?int $specialiteId = null,
+        ?string $traineeType = null,
+        ?string $search = null,
+        int $limit = 500
+    ): array {
+        $where = "WHERE a.statut = 'actif' {$extraWhere}";
+        $execParams = $params;
+
+        if ($sectionId && $sectionId > 0) {
+            $where .= " AND a.IDSection = ?";
+            $execParams[] = $sectionId;
+        }
+
+        if ($specialiteId && $specialiteId > 0) {
+            $where .= " AND o.IDSpecialite = ?";
+            $execParams[] = $specialiteId;
+        }
+
+        if ($traineeType === 'new') {
+            $where .= " AND COALESCE(ss.NumSem, 1) = 1";
+        } elseif ($traineeType === 'continuing') {
+            $where .= " AND COALESCE(ss.NumSem, 1) > 1";
+        }
+
+        if (!empty($search)) {
+            $where .= " AND (c1.Nom LIKE ? OR c1.Prenom LIKE ? OR c1.NumIns LIKE ? OR a.Nccp LIKE ?)";
+            $term = "%{$search}%";
+            array_push($execParams, $term, $term, $term, $term);
+        }
+
+        $sql = "
+            SELECT a.IDapprenant as id, a.IDCandidat as candidat_id, a.IDSection as section_id,
+                   COALESCE(NULLIF(a.Nccp, ''), c1.NumIns) as matricule, a.statut,
+                   c1.Nom as nom_ar, c1.Prenom as prenom_ar,
+                   c1.NomFr as nom_fr, c1.PrenomFr as prenom_fr,
+                   c1.Civ as civ,
+                   sp.Nom as specialite_ar, sp.IDSpecialite as specialite_id,
+                   s.Nom as section_nom, s.Groupe as groupe,
+                   e.Nom as etab_nom,
+                   COALESCE(ss.NumSem, 1) as num_semestre,
+                   CASE WHEN COALESCE(ss.NumSem, 1) = 1 THEN 'جديد' ELSE 'مستمر' END as type_statut,
+                   (
+                       SELECT COUNT(*)
+                       FROM apprenant_absence ab
+                       JOIN apprenant_section_semstre ass ON ab.IDapprenant_Section_semstre = ass.IDapprenant_Section_semstre
+                       WHERE ass.IDapprenant = a.IDapprenant AND ab.Type = 1
+                   ) * 2 as total_absences_heures
+            FROM apprenant a
+            LEFT JOIN section s ON a.IDSection = s.IDSection
+            LEFT JOIN candidat c1 ON c1.IDCandidat = a.IDCandidat
+            LEFT JOIN offre o ON o.IDOffre = c1.IDOffre
+            LEFT JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
+            LEFT JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
+            LEFT JOIN section_semestre ss ON s.IDSection = ss.IDSection AND ss.Dernier = 1
+            {$where}
+            ORDER BY COALESCE(ss.NumSem, 1) ASC, c1.Nom ASC, c1.Prenom ASC
+            LIMIT {$limit}
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($execParams);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
      * Memory-safe Generator for streaming large trainee datasets to ReportingService.
      * Fetches data in chunks of $chunkSize rows — peak RAM = O(chunkSize).
      *

@@ -17,7 +17,11 @@ $files = [
     'resources/views/admin/modules/distribution_globale.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/modules/distribution_globale.blade.php',
     'app/Services/Employee/EmployeeScopeService.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Services/Employee/EmployeeScopeService.php',
     'app/Services/Employee/EmployeeQueryService.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Services/Employee/EmployeeQueryService.php',
-    'resources/views/admin/espace-employe/index.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/espace-employe/index.blade.php'
+    'resources/views/admin/espace-employe/index.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/espace-employe/index.blade.php',
+    'app/Http/Controllers/Admin/AbsencesController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/AbsencesController.php',
+    'app/Domains/Academic/Services/ApprenantService.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Domains/Academic/Services/ApprenantService.php',
+    'app/Domains/Academic/Repositories/ApprenantRepository.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Domains/Academic/Repositories/ApprenantRepository.php',
+    'resources/views/admin/absences/index.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/absences/index.blade.php'
 ];
 
 foreach ($files as $localPath => $remoteUrl) {

@@ -383,6 +383,49 @@ class ApprenantService
     }
 
     /**
+     * Fetch complete attendance page dataset: sections, specialties, filtered trainees (new & continuing), and stats.
+     */
+    public function getAttendancePageData(array $user, array $filters = []): array
+    {
+        [$extraWhere, $params] = $this->buildRoleFilter($user);
+
+        $sections    = $this->repository->findSectionsForAttendance($extraWhere, $params);
+        $specialites = $this->repository->findSpecialitesForAttendance($extraWhere, $params);
+
+        $sectionId    = isset($filters['section_id']) && $filters['section_id'] !== '' ? (int)$filters['section_id'] : null;
+        $specialiteId = isset($filters['specialite_id']) && $filters['specialite_id'] !== '' ? (int)$filters['specialite_id'] : null;
+        $traineeType  = $filters['trainee_type'] ?? 'all';
+        $search       = $filters['search'] ?? null;
+
+        $trainees = $this->repository->findTraineesForAttendance(
+            $extraWhere, $params, $sectionId, $specialiteId, $traineeType, $search, 500
+        );
+
+        $stats = $this->getAbsenceDashboardStats($user);
+
+        // Calculate counts for currently displayed trainees
+        $displayedNew = 0;
+        $displayedContinuing = 0;
+        foreach ($trainees as $t) {
+            if (($t['type_statut'] ?? '') === 'جديد' || (int)($t['num_semestre'] ?? 1) === 1) {
+                $displayedNew++;
+            } else {
+                $displayedContinuing++;
+            }
+        }
+
+        return [
+            'sections'            => $sections,
+            'specialites'         => $specialites,
+            'trainees'            => $trainees,
+            'stats'               => $stats,
+            'displayed_new'       => $displayedNew,
+            'displayed_continuing'=> $displayedContinuing,
+            'selected_filters'    => compact('sectionId', 'specialiteId', 'traineeType', 'search'),
+        ];
+    }
+
+    /**
      * Fetch list of apprenants for absence recording.
      * Business rules preserved from AbsencesController::add()
      */
