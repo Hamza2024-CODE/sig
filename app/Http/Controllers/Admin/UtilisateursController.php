@@ -130,14 +130,17 @@ class UtilisateursController extends Controller
             $whereEnc = ["enc.nin IS NOT NULL AND enc.nin != '' AND enc.MotDePass IS NOT NULL AND enc.MotDePass != ''"];
             $paramsEnc = [];
             if ($isEtabRole && $etabId > 0) {
-                $whereEnc[] = "enc.IDetablissement = ?";
+                $whereEnc[] = "(enc.IDetablissement = ? OR enc.IDEts_Form = ?)";
+                $paramsEnc[] = $etabId;
                 $paramsEnc[] = $etabId;
             } elseif ($selWilaya > 0) {
-                $whereEnc[] = "e.IDDFEP = ?";
+                $whereEnc[] = "(e.IDDFEP = ? OR et_form.IDDFEP = ?)";
+                $paramsEnc[] = $selWilaya;
                 $paramsEnc[] = $selWilaya;
             }
             if ($selEtab > 0) {
-                $whereEnc[] = "enc.IDetablissement = ?";
+                $whereEnc[] = "(enc.IDetablissement = ? OR enc.IDEts_Form = ?)";
+                $paramsEnc[] = $selEtab;
                 $paramsEnc[] = $selEtab;
             }
             if ($selStatus === 'suspended') {
@@ -168,6 +171,7 @@ class UtilisateursController extends Controller
                 SELECT COUNT(*) as c 
                 FROM encadrement enc
                 LEFT JOIN etablissement e ON enc.IDetablissement = e.IDetablissement
+                LEFT JOIN etablissement et_form ON enc.IDEts_Form = et_form.IDetablissement
                 {$whereEncSQL}
             ", $paramsEnc)->c;
 
@@ -230,8 +234,8 @@ class UtilisateursController extends Controller
 
                 SELECT enc.IDEncadrement as id, enc.nin as username, CONCAT(enc.Nom, ' ', enc.Prenom) as nom_complet,
                        enc.Email as email, 0 as admin, 1 as est_actif,
-                       enc.IDetablissement as etablissement_id, e.Nom as etab_nom,
-                       e.IDDFEP as wilaya_id, '' as wilaya_nom,
+                       COALESCE(NULLIF(enc.IDEts_Form, 0), enc.IDetablissement) as etablissement_id, COALESCE(et_form.Nom, e.Nom) as etab_nom,
+                       COALESCE(et_form.IDDFEP, e.IDDFEP) as wilaya_id, '' as wilaya_nom,
                        '' as last_login,
                        '2026-01-01 00:00:00' as created_at,
                        'formateur' as role_code,
@@ -242,6 +246,7 @@ class UtilisateursController extends Controller
                        enc.photo as avatar
                 FROM encadrement enc
                 LEFT JOIN etablissement e ON enc.IDetablissement = e.IDetablissement
+                LEFT JOIN etablissement et_form ON enc.IDEts_Form = et_form.IDetablissement
                 {$whereEncSQL}
 
                 LIMIT ? OFFSET ?

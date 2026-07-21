@@ -25,7 +25,9 @@ $files = [
     'app/Http/Controllers/Evaluation/EvaluationController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Evaluation/EvaluationController.php',
     'resources/views/admin/modules/eval_finale.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/modules/eval_finale.blade.php',
     'resources/views/admin/modules/eval_stagiaires.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/modules/eval_stagiaires.blade.php',
-    'resources/views/admin/modules/gestion_evaluations.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/modules/gestion_evaluations.blade.php'
+    'resources/views/admin/modules/gestion_evaluations.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/modules/gestion_evaluations.blade.php',
+    'app/Domains/HR/Repositories/RHRepository.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Domains/HR/Repositories/RHRepository.php',
+    'app/Http/Controllers/Admin/UtilisateursController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/UtilisateursController.php'
 ];
 
 foreach ($files as $localPath => $remoteUrl) {

@@ -14,10 +14,14 @@ class RHRepository
         $this->db = Database::getInstance()->getConnection();
     }
 
-    private function etabScope(int $etabId, int $dfepId, string $col = 'IDetablissement'): array
+    private function etabScope(int $etabId, int $dfepId, string $col = 'e.IDetablissement'): array
     {
-        if ($etabId > 0) return [["$col = ?"], [$etabId]];
-        if ($dfepId > 0) return [["$col IN (SELECT IDetablissement FROM etablissement WHERE IDDFEP = ?)"], [$dfepId]];
+        if ($etabId > 0) {
+            return [["($col = ? OR e.IDEts_Form = ?)"], [$etabId, $etabId]];
+        }
+        if ($dfepId > 0) {
+            return [["($col IN (SELECT IDetablissement FROM etablissement WHERE IDDFEP = ?) OR e.IDEts_Form IN (SELECT IDetablissement FROM etablissement WHERE IDDFEP = ?))"], [$dfepId, $dfepId]];
+        }
         return [[], []];
     }
 
