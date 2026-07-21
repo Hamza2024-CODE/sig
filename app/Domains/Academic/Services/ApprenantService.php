@@ -55,7 +55,8 @@ class ApprenantService
         if (in_array($roleCode, ['admin', 'central'])) {
             // unrestricted
         } elseif ($roleCode === 'dfep' && $dfepId > 0) {
-            $extraWhere = " AND (o.IDEts_Form IN (SELECT IDetablissement FROM etablissement WHERE IDDFEP = ?))";
+            $extraWhere = " AND ({$prefix}.IDDFEP = ? OR {$prefix}.IDOffre IN (SELECT IDOffre FROM offre WHERE IDEts_Form IN (SELECT IDetablissement FROM etablissement WHERE IDDFEP = ?)))";
+            $params[]   = $dfepId;
             $params[]   = $dfepId;
         } elseif ($etabId > 0) {
             $extraWhere = " AND {$prefix}.IDOffre IN (SELECT IDOffre FROM offre WHERE IDEts_Form = ?)";
@@ -374,12 +375,16 @@ class ApprenantService
     {
         [$extraWhere, $params] = $this->buildRoleFilter($user);
 
-        return [
-            'total_trainees' => $this->repository->countActive($extraWhere, $params),
-            'total_absences' => $this->repository->countAbsences($extraWhere, $params),
-            'total_warnings' => $this->repository->countWarnings($extraWhere, $params),
-            'recent_absences' => $this->repository->findRecentAbsences($extraWhere, $params),
-        ];
+        $statsCacheKey = 'attendance_stats_' . ($user['role_code'] ?? 'user') . '_' . ($user['iddfep'] ?? 0) . '_' . ($user['etablissement_id'] ?? 0);
+
+        return \Illuminate\Support\Facades\Cache::remember($statsCacheKey, 300, function() use ($extraWhere, $params) {
+            return [
+                'total_trainees' => $this->repository->countActive($extraWhere, $params),
+                'total_absences' => $this->repository->countAbsences($extraWhere, $params),
+                'total_warnings' => $this->repository->countWarnings($extraWhere, $params),
+                'recent_absences' => $this->repository->findRecentAbsences($extraWhere, $params),
+            ];
+        });
     }
 
     /**
@@ -403,13 +408,15 @@ class ApprenantService
 
         $stats = $this->getAbsenceDashboardStats($user);
 
-        // Calculate exact total new (S1) and continuing (S2+) trainees matching scope and filters
-        $displayedNew = $this->repository->countNewTrainees(
-            $extraWhere, $params, $sectionId, $specialiteId, $search
-        );
-        $displayedContinuing = $this->repository->countContinuingTrainees(
-            $extraWhere, $params, $sectionId, $specialiteId, $search
-        );
+        // Cache exact total new (S1) and continuing (S2+) count for 300s
+        $cacheKey = 'attendance_counts_' . ($user['role_code'] ?? 'user') . '_' . ($user['iddfep'] ?? 0) . '_' . ($user['etablissement_id'] ?? 0) . '_' . md5(serialize($filters));
+
+        [$displayedNew, $displayedContinuing] = \Illuminate\Support\Facades\Cache::remember($cacheKey, 300, function() use ($extraWhere, $params, $sectionId, $specialiteId, $search) {
+            return [
+                $this->repository->countNewTrainees($extraWhere, $params, $sectionId, $specialiteId, $search),
+                $this->repository->countContinuingTrainees($extraWhere, $params, $sectionId, $specialiteId, $search),
+            ];
+        });
 
         return [
             'sections'            => $sections,

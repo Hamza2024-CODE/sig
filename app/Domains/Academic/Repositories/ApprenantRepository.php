@@ -200,26 +200,24 @@ class ApprenantRepository
             $execParams[] = $sectionId;
         }
 
+        $joins = "
+            INNER JOIN section s ON a.IDSection = s.IDSection
+            LEFT JOIN section_semestre ss ON s.IDSection = ss.IDSection AND ss.Dernier = 1
+        ";
+
         if ($specialiteId && $specialiteId > 0) {
-            $where .= " AND o.IDSpecialite = ?";
+            $joins .= " INNER JOIN offre o ON s.IDOffre = o.IDOffre AND o.IDSpecialite = ?";
             $execParams[] = $specialiteId;
         }
 
         if (!empty($search)) {
+            $joins .= " LEFT JOIN candidat c1 ON c1.IDCandidat = a.IDCandidat";
             $where .= " AND (c1.Nom LIKE ? OR c1.Prenom LIKE ? OR c1.NumIns LIKE ? OR a.Nccp LIKE ?)";
             $term = "%{$search}%";
             array_push($execParams, $term, $term, $term, $term);
         }
 
-        $sql = "
-            SELECT COUNT(*)
-            FROM apprenant a
-            JOIN section s ON a.IDSection = s.IDSection
-            LEFT JOIN candidat c1 ON c1.IDCandidat = a.IDCandidat
-            LEFT JOIN offre o ON o.IDOffre = c1.IDOffre
-            LEFT JOIN section_semestre ss ON s.IDSection = ss.IDSection AND ss.Dernier = 1
-            {$where}
-        ";
+        $sql = "SELECT COUNT(a.IDapprenant) FROM apprenant a {$joins} {$where}";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute($execParams);
@@ -244,30 +242,27 @@ class ApprenantRepository
             $execParams[] = $sectionId;
         }
 
+        $joins = "
+            INNER JOIN section s    ON a.IDSection  = s.IDSection
+            INNER JOIN offre o      ON s.IDOffre    = o.IDOffre
+            INNER JOIN session sess ON o.IDSession = sess.IDSession
+            INNER JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
+            LEFT  JOIN apprenant_fin af ON a.IDapprenant = af.IDapprenant
+        ";
+
         if ($specialiteId && $specialiteId > 0) {
             $where .= " AND o.IDSpecialite = ?";
             $execParams[] = $specialiteId;
         }
 
         if (!empty($search)) {
+            $joins .= " LEFT JOIN candidat c1 ON c1.IDCandidat = a.IDCandidat";
             $where .= " AND (c1.Nom LIKE ? OR c1.Prenom LIKE ? OR c1.NumIns LIKE ? OR a.Nccp LIKE ?)";
             $term = "%{$search}%";
             array_push($execParams, $term, $term, $term, $term);
         }
 
-        $sql = "
-            SELECT COUNT(DISTINCT a.IDapprenant)
-            FROM apprenant a
-            JOIN section s ON a.IDSection = s.IDSection
-            LEFT JOIN candidat c1 ON c1.IDCandidat = a.IDCandidat
-            LEFT JOIN offre o ON o.IDOffre = c1.IDOffre
-            LEFT JOIN session sess ON o.IDSession = sess.IDSession
-            LEFT JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
-            LEFT JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
-            LEFT JOIN section_semestre ss ON s.IDSection = ss.IDSection AND ss.Dernier = 1
-            LEFT JOIN apprenant_fin af ON a.IDapprenant = af.IDapprenant
-            {$where}
-        ";
+        $sql = "SELECT COUNT(a.IDapprenant) FROM apprenant a {$joins} {$where}";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute($execParams);
@@ -739,7 +734,7 @@ class ApprenantRepository
     {
         $stmt = $this->db->prepare("
             SELECT ab.IDapprenant_Absence as id, ab.Date as date_absence, ab.Type, ab.Obs, ab.heure,
-                   COALESCE(c1.Nom, c2.Nom) as nom_ar, COALESCE(c1.Prenom, c2.Prenom) as prenom_ar, COALESCE(NULLIF(a.Nccp, ''), c1.NumIns, c2.NumIns) as numero_matricule,
+                   c1.Nom as nom_ar, c1.Prenom as prenom_ar, COALESCE(NULLIF(a.Nccp, ''), c1.NumIns) as numero_matricule,
                    sp.Nom as specialite_ar,
                    2.0 as duree_heures,
                    (ab.Type = 0) as est_justifiee,
@@ -750,10 +745,7 @@ class ApprenantRepository
             LEFT JOIN apprenant a ON ass.IDapprenant = a.IDapprenant
             LEFT JOIN section s ON a.IDSection = s.IDSection
             LEFT JOIN candidat c1 ON c1.IDCandidat = a.IDCandidat
-            LEFT JOIN candidat c2 ON c2.IdMihnati1 = a.IDapprenant AND c2.IDCandidat = (
-                SELECT MAX(c3.IDCandidat) FROM candidat c3 WHERE c3.IdMihnati1 = a.IDapprenant
-            )
-            LEFT JOIN offre o ON o.IDOffre = COALESCE(c1.IDOffre, c2.IDOffre)
+            LEFT JOIN offre o ON o.IDOffre = c1.IDOffre
             LEFT JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
             WHERE 1=1 {$extraWhere}
             ORDER BY ab.Date DESC
