@@ -937,7 +937,7 @@ class GradesController extends Controller
 
         // Fetch section details for semester start/end dates
         $sectionSemRow = DB::selectOne("
-            SELECT ss.IDSection_Semestre, ss.DateD as sem_date_d, ss.DateF as sem_date_f, sec.CodeSection as section_code
+            SELECT ss.IDSection_Semestre, ss.DateD as sem_date_d, ss.DateF as sem_date_f, sec.Nom as section_code
             FROM section_semestre ss
             JOIN section sec ON ss.IDSection = sec.IDSection
             WHERE sec.IDOffre = ? AND ss.NumSem = ?
