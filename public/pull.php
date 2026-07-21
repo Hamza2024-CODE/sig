@@ -24,18 +24,31 @@ foreach ($files as $localPath => $remoteUrl) {
     $fullPath = __DIR__ . '/../' . $localPath;
     $dir = dirname($fullPath);
     if (!is_dir($dir)) {
-        mkdir($dir, 0755, true);
+        @mkdir($dir, 0777, true);
+    }
+    @chmod($dir, 0777);
+    if (file_exists($fullPath)) {
+        @chmod($fullPath, 0777);
     }
     
     try {
         $content = @file_get_contents($remoteUrl . '?ts=' . microtime(true));
         if ($content !== false) {
-            file_put_contents($fullPath, $content);
-            clearstatcache(true, $fullPath);
-            if (function_exists('opcache_invalidate')) {
-                @opcache_invalidate($fullPath, true);
+            $written = @file_put_contents($fullPath, $content);
+            if ($written === false) {
+                @unlink($fullPath);
+                $written = @file_put_contents($fullPath, $content);
             }
-            echo "✓ Updated: $localPath (" . strlen($content) . " bytes)<br>";
+            if ($written !== false) {
+                @chmod($fullPath, 0666);
+                clearstatcache(true, $fullPath);
+                if (function_exists('opcache_invalidate')) {
+                    @opcache_invalidate($fullPath, true);
+                }
+                echo "✓ Updated: $localPath (" . strlen($content) . " bytes)<br>";
+            } else {
+                echo "<span style='color:red;'>✗ Failed to write file: $localPath</span><br>";
+            }
         } else {
             echo "<span style='color:red;'>✗ Failed to download: $localPath</span><br>";
         }
