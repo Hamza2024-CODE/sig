@@ -137,7 +137,7 @@ class ApprenantRepository
         if ($traineeType === 'new') {
             $where .= " AND COALESCE(ss.NumSem, 1) = 1";
         } elseif ($traineeType === 'continuing') {
-            $where .= " AND COALESCE(ss.NumSem, 1) > 1";
+            $where .= " AND af.IDapprenant IS NULL AND DATE_ADD(sess.DateD, INTERVAL COALESCE(NULLIF(sp.dureeM, 0), sp.NbrSem * 6, 24) MONTH) >= CURRENT_DATE()";
         }
 
         if (!empty($search)) {
@@ -167,9 +167,11 @@ class ApprenantRepository
             LEFT JOIN section s ON a.IDSection = s.IDSection
             LEFT JOIN candidat c1 ON c1.IDCandidat = a.IDCandidat
             LEFT JOIN offre o ON o.IDOffre = c1.IDOffre
+            LEFT JOIN session sess ON o.IDSession = sess.IDSession
             LEFT JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
             LEFT JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
             LEFT JOIN section_semestre ss ON s.IDSection = ss.IDSection AND ss.Dernier = 1
+            LEFT JOIN apprenant_fin af ON a.IDapprenant = af.IDapprenant
             {$where}
             ORDER BY COALESCE(ss.NumSem, 1) ASC, c1.Nom ASC, c1.Prenom ASC
             LIMIT {$limit}
@@ -234,7 +236,7 @@ class ApprenantRepository
         ?int $specialiteId = null,
         ?string $search = null
     ): int {
-        $where = "WHERE a.statut = 'actif' AND COALESCE(ss.NumSem, 1) > 1 {$extraWhere}";
+        $where = "WHERE a.statut = 'actif' AND af.IDapprenant IS NULL AND DATE_ADD(sess.DateD, INTERVAL COALESCE(NULLIF(sp.dureeM, 0), sp.NbrSem * 6, 24) MONTH) >= CURRENT_DATE() {$extraWhere}";
         $execParams = $params;
 
         if ($sectionId && $sectionId > 0) {
@@ -254,12 +256,16 @@ class ApprenantRepository
         }
 
         $sql = "
-            SELECT COUNT(*)
+            SELECT COUNT(DISTINCT a.IDapprenant)
             FROM apprenant a
             JOIN section s ON a.IDSection = s.IDSection
             LEFT JOIN candidat c1 ON c1.IDCandidat = a.IDCandidat
             LEFT JOIN offre o ON o.IDOffre = c1.IDOffre
+            LEFT JOIN session sess ON o.IDSession = sess.IDSession
+            LEFT JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
+            LEFT JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
             LEFT JOIN section_semestre ss ON s.IDSection = ss.IDSection AND ss.Dernier = 1
+            LEFT JOIN apprenant_fin af ON a.IDapprenant = af.IDapprenant
             {$where}
         ";
 
