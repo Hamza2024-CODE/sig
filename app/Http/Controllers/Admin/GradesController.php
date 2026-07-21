@@ -908,9 +908,9 @@ class GradesController extends Controller
                        WHEN s.NbrSem = 1 THEN 'Qualifiant'
                        ELSE 'CAP'
                    END as diplome_vise,
-                   e.IDetablissement as etablissement_id, e.Nom as etab_ar, e.NomFr as etab_fr,
+                   o.IDEts_Form as etablissement_id, e.IDDFEP as dfep_id, e.Nom as etab_ar, e.NomFr as etab_fr,
                    w.Nom as wilaya_ar, w.NomFr as wilaya_fr,
-                   o.IDMode_formation as mode_id, mf.Nom as mode_ar,
+                   o.IDMode_formation as mode_id, o.IDMode_formation as mode_formation, mf.Nom as mode_ar,
                    o.DateD as date_debut, o.DateF as date_fin
             FROM offre o
             JOIN specialite s ON o.IDSpecialite = s.IDSpecialite
