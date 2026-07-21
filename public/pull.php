@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 echo "<h1>Auto-Updating All Modified Files...</h1>";
 
 $files = [
+    'app/Http/Controllers/Admin/ModulesController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/ModulesController.php',
     'app/Domains/Academic/Services/OffresService.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Domains/Academic/Services/OffresService.php',
     'app/Services/ReferenceCache.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Services/ReferenceCache.php',
     'app/Http/Controllers/Evaluation/EvaluationController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Evaluation/EvaluationController.php',
