@@ -110,7 +110,7 @@ $titleSuffix = ($type === 'apres') ? '-بعد الاستدراك-' : '-قبل ا
     width: 7%;
 }
 
-/* Jury Table */
+/* Jury Table & Inputs */
 .pv-table-jury {
     width: 100%;
     border-collapse: collapse;
@@ -119,7 +119,7 @@ $titleSuffix = ($type === 'apres') ? '-بعد الاستدراك-' : '-قبل ا
 }
 .pv-table-jury th, .pv-table-jury td {
     border: 1px solid #000;
-    padding: 5px 6px;
+    padding: 3px 4px;
     text-align: center;
 }
 .pv-table-jury th {
@@ -128,6 +128,39 @@ $titleSuffix = ($type === 'apres') ? '-بعد الاستدراك-' : '-قبل ا
 }
 .pv-table-jury tr {
     height: 28px;
+}
+
+.jury-input {
+    width: 100%;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    padding: 3px 6px;
+    font-family: 'Cairo', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: #0f172a;
+    background: #fff;
+    box-sizing: border-box;
+}
+.jury-input.jury-func {
+    text-align: right;
+}
+.jury-input.jury-role, .jury-input.jury-name {
+    text-align: center;
+}
+
+@media print {
+    .jury-input {
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        font-size: 11px !important;
+        font-weight: 800 !important;
+        color: #000 !important;
+        appearance: none !important;
+        -webkit-appearance: none !important;
+    }
 }
 
 .sign-president {
@@ -361,25 +394,50 @@ $titleSuffix = ($type === 'apres') ? '-بعد الاستدراك-' : '-قبل ا
         </tbody>
     </table>
 
+    <!-- Editable Jury Members Controls (Hidden when printing) -->
+    <div style="margin: 14px 0 6px; display:flex; justify-content:space-between; align-items:center;" class="no-print">
+        <span style="font-size:0.85rem; font-weight:800; color:#0f172a;">
+            ✏️ أعضاء لجنة المداولات (حقول قابلة للتعديل والكتابة المباشرة قبل الطباعة):
+        </span>
+        <div style="display:flex; gap:6px;">
+            <button type="button" onclick="addJuryRow()" class="btn btn-sm btn-outline-primary" style="font-size:0.75rem; padding:2px 10px; font-weight:700;">
+                ➕ إضافة عضو لجنة
+            </button>
+            <button type="button" onclick="clearJuryFields()" class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem; padding:2px 10px; font-weight:700;">
+                🧹 تفريغ الأسماء لملئها
+            </button>
+        </div>
+    </div>
+
     <!-- Jury Members Table -->
-    <table class="pv-table-jury">
+    <table class="pv-table-jury" id="juryTable">
         <thead>
             <tr>
-                <th style="width: 6%;">الرقم</th>
+                <th style="width: 5%;">الرقم</th>
                 <th style="width: 32%;">اللقب و الاسم</th>
                 <th style="width: 38%;">الرتبة و الوظيفة</th>
-                <th style="width: 12%;">الصفة</th>
-                <th style="width: 12%;">الملاحظة و الامضاء</th>
+                <th style="width: 11%;">الصفة</th>
+                <th style="width: 11%;">الملاحظة و الامضاء</th>
+                <th style="width: 3%;" class="no-print"></th>
             </tr>
         </thead>
-        <tbody>
+        <tbody id="juryTableBody">
             <?php foreach ($juryMembers as $idx => $m): ?>
                 <tr>
-                    <td><?= $idx + 1 ?></td>
-                    <td><?= htmlspecialchars($m['nom_complet']) ?></td>
-                    <td style="text-align:right; padding-right:8px;"><?= htmlspecialchars($m['fonction']) ?></td>
-                    <td><?= htmlspecialchars($m['role']) ?></td>
+                    <td class="row-num"><?= $idx + 1 ?></td>
+                    <td>
+                        <input type="text" class="jury-input jury-name" value="<?= htmlspecialchars($m['nom_complet']) ?>" placeholder="اللقب والاسم">
+                    </td>
+                    <td>
+                        <input type="text" class="jury-input jury-func" value="<?= htmlspecialchars($m['fonction']) ?>" placeholder="الرتبة والوظيفة">
+                    </td>
+                    <td>
+                        <input type="text" class="jury-input jury-role" value="<?= htmlspecialchars($m['role']) ?>" placeholder="الصفة">
+                    </td>
                     <td></td>
+                    <td class="no-print text-center">
+                        <button type="button" onclick="deleteJuryRow(this)" style="border:none;background:none;color:#ef4444;font-weight:bold;cursor:pointer;" title="حذف العضو">×</button>
+                    </td>
                 </tr>
             <?php endforeach; ?>
         </tbody>
@@ -462,4 +520,50 @@ $titleSuffix = ($type === 'apres') ? '-بعد الاستدراك-' : '-قبل ا
         <div>مدير (ة) المؤسسة</div>
     </div>
 </div>
+
+<script>
+function addJuryRow() {
+    const tbody = document.getElementById('juryTableBody');
+    const rowCount = tbody.rows.length + 1;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+        <td class="row-num">${rowCount}</td>
+        <td><input type="text" class="jury-input jury-name" value="" placeholder="اللقب والاسم"></td>
+        <td><input type="text" class="jury-input jury-func" value="أستاذ متخصص في التكوين و التعليم المهنيين" placeholder="الرتبة والوظيفة"></td>
+        <td><input type="text" class="jury-input jury-role" value="عضو" placeholder="الصفة"></td>
+        <td></td>
+        <td class="no-print text-center">
+            <button type="button" onclick="deleteJuryRow(this)" style="border:none;background:none;color:#ef4444;font-weight:bold;cursor:pointer;" title="حذف العضو">×</button>
+        </td>
+    `;
+    tbody.appendChild(tr);
+    reindexJuryRows();
+}
+
+function deleteJuryRow(btn) {
+    const row = btn.closest('tr');
+    if (row) {
+        row.remove();
+        reindexJuryRows();
+    }
+}
+
+function reindexJuryRows() {
+    const rows = document.querySelectorAll('#juryTableBody tr');
+    rows.forEach((r, idx) => {
+        const numTd = r.querySelector('.row-num');
+        if (numTd) numTd.textContent = idx + 1;
+    });
+}
+
+function clearJuryFields() {
+    if (confirm('هل أنت تأكد من رغبتك في تفريغ أسماء وحقول أعضاء اللجنة لملئها يدوياً؟')) {
+        document.querySelectorAll('.jury-input').forEach(input => {
+            if (!input.classList.contains('jury-role')) {
+                input.value = '';
+            }
+        });
+    }
+}
+</script>
 @endsection

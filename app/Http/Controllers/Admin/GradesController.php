@@ -1159,13 +1159,19 @@ class GradesController extends Controller
             }
         }
 
-        if (count($juryMembers) < 4) {
-            foreach ($teachers as $t) {
-                if (count($juryMembers) >= 8) break;
-                if (!in_array($t['nom_complet'], array_column($juryMembers, 'nom_complet'))) {
-                    $juryMembers[] = $t;
-                }
+        foreach ($teachers as $t) {
+            if (count($juryMembers) >= 8) break;
+            if (!in_array($t['nom_complet'], array_column($juryMembers, 'nom_complet'))) {
+                $juryMembers[] = $t;
             }
+        }
+
+        while (count($juryMembers) < 8) {
+            $juryMembers[] = [
+                'nom_complet' => '',
+                'fonction' => 'أستاذ متخصص في التكوين و التعليم المهنيين مكلف بالهندسة البيداغوجية',
+                'role' => 'عضو'
+            ];
         }
 
         return $this->render('admin/modules/pv_print', [
