@@ -1234,11 +1234,11 @@ class ModulesController extends Controller {
         if ($etabFilterId > 0) {
             $efClauses[] = "ef.IDetablissement = " . $etabFilterId;
         }
-        $efClauses[] = "(ef.activee = 1 OR ef.activee IS NULL) AND (ef.IDEtablissement_Enservice = 1 OR ef.IDEtablissement_Enservice IS NULL)";
+        $efClauses[] = "(ef.IDEtablissement_Enservice != 2 OR ef.IDEtablissement_Enservice IS NULL) AND ef.IDetablissement != 1323 AND ef.Nom NOT LIKE '%الياسين%'";
         $efWhere = implode(' AND ', $efClauses);
 
         // Secure cache key using role scope configurations
-        $cacheKey = 'reconduits_data_' . $scope['role'] . '_' . $scope['iddfep'] . '_' . $scope['etabId'] . '_' . md5($ofWhere . $efWhere . serialize($params));
+        $cacheKey = 'reconduits_data_v2_' . $scope['role'] . '_' . $scope['iddfep'] . '_' . $scope['etabId'] . '_' . md5($ofWhere . $efWhere . serialize($params));
         $error = null;
 
         try {
@@ -1257,6 +1257,7 @@ class ModulesController extends Controller {
                     FROM apprenant a
                     INNER JOIN section s   ON a.IDSection  = s.IDSection
                     INNER JOIN offre o     ON s.IDOffre    = o.IDOffre
+                    INNER JOIN etablissement ef ON o.IDEts_Form = ef.IDetablissement
                     INNER JOIN session sess ON o.IDSession = sess.IDSession
                     INNER JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
                     LEFT  JOIN candidat c  ON a.IDCandidat = c.IDCandidat
@@ -1265,6 +1266,7 @@ class ModulesController extends Controller {
                       AND af.IDapprenant IS NULL
                       AND DATE_ADD(sess.DateD, INTERVAL COALESCE(NULLIF(sp.dureeM, 0), sp.NbrSem * 6, 24) MONTH) >= CURRENT_DATE()
                       AND $ofWhere
+                      AND $efWhere
                 ");
                 $stmtT->execute($params);
                 $row = $stmtT->fetch(PDO::FETCH_ASSOC);
@@ -1281,8 +1283,10 @@ class ModulesController extends Controller {
                         JOIN apprenant a ON ass.IDapprenant = a.IDapprenant
                         JOIN section s ON a.IDSection = s.IDSection
                         JOIN offre o ON s.IDOffre = o.IDOffre
+                        JOIN etablissement ef ON o.IDEts_Form = ef.IDetablissement
                         WHERE ass.IDDecision_evals = 8
                           AND $ofWhere
+                          AND $efWhere
                     ");
                     $stmtExp->execute($params);
                     $stats['mafsouls'] = (int)$stmtExp->fetchColumn();
@@ -1294,8 +1298,10 @@ class ModulesController extends Controller {
                         JOIN apprenant a ON ass.IDapprenant = a.IDapprenant
                         JOIN section s ON a.IDSection = s.IDSection
                         JOIN offre o ON s.IDOffre = o.IDOffre
+                        JOIN etablissement ef ON o.IDEts_Form = ef.IDetablissement
                         WHERE ass.IDDecision_evals = 4
                           AND $ofWhere
+                          AND $efWhere
                     ");
                     $stmtFail->execute($params);
                     $stats['rasiboun'] = (int)$stmtFail->fetchColumn();
@@ -1307,8 +1313,10 @@ class ModulesController extends Controller {
                         JOIN apprenant a ON ass.IDapprenant = a.IDapprenant
                         JOIN section s ON a.IDSection = s.IDSection
                         JOIN offre o ON s.IDOffre = o.IDOffre
+                        JOIN etablissement ef ON o.IDEts_Form = ef.IDetablissement
                         WHERE ass.IDDecision_evals = 2
                           AND $ofWhere
+                          AND $efWhere
                     ");
                     $stmtRem->execute($params);
                     $stats['mostadraks'] = (int)$stmtRem->fetchColumn();
