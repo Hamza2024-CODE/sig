@@ -162,15 +162,10 @@
                     <tbody>
                         <?php if (empty($list)): ?>
                             <tr>
-                                <td class="ps-4">
-                                    <div class="fw-bold text-dark">بن علي عبد الرحمن</div>
-                                    <div class="text-muted small">رقم: 20261234</div>
-                                </td>
-                                <td>مطور الويب والوسائط المتعددة</td>
-                                <td class="text-center"><span class="badge bg-primary rounded-pill px-3 py-1">السداسي الثالث</span></td>
-                                <td class="text-center fw-bold text-success fs-5">16.85</td>
-                                <td class="pe-4 text-end">
-                                    <span class="badge bg-warning text-dark rounded-pill px-3 py-2"><i class="fa-solid fa-trophy me-1"></i> الأول على الدفعة</span>
+                                <td colspan="5" class="text-center py-5 text-muted">
+                                    <i class="fa-solid fa-user-graduate d-block mb-3" style="font-size: 3rem; opacity: 0.3;"></i>
+                                    <div class="fw-bold text-dark fs-6">لا توجد نتائج تقييم مسجلة لهذه المؤسسة / المعايير المختارة</div>
+                                    <div class="small text-muted mt-1">يرجى تغيير خيارات التصفية أعلاه لعرض النتائج.</div>
                                 </td>
                             </tr>
                         <?php else: ?>

@@ -90,15 +90,10 @@
                     <tbody>
                         <?php if (empty($list)): ?>
                             <tr>
-                                <td class="ps-4">
-                                    <div class="fw-bold text-dark">قسم مطور الويب والوسائط المتعددة - د5</div>
-                                    <div class="text-muted small">رئيس اللجنة: أ. بن عيسى خديجة | مؤطر: أ. طويل عبد القادر</div>
-                                </td>
-                                <td>مطور الويب والوسائط المتعددة (معهد سعيدة)</td>
-                                <td class="text-center fw-bold text-primary">دورة فيفري 2026</td>
-                                <td class="text-center fw-bold text-success fs-5">18.5 / 20</td>
-                                <td class="pe-4 text-end">
-                                    <span class="badge bg-success rounded-pill px-3 py-2">معدل النجاح: 100% (25/25 متربص)</span>
+                                <td colspan="5" class="text-center py-5 text-muted">
+                                    <i class="fa-solid fa-clipboard-list d-block mb-3" style="font-size: 3rem; opacity: 0.3;"></i>
+                                    <div class="fw-bold text-dark fs-6">لا توجد محاضر تقييم مسجلة لهذه المؤسسة / المعايير المختارة</div>
+                                    <div class="small text-muted mt-1">يرجى تغيير خيارات التصفية أعلاه لعرض التقارير المتاحة.</div>
                                 </td>
                             </tr>
                         <?php else: ?>

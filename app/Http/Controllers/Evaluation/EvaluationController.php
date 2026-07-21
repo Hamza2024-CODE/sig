@@ -55,12 +55,14 @@ class EvaluationController extends Controller {
         $selectedYear = request('filter_year') ? (int)request('filter_year') : null;
 
         if ($selectedWilaya > 0) {
-            $conditions[] = "{$sectionAlias}.IDEts_Form IN (SELECT IDetablissement FROM etablissement WHERE IDDFEP = ?)";
+            $conditions[] = "({$sectionAlias}.IDEts_Form IN (SELECT IDetablissement FROM etablissement WHERE IDDFEP = ?) OR {$sectionAlias}.IDOffre IN (SELECT IDOffre FROM offre WHERE IDEts_Form IN (SELECT IDetablissement FROM etablissement WHERE IDDFEP = ?)))";
+            $params[] = $selectedWilaya;
             $params[] = $selectedWilaya;
         }
 
         if ($selectedEtab > 0) {
-            $conditions[] = "{$sectionAlias}.IDEts_Form = ?";
+            $conditions[] = "({$sectionAlias}.IDEts_Form = ? OR {$sectionAlias}.IDOffre IN (SELECT IDOffre FROM offre WHERE IDEts_Form = ?))";
+            $params[] = $selectedEtab;
             $params[] = $selectedEtab;
         }
 
@@ -557,7 +559,7 @@ class EvaluationController extends Controller {
                     LEFT JOIN session sess ON s.IDSession = sess.IDSession
                     LEFT JOIN offre o ON s.IDOffre = o.IDOffre
                     LEFT JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
-                    LEFT JOIN etablissement e ON o.IDEts_Form = e.IDetablissement
+                    LEFT JOIN etablissement e ON e.IDetablissement = COALESCE(NULLIF(s.IDEts_Form, 0), o.IDEts_Form)
                     WHERE $filter
                     ORDER BY af.IDApprenant_Fin DESC
                     LIMIT 100

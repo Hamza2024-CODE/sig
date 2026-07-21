@@ -162,22 +162,17 @@
                     <tbody>
                         <?php if (empty($list)): ?>
                             <tr>
-                                <td class="ps-4">
-                                    <div class="fw-bold text-dark">المعهد الوطني المتخصص سعيدة</div>
-                                    <div class="text-muted small">عماري قادة</div>
-                                </td>
-                                <td>مطور الويب والوسائط المتعددة (BTS)</td>
-                                <td class="text-center fw-bold text-primary">2026-05-15</td>
-                                <td class="text-center">اللجنة الولائية الكبرى + 4 خبراء</td>
-                                <td class="pe-4 text-end">
-                                    <span class="badge bg-success rounded-pill px-3 py-2"><i class="fa-solid fa-lock me-1"></i> مغلق ومصادق عليه</span>
+                                <td colspan="5" class="text-center py-5 text-muted">
+                                    <i class="fa-solid fa-folder-open d-block mb-3" style="font-size: 3rem; opacity: 0.3;"></i>
+                                    <div class="fw-bold text-dark fs-6">لا توجد محاضر مداولات نهائية مسجلة لهذه المؤسسة / المعايير المختارة</div>
+                                    <div class="small text-muted mt-1">يرجى اختيار مؤسسة أو سنة دورة أخرى لعرض المداولات المتاحة.</div>
                                 </td>
                             </tr>
                         <?php else: ?>
                             <?php foreach ($list as $item): ?>
                                 <tr>
                                     <td class="ps-4">
-                                        <div class="fw-bold text-dark"><?= htmlspecialchars($item['etab_nom'] ?? 'المعهد الوطني المتخصص سعيدة') ?></div>
+                                        <div class="fw-bold text-dark"><?= htmlspecialchars($item['etab_nom'] ?? 'مؤسسة تكوينية') ?></div>
                                         <div class="text-muted small">رقم المحضر: <?= htmlspecialchars($item['numero_pv'] ?? 'PV-2026-104') ?></div>
                                     </td>
                                     <td><?= htmlspecialchars($item['spec_ar']) ?> (<?= htmlspecialchars($item['code_session'] ?? 'FEB-2026') ?>)</td>

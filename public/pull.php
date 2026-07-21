@@ -21,7 +21,11 @@ $files = [
     'app/Http/Controllers/Admin/AbsencesController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/AbsencesController.php',
     'app/Domains/Academic/Services/ApprenantService.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Domains/Academic/Services/ApprenantService.php',
     'app/Domains/Academic/Repositories/ApprenantRepository.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Domains/Academic/Repositories/ApprenantRepository.php',
-    'resources/views/admin/absences/index.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/absences/index.blade.php'
+    'resources/views/admin/absences/index.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/absences/index.blade.php',
+    'app/Http/Controllers/Evaluation/EvaluationController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Evaluation/EvaluationController.php',
+    'resources/views/admin/modules/eval_finale.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/modules/eval_finale.blade.php',
+    'resources/views/admin/modules/eval_stagiaires.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/modules/eval_stagiaires.blade.php',
+    'resources/views/admin/modules/gestion_evaluations.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/modules/gestion_evaluations.blade.php'
 ];
 
 foreach ($files as $localPath => $remoteUrl) {
