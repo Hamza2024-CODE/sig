@@ -183,7 +183,7 @@ class ApprenantRepository
     }
 
     /**
-     * Count new (S1) active trainees — role and filter-scoped.
+     * Count new (S1) active trainees — role and filter-scoped within active Reconduits.
      */
     public function countNewTrainees(
         string $extraWhere,
@@ -192,49 +192,7 @@ class ApprenantRepository
         ?int $specialiteId = null,
         ?string $search = null
     ): int {
-        $where = "WHERE a.statut = 'actif' AND COALESCE(ss.NumSem, 1) = 1 {$extraWhere}";
-        $execParams = $params;
-
-        if ($sectionId && $sectionId > 0) {
-            $where .= " AND a.IDSection = ?";
-            $execParams[] = $sectionId;
-        }
-
-        $joins = "
-            INNER JOIN section s ON a.IDSection = s.IDSection
-            LEFT JOIN section_semestre ss ON s.IDSection = ss.IDSection AND ss.Dernier = 1
-        ";
-
-        if ($specialiteId && $specialiteId > 0) {
-            $joins .= " INNER JOIN offre o ON s.IDOffre = o.IDOffre AND o.IDSpecialite = ?";
-            $execParams[] = $specialiteId;
-        }
-
-        if (!empty($search)) {
-            $joins .= " LEFT JOIN candidat c1 ON c1.IDCandidat = a.IDCandidat";
-            $where .= " AND (c1.Nom LIKE ? OR c1.Prenom LIKE ? OR c1.NumIns LIKE ? OR a.Nccp LIKE ?)";
-            $term = "%{$search}%";
-            array_push($execParams, $term, $term, $term, $term);
-        }
-
-        $sql = "SELECT COUNT(a.IDapprenant) FROM apprenant a {$joins} {$where}";
-
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute($execParams);
-        return (int)$stmt->fetchColumn();
-    }
-
-    /**
-     * Count continuing (S2+) active trainees — role and filter-scoped.
-     */
-    public function countContinuingTrainees(
-        string $extraWhere,
-        array $params,
-        ?int $sectionId = null,
-        ?int $specialiteId = null,
-        ?string $search = null
-    ): int {
-        $where = "WHERE a.statut = 'actif' AND af.IDapprenant IS NULL AND DATE_ADD(sess.DateD, INTERVAL COALESCE(NULLIF(sp.dureeM, 0), sp.NbrSem * 6, 24) MONTH) >= CURRENT_DATE() {$extraWhere}";
+        $where = "WHERE a.statut = 'actif' AND af.IDapprenant IS NULL AND COALESCE(ss.NumSem, 1) = 1 AND DATE_ADD(sess.DateD, INTERVAL COALESCE(NULLIF(sp.dureeM, 0), sp.NbrSem * 6, 24) MONTH) >= CURRENT_DATE() {$extraWhere}";
         $execParams = $params;
 
         if ($sectionId && $sectionId > 0) {
@@ -247,6 +205,7 @@ class ApprenantRepository
             INNER JOIN offre o      ON s.IDOffre    = o.IDOffre
             INNER JOIN session sess ON o.IDSession = sess.IDSession
             INNER JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
+            LEFT  JOIN section_semestre ss ON s.IDSection = ss.IDSection AND ss.Dernier = 1
             LEFT  JOIN apprenant_fin af ON a.IDapprenant = af.IDapprenant
         ";
 
@@ -262,7 +221,53 @@ class ApprenantRepository
             array_push($execParams, $term, $term, $term, $term);
         }
 
-        $sql = "SELECT COUNT(a.IDapprenant) FROM apprenant a {$joins} {$where}";
+        $sql = "SELECT COUNT(DISTINCT a.IDapprenant) FROM apprenant a {$joins} {$where}";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($execParams);
+        return (int)$stmt->fetchColumn();
+    }
+
+    /**
+     * Count continuing (S2+) active trainees — role and filter-scoped within active Reconduits.
+     */
+    public function countContinuingTrainees(
+        string $extraWhere,
+        array $params,
+        ?int $sectionId = null,
+        ?int $specialiteId = null,
+        ?string $search = null
+    ): int {
+        $where = "WHERE a.statut = 'actif' AND af.IDapprenant IS NULL AND COALESCE(ss.NumSem, 1) > 1 AND DATE_ADD(sess.DateD, INTERVAL COALESCE(NULLIF(sp.dureeM, 0), sp.NbrSem * 6, 24) MONTH) >= CURRENT_DATE() {$extraWhere}";
+        $execParams = $params;
+
+        if ($sectionId && $sectionId > 0) {
+            $where .= " AND a.IDSection = ?";
+            $execParams[] = $sectionId;
+        }
+
+        $joins = "
+            INNER JOIN section s    ON a.IDSection  = s.IDSection
+            INNER JOIN offre o      ON s.IDOffre    = o.IDOffre
+            INNER JOIN session sess ON o.IDSession = sess.IDSession
+            INNER JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
+            LEFT  JOIN section_semestre ss ON s.IDSection = ss.IDSection AND ss.Dernier = 1
+            LEFT  JOIN apprenant_fin af ON a.IDapprenant = af.IDapprenant
+        ";
+
+        if ($specialiteId && $specialiteId > 0) {
+            $where .= " AND o.IDSpecialite = ?";
+            $execParams[] = $specialiteId;
+        }
+
+        if (!empty($search)) {
+            $joins .= " LEFT JOIN candidat c1 ON c1.IDCandidat = a.IDCandidat";
+            $where .= " AND (c1.Nom LIKE ? OR c1.Prenom LIKE ? OR c1.NumIns LIKE ? OR a.Nccp LIKE ?)";
+            $term = "%{$search}%";
+            array_push($execParams, $term, $term, $term, $term);
+        }
+
+        $sql = "SELECT COUNT(DISTINCT a.IDapprenant) FROM apprenant a {$joins} {$where}";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute($execParams);
@@ -675,10 +680,17 @@ class ApprenantRepository
     public function countActive(string $extraWhere, array $params): int
     {
         $stmt = $this->db->prepare("
-            SELECT COUNT(*)
+            SELECT COUNT(DISTINCT a.IDapprenant)
             FROM apprenant a
-            JOIN section s ON a.IDSection = s.IDSection
-            WHERE a.statut = 'actif' {$extraWhere}
+            INNER JOIN section s    ON a.IDSection   = s.IDSection
+            INNER JOIN offre o      ON s.IDOffre     = o.IDOffre
+            INNER JOIN session sess ON o.IDSession  = sess.IDSession
+            INNER JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
+            LEFT  JOIN apprenant_fin af ON a.IDapprenant = af.IDapprenant
+            WHERE a.statut = 'actif'
+              AND af.IDapprenant IS NULL
+              AND DATE_ADD(sess.DateD, INTERVAL COALESCE(NULLIF(sp.dureeM, 0), sp.NbrSem * 6, 24) MONTH) >= CURRENT_DATE()
+              {$extraWhere}
         ");
         $stmt->execute($params);
         return (int)$stmt->fetchColumn();
