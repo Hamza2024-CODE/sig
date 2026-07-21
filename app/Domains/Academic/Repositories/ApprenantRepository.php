@@ -181,6 +181,94 @@ class ApprenantRepository
     }
 
     /**
+     * Count new (S1) active trainees — role and filter-scoped.
+     */
+    public function countNewTrainees(
+        string $extraWhere,
+        array $params,
+        ?int $sectionId = null,
+        ?int $specialiteId = null,
+        ?string $search = null
+    ): int {
+        $where = "WHERE a.statut = 'actif' AND COALESCE(ss.NumSem, 1) = 1 {$extraWhere}";
+        $execParams = $params;
+
+        if ($sectionId && $sectionId > 0) {
+            $where .= " AND a.IDSection = ?";
+            $execParams[] = $sectionId;
+        }
+
+        if ($specialiteId && $specialiteId > 0) {
+            $where .= " AND o.IDSpecialite = ?";
+            $execParams[] = $specialiteId;
+        }
+
+        if (!empty($search)) {
+            $where .= " AND (c1.Nom LIKE ? OR c1.Prenom LIKE ? OR c1.NumIns LIKE ? OR a.Nccp LIKE ?)";
+            $term = "%{$search}%";
+            array_push($execParams, $term, $term, $term, $term);
+        }
+
+        $sql = "
+            SELECT COUNT(*)
+            FROM apprenant a
+            JOIN section s ON a.IDSection = s.IDSection
+            LEFT JOIN candidat c1 ON c1.IDCandidat = a.IDCandidat
+            LEFT JOIN offre o ON o.IDOffre = c1.IDOffre
+            LEFT JOIN section_semestre ss ON s.IDSection = ss.IDSection AND ss.Dernier = 1
+            {$where}
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($execParams);
+        return (int)$stmt->fetchColumn();
+    }
+
+    /**
+     * Count continuing (S2+) active trainees — role and filter-scoped.
+     */
+    public function countContinuingTrainees(
+        string $extraWhere,
+        array $params,
+        ?int $sectionId = null,
+        ?int $specialiteId = null,
+        ?string $search = null
+    ): int {
+        $where = "WHERE a.statut = 'actif' AND COALESCE(ss.NumSem, 1) > 1 {$extraWhere}";
+        $execParams = $params;
+
+        if ($sectionId && $sectionId > 0) {
+            $where .= " AND a.IDSection = ?";
+            $execParams[] = $sectionId;
+        }
+
+        if ($specialiteId && $specialiteId > 0) {
+            $where .= " AND o.IDSpecialite = ?";
+            $execParams[] = $specialiteId;
+        }
+
+        if (!empty($search)) {
+            $where .= " AND (c1.Nom LIKE ? OR c1.Prenom LIKE ? OR c1.NumIns LIKE ? OR a.Nccp LIKE ?)";
+            $term = "%{$search}%";
+            array_push($execParams, $term, $term, $term, $term);
+        }
+
+        $sql = "
+            SELECT COUNT(*)
+            FROM apprenant a
+            JOIN section s ON a.IDSection = s.IDSection
+            LEFT JOIN candidat c1 ON c1.IDCandidat = a.IDCandidat
+            LEFT JOIN offre o ON o.IDOffre = c1.IDOffre
+            LEFT JOIN section_semestre ss ON s.IDSection = ss.IDSection AND ss.Dernier = 1
+            {$where}
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($execParams);
+        return (int)$stmt->fetchColumn();
+    }
+
+    /**
      * Memory-safe Generator for streaming large trainee datasets to ReportingService.
      * Fetches data in chunks of $chunkSize rows — peak RAM = O(chunkSize).
      *

@@ -404,16 +404,13 @@ class ApprenantService
 
         $stats = $this->getAbsenceDashboardStats($user);
 
-        // Calculate counts for currently displayed trainees
-        $displayedNew = 0;
-        $displayedContinuing = 0;
-        foreach ($trainees as $t) {
-            if (($t['type_statut'] ?? '') === 'جديد' || (int)($t['num_semestre'] ?? 1) === 1) {
-                $displayedNew++;
-            } else {
-                $displayedContinuing++;
-            }
-        }
+        // Calculate exact total new (S1) and continuing (S2+) trainees matching scope and filters
+        $displayedNew = $this->repository->countNewTrainees(
+            $extraWhere, $params, $sectionId, $specialiteId, $search
+        );
+        $displayedContinuing = $this->repository->countContinuingTrainees(
+            $extraWhere, $params, $sectionId, $specialiteId, $search
+        );
 
         return [
             'sections'            => $sections,
