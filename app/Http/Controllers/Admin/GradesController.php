@@ -1160,7 +1160,7 @@ class GradesController extends Controller
             }
         }
 
-        return $this->render('admin/grades/pv_print', [
+        return $this->render('admin/modules/pv_print', [
             'offre' => $offre,
             'semestre' => $semestre,
             'type' => $type,
