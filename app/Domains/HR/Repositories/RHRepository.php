@@ -14,13 +14,19 @@ class RHRepository
         $this->db = Database::getInstance()->getConnection();
     }
 
-    private function etabScope(int $etabId, int $dfepId, string $col = 'e.IDetablissement'): array
+    private function etabScope(int $etabId, int $dfepId, string $col = 'IDetablissement', bool $checkFormEtab = false): array
     {
         if ($etabId > 0) {
-            return [["($col = ? OR e.IDEts_Form = ?)"], [$etabId, $etabId]];
+            if ($checkFormEtab) {
+                return [["($col = ? OR e.IDEts_Form = ?)"], [$etabId, $etabId]];
+            }
+            return [["$col = ?"], [$etabId]];
         }
         if ($dfepId > 0) {
-            return [["($col IN (SELECT IDetablissement FROM etablissement WHERE IDDFEP = ?) OR e.IDEts_Form IN (SELECT IDetablissement FROM etablissement WHERE IDDFEP = ?))"], [$dfepId, $dfepId]];
+            if ($checkFormEtab) {
+                return [["($col IN (SELECT IDetablissement FROM etablissement WHERE IDDFEP = ?) OR e.IDEts_Form IN (SELECT IDetablissement FROM etablissement WHERE IDDFEP = ?))"], [$dfepId, $dfepId]];
+            }
+            return [["$col IN (SELECT IDetablissement FROM etablissement WHERE IDDFEP = ?)"], [$dfepId]];
         }
         return [[], []];
     }
@@ -33,7 +39,7 @@ class RHRepository
 
     public function getPersonnel(int $etabId, int $dfepId = 0): array
     {
-        [$conds, $params] = $this->etabScope($etabId, $dfepId, 'e.IDetablissement');
+        [$conds, $params] = $this->etabScope($etabId, $dfepId, 'e.IDetablissement', true);
         $where = $conds ? 'AND ' . implode(' AND ', $conds) : '';
         $sql = "
             SELECT e.IDEncadrement as id, e.Nom as nom, e.Prenom as prenom, e.Specialite as specialite,
@@ -60,7 +66,7 @@ class RHRepository
     /** Returns the REAL total count (ignores LIMIT used in getPersonnel) */
     public function getPersonnelCount(int $etabId, int $dfepId = 0): int
     {
-        [$conds, $params] = $this->etabScope($etabId, $dfepId, 'e.IDetablissement');
+        [$conds, $params] = $this->etabScope($etabId, $dfepId, 'e.IDetablissement', true);
         $where = $conds ? 'AND ' . implode(' AND ', $conds) : '';
         $sql = "SELECT COUNT(*) FROM encadrement e WHERE 1=1 $where";
         return (int) $this->execScope($sql, $params)->fetchColumn();
@@ -96,7 +102,7 @@ class RHRepository
 
     public function getRecrutements(int $etabId, int $dfepId = 0): array
     {
-        [$conds, $params] = $this->etabScope($etabId, $dfepId, 'e.IDetablissement');
+        [$conds, $params] = $this->etabScope($etabId, $dfepId, 'e.IDetablissement', true);
         $where = $conds ? 'AND ' . implode(' AND ', $conds) : '';
         $sql = "
             SELECT e.IDEncadrement as id, e.Nom as nom, e.Prenom as prenom, e.Daterecr as date_recrutement,
@@ -112,7 +118,7 @@ class RHRepository
 
     public function getFormations(int $etabId, int $dfepId = 0): array
     {
-        [$conds, $params] = $this->etabScope($etabId, $dfepId, 'e.IDetablissement');
+        [$conds, $params] = $this->etabScope($etabId, $dfepId, 'e.IDetablissement', true);
         $where = $conds ? 'AND ' . implode(' AND ', $conds) : '';
         $sql = "
             SELECT s.IDStagePerfectionnemnt as id, e.Nom as nom, e.Prenom as prenom,
