@@ -97,9 +97,6 @@ class OffresService
             $whereConditions[] = "o.IDMode_formation = 10";
         }
 
-        // Always exclude offers of suspended or closed institutions across the entire country
-        $whereConditions[] = "(e.activee = 1 OR e.activee IS NULL) AND (e.IDEtablissement_Enservice = 1 OR e.IDEtablissement_Enservice IS NULL)";
-
         // Apply GET HTTP parameters filters
         if (!empty($getParams['filter_etablissement'])) {
             $reqFilter = (int)$getParams['filter_etablissement'];
