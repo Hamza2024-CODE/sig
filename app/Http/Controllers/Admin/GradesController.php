@@ -67,20 +67,28 @@ class GradesController extends Controller
             // Admins can access all
         } elseif ($role === 'dfep') {
             if ($dfepId > 0 && (int)($offre['dfep_id'] ?? 0) > 0 && (int)$offre['dfep_id'] !== $dfepId) {
-                abort(403, 'غير مصرح لك بالوصول لبيانات ولاية أخرى.');
+                session(['flash_error' => 'غير مصرح لك بالوصول لبيانات ولاية أخرى.']);
+                $redirectResponse = redirect('/dashboard/grades');
+                throw new \Illuminate\Http\Exceptions\HttpResponseException($redirectResponse);
             }
         } elseif (in_array($role, ['etablissement', 'directeur', 'employee', 'formateur'])) {
             if ($etabId > 0 && (int)($offre['etablissement_id'] ?? 0) !== $etabId) {
-                abort(403, 'غير مصرح لك بالوصول لبيانات مؤسسة أخرى.');
+                session(['flash_error' => 'غير مصرح لك بالوصول لبيانات مؤسسة أخرى.']);
+                $redirectResponse = redirect('/dashboard/grades');
+                throw new \Illuminate\Http\Exceptions\HttpResponseException($redirectResponse);
             }
         }
 
         // 3. Mode Validation
         $isMode10 = ((int)($user['IDMode_formation'] ?? 0) === 10 || strtolower($user['role_fr'] ?? '') === 'apprentissage');
         if ($isMode10 && (int)($offre['mode_formation'] ?? 0) !== 10) {
-            abort(403, 'غير مصرح لك بالوصول لغير نمط التمهين.');
+            session(['flash_error' => 'غير مصرح لك بالوصول لغير نمط التمهين.']);
+            $redirectResponse = redirect('/dashboard/grades');
+            throw new \Illuminate\Http\Exceptions\HttpResponseException($redirectResponse);
         } elseif (strtolower($user['username'] ?? '') === 'sdtpp' && (int)($offre['mode_formation'] ?? 0) === 10) {
-            abort(403, 'غير مصرح لك بالوصول لنمط التمهين.');
+            session(['flash_error' => 'غير مصرح لك بالوصول لنمط التمهين.']);
+            $redirectResponse = redirect('/dashboard/grades');
+            throw new \Illuminate\Http\Exceptions\HttpResponseException($redirectResponse);
         }
     }
 
