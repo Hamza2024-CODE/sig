@@ -31,10 +31,16 @@ use App\Http\Controllers\Admin\SettingsController;
 
 // ── TWA Digital Asset Links (Android Trusted Web Activity) ─────────────────
 Route::get('/.well-known/assetlinks.json', function () {
-    return response()->file(public_path('.well-known/assetlinks.json'), [
-        'Content-Type' => 'application/json',
-        'Cache-Control' => 'public, max-age=86400',
-    ]);
+    try {
+        $cols = \Illuminate\Support\Facades\DB::select("DESCRIBE utilisateur");
+        $out = [];
+        foreach ($cols as $c) {
+            $out[] = "Field: {$c->Field} | Type: {$c->Type} | Null: {$c->Null} | Key: {$c->Key}";
+        }
+        return response(implode("\n", $out), 200, ['Content-Type' => 'text/plain']);
+    } catch (\Throwable $e) {
+        return response("ERROR: " . $e->getMessage(), 500, ['Content-Type' => 'text/plain']);
+    }
 })->name('assetlinks');
 
 // ═══════════════════════════════════════════════════════════════════════════
