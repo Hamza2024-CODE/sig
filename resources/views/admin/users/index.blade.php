@@ -940,7 +940,19 @@ function handleRoleChange(roleId, mode) {
         'dir_org': 9
     };
 
-    if (roleCode && roleCode.startsWith('dir_')) {
+    if (roleCode === 'admin' || roleCode === 'dfep') {
+        // Global system admin or Regional DFEP: no central department, no CFPA/INSFP school
+        if (deptSelect) deptSelect.value = '';
+        if (deptContainer) deptContainer.style.display = 'none';
+
+        if (etabSelect) {
+            etabSelect.value = '';
+            etabSelect.disabled = true;
+            etabSelect.required = false;
+        }
+        if (etabContainer) etabContainer.style.display = 'none';
+
+    } else if (roleCode && roleCode.startsWith('dir_')) {
         // Internal Directorate service roles
         // Auto-select corresponding department
         const targetDeptId = roleToDeptMap[roleCode];

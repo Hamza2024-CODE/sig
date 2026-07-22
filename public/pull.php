@@ -66,6 +66,7 @@ $files = [
     'app/Domains/Reporting/Services/ReportingService.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Domains/Reporting/Services/ReportingService.php',
     'app/Http/Controllers/Admin/ReportController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/ReportController.php',
     'resources/views/admin/reports/index.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/reports/index.blade.php',
+    'resources/views/admin/users/index.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/users/index.blade.php',
     'resources/views/admin/espace-employe/index.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/espace-employe/index.blade.php'
 ];
 
