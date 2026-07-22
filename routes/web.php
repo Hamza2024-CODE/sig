@@ -311,6 +311,7 @@ Route::middleware('check.session')->group(function () {
         Route::post('/budget/store',                [\App\Http\Controllers\Admin\FinancesController::class, 'storeBudget'])->name('finances.budget.store');
         Route::post('/operation/store',             [\App\Http\Controllers\Admin\FinancesController::class, 'storeOperation'])->name('finances.operation.store');
         Route::post('/bourse/store',                [\App\Http\Controllers\Admin\FinancesController::class, 'storeBourse'])->name('finances.bourse.store');
+        Route::get('/bourse/export',                [\App\Http\Controllers\Admin\FinancesController::class, 'exportBourses'])->name('finances.bourse.export');
         Route::post('/stock/store',                 [\App\Http\Controllers\Admin\FinancesController::class, 'storeStock'])->name('finances.stock.store');
         Route::post('/profile/update',              [\App\Http\Controllers\Admin\FinancesController::class, 'updateProfile'])->name('finances.profile.update');
     });
@@ -819,6 +820,7 @@ Route::prefix('sig')->middleware('check.session')->group(function () {
         Route::post('/budget/store',                [\App\Http\Controllers\Admin\FinancesController::class, 'storeBudget']);
         Route::post('/operation/store',             [\App\Http\Controllers\Admin\FinancesController::class, 'storeOperation']);
         Route::post('/bourse/store',                [\App\Http\Controllers\Admin\FinancesController::class, 'storeBourse']);
+        Route::get('/bourse/export',                [\App\Http\Controllers\Admin\FinancesController::class, 'exportBourses']);
         Route::post('/stock/store',                 [\App\Http\Controllers\Admin\FinancesController::class, 'storeStock']);
         Route::post('/profile/update',              [\App\Http\Controllers\Admin\FinancesController::class, 'updateProfile']);
     });

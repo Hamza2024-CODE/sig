@@ -968,9 +968,14 @@ $statCards = [
             <i class="fa-solid fa-search"></i>
             <input type="text" id="searchBourse" placeholder="بحث في المتربصين..." onkeyup="filterTable('tblBourse','searchBourse',[0])">
         </div>
-        <button class="btn-fin-add" onclick="openModal('modalBourse')">
-            <i class="fa-solid fa-plus"></i> تسجيل حوالة منحة
-        </button>
+        <div style="display: flex; gap: 8px;">
+            <a href="{{ route('finances.bourse.export', request()->query()) }}" class="btn-fin-add" style="background-color: #2e7d32; border-color: #2e7d32; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; color: #fff;">
+                <i class="fa-solid fa-file-excel"></i> تصدير إلى إكسل
+            </a>
+            <button class="btn-fin-add" onclick="openModal('modalBourse')">
+                <i class="fa-solid fa-plus"></i> تسجيل حوالة منحة
+            </button>
+        </div>
     </div>
     <div class="fin-table-wrap">
         <table class="fin-table" id="tblBourse">
@@ -1047,7 +1052,12 @@ $statCards = [
             <h3 style="font-family: 'Cairo', sans-serif; font-size: 1.05rem; font-weight: 800; color: var(--tx-1); margin: 0;">
                 <i class="fa-solid fa-chart-bar" style="color: #1a6bcc; margin-left: 8px;"></i>{{ ($dfepId > 0 || $etabId > 0) ? 'نسبة صب المنح للمتربصين حسب المؤسسة' : 'مقارنة نسب صب المنح للمتربصين حسب الولايات' }}
             </h3>
-            <span style="font-family: 'Cairo', sans-serif; font-size: 0.8rem; font-weight: 700; color: var(--tx-2);">{{ ($dfepId > 0 || $etabId > 0) ? 'عدد المؤسسات: ' . count($bourseWilayaStats) : 'إجمالي الولايات: ' . count($bourseWilayaStats) }}</span>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <a href="{{ route('finances.bourse.export', request()->query()) }}" class="btn-fin-add" style="background-color: #2e7d32; border-color: #2e7d32; padding: 0.35rem 0.8rem; font-size: 0.8rem; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; color: #fff; border-radius: 6px; font-weight: 700;">
+                    <i class="fa-solid fa-file-excel"></i> تصدير قائمة المستفيدين
+                </a>
+                <span style="font-family: 'Cairo', sans-serif; font-size: 0.8rem; font-weight: 700; color: var(--tx-2);">{{ ($dfepId > 0 || $etabId > 0) ? 'عدد المؤسسات: ' . count($bourseWilayaStats) : 'إجمالي الولايات: ' . count($bourseWilayaStats) }}</span>
+            </div>
         </div>
         <table class="fin-table" id="tblBourseStats">
             <thead>

@@ -407,4 +407,91 @@ class FinancesController extends Controller
         $sousprog    = $this->repo->getSousProgrammes();
         return view('admin.finances.print_programmes', compact('programmes', 'sousprog', 'user'));
     }
+
+    public function exportBourses(Request $request)
+    {
+        $user = session('user');
+        if (!$user) return redirect('/login');
+        
+        $roleCode = strtolower($user['role_code'] ?? '');
+        $etabId = 0;
+        $dfepId = 0;
+
+        if ($roleCode === 'admin') {
+            $etabId = (int)$request->get('filter_etablissement', 0);
+            $dfepId = (int)$request->get('filter_wilaya', 0);
+        } elseif (in_array($roleCode, ['dfep', 'central'])) {
+            $dfepId = (int)($user['iddfep'] ?? $user['IDDFEP'] ?? 0);
+            $etabId = (int)$request->get('filter_etablissement', 0);
+        } else {
+            $etabId = (int)($user['etablissement_id'] ?? 0);
+        }
+
+        $bourses = $this->repo->getBoursesForExport($etabId, $dfepId);
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="bourses_export_' . date('Ymd_His') . '.csv"',
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0',
+        ];
+
+        $callback = function () use ($bourses) {
+            $file = fopen('php://output', 'w');
+
+            // UTF-8 BOM for Excel support
+            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+
+            // Headers
+            fputcsv($file, [
+                'الرقم الترتيبي',
+                'الولاية',
+                'المؤسسة',
+                'اللقب',
+                'الاسم',
+                'تاريخ الميلاد',
+                'الرقم التعريفي الوطني (NIN)',
+                'رقم الحساب الجاري (CCP)',
+                'التخصص',
+                'مبلغ المنحة (دج)',
+                'مدة الدفع (أشهر)',
+                'الصافي المدفوع (دج)',
+                'تاريخ البداية',
+                'تاريخ النهاية'
+            ]);
+
+            foreach ($bourses as $idx => $b) {
+                $nin = $b['nin'] ?? '';
+                if (!empty($nin)) {
+                    try {
+                        $nin = \Illuminate\Support\Facades\Crypt::decryptString($nin);
+                    } catch (\Exception $e) {
+                        // Keep raw on failure
+                    }
+                }
+
+                fputcsv($file, [
+                    $idx + 1,
+                    $b['wilaya_nom'] ?? '—',
+                    $b['etablissement_nom'] ?? '—',
+                    $b['nom'] ?? '—',
+                    $b['prenom'] ?? '—',
+                    $b['date_naissance'] ?? '—',
+                    $nin,
+                    $b['nccp'] ?? '—',
+                    $b['specialite'] ?? 'تمهين',
+                    number_format($b['montant'], 2, '.', ''),
+                    $b['duree_payee'],
+                    number_format($b['net_paye'], 2, '.', ''),
+                    $b['date_debut'] ?? '—',
+                    $b['date_fin'] ?? '—'
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
 }

@@ -514,6 +514,30 @@ class FinanceRepository
         return $this->execScope($sql, $params)->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function getBoursesForExport(int $etabId, int $dfepId = 0): array
+    {
+        [$conds, $params] = $this->etabScope($etabId, $dfepId, 'o.IDEts_Form');
+        $where = $conds ? 'AND ' . implode(' AND ', $conds) : '';
+        $sql = "
+            SELECT b.IDbourse as id, b.Montant as montant, b.dureepaye as duree_payee, b.neteapaye as net_paye,
+                   b.datedebenga as date_debut, b.datefinenga as date_fin,
+                   c.Nom as nom, c.Prenom as prenom, c.DateNais as date_naissance, c.Nin as nin,
+                   a.Nccp as nccp, sp.Nom as specialite,
+                   et.Nom as etablissement_nom, d.Nom as wilaya_nom
+            FROM bourse b
+            JOIN apprenant a ON b.IDapprenant = a.IDapprenant
+            JOIN candidat c ON a.IDCandidat = c.IDCandidat
+            LEFT JOIN offre o ON c.IDOffre = o.IDOffre
+            LEFT JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
+            LEFT JOIN etablissement et ON o.IDEts_Form = et.IDetablissement
+            LEFT JOIN dfep d ON et.IDDFEP = d.IDDFEP
+            WHERE 1=1 $where
+            ORDER BY b.IDbourse DESC
+            LIMIT 50000
+        ";
+        return $this->execScope($sql, $params)->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function insertBourse(array $d): int
     {
         $id = (int)($this->db->query("SELECT COALESCE(MAX(IDbourse),0)+1 FROM bourse")->fetchColumn() ?: 1);

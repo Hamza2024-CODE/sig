@@ -59,6 +59,9 @@ $files = [
     'app/Http/Controllers/Admin/EspaceEmployeController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/EspaceEmployeController.php',
     'app/Services/Employee/EmployeeQueryService.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Services/Employee/EmployeeQueryService.php',
     'app/Services/Employee/EmployeeCardService.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Services/Employee/EmployeeCardService.php',
+    'app/Domains/Finance/Repositories/FinanceRepository.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Domains/Finance/Repositories/FinanceRepository.php',
+    'app/Http/Controllers/Admin/FinancesController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/FinancesController.php',
+    'resources/views/admin/finances/index.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/finances/index.blade.php',
     'resources/views/admin/espace-employe/index.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/espace-employe/index.blade.php'
 ];
 
