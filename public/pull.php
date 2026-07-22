@@ -9,6 +9,23 @@ $kernel->bootstrap();
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 
+try {
+    $columns = DB::select("DESCRIBE utilisateur");
+    $altered = false;
+    foreach ($columns as $col) {
+        if ($col->Field === 'NomUser' && strpos($col->Type, 'varchar(50)') !== false) {
+            DB::statement("ALTER TABLE utilisateur MODIFY COLUMN NomUser VARCHAR(255)");
+            $altered = true;
+            break;
+        }
+    }
+    if ($altered) {
+        echo "✓ Database migration: NomUser column size increased to VARCHAR(255) successfully!<br>";
+    }
+} catch (\Throwable $e) {
+    echo "⚠️ Database migration check failed: " . $e->getMessage() . "<br>";
+}
+
 echo "<h1>Auto-Updating All Modified Files...</h1>";
 
 $files = [
