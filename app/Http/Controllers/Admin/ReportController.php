@@ -124,6 +124,15 @@ class ReportController extends Controller
                 'count'       => null,
                 'label'       => null,
             ],
+            [
+                'key'         => 'bourses',
+                'title'       => 'تقرير المنح وشبه الأجر إدارية مالية',
+                'description' => 'تقرير تفصيلي لجميع المتربصين المستفيدين من المنحة على المستوى الوطني',
+                'icon'        => 'fa-hand-holding-dollar',
+                'color'       => '#2e7d32',
+                'count'       => DB::table('bourse')->count(),
+                'label'       => 'مستفيد',
+            ],
         ];
 
         return view('admin.reports.index', compact('reportTypes', 'quickStats', 'user'));

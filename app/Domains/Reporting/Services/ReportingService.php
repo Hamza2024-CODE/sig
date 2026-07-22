@@ -117,6 +117,7 @@ class ReportingService
             'offres'              => $this->reportOffres($user, $filters),
             'absences'            => $this->reportAbsences($user, $filters),
             'specialites_encours' => $this->reportSpecialitesEnCours($user, $filters),
+            'bourses'             => $this->reportBourses($user, $filters),
             default               => throw new Exception("نوع التقرير غير مدعوم: {$reportType}"),
         };
     }
@@ -332,7 +333,35 @@ class ReportingService
             'offres'              => 'كشف عروض التكوين',
             'absences'            => 'تقرير الغيابات',
             'specialites_encours' => 'تقرير التخصصات في طور التكوين',
+            'bourses'             => 'تقرير المنح وشبه الأجر للقطاع الوطني',
             default               => 'تصدير البيانات',
         };
+    }
+
+    private function reportBourses(array $user, array $filters): array
+    {
+        [$extraWhere, $params] = $this->buildSectionFilter($user);
+
+        $maxRows   = isset($filters['max_rows']) ? (int)$filters['max_rows'] : 50000;
+        $generator = $this->apprenantRepo->streamBoursesChunked($extraWhere, $params, 500, $maxRows);
+
+        $columns = [
+            'id'                  => 'الرقم الترتيبي',
+            'wilaya_nom'          => 'الولاية',
+            'etablissement_nom'   => 'المؤسسة',
+            'nom'                 => 'اللقب',
+            'prenom'              => 'الاسم',
+            'date_naissance'      => 'تاريخ الميلاد',
+            'nin_decrypted'       => 'الرقم التعريفي الوطني (NIN)',
+            'nccp'                => 'رقم الحساب الجاري (CCP)',
+            'specialite'          => 'التخصص',
+            'montant'             => 'مبلغ المنحة',
+            'duree_payee'         => 'مدة الدفع (أشهر)',
+            'net_paye'            => 'الصافي المدفوع',
+            'date_debut'          => 'تاريخ البداية',
+            'date_fin'            => 'تاريخ النهاية',
+        ];
+
+        return [$generator, $columns];
     }
 }

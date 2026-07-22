@@ -338,6 +338,54 @@ class ApprenantRepository
         } while (count($rows) === $chunkSize && $yielded < $totalLimit);
     }
 
+    public function streamBoursesChunked(string $extraWhere, array $params, int $chunkSize = 500, int $totalLimit = 50000): \Generator
+    {
+        $offset    = 0;
+        $yielded   = 0;
+
+        do {
+            $chunkParams = array_merge($params, [$chunkSize, $offset]);
+            $stmt = $this->db->prepare("
+                SELECT b.IDbourse as id, b.Montant as montant, b.dureepaye as duree_payee, b.neteapaye as net_paye,
+                       b.datedebenga as date_debut, b.datefinenga as date_fin,
+                       c.Nom as nom, c.Prenom as prenom, c.DateNais as date_naissance, c.Nin as nin,
+                       a.Nccp as nccp, sp.Nom as specialite,
+                       et.Nom as etablissement_nom, d.Nom as wilaya_nom
+                FROM bourse b
+                JOIN apprenant a ON b.IDapprenant = a.IDapprenant
+                JOIN candidat c ON a.IDCandidat = c.IDCandidat
+                LEFT JOIN offre o ON c.IDOffre = o.IDOffre
+                LEFT JOIN specialite sp ON o.IDSpecialite = sp.IDSpecialite
+                LEFT JOIN etablissement et ON o.IDEts_Form = et.IDetablissement
+                LEFT JOIN dfep d ON et.IDDFEP = d.IDDFEP
+                WHERE 1=1 {$extraWhere}
+                ORDER BY b.IDbourse DESC
+                LIMIT ? OFFSET ?
+            ");
+            $stmt->execute($chunkParams);
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            foreach ($rows as $row) {
+                if ($yielded >= $totalLimit) {
+                    return;
+                }
+                $nin = $row['nin'] ?? '';
+                if (!empty($nin)) {
+                    try {
+                        $nin = \Illuminate\Support\Facades\Crypt::decryptString($nin);
+                    } catch (\Exception $e) {
+                        // Keep raw on failure
+                    }
+                }
+                $row['nin_decrypted'] = $nin;
+                yield $row;
+                $yielded++;
+            }
+
+            $offset += $chunkSize;
+        } while (count($rows) === $chunkSize && $yielded < $totalLimit);
+    }
+
     /**
      * Lightweight list for dropdowns (name + ID only)
      * SQL preserved exactly from ApprentissageController::maitres()
