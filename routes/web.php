@@ -32,10 +32,23 @@ use App\Http\Controllers\Admin\SettingsController;
 Route::get('/db-diagnose', function () {
     try {
         $cols = \Illuminate\Support\Facades\DB::select("DESCRIBE utilisateur");
-        $out = [];
+        $out = ["=== COLUMNS ==="];
         foreach ($cols as $c) {
             $out[] = "Field: {$c->Field} | Type: {$c->Type} | Null: {$c->Null} | Key: {$c->Key}";
         }
+        
+        $out[] = "\n=== TRIGGERS ===";
+        $triggers = \Illuminate\Support\Facades\DB::select("SHOW TRIGGERS");
+        if (empty($triggers)) {
+            $out[] = "No triggers found.";
+        } else {
+            foreach ($triggers as $t) {
+                if (strtolower($t->Table) === 'utilisateur') {
+                    $out[] = "Trigger: {$t->Trigger} | Event: {$t->Event} | Timing: {$t->Timing} | Statement: {$t->Statement}";
+                }
+            }
+        }
+        
         return response(implode("\n", $out), 200, ['Content-Type' => 'text/plain']);
     } catch (\Throwable $e) {
         return response("ERROR: " . $e->getMessage(), 500, ['Content-Type' => 'text/plain']);
