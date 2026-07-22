@@ -29,6 +29,7 @@ try {
 echo "<h1>Auto-Updating All Modified Files...</h1>";
 
 $files = [
+    'public/pull.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/pull.php',
     'config/app.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/config/app.php',
     'app/Http/Kernel.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Kernel.php',
     'app/Http/Controllers/Admin/ApprenantController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/ApprenantController.php',
