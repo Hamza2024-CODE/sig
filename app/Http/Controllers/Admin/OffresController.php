@@ -22,6 +22,8 @@ class OffresController extends Controller
      */
     public function index(Request $request)
     {
+        app(\App\Security\AuthorizationService::class)->authorize('view');
+
         $user = session('user');
         if (!$user) {
             return redirect()->route('login');
@@ -41,6 +43,8 @@ class OffresController extends Controller
      */
     public function validation()
     {
+        app(\App\Security\AuthorizationService::class)->authorize('view');
+
         $user = session('user');
         if (!$user) {
             return redirect()->route('login');
@@ -60,6 +64,8 @@ class OffresController extends Controller
      */
     public function storeOffre(Request $request)
     {
+        app(\App\Security\AuthorizationService::class)->authorize('create');
+
         $user = session('user');
         if (!$user) {
             return redirect()->route('login');
@@ -80,6 +86,8 @@ class OffresController extends Controller
      */
     public function updateOffre(Request $request)
     {
+        app(\App\Security\AuthorizationService::class)->authorize('update');
+
         $user = session('user');
         if (!$user) {
             return redirect()->route('login');
@@ -100,6 +108,8 @@ class OffresController extends Controller
      */
     public function deleteOffre($id)
     {
+        app(\App\Security\AuthorizationService::class)->authorize('delete');
+
         $user = session('user');
         if (!$user) {
             return redirect()->route('login');

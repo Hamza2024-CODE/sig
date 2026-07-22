@@ -31,6 +31,7 @@ return [
         Illuminate\View\ViewServiceProvider::class,
         App\Providers\AppServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
+        App\Providers\SecurityServiceProvider::class,
         Sentry\Laravel\ServiceProvider::class,
         L5Swagger\L5SwaggerServiceProvider::class,
     ],

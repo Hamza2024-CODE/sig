@@ -13,6 +13,8 @@ class ApprenantController extends Controller
 
     public function index(Request $request)
     {
+        app(\App\Security\AuthorizationService::class)->authorize('view');
+
         @set_time_limit(300);
         $user   = session('user') ?? [];
         $role   = strtolower($user['role_code'] ?? '');
@@ -289,6 +291,8 @@ class ApprenantController extends Controller
 
     public function show($id)
     {
+        app(\App\Security\AuthorizationService::class)->authorize('view');
+
         try {
             $memosEnabled = \App\Helpers\SovereignLicensingHelper::getSetting('feature_large_memos_query_enabled', '1') === '1';
 
@@ -334,7 +338,7 @@ class ApprenantController extends Controller
                 ]);
             }
 
-            $student = DB::table('apprenant')
+            $student = \App\Database\ScopedQuery::for(\App\Models\Apprenant::class)
                 ->join('candidat', 'apprenant.IDCandidat', '=', 'candidat.IDCandidat')
                 ->leftJoin('preinscrit', 'candidat.IDPreinscrit', '=', 'preinscrit.IDPreinscrit')
                 ->leftJoin('candidat_document', 'candidat.IDCandidat', '=', 'candidat_document.IDCandidat')
@@ -358,8 +362,7 @@ class ApprenantController extends Controller
 
     public function store(Request $request)
     {
-        $user = session('user');
-        if (!$user) return redirect('/login');
+        app(\App\Security\AuthorizationService::class)->authorize('create');
 
         $validated = $request->validate([
             'candidat_id' => 'required|integer',
@@ -370,9 +373,19 @@ class ApprenantController extends Controller
             'groupe' => 'required|integer',
         ]);
 
-        $candidate = DB::table('candidat')->where('IDCandidat', $validated['candidat_id'])->first();
+        $candidate = \App\Database\ScopedQuery::for(\App\Models\Candidat::class)
+            ->where('IDCandidat', $validated['candidat_id'])
+            ->first();
         if (!$candidate) {
-            session(['flash_error' => 'المترشح غير موجود.']);
+            session(['flash_error' => 'المترشح غير موجود أو غير تابع لمؤسستك.']);
+            return redirect()->back();
+        }
+
+        $section = \App\Database\ScopedQuery::for(\App\Models\Section::class)
+            ->where('IDSection', $validated['section_id'])
+            ->first();
+        if (!$section) {
+            session(['flash_error' => 'القسم غير موجود أو غير تابع لمؤسستك.']);
             return redirect()->back();
         }
 
@@ -414,8 +427,7 @@ class ApprenantController extends Controller
 
     public function update(Request $request)
     {
-        $user = session('user');
-        if (!$user) return redirect('/login');
+        app(\App\Security\AuthorizationService::class)->authorize('update');
 
         $validated = $request->validate([
             'id' => 'required|integer',
@@ -427,11 +439,22 @@ class ApprenantController extends Controller
             'groupe' => 'required|integer',
         ]);
 
-        $student = DB::table('apprenant')->where('IDapprenant', $validated['id'])->first();
+        $student = \App\Database\ScopedQuery::for(\App\Models\Apprenant::class)
+            ->where('IDapprenant', $validated['id'])
+            ->first();
         if (!$student) {
-            session(['flash_error' => 'الطالب غير موجود.']);
+            session(['flash_error' => 'الطالب غير موجود أو غير تابع لمؤسستك.']);
             return redirect()->back();
         }
+
+        $section = \App\Database\ScopedQuery::for(\App\Models\Section::class)
+            ->where('IDSection', $validated['section_id'])
+            ->first();
+        if (!$section) {
+            session(['flash_error' => 'القسم غير موجود أو غير تابع لمؤسستك.']);
+            return redirect()->back();
+        }
+
 
         $candidate = DB::table('candidat')->where('IDCandidat', $student->IDCandidat)->first();
         $wilayaId = 0;
@@ -483,10 +506,15 @@ class ApprenantController extends Controller
 
     public function destroy($id)
     {
-        $user = session('user');
-        if (!$user) return redirect('/login');
+        app(\App\Security\AuthorizationService::class)->authorize('delete');
 
-        $student = DB::table('apprenant')->where('IDapprenant', $id)->first();
+        $student = \App\Database\ScopedQuery::for(\App\Models\Apprenant::class)
+            ->where('IDapprenant', $id)
+            ->first();
+        if (!$student) {
+            session(['flash_error' => 'الطالب غير موجود أو غير تابع لمؤسستك.']);
+            return redirect()->back();
+        }
         if ($student) {
             $candidate = DB::table('candidat')->where('IDCandidat', $student->IDCandidat)->first();
             $wilayaId = 0;

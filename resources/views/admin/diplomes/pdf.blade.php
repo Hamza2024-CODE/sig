@@ -11,6 +11,21 @@
             background-image-resize: 6;
             <?php endif; ?>
         }
+        /* 
+         * Custom fonts configured in mPDF:
+         * - 'clarendon_black' (Clarendon Blk BT Black.ttf)
+         * - 'arabic_ejaza' (arabic-ejaza.ttf)
+         * - '94pt_bold' (94PT Bold Heading_0.ttf)
+         * - 'decotype_naskh' (43 DecoType Naskh Variants_0.ttf)
+         * - 'clarendon_roman' (Clarendon BT Roman.ttf)
+         * - 'clarendon_light' (Clarendon Lt BT Light.ttf)
+         * - 'clarendon_bold' (Clarendon BT Bold.ttf)
+         * - 'mohammad_bold' (MOHAMMAD_BOLD_ART.TTF)
+         * - 'drarku' (drarku.otf)
+         * - 'drarku_bold' (drarkubold.otf)
+         *
+         * To use one, simply set: font-family: 'arabic_ejaza', sans-serif;
+         */
         body {
             font-family: 'xbriyaz', 'aealarab', 'dejavusans', sans-serif;
             margin: 0;
@@ -127,7 +142,7 @@ $isBEP = (str_contains(strtolower($d['type_diplome_fr'] ?? ''), 'brevet d\'ensei
 
         <!-- 2. MAIN TITLE -->
         @if (!$isBEP)
-            <div style="text-align: center; margin-top: 6mm; font-size: 24pt; font-weight: bold; color: #1e3a5f;">
+            <div style="text-align: center; margin-top: 6mm; font-size: 24pt; font-weight: bold; color: #1e3a5f; visibility: hidden;">
                 <?= htmlspecialchars($d['type_diplome_ar'] ?? 'شهادة تقني سام') ?>
             </div>
         @else
@@ -179,7 +194,7 @@ $isBEP = (str_contains(strtolower($d['type_diplome_fr'] ?? ''), 'brevet d\'ensei
                     Prénom : <strong><?= htmlspecialchars(ucfirst($d['prenom_fr'] ?? '')) ?></strong><br>
                     Date & Lieu de naissance : <strong><?= htmlspecialchars($d['date_naissance_fr'] ?? '') ?> &nbsp; <?= htmlspecialchars(strtoupper($d['lieu_naissance_fr'] ?? '')) ?></strong><br>
                     Spécialité : <strong><?= htmlspecialchars(cleanFrenchText($d['spec_fr'] ?? '')) ?></strong><br>
-                    Diplôme : <strong><?= htmlspecialchars($d['type_diplome_fr'] ?? '') ?></strong>
+                    <span style="visibility: hidden;">Diplôme : <strong><?= htmlspecialchars($d['type_diplome_fr'] ?? '') ?></strong></span>
                 </td>
             </tr>
         </table>

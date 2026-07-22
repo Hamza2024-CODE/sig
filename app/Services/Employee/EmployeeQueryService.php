@@ -35,13 +35,20 @@ class EmployeeQueryService
         enc.TachesPrincipale, enc.Echlo, enc.nbrEnf, enc.nbrenfscol,
         enc.IDSitfamille, enc.nss, enc.nin, enc.numActNaiss, enc.SitMilitaire,
         enc.IDetablissement, enc.IDEts_Form, enc.IDSituationAdministrat, enc.photo,
+        enc.endicape, enc.IDEndicapePourcentage, enc.IDEndicapetype, enc.lieunaissetranger,
+        enc.IDGradeDeb, enc.IDNiveau_Scol_enca, enc.IDDiplome, enc.IDBranche, enc.DureeDiplome,
+        enc.DateInstall, enc.DateEchlon, enc.DateDebFonctions, enc.DateFinFonctions, enc.DateinstallPoste,
         et.Nom AS etab_nom, et.NomFr AS etab_fr, et.IDNature_etsF,
         et_form.Nom AS etab_form_nom, et_form.NomFr AS etab_form_fr, et_form.IDNature_etsF AS form_IDNature_etsF,
         w.Nom AS wilaya_nom, w.IDWilayaa AS id_wilaya,
         w_form.Nom AS form_wilaya_nom, w_form.IDWilayaa AS form_id_wilaya,
         g.Nom AS grade_nom,
         f.Nom AS fonction_nom,
-        sa.Nom AS situation_admin_nom
+        sa.Nom AS situation_admin_nom,
+        g_deb.Nom AS grade_deb_nom,
+        nse.Nom AS niveau_scol_nom,
+        d.Nom AS diplome_nom,
+        b.Nom AS branche_nom
     ';
 
     // ─────────────────────────────────────────────
@@ -123,6 +130,10 @@ class EmployeeQueryService
                     LEFT JOIN grade g ON enc.IDGrade = g.IDGrade
                     LEFT JOIN fonctions f ON enc.IDFonctions = f.IDFonctions
                     LEFT JOIN situationadministrat sa ON enc.IDSituationAdministrat = sa.IDSituationAdministrat
+                    LEFT JOIN grade g_deb ON enc.IDGradeDeb = g_deb.IDGrade
+                    LEFT JOIN niveau_scol_enca nse ON enc.IDNiveau_Scol_enca = nse.IDNiveau_Scol_enca
+                    LEFT JOIN diplome d ON enc.IDDiplome = d.IDDiplome
+                    LEFT JOIN branche b ON enc.IDBranche = b.IDBranche
                     WHERE enc.IDEncadrement = ?
                     LIMIT 1';
 

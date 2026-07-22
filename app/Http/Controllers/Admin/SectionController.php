@@ -13,6 +13,8 @@ class SectionController extends Controller
 
     public function index(Request $request)
     {
+        app(\App\Security\AuthorizationService::class)->authorize('view');
+
         $user   = session('user') ?? [];
         $role   = strtolower($user['role_code'] ?? '');
         $etabId = (int)($user['etablissement_id'] ?? $user['IDEts_Form'] ?? 0);
@@ -186,8 +188,10 @@ class SectionController extends Controller
 
     public function show($id)
     {
+        app(\App\Security\AuthorizationService::class)->authorize('view');
+
         try {
-            $section = DB::table('section')
+            $section = \App\Database\ScopedQuery::for(\App\Models\Section::class)
                 ->where('IDSection', $id)
                 ->first();
 
@@ -203,8 +207,7 @@ class SectionController extends Controller
 
     public function store(Request $request)
     {
-        $user = session('user');
-        if (!$user) return redirect('/login');
+        app(\App\Security\AuthorizationService::class)->authorize('create');
 
         $validated = $request->validate([
             'offre_id' => 'required|integer',
@@ -220,10 +223,12 @@ class SectionController extends Controller
         ]);
 
         try {
-            // Load offer to extract properties
-            $offre = DB::table('offre')->where('IDOffre', $validated['offre_id'])->first();
+            // Load offer to extract properties securely
+            $offre = \App\Database\ScopedQuery::for(\App\Models\Offre::class)
+                ->where('IDOffre', $validated['offre_id'])
+                ->first();
             if (!$offre) {
-                session(['flash_error' => 'عرض التكوين المحدد غير صالح / Invalid offer selected']);
+                session(['flash_error' => 'عرض التكوين المحدد غير صالح أو غير تابع لمؤسستك.']);
                 return redirect()->back();
             }
 
@@ -284,8 +289,7 @@ class SectionController extends Controller
 
     public function update(Request $request)
     {
-        $user = session('user');
-        if (!$user) return redirect('/login');
+        app(\App\Security\AuthorizationService::class)->authorize('update');
 
         $validated = $request->validate([
             'id' => 'required|integer',
@@ -298,14 +302,22 @@ class SectionController extends Controller
             'encadrement_id' => 'nullable|integer',
         ]);
 
+        $section = \App\Database\ScopedQuery::for(\App\Models\Section::class)
+            ->where('IDSection', $validated['id'])
+            ->first();
+        if (!$section) {
+            session(['flash_error' => 'القسم غير موجود أو غير تابع لمؤسستك.']);
+            return redirect()->back();
+        }
+
         try {
-            DB::transaction(function () use ($validated) {
-                $section = DB::table('section')->where('IDSection', $validated['id'])->first();
+            DB::transaction(function () use ($validated, $section) {
                 if ($section) {
                     DB::table('offre')
                         ->where('IDOffre', $section->IDOffre)
                         ->update(['nbrGroupe' => $validated['groupe']]);
                 }
+
 
                 DB::table('section')
                     ->where('IDSection', $validated['id'])
@@ -330,8 +342,15 @@ class SectionController extends Controller
 
     public function destroy($id)
     {
-        $user = session('user');
-        if (!$user) return redirect('/login');
+        app(\App\Security\AuthorizationService::class)->authorize('delete');
+
+        $section = \App\Database\ScopedQuery::for(\App\Models\Section::class)
+            ->where('IDSection', $id)
+            ->first();
+        if (!$section) {
+            session(['flash_error' => 'القسم غير موجود أو غير تابع لمؤسستك.']);
+            return redirect()->back();
+        }
 
         try {
             // Guard: check if section contains students

@@ -12,6 +12,13 @@
  * @var string $api_key
  * @var array $scope
  * @var array $selected_filters
+ * @var array $grades_ref
+ * @var array $fonctions_ref
+ * @var array $diplomes_ref
+ * @var array $scol_levels_ref
+ * @var array $branches_ref
+ * @var array $sitfamilles_ref
+ * @var array $mode_recrutements_ref
  */
 $isSuperAdmin = in_array($scope['role'] ?? '', ['admin', 'superadmin', 'central']);
 $isDfep = $scope['role'] === 'dfep';
@@ -446,150 +453,391 @@ $sitFamilleMap = [
 
 <!-- Employee Edit Modal (Comprehensive Multi-Tab Form) -->
 <div class="modal fade" id="employeeEditModal" tabindex="-1" style="font-family:'Cairo', sans-serif;">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content border-0 shadow-lg" style="border-radius:20px;">
-            <div class="modal-header border-0 pb-0 justify-content-between">
-                <h5 class="fw-bold text-dark m-0"><i class="fa-solid fa-user-pen text-primary me-2"></i>تعديل بيانات الملف الشخصي للموظف</h5>
+            <div class="modal-header border-0 pb-0 justify-content-between bg-light" style="border-top-left-radius: 20px; border-top-right-radius: 20px;">
+                <h5 class="fw-bold text-dark m-0"><i class="fa-solid fa-user-pen text-primary me-2"></i>معاينة وتعديل بيانات ملف الموظف بالكامل</h5>
                 <button type="button" class="btn-close m-0" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body pt-3">
+            <div class="modal-body pt-3 bg-light">
                 <form id="employeeEditForm" enctype="multipart/form-data">
                     <input type="hidden" id="edit-emp-id" name="id">
-                    
-                    <!-- Avatar Upload Section -->
-                    <div class="d-flex align-items-center justify-content-center flex-column mb-4 pb-2 border-bottom border-light">
-                        <div class="avatar-preview-wrapper shadow-sm">
-                            <img src="" id="edit-avatar-preview" alt="Preview">
-                            <label for="edit-photo-input" class="avatar-upload-btn">
-                                <i class="fa-solid fa-camera"></i>
-                            </label>
-                            <input type="file" id="edit-photo-input" name="photo" accept="image/*" class="d-none" onchange="previewSelectedPhoto(this)">
-                        </div>
-                        <span class="text-muted small mt-2">انقر على الكاميرا لتحديث الصورة الشخصية (JPG/PNG)</span>
-                    </div>
 
-                    <!-- Modal Tabs -->
-                    <ul class="nav nav-tabs nav-justified border-0 p-1 bg-light rounded-4 mb-4 gap-1 shadow-sm" id="editModalTabs" role="tablist" style="font-size:0.85rem;font-weight:700;">
+                    <!-- Main Tabs -->
+                    <ul class="nav nav-tabs nav-justified border-0 p-1 bg-white rounded-pill mb-4 gap-1 shadow-sm" id="editModalTabs" role="tablist" style="font-size:0.85rem;font-weight:700;">
                         <li class="nav-item">
-                            <button class="nav-link active rounded-3 py-2" id="edit-personal-tab" data-bs-toggle="tab" data-bs-target="#edit-tab-personal" type="button">البيانات الشخصية</button>
+                            <button class="nav-link active rounded-pill py-2" id="edit-personal-tab" data-bs-toggle="tab" data-bs-target="#edit-tab-personal" type="button">1- المعلومات الحالية (الشخصية والمهنية)</button>
                         </li>
                         <li class="nav-item">
-                            <button class="nav-link rounded-3 py-2" id="edit-family-tab" data-bs-toggle="tab" data-bs-target="#edit-tab-family" type="button">الحالة العائلية والمدنية</button>
+                            <button class="nav-link rounded-pill py-2" id="edit-career-tab" data-bs-toggle="tab" data-bs-target="#edit-tab-career" type="button">2- المعلومات الدراسية والمهنية</button>
                         </li>
                         <li class="nav-item">
-                            <button class="nav-link rounded-3 py-2" id="edit-career-tab" data-bs-toggle="tab" data-bs-target="#edit-tab-career" type="button">البيانات الوظيفية</button>
+                            <button class="nav-link rounded-pill py-2" id="edit-history-tab" data-bs-toggle="tab" data-bs-target="#edit-tab-history" type="button">3- المسار المهني - داخل القطاع</button>
                         </li>
                     </ul>
 
                     <div class="tab-content" id="editModalTabContent">
-                        <!-- Tab 1: Personal Details -->
+                        <!-- Tab 1: Personal Details, Contact, and Identifiers -->
                         <div class="tab-pane fade show active" id="edit-tab-personal" role="tabpanel">
                             <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label class="form-label text-muted small fw-bold">الاسم (بالعربية)</label>
-                                    <input type="text" name="prenom" id="edit-prenom" class="form-control bg-light border-0 rounded-3 py-2 px-3 fw-bold" required>
+                                <!-- Right side: Personal Info Forms -->
+                                <div class="col-lg-9">
+                                    <div class="card border-0 p-4 bg-white shadow-sm rounded-4 mb-3">
+                                        <h6 class="fw-bold mb-3 text-primary border-bottom pb-2"><i class="fa-solid fa-address-card me-1"></i> 1- المعلومات الشخصية</h6>
+                                        <div class="row g-3">
+                                            <div class="col-md-3">
+                                                <label class="form-label text-muted small fw-bold">اللقب (العربية)</label>
+                                                <input type="text" name="nom" id="edit-nom" class="form-control bg-light border-0 rounded-3 py-2 px-3 fw-bold" required>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="form-label text-muted small fw-bold">الاسم (العربية)</label>
+                                                <input type="text" name="prenom" id="edit-prenom" class="form-control bg-light border-0 rounded-3 py-2 px-3 fw-bold" required>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="form-label text-muted small fw-bold">اللقب (الفرنسية)</label>
+                                                <input type="text" name="nom_fr" id="edit-nom_fr" class="form-control bg-light border-0 rounded-3 py-2 px-3 fw-bold" required>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="form-label text-muted small fw-bold">الاسم (الفرنسية)</label>
+                                                <input type="text" name="prenom_fr" id="edit-prenom_fr" class="form-control bg-light border-0 rounded-3 py-2 px-3 fw-bold" required>
+                                            </div>
+
+                                            <div class="col-md-3">
+                                                <label class="form-label text-muted small fw-bold">الجنس</label>
+                                                <select name="civ" id="edit-civ" class="form-select bg-light border-0 rounded-3 py-2 px-3 fw-bold">
+                                                    <option value="1">ذكر</option>
+                                                    <option value="2">أنثى</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="form-label text-muted small fw-bold">تاريخ الميلاد</label>
+                                                <input type="text" name="date_nais" id="edit-date_nais" class="form-control bg-light border-0 rounded-3 py-2 px-3 fw-bold" placeholder="YYYY/MM/DD" required>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label text-muted small fw-bold">مكان الميلاد</label>
+                                                <input type="text" name="lieu_nais" id="edit-lieu_nais" class="form-control bg-light border-0 rounded-3 py-2 px-3 fw-bold" required>
+                                            </div>
+                                            <div class="col-md-2 d-flex align-items-center mt-4 justify-content-center">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" name="lieunaissetranger" id="edit-lieunaissetranger" value="1">
+                                                    <label class="form-check-label text-muted small fw-bold" for="edit-lieunaissetranger">خارج الوطن</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="card border-0 p-4 bg-white shadow-sm rounded-4 mb-3">
+                                        <h6 class="fw-bold mb-3 text-primary border-bottom pb-2"><i class="fa-solid fa-house-user me-1"></i> المعلومات العائلية والاتصال</h6>
+                                        <div class="row g-3">
+                                            <div class="col-md-12">
+                                                <label class="form-label text-muted small fw-bold">العنوان الشخصي</label>
+                                                <input type="text" name="adres" id="edit-adres" class="form-control bg-light border-0 rounded-3 py-2 px-3 fw-bold">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label text-muted small fw-bold">رقم الهاتف</label>
+                                                <input type="text" name="tel" id="edit-tel" class="form-control bg-light border-0 rounded-3 py-2 px-3 fw-bold">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label text-muted small fw-bold">البريد الإلكتروني</label>
+                                                <input type="email" name="email" id="edit-email" class="form-control bg-light border-0 rounded-3 py-2 px-3 fw-bold">
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label class="form-label text-muted small fw-bold">الحالة العائلية</label>
+                                                <select name="sitfamille" id="edit-sitfamille" class="form-select bg-light border-0 rounded-3 py-2 px-3 fw-bold">
+                                                    <?php foreach ($sitfamilles_ref as $sf): ?>
+                                                        <option value="<?= $sf->IDSitfamille ?>"><?= $sf->Nom ?></option>
+                                                    <?php endforeach; ?>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label text-muted small fw-bold">إجمالي عدد الأولاد</label>
+                                                <input type="number" name="nbr_enfants" id="edit-nbr_enfants" min="0" class="form-control bg-light border-0 rounded-3 py-2 px-3 fw-bold">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label text-muted small fw-bold">منهم الأولاد المتمدرسين</label>
+                                                <input type="number" name="nbr_enfants_scol" id="edit-nbr_enfants_scol" min="0" class="form-control bg-light border-0 rounded-3 py-2 px-3 fw-bold">
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <label class="form-label text-muted small fw-bold">اللقب (بالعربية)</label>
-                                    <input type="text" name="nom" id="edit-nom" class="form-control bg-light border-0 rounded-3 py-2 px-3 fw-bold" required>
+
+                                <!-- Left side: Photo & Taches -->
+                                <div class="col-lg-3">
+                                    <div class="card border-0 p-4 bg-white shadow-sm rounded-4 mb-3 text-center h-100">
+                                        <div class="d-flex align-items-center justify-content-center flex-column mb-3">
+                                            <div class="avatar-preview-wrapper shadow">
+                                                <img src="" id="edit-avatar-preview" alt="Preview" style="object-fit: cover; width: 100px; height: 100px;">
+                                                <label for="edit-photo-input" class="avatar-upload-btn">
+                                                    <i class="fa-solid fa-camera"></i>
+                                                </label>
+                                                <input type="file" id="edit-photo-input" name="photo" accept="image/*" class="d-none" onchange="previewSelectedPhoto(this)">
+                                            </div>
+                                            <span class="text-muted small mt-2">الصورة الشخصية</span>
+                                        </div>
+                                        
+                                        <div class="text-right">
+                                            <label class="form-label text-muted small fw-bold">المهام الحالية مفصلة وبإيجاز والتكليفات (50 حرف على الأقل)</label>
+                                            <textarea name="taches_principale" id="edit-taches_principale" class="form-control bg-light border-0 rounded-3 py-2 px-3 fw-bold small" rows="5" placeholder="مكلف بمهام..."></textarea>
+                                        </div>
+                                    </div>
                                 </div>
+                            </div>
+
+                            <!-- Row 2: Military service, handicap, NIN, NSS, Birth Certificate -->
+                            <div class="row g-3 mt-1">
                                 <div class="col-md-6">
-                                    <label class="form-label text-muted small fw-bold">الاسم (بالفرنسية)</label>
-                                    <input type="text" name="prenom_fr" id="edit-prenom_fr" class="form-control bg-light border-0 rounded-3 py-2 px-3 fw-bold" required>
+                                    <div class="card border-0 p-4 bg-white shadow-sm rounded-4 h-100">
+                                        <h6 class="fw-bold mb-3 text-primary border-bottom pb-2"><i class="fa-solid fa-shield-halved me-1"></i> الخدمة الوطنية وذوي الاحتياجات</h6>
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label text-muted small fw-bold">الخدمة الوطنية (الوضعية)</label>
+                                                <select name="sit_militaire" id="edit-sit_militaire" class="form-select bg-light border-0 rounded-3 py-2 px-3 fw-bold">
+                                                    <option value="1">مؤدى</option>
+                                                    <option value="2">معفى</option>
+                                                    <option value="3">مؤجل</option>
+                                                    <option value="4">غير معني</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6 d-flex align-items-center mt-4 justify-content-center">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" name="endicape" id="edit-endicape" value="1" onchange="toggleHandicapFields(this)">
+                                                    <label class="form-check-label text-muted small fw-bold" for="edit-endicape">من ذوي الاحتياجات</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 handicap-field d-none">
+                                                <label class="form-label text-muted small fw-bold">النسبة (%)</label>
+                                                <input type="number" name="endicape_pourcentage" id="edit-endicape_pourcentage" min="0" max="100" class="form-control bg-light border-0 rounded-3 py-2 px-3 fw-bold">
+                                            </div>
+                                            <div class="col-md-6 handicap-field d-none">
+                                                <label class="form-label text-muted small fw-bold">الطبيعة / النوع</label>
+                                                <select name="endicape_type" id="edit-endicape_type" class="form-select bg-light border-0 rounded-3 py-2 px-3 fw-bold">
+                                                    <option value="1">حركية</option>
+                                                    <option value="2">بصرية</option>
+                                                    <option value="3">سمعية</option>
+                                                    <option value="4">أخرى</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
+
                                 <div class="col-md-6">
-                                    <label class="form-label text-muted small fw-bold">اللقب (بالفرنسية)</label>
-                                    <input type="text" name="nom_fr" id="edit-nom_fr" class="form-control bg-light border-0 rounded-3 py-2 px-3 fw-bold" required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label text-muted small fw-bold">تاريخ الميلاد</label>
-                                    <input type="text" name="date_nais" id="edit-date_nais" class="form-control bg-light border-0 rounded-3 py-2 px-3 fw-bold" placeholder="YYYY/MM/DD" required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label text-muted small fw-bold">مكان الميلاد</label>
-                                    <input type="text" name="lieu_nais" id="edit-lieu_nais" class="form-control bg-light border-0 rounded-3 py-2 px-3 fw-bold" required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label text-muted small fw-bold">الجنس (الحالة المدنية)</label>
-                                    <select name="civ" id="edit-civ" class="form-select bg-light border-0 rounded-3 py-2 px-3 fw-bold">
-                                        <option value="1">ذكر</option>
-                                        <option value="2">أنثى</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label text-muted small fw-bold">رقم الهاتف</label>
-                                    <input type="text" name="tel" id="edit-tel" class="form-control bg-light border-0 rounded-3 py-2 px-3 fw-bold">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label text-muted small fw-bold">البريد الإلكتروني</label>
-                                    <input type="email" name="email" id="edit-email" class="form-control bg-light border-0 rounded-3 py-2 px-3 fw-bold" placeholder="name@domain.com">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label text-muted small fw-bold">العنوان الشخصي</label>
-                                    <input type="text" name="adres" id="edit-adres" class="form-control bg-light border-0 rounded-3 py-2 px-3 fw-bold">
+                                    <div class="card border-0 p-4 bg-white shadow-sm rounded-4 h-100">
+                                        <h6 class="fw-bold mb-3 text-primary border-bottom pb-2"><i class="fa-solid fa-fingerprint me-1"></i> رموز وتعريفات رسمية</h6>
+                                        <div class="row g-3">
+                                            <div class="col-md-4">
+                                                <label class="form-label text-muted small fw-bold">رقم شهادة الميلاد</label>
+                                                <input type="text" name="num_act_naiss" id="edit-num_act_naiss" class="form-control bg-light border-0 rounded-3 py-2 px-3 fw-bold">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label text-muted small fw-bold">رقم الضمان الاجتماعي NSS</label>
+                                                <input type="text" name="nss" id="edit-nss" class="form-control bg-light border-0 rounded-3 py-2 px-3 fw-bold">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label text-muted small fw-bold">الرقم التعريفي الوطني NIN <i class="fa-solid fa-lock text-danger ms-1"></i></label>
+                                                <input type="text" id="edit-nin" class="form-control border border-2 border-danger-subtle bg-white py-2 px-2 fw-bold text-danger small" readonly disabled style="cursor: not-allowed; opacity: 0.85;">
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Tab 2: Family Status -->
-                        <div class="tab-pane fade" id="edit-tab-family" role="tabpanel">
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label class="form-label text-muted small fw-bold">الوضعية العائلية</label>
-                                    <select name="sitfamille" id="edit-sitfamille" class="form-select bg-light border-0 rounded-3 py-2 px-3 fw-bold">
-                                        <option value="1">أعزب / عزباء</option>
-                                        <option value="2">متزوج / متزوجة</option>
-                                        <option value="3">مطلق / مطلقة</option>
-                                        <option value="4">أرمل / أرملة</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label text-muted small fw-bold">إجمالي عدد الأولاد</label>
-                                    <input type="number" name="nbr_enfants" id="edit-nbr_enfants" min="0" class="form-control bg-light border-0 rounded-3 py-2 px-3 fw-bold">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label text-muted small fw-bold">منهم الأولاد المتمدرسين</label>
-                                    <input type="number" name="nbr_enfants_scol" id="edit-nbr_enfants_scol" min="0" class="form-control bg-light border-0 rounded-3 py-2 px-3 fw-bold">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Tab 3: Professional details -->
+                        <!-- Tab 2: Educational and Professional Details -->
                         <div class="tab-pane fade" id="edit-tab-career" role="tabpanel">
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <!-- NIN field is disabled and readonly to block editing as requested -->
-                                    <label class="form-label text-muted small fw-bold">الرقم الوطني للتعريف الإلكتروني (NIN) <i class="fa-solid fa-lock text-danger ms-1"></i></label>
-                                    <input type="text" id="edit-nin" class="form-control border border-2 border-danger-subtle bg-white py-2 px-3 fw-bold text-danger" readonly disabled style="cursor: not-allowed; opacity: 0.8;">
-                                    <span class="text-danger small mt-1 d-block" style="font-size:0.7rem;">حقل مغلق - غير قابل للتعديل نهائياً.</span>
+                            <!-- Section 1: Study & Diploma -->
+                            <div class="card border-0 p-4 bg-white shadow-sm rounded-4 mb-3">
+                                <h6 class="fw-bold mb-3 text-primary border-bottom pb-2"><i class="fa-solid fa-graduation-cap me-1"></i> المستوى والشهادة الموافقة للرتبة الحالية أو الأصلية</h6>
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label text-muted small fw-bold">الطور الدراسي</label>
+                                        <select name="niveau_scol" id="edit-niveau_scol" class="form-select bg-light border-0 rounded-3 py-2 px-3 fw-bold">
+                                            <option value="">-- اختر الطور الدراسي --</option>
+                                            <?php foreach ($scol_levels_ref as $sl): ?>
+                                                <option value="<?= $sl->IDNiveau_Scol_enca ?>"><?= $sl->Nom ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label text-muted small fw-bold">الشهادة</label>
+                                        <select name="diplome" id="edit-diplome" class="form-select bg-light border-0 rounded-3 py-2 px-3 fw-bold">
+                                            <option value="">-- اختر الشهادة --</option>
+                                            <?php foreach ($diplomes_ref as $dp): ?>
+                                                <option value="<?= $dp->IDDiplome ?>"><?= $dp->Nom ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label text-muted small fw-bold">الاختصاص</label>
+                                        <input type="text" name="specialite" id="edit-specialite" class="form-control bg-light border-0 rounded-3 py-2 px-3 fw-bold">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label text-muted small fw-bold">المجال / الشعبة</label>
+                                        <select name="branche" id="edit-branche" class="form-select bg-light border-0 rounded-3 py-2 px-3 fw-bold">
+                                            <option value="">-- اختر الشعبة --</option>
+                                            <?php foreach ($branches_ref as $br): ?>
+                                                <option value="<?= $br->IDBranche ?>"><?= $br->Nom ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label text-muted small fw-bold">مدة التكوين بالأشهر</label>
+                                        <input type="number" name="duree_diplome" id="edit-duree_diplome" min="0" class="form-control bg-light border-0 rounded-3 py-2 px-3 fw-bold">
+                                    </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <label class="form-label text-muted small fw-bold">رقم الضمان الاجتماعي (NSS)</label>
-                                    <input type="text" name="nss" id="edit-nss" class="form-control bg-light border-0 rounded-3 py-2 px-3 fw-bold">
+                            </div>
+
+                            <!-- Section 2: Original Grade -->
+                            <div class="card border-0 p-4 bg-white shadow-sm rounded-4 mb-3">
+                                <h6 class="fw-bold mb-3 text-primary border-bottom pb-2"><i class="fa-solid fa-circle-info me-1"></i> الرتبة الأصلية وتواريخ التوظيف</h6>
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label text-muted small fw-bold">الرتبة الأصلية</label>
+                                        <select name="grade_deb" id="edit-grade_deb" class="form-select bg-light border-0 rounded-3 py-2 px-3 fw-bold">
+                                            <option value="">-- اختر الرتبة الأصلية --</option>
+                                            <?php foreach ($grades_ref as $gr): ?>
+                                                <option value="<?= $gr->IDGrade ?>"><?= $gr->Nom ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label text-muted small fw-bold">نمط التوظيف</label>
+                                        <select name="mode_recrutement" id="edit-mode_recrutement" class="form-select bg-light border-0 rounded-3 py-2 px-3 fw-bold">
+                                            <option value="">-- اختر النمط --</option>
+                                            <?php foreach ($mode_recrutements_ref as $mr): ?>
+                                                <option value="<?= $mr->IDMode_Recrutement ?>"><?= $mr->Nom ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label text-muted small fw-bold">تاريخ التوظيف الأول</label>
+                                        <input type="date" name="daterecr" id="edit-daterecr" class="form-control bg-light border-0 rounded-3 py-2 px-3 fw-bold">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label text-muted small fw-bold">تاريخ التثبيت (الترسيم الأول)</label>
+                                        <input type="date" name="date_install" id="edit-date_install" class="form-control bg-light border-0 rounded-3 py-2 px-3 fw-bold">
+                                    </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <label class="form-label text-muted small fw-bold">تاريخ التوظيف</label>
-                                    <input type="date" name="daterecr" id="edit-daterecr" class="form-control bg-light border-0 rounded-3 py-2 px-3 fw-bold">
+                            </div>
+
+                            <!-- Section 3: Current Grade -->
+                            <div class="card border-0 p-4 bg-white shadow-sm rounded-4 mb-3">
+                                <h6 class="fw-bold mb-3 text-primary border-bottom pb-2"><i class="fa-solid fa-briefcase me-1"></i> الرتبة الحالية والدرجة (Echelon)</h6>
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label text-muted small fw-bold">الرتبة الحالية</label>
+                                        <select name="grade" id="edit-grade" class="form-select bg-light border-0 rounded-3 py-2 px-3 fw-bold">
+                                            <option value="">-- اختر الرتبة الحالية --</option>
+                                            <?php foreach ($grades_ref as $gr): ?>
+                                                <option value="<?= $gr->IDGrade ?>"><?= $gr->Nom ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label text-muted small fw-bold">تاريخ التعيين في الرتبة الحالية</label>
+                                        <input type="date" name="date_install_poste" id="edit-date_install_poste" class="form-control bg-light border-0 rounded-3 py-2 px-3 fw-bold">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label text-muted small fw-bold">آخر درجة (Echelon)</label>
+                                        <input type="number" name="echelon" id="edit-echelon" min="1" max="15" class="form-control bg-light border-0 rounded-3 py-2 px-3 fw-bold">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label text-muted small fw-bold">تاريخ الدرجة الأخيرة</label>
+                                        <input type="date" name="date_echelon" id="edit-date_echelon" class="form-control bg-light border-0 rounded-3 py-2 px-3 fw-bold">
+                                    </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <label class="form-label text-muted small fw-bold">التخصص المهني</label>
-                                    <input type="text" name="specialite" id="edit-specialite" class="form-control bg-light border-0 rounded-3 py-2 px-3 fw-bold">
+                            </div>
+
+                            <!-- Section 4: High functions/positions -->
+                            <div class="card border-0 p-4 bg-white shadow-sm rounded-4 mb-3">
+                                <h6 class="fw-bold mb-3 text-primary border-bottom pb-2"><i class="fa-solid fa-arrow-up-right-dots me-1"></i> المناصب والوظائف العليا الحالية (تحدد في المؤسسة الأصلية)</h6>
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label text-muted small fw-bold">طبيعة المنصب</label>
+                                        <input type="text" name="nature_poste_superieur" id="edit-nature_poste_superieur" class="form-control bg-light border-0 rounded-3 py-2 px-3 fw-bold" placeholder="مثال: منصب عالي هيكلي">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label text-muted small fw-bold">المنصب / الوظيفة</label>
+                                        <select name="fonction" id="edit-fonction" class="form-select bg-light border-0 rounded-3 py-2 px-3 fw-bold">
+                                            <option value="">-- اختر الوظيفة العليا --</option>
+                                            <?php foreach ($fonctions_ref as $fn): ?>
+                                                <option value="<?= $fn->IDFonctions ?>"><?= $fn->Nom ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label text-muted small fw-bold">تاريخ البداية</label>
+                                        <input type="date" name="date_deb_fonctions" id="edit-date_deb_fonctions" class="form-control bg-light border-0 rounded-3 py-2 px-3 fw-bold">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label text-muted small fw-bold">تاريخ النهاية</label>
+                                        <input type="date" name="date_fin_fonctions" id="edit-date_fin_fonctions" class="form-control bg-light border-0 rounded-3 py-2 px-3 fw-bold">
+                                    </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <label class="form-label text-muted small fw-bold">المهام الأساسية / الرتبة</label>
-                                    <input type="text" name="taches_principale" id="edit-taches_principale" class="form-control bg-light border-0 rounded-3 py-2 px-3 fw-bold">
+                            </div>
+                        </div>
+
+                        <!-- Tab 3: Career History Timeline Grids -->
+                        <div class="tab-pane fade" id="edit-tab-history" role="tabpanel">
+                            <!-- Grid 1: Normal Grades history -->
+                            <div class="card border-0 p-4 bg-white shadow-sm rounded-4 mb-4">
+                                <h6 class="fw-bold mb-3 text-success border-bottom pb-2"><i class="fa-solid fa-list-ol me-1"></i> المسار المهني - الرتب العادية</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-striped table-hover align-middle mb-0 text-center small">
+                                        <thead class="table-light text-secondary fw-bold">
+                                            <tr>
+                                                <th>الترتيب</th>
+                                                <th>الرمز</th>
+                                                <th>القطاع</th>
+                                                <th>السلك/الشعبة</th>
+                                                <th>الرتبة</th>
+                                                <th>النمط في حالة الترقية</th>
+                                                <th>تاريخ التنصيب</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="edit-grades-history-body">
+                                            <tr>
+                                                <td colspan="7" class="text-center text-muted">لا يوجد سجل تاريخي للرتب العادية</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
                                 </div>
-                                <div class="col-md-6">
-                                    <label class="form-label text-muted small fw-bold">الدرجة المهنية (Echelon)</label>
-                                    <input type="number" name="echelon" id="edit-echelon" min="1" max="15" class="form-control bg-light border-0 rounded-3 py-2 px-3 fw-bold">
+                            </div>
+
+                            <!-- Grid 2: High Functions/Positions history -->
+                            <div class="card border-0 p-4 bg-white shadow-sm rounded-4">
+                                <h6 class="fw-bold mb-3 text-success border-bottom pb-2"><i class="fa-solid fa-ranking-star me-1"></i> المسار المهني - المناصب والوظائف العليا</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-striped table-hover align-middle mb-0 text-center small">
+                                        <thead class="table-light text-secondary fw-bold">
+                                            <tr>
+                                                <th>الترتيب</th>
+                                                <th>الرمز</th>
+                                                <th>طبيعة الوظيفة</th>
+                                                <th>الوظيفة</th>
+                                                <th>تاريخ التعيين</th>
+                                                <th>رقم مقرر التعيين</th>
+                                                <th>تاريخ مقرر التعيين</th>
+                                                <th>تاريخ التأشيرة</th>
+                                                <th>رقم التأشيرة</th>
+                                                <th>تاريخ النهاية</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="edit-fonctions-history-body">
+                                            <tr>
+                                                <td colspan="10" class="text-center text-muted">لا يوجد سجل تاريخي للمناصب والوظائف العليا</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <div class="d-flex gap-2 justify-content-end mt-4 pt-3 border-top border-light">
-                        <button type="button" class="btn btn-outline-secondary rounded-pill px-4 fw-bold" data-bs-dismiss="modal">إلغاء</button>
-                        <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold" style="background: linear-gradient(135deg, #482b8f 0%, #643edb 100%); border: none;">حفظ التعديلات</button>
+                        <button type="button" class="btn btn-outline-secondary rounded-pill px-4 fw-bold shadow-sm" data-bs-dismiss="modal">إلغاء</button>
+                        <button type="submit" class="btn btn-success rounded-pill px-5 fw-bold shadow-sm" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none;">حفظ وتعديل</button>
                     </div>
                 </form>
             </div>
@@ -598,6 +846,17 @@ $sitFamilleMap = [
 </div>
 
 <script>
+function toggleHandicapFields(chk) {
+    const fields = document.querySelectorAll(".handicap-field");
+    fields.forEach(f => {
+        if (chk && chk.checked) {
+            f.classList.remove("d-none");
+        } else {
+            f.classList.add("d-none");
+        }
+    });
+}
+
 // Select first employee row automatically on load if available
 document.addEventListener("DOMContentLoaded", function() {
     const firstRow = document.querySelector("#employeesTable tbody tr.employee-row");
@@ -718,13 +977,88 @@ function openEditModal(empId) {
             document.getElementById("edit-nbr_enfants").value = emp.nbrEnf || 0;
             document.getElementById("edit-nbr_enfants_scol").value = emp.nbrenfscol || 0;
 
-            // Career details
-            document.getElementById("edit-nin").value = emp.nin || '0';
+            // Personal Identifiers & Extras
+            document.getElementById("edit-num_act_naiss").value = emp.numActNaiss || '';
             document.getElementById("edit-nss").value = emp.nss || '';
-            document.getElementById("edit-daterecr").value = emp.Daterecr || '';
+            document.getElementById("edit-nin").value = emp.nin || '';
+            document.getElementById("edit-sit_militaire").value = emp.SitMilitaire || '4';
+            
+            const lne = document.getElementById("edit-lieunaissetranger");
+            if (lne) { lne.checked = (parseInt(emp.lieunaissetranger) === 1); }
+
+            const hnd = document.getElementById("edit-endicape");
+            if (hnd) {
+                hnd.checked = (parseInt(emp.endicape) === 1);
+                toggleHandicapFields(hnd);
+            }
+            document.getElementById("edit-endicape_pourcentage").value = emp.IDEndicapePourcentage || '';
+            document.getElementById("edit-endicape_type").value = emp.IDEndicapetype || '1';
+
+            // Career / Study details
+            document.getElementById("edit-niveau_scol").value = emp.IDNiveau_Scol_enca || '';
+            document.getElementById("edit-diplome").value = emp.IDDiplome || '';
             document.getElementById("edit-specialite").value = emp.Specialite || '';
-            document.getElementById("edit-taches_principale").value = emp.TachesPrincipale || '';
+            document.getElementById("edit-branche").value = emp.IDBranche || '';
+            document.getElementById("edit-duree_diplome").value = emp.DureeDiplome || '';
+            
+            document.getElementById("edit-grade_deb").value = emp.IDGradeDeb || '';
+            document.getElementById("edit-daterecr").value = emp.Daterecr || '';
+            document.getElementById("edit-date_install").value = emp.DateInstall || '';
+            
+            document.getElementById("edit-grade").value = emp.IDGrade || '';
+            document.getElementById("edit-date_install_poste").value = emp.DateinstallPoste || '';
             document.getElementById("edit-echelon").value = emp.Echlo || 1;
+            document.getElementById("edit-date_echelon").value = emp.DateEchlon || '';
+
+            // High functions
+            document.getElementById("edit-fonction").value = emp.IDFonctions || '';
+            document.getElementById("edit-date_deb_fonctions").value = emp.DateDebFonctions || '';
+            document.getElementById("edit-date_fin_fonctions").value = emp.DateFinFonctions || '';
+            document.getElementById("edit-taches_principale").value = emp.TachesPrincipale || '';
+
+            // Render Career Grids (Tab 3)
+            const gradesBody = document.getElementById("edit-grades-history-body");
+            gradesBody.innerHTML = "";
+            if (emp.grades_history && emp.grades_history.length > 0) {
+                emp.grades_history.forEach((g, i) => {
+                    gradesBody.innerHTML += `
+                        <tr>
+                            <td>${i + 1}</td>
+                            <td>${g.IDGrade || '—'}</td>
+                            <td>التعليم والتكوين المهنيين</td>
+                            <td>الأستاذة المتخصصين في التكوين والتعليم المهنيين</td>
+                            <td><strong>${g.grade_nom || 'غير محدد'}</strong></td>
+                            <td><span class="badge bg-info-subtle text-info fw-bold">${g.mode_promotion_nom || 'امتحان مهني'}</span></td>
+                            <td>${g.dateinstal || 'غير متوفر'}</td>
+                        </tr>
+                    `;
+                });
+            } else {
+                gradesBody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-3">لا يوجد سجل تاريخي للرتب العادية</td></tr>';
+            }
+
+            const fonctionsBody = document.getElementById("edit-fonctions-history-body");
+            fonctionsBody.innerHTML = "";
+            if (emp.fonctions_history && emp.fonctions_history.length > 0) {
+                emp.fonctions_history.forEach((f, i) => {
+                    fonctionsBody.innerHTML += `
+                        <tr>
+                            <td>${i + 1}</td>
+                            <td>${f.IDFonctions || '—'}</td>
+                            <td>منصب عالي هيكلي</td>
+                            <td><strong>${f.fonction_nom || 'غير محدد'}</strong></td>
+                            <td>${f.Dateinstal || 'غير متوفر'}</td>
+                            <td>${f.NumDection || '—'}</td>
+                            <td>${f.DateDecision || '—'}</td>
+                            <td>${f.datevisafp || '—'}</td>
+                            <td>${f.visafp || '—'}</td>
+                            <td>${f.DateFIn || 'قيد الخدمة'}</td>
+                        </tr>
+                    `;
+                });
+            } else {
+                fonctionsBody.innerHTML = '<tr><td colspan="10" class="text-center text-muted py-3">لا يوجد سجل تاريخي للمناصب والوظائف العليا</td></tr>';
+            }
 
             // Avatar Preview
             const preview = document.getElementById("edit-avatar-preview");
@@ -748,7 +1082,8 @@ function openEditModal(empId) {
             new bootstrap.Modal(document.getElementById("employeeEditModal")).show();
         }
     })
-    .catch(() => {
+    .catch((err) => {
+        console.error(err);
         if (typeof Swal !== 'undefined') {
             Swal.fire({ icon: 'error', title: 'خطأ!', text: 'حدث خطأ أثناء تحميل ملف الموظف' });
         }

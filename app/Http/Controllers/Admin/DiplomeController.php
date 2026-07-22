@@ -1588,17 +1588,7 @@ class DiplomeController extends Controller
 
         $background = request()->query('background', '1') === '1';
 
-        $mpdf = new \Mpdf\Mpdf([
-            'mode' => 'utf-8',
-            'format' => 'A4-L',
-            'autoScriptToLang' => true,
-            'autoLangToFont' => true,
-            'margin_top' => 0,
-            'margin_bottom' => 0,
-            'margin_left' => 0,
-            'margin_right' => 0
-        ]);
-        $mpdf->SetDirectionality('rtl');
+        $mpdf = $this->createMpdfInstance();
 
         $html = view('admin.diplomes.pdf', [
             'diplomas' => [$d],
@@ -1775,17 +1765,7 @@ class DiplomeController extends Controller
 
         $background = $request->query('background', '1') === '1';
 
-        $mpdf = new \Mpdf\Mpdf([
-            'mode' => 'utf-8',
-            'format' => 'A4-L',
-            'autoScriptToLang' => true,
-            'autoLangToFont' => true,
-            'margin_top' => 0,
-            'margin_bottom' => 0,
-            'margin_left' => 0,
-            'margin_right' => 0
-        ]);
-        $mpdf->SetDirectionality('rtl');
+        $mpdf = $this->createMpdfInstance();
 
         $html = view('admin.diplomes.pdf', [
             'diplomas' => $diplomas,
@@ -1796,5 +1776,72 @@ class DiplomeController extends Controller
         $mpdf->WriteHTML($html);
         return response($mpdf->Output('diplomes_batch.pdf', \Mpdf\Output\Destination::DOWNLOAD))
             ->header('Content-Type', 'application/pdf');
+    }
+
+    /**
+     * Create a fully configured mPDF instance with custom fonts registered.
+     */
+    private function createMpdfInstance(): \Mpdf\Mpdf
+    {
+        $defaultConfig = (new \Mpdf\Config\ConfigVariables())->getDefaults();
+        $fontDirs = $defaultConfig['fontDir'];
+        $defaultFontConfig = (new \Mpdf\Config\FontVariables())->getDefaults();
+        $fontData = $defaultFontConfig['fontdata'];
+
+        return new \Mpdf\Mpdf([
+            'mode' => 'utf-8',
+            'format' => 'A4-L',
+            'autoScriptToLang' => true,
+            'autoLangToFont' => true,
+            'margin_top' => 0,
+            'margin_bottom' => 0,
+            'margin_left' => 0,
+            'margin_right' => 0,
+            'fontDir' => array_merge($fontDirs, [
+                public_path('assets/fonts')
+            ]),
+            'fontdata' => array_merge($fontData, [
+                'clarendon_black' => [
+                    'R' => 'Clarendon Blk BT Black.ttf',
+                ],
+                'arabic_ejaza' => [
+                    'R' => 'arabic-ejaza.ttf',
+                    'useOTL' => 0xFF,
+                    'useKashida' => 75,
+                ],
+                '94pt_bold' => [
+                    'R' => '94PT Bold Heading_0.ttf',
+                ],
+                'decotype_naskh' => [
+                    'R' => '43 DecoType Naskh Variants_0.ttf',
+                    'useOTL' => 0xFF,
+                    'useKashida' => 75,
+                ],
+                'clarendon_roman' => [
+                    'R' => 'Clarendon BT Roman.ttf',
+                ],
+                'clarendon_light' => [
+                    'R' => 'Clarendon Lt BT Light.ttf',
+                ],
+                'clarendon_bold' => [
+                    'R' => 'Clarendon BT Bold.ttf',
+                ],
+                'mohammad_bold' => [
+                    'R' => 'MOHAMMAD_BOLD_ART.TTF',
+                    'useOTL' => 0xFF,
+                    'useKashida' => 75,
+                ],
+                'drarku' => [
+                    'R' => 'drarku.otf',
+                    'useOTL' => 0xFF,
+                    'useKashida' => 75,
+                ],
+                'drarku_bold' => [
+                    'R' => 'drarkubold.otf',
+                    'useOTL' => 0xFF,
+                    'useKashida' => 75,
+                ],
+            ]),
+        ]);
     }
 }

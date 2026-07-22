@@ -111,6 +111,14 @@ class EspaceEmployeController extends Controller
         $type   = $request->query('filter_type');
         $etab   = $request->query('filter_etab');
 
+        $grades_ref = DB::select("SELECT IDGrade, Nom FROM grade ORDER BY Nom ASC");
+        $fonctions_ref = DB::select("SELECT IDFonctions, Nom FROM fonctions ORDER BY Nom ASC");
+        $diplomes_ref = DB::select("SELECT IDDiplome, Nom FROM diplome ORDER BY Nom ASC");
+        $scol_levels_ref = DB::select("SELECT IDNiveau_Scol_enca, Nom FROM niveau_scol_enca ORDER BY NumOrd ASC");
+        $branches_ref = DB::select("SELECT IDBranche, Nom FROM branche ORDER BY Nom ASC");
+        $sitfamilles_ref = DB::select("SELECT IDSitfamille, Nom FROM sitfamille ORDER BY Nom ASC");
+        $mode_recrutements_ref = DB::select("SELECT IDMode_Recrutement, Nom FROM mode_recrutement ORDER BY Nom ASC");
+
         return $this->render('admin/espace-employe/index', [
             'employees'             => $employees,
             'filter_wilayas'        => $filter_wilayas,
@@ -121,6 +129,13 @@ class EspaceEmployeController extends Controller
             'api_key'               => $apiKey,
             'scope'                 => $scopeData,
             'selected_filters'      => compact('search', 'wilaya', 'type', 'etab'),
+            'grades_ref'            => $grades_ref,
+            'fonctions_ref'         => $fonctions_ref,
+            'diplomes_ref'          => $diplomes_ref,
+            'scol_levels_ref'       => $scol_levels_ref,
+            'branches_ref'          => $branches_ref,
+            'sitfamilles_ref'       => $sitfamilles_ref,
+            'mode_recrutements_ref' => $mode_recrutements_ref,
         ]);
     }
 
@@ -259,6 +274,24 @@ class EspaceEmployeController extends Controller
                 'Specialite'       => trim($request->input('specialite') ?? ''),
                 'TachesPrincipale' => trim($request->input('taches_principale') ?? ''),
                 'Daterecr'         => $request->input('daterecr') ?: null,
+                'numActNaiss'      => trim($request->input('num_act_naiss') ?? ''),
+                'SitMilitaire'     => (int)($request->input('sit_militaire') ?? 4),
+                'endicape'         => (int)($request->input('endicape') ?? 0),
+                'IDEndicapePourcentage' => $request->input('endicape_pourcentage') ? (int)$request->input('endicape_pourcentage') : null,
+                'IDEndicapetype'   => $request->input('endicape_type') ? (int)$request->input('endicape_type') : null,
+                'lieunaissetranger' => (int)($request->input('lieunaissetranger') ?? 0),
+                'IDGradeDeb'       => $request->input('grade_deb') ? (int)$request->input('grade_deb') : null,
+                'IDGrade'          => $request->input('grade') ? (int)$request->input('grade') : null,
+                'IDFonctions'      => $request->input('fonction') ? (int)$request->input('fonction') : null,
+                'IDNiveau_Scol_enca' => $request->input('niveau_scol') ? (int)$request->input('niveau_scol') : null,
+                'IDDiplome'        => $request->input('diplome') ? (int)$request->input('diplome') : null,
+                'IDBranche'        => $request->input('branche') ? (int)$request->input('branche') : null,
+                'DureeDiplome'     => $request->input('duree_diplome') ? (double)$request->input('duree_diplome') : null,
+                'DateInstall'      => $request->input('date_install') ?: null,
+                'DateEchlon'       => $request->input('date_echelon') ?: null,
+                'DateDebFonctions' => $request->input('date_deb_fonctions') ?: null,
+                'DateFinFonctions' => $request->input('date_fin_fonctions') ?: null,
+                'DateinstallPoste' => $request->input('date_install_poste') ?: null,
                 // nin intentionally OMITTED — cannot be modified via this endpoint
             ];
 

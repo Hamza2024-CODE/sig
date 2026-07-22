@@ -23,6 +23,8 @@ class CandidatController extends Controller
      */
     public function index(Request $request): mixed
     {
+        app(\App\Security\AuthorizationService::class)->authorize('view');
+
         @set_time_limit(300);
         $statusFilter = $request->query('status', 'all');
         $user         = session('user');
@@ -138,13 +140,17 @@ class CandidatController extends Controller
      */
     public function action(): mixed
     {
+        app(\App\Security\AuthorizationService::class)->authorize('update');
+
         if (request()->isMethod('post')) {
             $candidatId  = (int)(request()->all()['pre_inscr_id'] ?? 0);
             $decision    = request()->all()['decision'] ?? '';
             $motifRefus  = request()->all()['motif_refus'] ?? null;
             $user        = session('user');
 
-            $candidate = DB::table('candidat')->where('IDCandidat', $candidatId)->first();
+            $candidate = \App\Database\ScopedQuery::for(\App\Models\Candidat::class)
+                ->where('IDCandidat', $candidatId)
+                ->first();
             if ($candidate) {
                 $wilayaId = (int) DB::table('offre')
                     ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDetablissement')
@@ -172,6 +178,8 @@ class CandidatController extends Controller
 
     public function show($id)
     {
+        app(\App\Security\AuthorizationService::class)->authorize('view');
+
         try {
             $memosEnabled = \App\Helpers\SovereignLicensingHelper::getSetting('feature_large_memos_query_enabled', '1') === '1';
 
@@ -196,7 +204,7 @@ class CandidatController extends Controller
                 ]);
             }
 
-            $candidate = DB::table('candidat')
+            $candidate = \App\Database\ScopedQuery::for(\App\Models\Candidat::class)
                 ->leftJoin('preinscrit', 'candidat.IDPreinscrit', '=', 'preinscrit.IDPreinscrit')
                 ->leftJoin('candidat_contratapp', 'candidat.IDCandidat', '=', 'candidat_contratapp.IDCandidat')
                 ->where('candidat.IDCandidat', $id)
@@ -214,8 +222,7 @@ class CandidatController extends Controller
     }
     public function store(Request $request)
     {
-        $user = session('user');
-        if (!$user) return redirect('/login');
+        app(\App\Security\AuthorizationService::class)->authorize('create');
 
         $validated = $request->validate([
             'offre_id' => 'required|integer',
@@ -233,11 +240,24 @@ class CandidatController extends Controller
             'nin' => 'nullable|string|max:50',
         ]);
 
-        $wilayaId = (int) DB::table('offre')
-            ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDetablissement')
-            ->join('dfep', 'etablissement.IDDFEP', '=', 'dfep.IDDFEP')
-            ->where('offre.IDOffre', $validated['offre_id'])
-            ->value('dfep.IDWilayaa');
+        $offre = \App\Database\ScopedQuery::for(\App\Models\Offre::class)
+            ->where('IDOffre', $validated['offre_id'])
+            ->first();
+        if (!$offre) {
+            session(['flash_error' => 'العرض غير موجود أو غير تابع لمؤسستك.']);
+            return redirect()->back();
+        }
+
+        $wilayaId = 0;
+        try {
+            $wilayaId = (int) DB::table('offre')
+                ->join('etablissement', 'offre.IDEts_Form', '=', 'etablissement.IDetablissement')
+                ->join('dfep', 'etablissement.IDDFEP', '=', 'dfep.IDDFEP')
+                ->where('offre.IDOffre', $validated['offre_id'])
+                ->value('dfep.IDWilayaa');
+        } catch (\Exception $e) {
+            $wilayaId = 0;
+        }
 
         if (!\App\Helpers\SovereignLicensingHelper::checkEnrollmentPermission('add', $wilayaId)) {
             session(['flash_error' => 'تسجيل المترشحين الجدد معطل حالياً لهذه الولاية / L\'inscription est désactivée pour cette wilaya.']);
@@ -280,8 +300,7 @@ class CandidatController extends Controller
     }
     public function update(Request $request)
     {
-        $user = session('user');
-        if (!$user) return redirect('/login');
+        app(\App\Security\AuthorizationService::class)->authorize('update');
 
         $validated = $request->validate([
             'id' => 'required|integer',
@@ -299,11 +318,14 @@ class CandidatController extends Controller
             'nin' => 'nullable|string|max:50',
         ]);
 
-        $candidate = DB::table('candidat')->where('IDCandidat', $validated['id'])->first();
+        $candidate = \App\Database\ScopedQuery::for(\App\Models\Candidat::class)
+            ->where('IDCandidat', $validated['id'])
+            ->first();
         if (!$candidate) {
-            session(['flash_error' => 'المترشح غير موجود.']);
+            session(['flash_error' => 'المترشح غير موجود أو غير تابع لمؤسستك.']);
             return redirect()->back();
         }
+
 
         $wilayaId = 0;
         if (!empty($candidate->IDOffre)) {
@@ -352,11 +374,15 @@ class CandidatController extends Controller
 
     public function destroy($id)
     {
-        $user = session('user');
-        if (!$user) return redirect('/login');
+        app(\App\Security\AuthorizationService::class)->authorize('delete');
 
-        $candidate = DB::table('candidat')->where('IDCandidat', $id)->first();
-        if ($candidate) {
+        $candidate = \App\Database\ScopedQuery::for(\App\Models\Candidat::class)
+            ->where('IDCandidat', $id)
+            ->first();
+        if (!$candidate) {
+            session(['flash_error' => 'المترشح غير موجود أو غير تابع لمؤسستك.']);
+            return redirect()->back();
+        }
             $wilayaId = 0;
             if (!empty($candidate->IDOffre)) {
                 try {
@@ -374,7 +400,6 @@ class CandidatController extends Controller
                 session(['flash_error' => 'حذف المترشحين معطل حالياً لهذه الولاية / La suppression est désactivée pour cette wilaya.']);
                 return redirect()->back();
             }
-        }
 
         try {
             // Guard: check if candidate is registered as a student

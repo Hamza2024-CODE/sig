@@ -382,12 +382,12 @@ Route::middleware('check.session')->group(function () {
     });
 
     // ── Candidates ────────────────────────────────────────────────────────
-    Route::get('/dashboard/candidates', [\App\Http\Controllers\Admin\CandidatController::class, 'index'])->name('candidates.index');
-    Route::post('/dashboard/candidates/action', [\App\Http\Controllers\Admin\CandidatController::class, 'action'])->name('candidates.action');
-    Route::post('/dashboard/candidates/store', [\App\Http\Controllers\Admin\CandidatController::class, 'store'])->name('candidates.store');
-    Route::get('/dashboard/candidates/show/{id}', [\App\Http\Controllers\Admin\CandidatController::class, 'show'])->name('candidates.show');
-    Route::post('/dashboard/candidates/update', [\App\Http\Controllers\Admin\CandidatController::class, 'update'])->name('candidates.update');
-    Route::post('/dashboard/candidates/delete/{id}', [\App\Http\Controllers\Admin\CandidatController::class, 'destroy'])->name('candidates.delete');
+    Route::get('/dashboard/candidates', [\App\Http\Controllers\Admin\CandidatController::class, 'index'])->name('candidates.index')->middleware('secure.permission:view');
+    Route::post('/dashboard/candidates/action', [\App\Http\Controllers\Admin\CandidatController::class, 'action'])->name('candidates.action')->middleware('secure.permission:update');
+    Route::post('/dashboard/candidates/store', [\App\Http\Controllers\Admin\CandidatController::class, 'store'])->name('candidates.store')->middleware(['secure.permission:create', 'secure.scope']);
+    Route::get('/dashboard/candidates/show/{id}', [\App\Http\Controllers\Admin\CandidatController::class, 'show'])->name('candidates.show')->middleware(['secure.permission:view', 'secure.ownership:App\Models\Candidat,id']);
+    Route::post('/dashboard/candidates/update', [\App\Http\Controllers\Admin\CandidatController::class, 'update'])->name('candidates.update')->middleware(['secure.permission:update', 'secure.ownership:App\Models\Candidat,id']);
+    Route::post('/dashboard/candidates/delete/{id}', [\App\Http\Controllers\Admin\CandidatController::class, 'destroy'])->name('candidates.delete')->middleware(['secure.permission:delete', 'secure.ownership:App\Models\Candidat,id']);
 
     // ── Absences ──────────────────────────────────────────────────────────
     Route::prefix('dashboard/absences')->group(function () {
@@ -458,65 +458,65 @@ Route::middleware('check.session')->group(function () {
 
     // ── Apprenants ────────────────────────────────────────────────────────
     Route::prefix('dashboard/apprenants')->group(function () {
-        Route::get('/',                     [\App\Http\Controllers\Admin\ApprenantController::class, 'index'])->name('apprenants.index');
-        Route::post('/store',               [\App\Http\Controllers\Admin\ApprenantController::class, 'store'])->name('apprenants.store');
-        Route::get('/show/{id}',            [\App\Http\Controllers\Admin\ApprenantController::class, 'show'])->name('apprenants.show');
-        Route::post('/update',              [\App\Http\Controllers\Admin\ApprenantController::class, 'update'])->name('apprenants.update');
-        Route::post('/delete/{id}',         [\App\Http\Controllers\Admin\ApprenantController::class, 'destroy'])->name('apprenants.delete');
+        Route::get('/',                     [\App\Http\Controllers\Admin\ApprenantController::class, 'index'])->name('apprenants.index')->middleware('secure.permission:view');
+        Route::post('/store',               [\App\Http\Controllers\Admin\ApprenantController::class, 'store'])->name('apprenants.store')->middleware(['secure.permission:create', 'secure.scope']);
+        Route::get('/show/{id}',            [\App\Http\Controllers\Admin\ApprenantController::class, 'show'])->name('apprenants.show')->middleware(['secure.permission:view', 'secure.ownership:App\Models\Apprenant,id']);
+        Route::post('/update',              [\App\Http\Controllers\Admin\ApprenantController::class, 'update'])->name('apprenants.update')->middleware(['secure.permission:update', 'secure.ownership:App\Models\Apprenant,id']);
+        Route::post('/delete/{id}',         [\App\Http\Controllers\Admin\ApprenantController::class, 'destroy'])->name('apprenants.delete')->middleware(['secure.permission:delete', 'secure.ownership:App\Models\Apprenant,id']);
     });
 
     // ── Sections ──────────────────────────────────────────────────────────
     Route::prefix('dashboard/sections')->group(function () {
-        Route::get('/',                     [\App\Http\Controllers\Admin\SectionController::class, 'index'])->name('sections.index');
-        Route::post('/store',               [\App\Http\Controllers\Admin\SectionController::class, 'store'])->name('sections.store');
-        Route::get('/show/{id}',            [\App\Http\Controllers\Admin\SectionController::class, 'show'])->name('sections.show');
-        Route::get('/trainees/{id}',        [\App\Http\Controllers\Admin\SectionController::class, 'ajaxGetTrainees'])->name('sections.trainees');
-        Route::post('/validate-trainees/{id}', [\App\Http\Controllers\Admin\SectionController::class, 'bulkValidateTrainees'])->name('sections.validate-trainees');
-        Route::post('/update',              [\App\Http\Controllers\Admin\SectionController::class, 'update'])->name('sections.update');
-        Route::post('/delete/{id}',         [\App\Http\Controllers\Admin\SectionController::class, 'destroy'])->name('sections.delete');
+        Route::get('/',                     [\App\Http\Controllers\Admin\SectionController::class, 'index'])->name('sections.index')->middleware('secure.permission:view');
+        Route::post('/store',               [\App\Http\Controllers\Admin\SectionController::class, 'store'])->name('sections.store')->middleware(['secure.permission:create', 'secure.scope']);
+        Route::get('/show/{id}',            [\App\Http\Controllers\Admin\SectionController::class, 'show'])->name('sections.show')->middleware(['secure.permission:view', 'secure.ownership:App\Models\Section,id']);
+        Route::get('/trainees/{id}',        [\App\Http\Controllers\Admin\SectionController::class, 'ajaxGetTrainees'])->name('sections.trainees')->middleware(['secure.permission:view', 'secure.ownership:App\Models\Section,id']);
+        Route::post('/validate-trainees/{id}', [\App\Http\Controllers\Admin\SectionController::class, 'bulkValidateTrainees'])->name('sections.validate-trainees')->middleware(['secure.permission:update', 'secure.ownership:App\Models\Section,id']);
+        Route::post('/update',              [\App\Http\Controllers\Admin\SectionController::class, 'update'])->name('sections.update')->middleware(['secure.permission:update', 'secure.ownership:App\Models\Section,id']);
+        Route::post('/delete/{id}',         [\App\Http\Controllers\Admin\SectionController::class, 'destroy'])->name('sections.delete')->middleware(['secure.permission:delete', 'secure.ownership:App\Models\Section,id']);
     });
 
     // ── Modules / New Modules ─────────────────────────────────────────────
-    Route::get('/dashboard/inscriptions', [\App\Http\Controllers\Admin\ModulesController::class, 'inscriptions'])->name('modules.inscriptions');
-    Route::post('/dashboard/inscriptions/orienter', [\App\Http\Controllers\Admin\ModulesController::class, 'orienterCandidate'])->name('modules.orienter');
-    Route::post('/dashboard/inscriptions/orienter-bulk', [\App\Http\Controllers\Admin\ModulesController::class, 'orienterBulkCandidates'])->name('modules.orienter-bulk');
-    Route::get('/dashboard/inscriptions/ajax/sections-by-offre/{offre_id}', [\App\Http\Controllers\Admin\ModulesController::class, 'ajaxGetSectionsByOffre']);
-    Route::get('/dashboard/integration', [\App\Http\Controllers\Admin\ModulesController::class, 'integration'])->name('modules.integration');
-    Route::post('/dashboard/integration/store', [\App\Http\Controllers\Admin\ModulesController::class, 'storeAgreement'])->name('modules.integration.store');
-    Route::post('/dashboard/integration/delete/{id}', [\App\Http\Controllers\Admin\ModulesController::class, 'deleteAgreement'])->name('modules.integration.delete');
-    Route::get('/dashboard/sessions', [\App\Http\Controllers\Admin\ModulesController::class, 'sessions'])->name('modules.sessions');
-    Route::post('/dashboard/sessions/store', [\App\Http\Controllers\Admin\ModulesController::class, 'storeSession'])->name('modules.sessions.store');
-    Route::post('/dashboard/sessions/update', [\App\Http\Controllers\Admin\ModulesController::class, 'updateSession'])->name('modules.sessions.update');
-    Route::post('/dashboard/sessions/delete/{id}', [\App\Http\Controllers\Admin\ModulesController::class, 'deleteSession'])->name('modules.sessions.delete');
-    Route::get('/dashboard/effectifs', [\App\Http\Controllers\Admin\ModulesController::class, 'effectifs'])->name('modules.effectifs');
-    Route::get('/dashboard/reconduits', [\App\Http\Controllers\Admin\ModulesController::class, 'reconduits'])->name('modules.reconduits');
-    Route::get('/dashboard/reconduits/details/{id}', [\App\Http\Controllers\Admin\ModulesController::class, 'reconduitsDetails'])->name('modules.reconduits-details');
-    Route::get('/dashboard/reconduits/edit/{id}', [\App\Http\Controllers\Admin\ModulesController::class, 'editReconduit'])->name('modules.reconduits-edit');
-    Route::post('/dashboard/reconduits/update/{id}', [\App\Http\Controllers\Admin\ModulesController::class, 'updateReconduit'])->name('modules.reconduits-update');
+    Route::get('/dashboard/inscriptions', [\App\Http\Controllers\Admin\ModulesController::class, 'inscriptions'])->name('modules.inscriptions')->middleware('secure.permission:view');
+    Route::post('/dashboard/inscriptions/orienter', [\App\Http\Controllers\Admin\ModulesController::class, 'orienterCandidate'])->name('modules.orienter')->middleware('secure.permission:update');
+    Route::post('/dashboard/inscriptions/orienter-bulk', [\App\Http\Controllers\Admin\ModulesController::class, 'orienterBulkCandidates'])->name('modules.orienter-bulk')->middleware('secure.permission:update');
+    Route::get('/dashboard/inscriptions/ajax/sections-by-offre/{offre_id}', [\App\Http\Controllers\Admin\ModulesController::class, 'ajaxGetSectionsByOffre'])->middleware('secure.permission:view');
+    Route::get('/dashboard/integration', [\App\Http\Controllers\Admin\ModulesController::class, 'integration'])->name('modules.integration')->middleware('secure.permission:view');
+    Route::post('/dashboard/integration/store', [\App\Http\Controllers\Admin\ModulesController::class, 'storeAgreement'])->name('modules.integration.store')->middleware('secure.permission:create');
+    Route::post('/dashboard/integration/delete/{id}', [\App\Http\Controllers\Admin\ModulesController::class, 'deleteAgreement'])->name('modules.integration.delete')->middleware('secure.permission:delete');
+    Route::get('/dashboard/sessions', [\App\Http\Controllers\Admin\ModulesController::class, 'sessions'])->name('modules.sessions')->middleware('secure.permission:view');
+    Route::post('/dashboard/sessions/store', [\App\Http\Controllers\Admin\ModulesController::class, 'storeSession'])->name('modules.sessions.store')->middleware('secure.permission:create');
+    Route::post('/dashboard/sessions/update', [\App\Http\Controllers\Admin\ModulesController::class, 'updateSession'])->name('modules.sessions.update')->middleware('secure.permission:update');
+    Route::post('/dashboard/sessions/delete/{id}', [\App\Http\Controllers\Admin\ModulesController::class, 'deleteSession'])->name('modules.sessions.delete')->middleware('secure.permission:delete');
+    Route::get('/dashboard/effectifs', [\App\Http\Controllers\Admin\ModulesController::class, 'effectifs'])->name('modules.effectifs')->middleware('secure.permission:view');
+    Route::get('/dashboard/reconduits', [\App\Http\Controllers\Admin\ModulesController::class, 'reconduits'])->name('modules.reconduits')->middleware('secure.permission:view');
+    Route::get('/dashboard/reconduits/details/{id}', [\App\Http\Controllers\Admin\ModulesController::class, 'reconduitsDetails'])->name('modules.reconduits-details')->middleware('secure.permission:view');
+    Route::get('/dashboard/reconduits/edit/{id}', [\App\Http\Controllers\Admin\ModulesController::class, 'editReconduit'])->name('modules.reconduits-edit')->middleware('secure.permission:view');
+    Route::post('/dashboard/reconduits/update/{id}', [\App\Http\Controllers\Admin\ModulesController::class, 'updateReconduit'])->name('modules.reconduits-update')->middleware('secure.permission:update');
     
     // ── Trainee Transfer System ──
-    Route::post('/dashboard/reconduits/transfer', [\App\Http\Controllers\Admin\ModulesController::class, 'initiateTransfer'])->name('modules.reconduits.transfer');
-    Route::get('/dashboard/reconduits/transfers', [\App\Http\Controllers\Admin\ModulesController::class, 'transfersList'])->name('modules.reconduits.transfers-list');
-    Route::post('/dashboard/reconduits/transfers/action', [\App\Http\Controllers\Admin\ModulesController::class, 'processTransferAction'])->name('modules.reconduits.transfers-action');
-    Route::get('/dashboard/reconduits/ajax/etablissements', [\App\Http\Controllers\Admin\ModulesController::class, 'ajaxGetEtablissements'])->name('modules.reconduits.ajax.etablissements');
-    Route::get('/dashboard/reconduits/ajax/sections', [\App\Http\Controllers\Admin\ModulesController::class, 'ajaxGetSections'])->name('modules.reconduits.ajax.sections');
+    Route::post('/dashboard/reconduits/transfer', [\App\Http\Controllers\Admin\ModulesController::class, 'initiateTransfer'])->name('modules.reconduits.transfer')->middleware('secure.permission:create');
+    Route::get('/dashboard/reconduits/transfers', [\App\Http\Controllers\Admin\ModulesController::class, 'transfersList'])->name('modules.reconduits.transfers-list')->middleware('secure.permission:view');
+    Route::post('/dashboard/reconduits/transfers/action', [\App\Http\Controllers\Admin\ModulesController::class, 'processTransferAction'])->name('modules.reconduits.transfers-action')->middleware('secure.permission:update');
+    Route::get('/dashboard/reconduits/ajax/etablissements', [\App\Http\Controllers\Admin\ModulesController::class, 'ajaxGetEtablissements'])->name('modules.reconduits.ajax.etablissements')->middleware('secure.permission:view');
+    Route::get('/dashboard/reconduits/ajax/sections', [\App\Http\Controllers\Admin\ModulesController::class, 'ajaxGetSections'])->name('modules.reconduits.ajax.sections')->middleware('secure.permission:view');
 
-    Route::get('/dashboard/discipline', [\App\Http\Controllers\Admin\ModulesController::class, 'discipline'])->name('modules.discipline');
-    Route::post('/dashboard/discipline/store', [\App\Http\Controllers\Admin\ModulesController::class, 'storeDiscipline'])->name('modules.discipline.store');
-    Route::post('/dashboard/discipline/delete/{id}', [\App\Http\Controllers\Admin\ModulesController::class, 'deleteDiscipline'])->name('modules.discipline.delete');
-    Route::get('/dashboard/distribution-globale', [\App\Http\Controllers\Admin\ModulesController::class, 'distributionGlobale'])->name('modules.distribution-globale');
-    Route::get('/dashboard/distribution-detaillee', [\App\Http\Controllers\Admin\ModulesController::class, 'distributionDetaillee'])->name('modules.distribution-detaillee');
-    Route::get('/dashboard/repas', [\App\Http\Controllers\Admin\ModulesController::class, 'repas'])->name('modules.repas');
-    Route::post('/dashboard/repas/reserver', [\App\Http\Controllers\Admin\ModulesController::class, 'reserverRepas'])->name('modules.repas.reserver');
-    Route::get('/dashboard/documents', [\App\Http\Controllers\Admin\ModulesController::class, 'documents'])->name('modules.documents');
-    Route::get('/dashboard/documents/print/{id}', [\App\Http\Controllers\Admin\ModulesController::class, 'printDocument'])->name('modules.documents.print');
-    Route::post('/dashboard/documents/demander', [\App\Http\Controllers\Admin\ModulesController::class, 'demanderDocument'])->name('modules.documents.demander');
-    Route::get('/dashboard/documents/ajax/modes', [\App\Http\Controllers\Admin\ModulesController::class, 'ajaxGetModes'])->name('modules.documents.ajax.modes');
-    Route::get('/dashboard/documents/ajax/wilayas', [\App\Http\Controllers\Admin\ModulesController::class, 'ajaxGetWilayas'])->name('modules.documents.ajax.wilayas');
-    Route::get('/dashboard/documents/ajax/etablissements', [\App\Http\Controllers\Admin\ModulesController::class, 'ajaxGetEtablissements'])->name('modules.documents.ajax.etablissements');
-    Route::get('/dashboard/documents/ajax/users', [\App\Http\Controllers\Admin\ModulesController::class, 'ajaxGetUsers'])->name('modules.documents.ajax.users');
-    Route::get('/dashboard/documents/ajax/branches', [\App\Http\Controllers\Admin\ModulesController::class, 'ajaxGetBranches'])->name('modules.documents.ajax.branches');
-    Route::get('/dashboard/documents/ajax/specialties', [\App\Http\Controllers\Admin\ModulesController::class, 'ajaxGetSpecialties'])->name('modules.documents.ajax.specialties');
+    Route::get('/dashboard/discipline', [\App\Http\Controllers\Admin\ModulesController::class, 'discipline'])->name('modules.discipline')->middleware('secure.permission:view');
+    Route::post('/dashboard/discipline/store', [\App\Http\Controllers\Admin\ModulesController::class, 'storeDiscipline'])->name('modules.discipline.store')->middleware('secure.permission:create');
+    Route::post('/dashboard/discipline/delete/{id}', [\App\Http\Controllers\Admin\ModulesController::class, 'deleteDiscipline'])->name('modules.discipline.delete')->middleware('secure.permission:delete');
+    Route::get('/dashboard/distribution-globale', [\App\Http\Controllers\Admin\ModulesController::class, 'distributionGlobale'])->name('modules.distribution-globale')->middleware('secure.permission:view');
+    Route::get('/dashboard/distribution-detaillee', [\App\Http\Controllers\Admin\ModulesController::class, 'distributionDetaillee'])->name('modules.distribution-detaillee')->middleware('secure.permission:view');
+    Route::get('/dashboard/repas', [\App\Http\Controllers\Admin\ModulesController::class, 'repas'])->name('modules.repas')->middleware('secure.permission:view');
+    Route::post('/dashboard/repas/reserver', [\App\Http\Controllers\Admin\ModulesController::class, 'reserverRepas'])->name('modules.repas.reserver')->middleware('secure.permission:create');
+    Route::get('/dashboard/documents', [\App\Http\Controllers\Admin\ModulesController::class, 'documents'])->name('modules.documents')->middleware('secure.permission:view');
+    Route::get('/dashboard/documents/print/{id}', [\App\Http\Controllers\Admin\ModulesController::class, 'printDocument'])->name('modules.documents.print')->middleware('secure.permission:view');
+    Route::post('/dashboard/documents/demander', [\App\Http\Controllers\Admin\ModulesController::class, 'demanderDocument'])->name('modules.documents.demander')->middleware('secure.permission:create');
+    Route::get('/dashboard/documents/ajax/modes', [\App\Http\Controllers\Admin\ModulesController::class, 'ajaxGetModes'])->name('modules.documents.ajax.modes')->middleware('secure.permission:view');
+    Route::get('/dashboard/documents/ajax/wilayas', [\App\Http\Controllers\Admin\ModulesController::class, 'ajaxGetWilayas'])->name('modules.documents.ajax.wilayas')->middleware('secure.permission:view');
+    Route::get('/dashboard/documents/ajax/etablissements', [\App\Http\Controllers\Admin\ModulesController::class, 'ajaxGetEtablissements'])->name('modules.documents.ajax.etablissements')->middleware('secure.permission:view');
+    Route::get('/dashboard/documents/ajax/users', [\App\Http\Controllers\Admin\ModulesController::class, 'ajaxGetUsers'])->name('modules.documents.ajax.users')->middleware('secure.permission:view');
+    Route::get('/dashboard/documents/ajax/branches', [\App\Http\Controllers\Admin\ModulesController::class, 'ajaxGetBranches'])->name('modules.documents.ajax.branches')->middleware('secure.permission:view');
+    Route::get('/dashboard/documents/ajax/specialties', [\App\Http\Controllers\Admin\ModulesController::class, 'ajaxGetSpecialties'])->name('modules.documents.ajax.specialties')->middleware('secure.permission:view');
 
     // ── Formation ──────────────────────────────────────────────────────────
     Route::prefix('dashboard/formation')->group(function () {
@@ -859,12 +859,12 @@ Route::prefix('sig')->middleware('check.session')->group(function () {
     });
 
     // ── Candidates ────────────────────────────────────────────────────────
-    Route::get('/dashboard/candidates',        [\App\Http\Controllers\Admin\CandidatController::class, 'index']);
-    Route::post('/dashboard/candidates/action',[\App\Http\Controllers\Admin\CandidatController::class, 'action']);
-    Route::post('/dashboard/candidates/store', [\App\Http\Controllers\Admin\CandidatController::class, 'store']);
-    Route::get('/dashboard/candidates/show/{id}', [\App\Http\Controllers\Admin\CandidatController::class, 'show']);
-    Route::post('/dashboard/candidates/update', [\App\Http\Controllers\Admin\CandidatController::class, 'update']);
-    Route::post('/dashboard/candidates/delete/{id}', [\App\Http\Controllers\Admin\CandidatController::class, 'destroy']);
+    Route::get('/dashboard/candidates',        [\App\Http\Controllers\Admin\CandidatController::class, 'index'])->middleware('secure.permission:view');
+    Route::post('/dashboard/candidates/action',[\App\Http\Controllers\Admin\CandidatController::class, 'action'])->middleware('secure.permission:update');
+    Route::post('/dashboard/candidates/store', [\App\Http\Controllers\Admin\CandidatController::class, 'store'])->middleware(['secure.permission:create', 'secure.scope']);
+    Route::get('/dashboard/candidates/show/{id}', [\App\Http\Controllers\Admin\CandidatController::class, 'show'])->middleware(['secure.permission:view', 'secure.ownership:App\Models\Candidat,id']);
+    Route::post('/dashboard/candidates/update', [\App\Http\Controllers\Admin\CandidatController::class, 'update'])->middleware(['secure.permission:update', 'secure.ownership:App\Models\Candidat,id']);
+    Route::post('/dashboard/candidates/delete/{id}', [\App\Http\Controllers\Admin\CandidatController::class, 'destroy'])->middleware(['secure.permission:delete', 'secure.ownership:App\Models\Candidat,id']);
 
     // ── Absences ──────────────────────────────────────────────────────────
     Route::prefix('dashboard/absences')->group(function () {
@@ -891,36 +891,36 @@ Route::prefix('sig')->middleware('check.session')->group(function () {
     });
 
     // ── Modules / Integration ─────────────────────────────────────────────
-    Route::get('/dashboard/inscriptions',              [\App\Http\Controllers\Admin\ModulesController::class, 'inscriptions']);
-    Route::post('/dashboard/inscriptions/orienter',    [\App\Http\Controllers\Admin\ModulesController::class, 'orienterCandidate']);
-    Route::get('/dashboard/integration',               [\App\Http\Controllers\Admin\ModulesController::class, 'integration']);
-    Route::post('/dashboard/integration/store',        [\App\Http\Controllers\Admin\ModulesController::class, 'storeAgreement']);
-    Route::post('/dashboard/integration/delete/{id}',  [\App\Http\Controllers\Admin\ModulesController::class, 'deleteAgreement']);
-    Route::get('/dashboard/sessions',                  [\App\Http\Controllers\Admin\ModulesController::class, 'sessions']);
-    Route::post('/dashboard/sessions/store',           [\App\Http\Controllers\Admin\ModulesController::class, 'storeSession']);
-    Route::post('/dashboard/sessions/update',          [\App\Http\Controllers\Admin\ModulesController::class, 'updateSession']);
-    Route::post('/dashboard/sessions/delete/{id}',     [\App\Http\Controllers\Admin\ModulesController::class, 'deleteSession']);
-    Route::get('/dashboard/effectifs',                 [\App\Http\Controllers\Admin\ModulesController::class, 'effectifs']);
-    Route::get('/dashboard/reconduits',                [\App\Http\Controllers\Admin\ModulesController::class, 'reconduits']);
-    Route::get('/dashboard/reconduits/details/{id}',   [\App\Http\Controllers\Admin\ModulesController::class, 'reconduitsDetails']);
-    Route::get('/dashboard/reconduits/edit/{id}',      [\App\Http\Controllers\Admin\ModulesController::class, 'editReconduit']);
-    Route::post('/dashboard/reconduits/update/{id}',   [\App\Http\Controllers\Admin\ModulesController::class, 'updateReconduit']);
-    Route::get('/dashboard/discipline',                [\App\Http\Controllers\Admin\ModulesController::class, 'discipline']);
-    Route::post('/dashboard/discipline/store',         [\App\Http\Controllers\Admin\ModulesController::class, 'storeDiscipline']);
-    Route::post('/dashboard/discipline/delete/{id}',   [\App\Http\Controllers\Admin\ModulesController::class, 'deleteDiscipline']);
-    Route::get('/dashboard/distribution-globale',      [\App\Http\Controllers\Admin\ModulesController::class, 'distributionGlobale']);
-    Route::get('/dashboard/distribution-detaillee',    [\App\Http\Controllers\Admin\ModulesController::class, 'distributionDetaillee']);
-    Route::get('/dashboard/repas',                     [\App\Http\Controllers\Admin\ModulesController::class, 'repas']);
-    Route::post('/dashboard/repas/reserver',           [\App\Http\Controllers\Admin\ModulesController::class, 'reserverRepas']);
-    Route::get('/dashboard/documents',                 [\App\Http\Controllers\Admin\ModulesController::class, 'documents']);
-    Route::get('/dashboard/documents/print/{id}',      [\App\Http\Controllers\Admin\ModulesController::class, 'printDocument']);
-    Route::post('/dashboard/documents/demander',       [\App\Http\Controllers\Admin\ModulesController::class, 'demanderDocument']);
-    Route::get('/dashboard/documents/ajax/wilayas',    [\App\Http\Controllers\Admin\ModulesController::class, 'ajaxGetWilayas']);
-    Route::get('/dashboard/documents/ajax/modes',      [\App\Http\Controllers\Admin\ModulesController::class, 'ajaxGetModes']);
-    Route::get('/dashboard/documents/ajax/etablissements', [\App\Http\Controllers\Admin\ModulesController::class, 'ajaxGetEtablissements']);
-    Route::get('/dashboard/documents/ajax/users',       [\App\Http\Controllers\Admin\ModulesController::class, 'ajaxGetUsers']);
-    Route::get('/dashboard/documents/ajax/branches',    [\App\Http\Controllers\Admin\ModulesController::class, 'ajaxGetBranches']);
-    Route::get('/dashboard/documents/ajax/specialties', [\App\Http\Controllers\Admin\ModulesController::class, 'ajaxGetSpecialties']);
+    Route::get('/dashboard/inscriptions',              [\App\Http\Controllers\Admin\ModulesController::class, 'inscriptions'])->middleware('secure.permission:view');
+    Route::post('/dashboard/inscriptions/orienter',    [\App\Http\Controllers\Admin\ModulesController::class, 'orienterCandidate'])->middleware('secure.permission:update');
+    Route::get('/dashboard/integration',               [\App\Http\Controllers\Admin\ModulesController::class, 'integration'])->middleware('secure.permission:view');
+    Route::post('/dashboard/integration/store',        [\App\Http\Controllers\Admin\ModulesController::class, 'storeAgreement'])->middleware('secure.permission:create');
+    Route::post('/dashboard/integration/delete/{id}',  [\App\Http\Controllers\Admin\ModulesController::class, 'deleteAgreement'])->middleware('secure.permission:delete');
+    Route::get('/dashboard/sessions',                  [\App\Http\Controllers\Admin\ModulesController::class, 'sessions'])->middleware('secure.permission:view');
+    Route::post('/dashboard/sessions/store',           [\App\Http\Controllers\Admin\ModulesController::class, 'storeSession'])->middleware('secure.permission:create');
+    Route::post('/dashboard/sessions/update',          [\App\Http\Controllers\Admin\ModulesController::class, 'updateSession'])->middleware('secure.permission:update');
+    Route::post('/dashboard/sessions/delete/{id}',     [\App\Http\Controllers\Admin\ModulesController::class, 'deleteSession'])->middleware('secure.permission:delete');
+    Route::get('/dashboard/effectifs',                 [\App\Http\Controllers\Admin\ModulesController::class, 'effectifs'])->middleware('secure.permission:view');
+    Route::get('/dashboard/reconduits',                [\App\Http\Controllers\Admin\ModulesController::class, 'reconduits'])->middleware('secure.permission:view');
+    Route::get('/dashboard/reconduits/details/{id}',   [\App\Http\Controllers\Admin\ModulesController::class, 'reconduitsDetails'])->middleware('secure.permission:view');
+    Route::get('/dashboard/reconduits/edit/{id}',      [\App\Http\Controllers\Admin\ModulesController::class, 'editReconduit'])->middleware('secure.permission:view');
+    Route::post('/dashboard/reconduits/update/{id}',   [\App\Http\Controllers\Admin\ModulesController::class, 'updateReconduit'])->middleware('secure.permission:update');
+    Route::get('/dashboard/discipline',                [\App\Http\Controllers\Admin\ModulesController::class, 'discipline'])->middleware('secure.permission:view');
+    Route::post('/dashboard/discipline/store',         [\App\Http\Controllers\Admin\ModulesController::class, 'storeDiscipline'])->middleware('secure.permission:create');
+    Route::post('/dashboard/discipline/delete/{id}',   [\App\Http\Controllers\Admin\ModulesController::class, 'deleteDiscipline'])->middleware('secure.permission:delete');
+    Route::get('/dashboard/distribution-globale',      [\App\Http\Controllers\Admin\ModulesController::class, 'distributionGlobale'])->middleware('secure.permission:view');
+    Route::get('/dashboard/distribution-detaillee',    [\App\Http\Controllers\Admin\ModulesController::class, 'distributionDetaillee'])->middleware('secure.permission:view');
+    Route::get('/dashboard/repas',                     [\App\Http\Controllers\Admin\ModulesController::class, 'repas'])->middleware('secure.permission:view');
+    Route::post('/dashboard/repas/reserver',           [\App\Http\Controllers\Admin\ModulesController::class, 'reserverRepas'])->middleware('secure.permission:create');
+    Route::get('/dashboard/documents',                 [\App\Http\Controllers\Admin\ModulesController::class, 'documents'])->middleware('secure.permission:view');
+    Route::get('/dashboard/documents/print/{id}',      [\App\Http\Controllers\Admin\ModulesController::class, 'printDocument'])->middleware('secure.permission:view');
+    Route::post('/dashboard/documents/demander',       [\App\Http\Controllers\Admin\ModulesController::class, 'demanderDocument'])->middleware('secure.permission:create');
+    Route::get('/dashboard/documents/ajax/wilayas',    [\App\Http\Controllers\Admin\ModulesController::class, 'ajaxGetWilayas'])->middleware('secure.permission:view');
+    Route::get('/dashboard/documents/ajax/modes',      [\App\Http\Controllers\Admin\ModulesController::class, 'ajaxGetModes'])->middleware('secure.permission:view');
+    Route::get('/dashboard/documents/ajax/etablissements', [\App\Http\Controllers\Admin\ModulesController::class, 'ajaxGetEtablissements'])->middleware('secure.permission:view');
+    Route::get('/dashboard/documents/ajax/users',       [\App\Http\Controllers\Admin\ModulesController::class, 'ajaxGetUsers'])->middleware('secure.permission:view');
+    Route::get('/dashboard/documents/ajax/branches',    [\App\Http\Controllers\Admin\ModulesController::class, 'ajaxGetBranches'])->middleware('secure.permission:view');
+    Route::get('/dashboard/documents/ajax/specialties', [\App\Http\Controllers\Admin\ModulesController::class, 'ajaxGetSpecialties'])->middleware('secure.permission:view');
 
     // ── Formation ─────────────────────────────────────────────────────────
     Route::prefix('dashboard/formation')->group(function () {
@@ -1084,20 +1084,20 @@ Route::prefix('sig')->middleware('check.session')->group(function () {
 
     // ── Apprenants ────────────────────────────────────────────────────────
     Route::prefix('dashboard/apprenants')->group(function () {
-        Route::get('/',                [\App\Http\Controllers\Admin\ApprenantController::class, 'index']);
-        Route::post('/store',          [\App\Http\Controllers\Admin\ApprenantController::class, 'store']);
-        Route::get('/show/{id}',       [\App\Http\Controllers\Admin\ApprenantController::class, 'show']);
-        Route::post('/update',         [\App\Http\Controllers\Admin\ApprenantController::class, 'update']);
-        Route::post('/delete/{id}',    [\App\Http\Controllers\Admin\ApprenantController::class, 'destroy']);
+        Route::get('/',                [\App\Http\Controllers\Admin\ApprenantController::class, 'index'])->middleware('secure.permission:view');
+        Route::post('/store',          [\App\Http\Controllers\Admin\ApprenantController::class, 'store'])->middleware(['secure.permission:create', 'secure.scope']);
+        Route::get('/show/{id}',       [\App\Http\Controllers\Admin\ApprenantController::class, 'show'])->middleware(['secure.permission:view', 'secure.ownership:App\Models\Apprenant,id']);
+        Route::post('/update',         [\App\Http\Controllers\Admin\ApprenantController::class, 'update'])->middleware(['secure.permission:update', 'secure.ownership:App\Models\Apprenant,id']);
+        Route::post('/delete/{id}',    [\App\Http\Controllers\Admin\ApprenantController::class, 'destroy'])->middleware(['secure.permission:delete', 'secure.ownership:App\Models\Apprenant,id']);
     });
 
     // ── Sections ──────────────────────────────────────────────────────────
     Route::prefix('dashboard/sections')->group(function () {
-        Route::get('/',                [\App\Http\Controllers\Admin\SectionController::class, 'index']);
-        Route::post('/store',          [\App\Http\Controllers\Admin\SectionController::class, 'store']);
-        Route::get('/show/{id}',       [\App\Http\Controllers\Admin\SectionController::class, 'show']);
-        Route::post('/update',         [\App\Http\Controllers\Admin\SectionController::class, 'update']);
-        Route::post('/delete/{id}',    [\App\Http\Controllers\Admin\SectionController::class, 'destroy']);
+        Route::get('/',                [\App\Http\Controllers\Admin\SectionController::class, 'index'])->middleware('secure.permission:view');
+        Route::post('/store',          [\App\Http\Controllers\Admin\SectionController::class, 'store'])->middleware(['secure.permission:create', 'secure.scope']);
+        Route::get('/show/{id}',       [\App\Http\Controllers\Admin\SectionController::class, 'show'])->middleware(['secure.permission:view', 'secure.ownership:App\Models\Section,id']);
+        Route::post('/update',         [\App\Http\Controllers\Admin\SectionController::class, 'update'])->middleware(['secure.permission:update', 'secure.ownership:App\Models\Section,id']);
+        Route::post('/delete/{id}',    [\App\Http\Controllers\Admin\SectionController::class, 'destroy'])->middleware(['secure.permission:delete', 'secure.ownership:App\Models\Section,id']);
     });
 
     // ── Reporting ─────────────────────────────────────────────────────────

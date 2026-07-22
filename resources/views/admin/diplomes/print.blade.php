@@ -603,7 +603,7 @@ if (!function_exists('cleanFrenchText')) {
 
                 <!-- ── TITLE ───────────────────────────────────────────── -->
                 @if (!$isBEP)
-                    <div class="main-title"><?= htmlspecialchars($d['type_diplome_ar'] ?? 'شهادة تقني سام') ?></div>
+                    <div class="main-title" style="visibility: hidden;"><?= htmlspecialchars($d['type_diplome_ar'] ?? 'شهادة تقني سام') ?></div>
                 @else
                     <div class="main-title-bep-spacer" style="height: 48px;"></div>
                 @endif
@@ -659,7 +659,7 @@ if (!function_exists('cleanFrenchText')) {
                 <div class="bio-line-fr-3">
                     Date et Lieu de naissance : <strong><?= htmlspecialchars($d['date_naissance_fr'] ?? '') ?> &nbsp; <?= htmlspecialchars(strtoupper($d['lieu_naissance_fr'] ?? '')) ?></strong>
                 </div>
-                <div class="bio-line-fr-4">
+                <div class="bio-line-fr-4" style="visibility: hidden;">
                     Diplôme : <strong><?= htmlspecialchars($d['type_diplome_fr'] ?? 'Brevet de technicien supérieur') ?></strong>
                 </div>
                 <div class="bio-line-fr-5">
