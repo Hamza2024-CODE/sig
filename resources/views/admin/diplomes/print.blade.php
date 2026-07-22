@@ -6,6 +6,11 @@
 $d = $d ?? [];
 $settings = \App\Helpers\TakwinHelper::getSettings();
 
+// Load the 38 background images dynamically from public/diplom
+$diplomImages = glob(public_path('diplom/*.{jpeg,jpg,png}'), GLOB_BRACE);
+$imagesList = array_map('basename', $diplomImages);
+sort($imagesList);
+
 // Check if this is a BEP certificate (Vocational Education)
 $isBEP = (str_contains(strtolower($d['type_diplome_fr'] ?? ''), 'brevet d\'enseignement professionnel') 
        || str_contains(strtolower($d['type_diplome_fr'] ?? ''), 'enseignement professionnel')
@@ -407,34 +412,80 @@ if (!function_exists('cleanFrenchText')) {
         direction: rtl;
     }
 
-    /* ═══ PRINT TOOLBAR (screen only) ═══════════════════════════════════ */
+    /* ═══ PRINT CONTROL PANEL (screen only) ══════════════════════════════ */
     .print-toolbar {
         position: fixed;
         top: 12px;
         left: 50%;
         transform: translateX(-50%);
         z-index: 9999;
-        background: rgba(255,255,255,0.96);
-        backdrop-filter: blur(12px);
-        padding: 9px 28px;
-        border-radius: 50px;
-        box-shadow: 0 6px 24px rgba(0,0,0,0.15);
+        background: rgba(255, 255, 255, 0.98);
+        backdrop-filter: blur(16px);
+        padding: 10px 24px;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.18);
         display: flex;
-        gap: 12px;
+        flex-wrap: wrap;
+        gap: 16px;
         align-items: center;
+        justify-content: space-between;
+        width: calc(100% - 40px);
+        max-width: 1160px;
+        font-family: 'Cairo', sans-serif;
+    }
+    .toolbar-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .toolbar-label {
+        font-size: 11px;
+        font-weight: 700;
+        color: #475569;
+        white-space: nowrap;
+    }
+    .toolbar-select {
+        padding: 6px 12px;
+        border-radius: 8px;
+        border: 1px solid #cbd5e1;
+        font-size: 12px;
+        outline: none;
+        cursor: pointer;
+        background: #fff;
+    }
+    .toolbar-input {
+        width: 60px;
+        padding: 5px 8px;
+        border-radius: 8px;
+        border: 1px solid #cbd5e1;
+        font-size: 12px;
+        text-align: center;
+        outline: none;
     }
     .btn-print {
         background: linear-gradient(135deg, #1e3a8a, #3b82f6);
         color: #fff; border: none;
-        padding: 9px 22px; border-radius: 50px;
-        font-family: 'Cairo', sans-serif; font-weight: 700; font-size: 0.88rem;
+        padding: 8px 18px; border-radius: 8px;
+        font-family: 'Cairo', sans-serif; font-weight: 700; font-size: 0.85rem;
         cursor: pointer;
+        transition: all 0.2s;
+    }
+    .btn-print:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
     }
     .btn-close {
         background: #64748b; color: #fff; border: none;
-        padding: 9px 22px; border-radius: 50px;
-        font-family: 'Cairo', sans-serif; font-weight: 700; font-size: 0.88rem;
+        padding: 8px 18px; border-radius: 8px;
+        font-family: 'Cairo', sans-serif; font-weight: 700; font-size: 0.85rem;
         cursor: pointer;
+    }
+    
+    /* Custom background templates styling */
+    .diploma-bg.jpeg-bg {
+        opacity: 1 !important;
+        object-fit: fill !important;
+        background: #fff;
     }
 
     @media print {
@@ -461,10 +512,53 @@ if (!function_exists('cleanFrenchText')) {
     }
 </style>
 
-<!-- Toolbar -->
+<!-- Control Panel / Toolbar -->
 <div class="print-toolbar">
-    <button class="btn-print" onclick="window.print()">🖨️ طباعة بخلفية</button>
-    <button class="btn-print" onclick="printWithoutBg()" style="background: #2563eb; color: #fff; margin-right: 6px;">🖨️ طباعة بدون خلفية</button>
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px;">
+        <button class="btn-print" onclick="window.print()">🖨️ طباعة بخلفية</button>
+        <button class="btn-print" onclick="printWithoutBg()" style="background: #2563eb; color: #fff;">🖨️ طباعة بدون خلفية</button>
+
+        <!-- Template dropdown selector -->
+        <div class="toolbar-group">
+            <span class="toolbar-label">خلفية الشهادة (القالب):</span>
+            <select class="toolbar-select" id="template_select" onchange="changeTemplate(this.value)">
+                <option value="">خلفية افتراضية (SVG)</option>
+                <?php foreach ($imagesList as $imgName): ?>
+                    <option value="<?= htmlspecialchars($imgName) ?>"><?= htmlspecialchars($imgName) ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+
+        <button class="btn-print" id="btn_toggle_bg" onclick="toggleBgOnly()" style="background: #059669; color: #fff;">👁️ إخفاء الخلفية</button>
+
+        <!-- Offset Y (Top/Bottom) Fine Tuning -->
+        <div class="toolbar-group" style="border-left: 1px solid #e2e8f0; padding-left: 12px;">
+            <span class="toolbar-label">إزاحة النص (أعلى/أسفل):</span>
+            <input type="number" class="toolbar-input" id="offset_y" value="0" step="0.5" oninput="adjustYOffset(this.value)">
+            <span style="font-size: 11px; color: #64748b;">مم</span>
+        </div>
+
+        <!-- Offset X (Left/Right) Fine Tuning -->
+        <div class="toolbar-group">
+            <span class="toolbar-label">إزاحة النص (يمين/يسار):</span>
+            <input type="number" class="toolbar-input" id="offset_x" value="0" step="0.5" oninput="adjustXOffset(this.value)">
+            <span style="font-size: 11px; color: #64748b;">مم</span>
+        </div>
+
+        <!-- Font Size Fine Tuning -->
+        <div class="toolbar-group" style="border-left: 1px solid #e2e8f0; padding-left: 12px;">
+            <span class="toolbar-label">حجم الخط:</span>
+            <input type="number" class="toolbar-input" id="font_size_scale" value="100" min="50" max="150" step="1" oninput="adjustFontSize(this.value)">
+            <span style="font-size: 11px; color: #64748b;">%</span>
+        </div>
+
+        <!-- Default Borders Toggle -->
+        <div class="toolbar-group">
+            <input type="checkbox" id="toggle_borders" checked onchange="toggleDefaultBorders(this.checked)">
+            <label for="toggle_borders" class="toolbar-label" style="cursor:pointer;">إظهار الإطار الافتراضي</label>
+        </div>
+    </div>
+
     <button class="btn-close" onclick="window.close()">✕ إغلاق</button>
 </div>
 
@@ -484,119 +578,202 @@ if (!function_exists('cleanFrenchText')) {
             <!-- Emblem Watermark (Crescent & Star) -->
             <div class="diploma-watermark" style="background-image: url('<?= htmlspecialchars($settings['diploma_watermark_url'] ?? 'https://upload.wikimedia.org/wikipedia/commons/e/e0/Emblem_of_Algeria.svg') ?>')"></div>
 
-            <!-- ── HEADER ──────────────────────────────────────────── -->
-            <div class="diploma-header">
-                <!-- LEFT: Serial -->
-                <div class="hdr-serial">
-                    <span class="serial-number"><?= htmlspecialchars($d['num_serie'] ?? '') ?></span>
-                    <span class="serial-label">الرقم التسلسلي</span>
+            <!-- Wrap all text elements in a positionable content container -->
+            <div class="diploma-printable-content" id="diploma_content_wrapper" style="position: absolute; inset: 0; z-index: 10; transition: transform 0.1s ease-out, font-size 0.1s ease-out; transform-origin: top center;">
+                <!-- ── HEADER ──────────────────────────────────────────── -->
+                <div class="diploma-header">
+                    <!-- LEFT: Serial -->
+                    <div class="hdr-serial">
+                        <span class="serial-number"><?= htmlspecialchars($d['num_serie'] ?? '') ?></span>
+                        <span class="serial-label">الرقم التسلسلي</span>
+                    </div>
+
+                    <!-- CENTER: Republic -->
+                    <div class="hdr-center">
+                        <div class="r1">الجمهورية الجزائرية الديمقراطية الشعبية</div>
+                        <div class="r2">وزارة التكوين و التعليم المهنيين</div>
+                    </div>
+
+                    <!-- RIGHT: Directorate + Institution -->
+                    <div class="hdr-right">
+                        <div class="r1">مديرية التكوين و التعليم المهنيين لولاية <?= htmlspecialchars($d['wilaya_ar'] ?? '') ?></div>
+                        <div class="r2"><?= htmlspecialchars($d['etab_ar'] ?? '') ?></div>
+                    </div>
                 </div>
 
-                <!-- CENTER: Republic -->
-                <div class="hdr-center">
-                    <div class="r1">الجمهورية الجزائرية الديمقراطية الشعبية</div>
-                    <div class="r2">وزارة التكوين و التعليم المهنيين</div>
+                <!-- ── TITLE ───────────────────────────────────────────── -->
+                @if (!$isBEP)
+                    <div class="main-title"><?= htmlspecialchars($d['type_diplome_ar'] ?? 'شهادة تقني سام') ?></div>
+                @else
+                    <div class="main-title-bep-spacer" style="height: 48px;"></div>
+                @endif
+
+                <!-- ── ARABIC PREAMBLE ──────────────────────── -->
+                <div class="arabic-preamble">
+                    <div class="preamble-head">إن وزير التكوين و التعليم المهنيين</div>
+                    <div class="preamble-body">
+                        @if ($isBEP)
+                            بمقتضى المرسوم التنفيذي رقم 17-212 المؤرخ في 26 شوال 1438 الموافق 20 يوليو 2017، الذي يحدد كيفيات إحداث الشهادات المتوجة لأطوار التعليم المهني<br>
+                            بمقتضى القرار الوزاري رقم 102 المؤرخ 8 جمادى الآخرة عام 1442 الموافق 31 جانفي سنة 2021، الذي يحدد شروط وكيفيات تنظيم و تسليم الشهادات المتوجة لأطوار التعليم المهني و كذا نماذجها<br>
+                            بناءا على محضر لجنة المداولات رقم : <?= htmlspecialchars($d['num_deliberation'] ?? '1') ?> المؤرخ في : <?= htmlspecialchars($d['date_deliberation_ar'] ?? '') ?>
+                        @else
+                            بمقتضى المرسوم التنفيذي رقم 16-282 المؤرخ في 2 صفر عام 1438 الموافق لـ 2 نوفمبر 2016 والذي يحدد نظام التكوين المهني الأولي والشهادات المتوجة له<br>
+                            بمقتضى القرار المؤرخ في 23 ربيع الأول عام 1439 الموافق لـ 12 ديسمبر 2017 الذي يحدد شروط وكيفيات تسليم الشهادات المتوجة للتكوين المهني الأولي<br>
+                            بناءا على محضر لجنة مداولات نهاية التكوين رقم : <?= htmlspecialchars($d['num_deliberation'] ?? '31') ?> المؤرخ في : <?= htmlspecialchars($d['date_deliberation_ar'] ?? '') ?>
+                        @endif
+                    </div>
                 </div>
 
-                <!-- RIGHT: Directorate + Institution -->
-                <div class="hdr-right">
-                    <div class="r1">مديرية التكوين و التعليم المهنيين لولاية <?= htmlspecialchars($d['wilaya_ar'] ?? '') ?></div>
-                    <div class="r2"><?= htmlspecialchars($d['etab_ar'] ?? '') ?></div>
+                <!-- ── ARABIC BIOGRAPHICAL DETAILS ──────────────────────── -->
+                <div class="bio-line-ar-1">
+                    تمنح هذه الشهادة للسيد(ة) : <strong><?= htmlspecialchars(($d['nom_ar'] ?? '') . ' ' . ($d['prenom_ar'] ?? '')) ?></strong> المولود(ة) بتاريخ : <strong><?= htmlspecialchars($d['date_naissance_ar'] ?? '') ?></strong> بـ <strong><?= htmlspecialchars($d['lieu_naissance'] ?? '') ?></strong>
                 </div>
-            </div>
 
-            <!-- ── TITLE ───────────────────────────────────────────── -->
-            @if (!$isBEP)
-                <div class="main-title"><?= htmlspecialchars($d['type_diplome_ar'] ?? 'شهادة تقني سام') ?></div>
-            @else
-                <div class="main-title-bep-spacer" style="height: 48px;"></div>
-            @endif
-
-            <!-- ── ARABIC PREAMBLE ──────────────────────── -->
-            <div class="arabic-preamble">
-                <div class="preamble-head">إن وزير التكوين و التعليم المهنيين</div>
-                <div class="preamble-body">
-                    @if ($isBEP)
-                        بمقتضى المرسوم التنفيذي رقم 17-212 المؤرخ في 26 شوال 1438 الموافق 20 يوليو 2017، الذي يحدد كيفيات إحداث الشهادات المتوجة لأطوار التعليم المهني<br>
-                        بمقتضى القرار الوزاري رقم 102 المؤرخ 8 جمادى الآخرة عام 1442 الموافق 31 جانفي سنة 2021، الذي يحدد شروط وكيفيات تنظيم و تسليم الشهادات المتوجة لأطوار التعليم المهني و كذا نماذجها<br>
-                        بناءا على محضر لجنة المداولات رقم : <?= htmlspecialchars($d['num_deliberation'] ?? '1') ?> المؤرخ في : <?= htmlspecialchars($d['date_deliberation_ar'] ?? '') ?>
-                    @else
-                        بمقتضى المرسوم التنفيذي رقم 16-282 المؤرخ في 2 صفر عام 1438 الموافق لـ 2 نوفمبر 2016 والذي يحدد نظام التكوين المهني الأولي والشهادات المتوجة له<br>
-                        بمقتضى القرار المؤرخ في 23 ربيع الأول عام 1439 الموافق لـ 12 ديسمبر 2017 الذي يحدد شروط وكيفيات تسليم الشهادات المتوجة للتكوين المهني الأولي<br>
-                        بناءا على محضر لجنة مداولات نهاية التكوين رقم : <?= htmlspecialchars($d['num_deliberation'] ?? '31') ?> المؤرخ في : <?= htmlspecialchars($d['date_deliberation_ar'] ?? '') ?>
-                    @endif
+                <div class="bio-line-ar-2">
+                    التخصص : <strong><?= htmlspecialchars($d['spec_ar'] ?? '') ?></strong> &nbsp;&nbsp;&nbsp; مستوى التأهيل : <strong><?= htmlspecialchars($d['niveau_qualification'] ?? 'الخامس') ?></strong> &nbsp;&nbsp;&nbsp; بتقدير : <strong><?= htmlspecialchars($d['mention_ar'] ?? '') ?></strong>
                 </div>
-            </div>
 
-            <!-- ── ARABIC BIOGRAPHICAL DETAILS ──────────────────────── -->
-            <div class="bio-line-ar-1">
-                تمنح هذه الشهادة للسيد(ة) : <strong><?= htmlspecialchars(($d['nom_ar'] ?? '') . ' ' . ($d['prenom_ar'] ?? '')) ?></strong> المولود(ة) بتاريخ : <strong><?= htmlspecialchars($d['date_naissance_ar'] ?? '') ?></strong> بـ <strong><?= htmlspecialchars($d['lieu_naissance'] ?? '') ?></strong>
-            </div>
-
-            <div class="bio-line-ar-2">
-                التخصص : <strong><?= htmlspecialchars($d['spec_ar'] ?? '') ?></strong> &nbsp;&nbsp;&nbsp; مستوى التأهيل : <strong><?= htmlspecialchars($d['niveau_qualification'] ?? 'الخامس') ?></strong> &nbsp;&nbsp;&nbsp; بتقدير : <strong><?= htmlspecialchars($d['mention_ar'] ?? '') ?></strong>
-            </div>
-
-            <div class="bio-line-ar-3">
-                <?php
-                    $city = '';
-                    if (!empty($d['etab_ar'])) {
-                        if (str_contains($d['etab_ar'], 'العلمة')) {
-                            $city = 'العلمة_سطيف';
+                <div class="bio-line-ar-3">
+                    <?php
+                        $city = '';
+                        if (!empty($d['etab_ar'])) {
+                            if (str_contains($d['etab_ar'], 'العلمة')) {
+                                $city = 'العلمة_سطيف';
+                            } else {
+                                $city = $d['wilaya_ar'] ?? '';
+                            }
                         } else {
                             $city = $d['wilaya_ar'] ?? '';
                         }
-                    } else {
-                        $city = $d['wilaya_ar'] ?? '';
-                    }
-                ?>
-                حرر بـ : <strong><?= htmlspecialchars($city) ?></strong> في : <strong><?= htmlspecialchars($d['date_emission_ar'] ?? '') ?></strong>
-            </div>
+                    ?>
+                    حرر بـ : <strong><?= htmlspecialchars($city) ?></strong> في : <strong><?= htmlspecialchars($d['date_emission_ar'] ?? '') ?></strong>
+                </div>
 
-            <!-- ── FRENCH BIOGRAPHICAL DETAILS ───────────────── -->
-            <div class="bio-line-fr-1">
-                Nom : <strong><?= htmlspecialchars(strtoupper($d['nom_fr'] ?? '')) ?></strong>
-            </div>
-            <div class="bio-line-fr-2">
-                Prénom : <strong><?= htmlspecialchars(ucfirst($d['prenom_fr'] ?? '')) ?></strong>
-            </div>
-            <div class="bio-line-fr-3">
-                Date et Lieu de naissance : <strong><?= htmlspecialchars($d['date_naissance_fr'] ?? '') ?> &nbsp; <?= htmlspecialchars(strtoupper($d['lieu_naissance_fr'] ?? '')) ?></strong>
-            </div>
-            <div class="bio-line-fr-4">
-                Diplôme : <strong><?= htmlspecialchars($d['type_diplome_fr'] ?? 'Brevet de technicien supérieur') ?></strong>
-            </div>
-            <div class="bio-line-fr-5">
-                Spécialité : <strong><?= htmlspecialchars(cleanFrenchText($d['spec_fr'] ?? '')) ?></strong>
-            </div>
+                <!-- ── FRENCH BIOGRAPHICAL DETAILS ───────────────── -->
+                <div class="bio-line-fr-1">
+                    Nom : <strong><?= htmlspecialchars(strtoupper($d['nom_fr'] ?? '')) ?></strong>
+                </div>
+                <div class="bio-line-fr-2">
+                    Prénom : <strong><?= htmlspecialchars(ucfirst($d['prenom_fr'] ?? '')) ?></strong>
+                </div>
+                <div class="bio-line-fr-3">
+                    Date et Lieu de naissance : <strong><?= htmlspecialchars($d['date_naissance_fr'] ?? '') ?> &nbsp; <?= htmlspecialchars(strtoupper($d['lieu_naissance_fr'] ?? '')) ?></strong>
+                </div>
+                <div class="bio-line-fr-4">
+                    Diplôme : <strong><?= htmlspecialchars($d['type_diplome_fr'] ?? 'Brevet de technicien supérieur') ?></strong>
+                </div>
+                <div class="bio-line-fr-5">
+                    Spécialité : <strong><?= htmlspecialchars(cleanFrenchText($d['spec_fr'] ?? '')) ?></strong>
+                </div>
 
-            <!-- ── QR CODE (left column bottom) ───────────────── -->
-            <div class="qr-absolute-container">
-                <img class="qr-img"
-                     src="https://api.qrserver.com/v1/create-qr-code/?size=88x88&data=<?= urlencode(url('/resultats?matricule=' . ($d['numero_matricule'] ?? ''))) ?>"
-                     alt="QR">
-                <div class="matricule-txt"><?= htmlspecialchars($d['numero_matricule'] ?? '') ?></div>
-            </div>
+                <!-- ── QR CODE (left column bottom) ───────────────── -->
+                <div class="qr-absolute-container">
+                    <img class="qr-img"
+                         src="https://api.qrserver.com/v1/create-qr-code/?size=88x88&data=<?= urlencode(url('/resultats?matricule=' . ($d['numero_matricule'] ?? ''))) ?>"
+                         alt="QR">
+                    <div class="matricule-txt"><?= htmlspecialchars($d['numero_matricule'] ?? '') ?></div>
+                </div>
 
-            <!-- ── SIGNATURES (bottom row) ────────────────────────── -->
-            <div class="sig-right">
-                <div class="sig-title">المسؤول (ة) البيداغوجي (ة)</div>
-                <div class="sig-space"></div>
-            </div>
+                <!-- ── SIGNATURES (bottom row) ────────────────────────── -->
+                <div class="sig-right">
+                    <div class="sig-title">المسؤول (ة) البيداغوجي (ة)</div>
+                    <div class="sig-space"></div>
+                </div>
 
-            <div class="sig-left">
-                <div class="sig-title">مدير (ة) المؤسسة</div>
-                <div class="sig-space"></div>
-            </div>
+                <div class="sig-left">
+                    <div class="sig-title">مدير (ة) المؤسسة</div>
+                    <div class="sig-space"></div>
+                </div>
 
-            <!-- ── BOTTOM NOTICE ───────────────────────────────────── -->
-            <div class="bottom-notice">لا تسلم إلا نسخة واحدة من هذه الشهادة</div>
+                <!-- ── BOTTOM NOTICE ───────────────────────────────────── -->
+                <div class="bottom-notice">لا تسلم إلا نسخة واحدة من هذه الشهادة</div>
+            </div>
 
         </div>
     </div>
 </div>
 
 <script>
+    let currentOffsetY = 0;
+    let currentOffsetX = 0;
+    let currentFontScale = 100;
+    const qualifId = <?= json_encode($d['qualif_id'] ?? 0) ?>;
+    const defaultBgUrl = <?= json_encode(!empty($settings['diploma_bg_url']) ? htmlspecialchars($settings['diploma_bg_url']) : asset('assets/images/diploma_bg.svg')) ?>;
+
+    function changeTemplate(imgName) {
+        const bgImg = document.querySelector('.diploma-bg');
+        if (!bgImg) return;
+        
+        if (imgName) {
+            bgImg.src = '/diplom/' + imgName;
+            bgImg.classList.add('jpeg-bg');
+            // If custom JPEG template background is selected, turn off default borders
+            toggleDefaultBorders(false);
+            document.getElementById('toggle_borders').checked = false;
+            // Save selection in localStorage
+            localStorage.setItem('diploma_bg_qualif_' + qualifId, imgName);
+        } else {
+            bgImg.src = defaultBgUrl;
+            bgImg.classList.remove('jpeg-bg');
+            toggleDefaultBorders(true);
+            document.getElementById('toggle_borders').checked = true;
+            localStorage.removeItem('diploma_bg_qualif_' + qualifId);
+        }
+    }
+
+    function toggleBgOnly() {
+        const bgImg = document.querySelector('.diploma-bg');
+        const watermark = document.querySelector('.diploma-watermark');
+        const btn = document.getElementById('btn_toggle_bg');
+        
+        if (bgImg.style.display === 'none') {
+            bgImg.style.display = '';
+            if (watermark) watermark.style.display = '';
+            btn.innerHTML = '👁️ إخفاء الخلفية';
+            btn.style.background = '#059669';
+        } else {
+            bgImg.style.display = 'none';
+            if (watermark) watermark.style.display = 'none';
+            btn.innerHTML = '👁️ إظهار الخلفية';
+            btn.style.background = '#dc2626';
+        }
+    }
+
+    function toggleDefaultBorders(visible) {
+        const borderOuter = document.querySelector('.diploma-border-outer');
+        const borderInner = document.querySelector('.diploma-border-inner');
+        if (borderOuter) borderOuter.style.display = visible ? '' : 'none';
+        if (borderInner) borderInner.style.display = visible ? '' : 'none';
+    }
+
+    function adjustYOffset(val) {
+        currentOffsetY = parseFloat(val) || 0;
+        applyTransform();
+        localStorage.setItem('diploma_offset_y_' + qualifId, currentOffsetY);
+    }
+
+    function adjustXOffset(val) {
+        currentOffsetX = parseFloat(val) || 0;
+        applyTransform();
+        localStorage.setItem('diploma_offset_x_' + qualifId, currentOffsetX);
+    }
+
+    function adjustFontSize(val) {
+        currentFontScale = parseInt(val) || 100;
+        const wrapper = document.getElementById('diploma_content_wrapper');
+        if (wrapper) {
+            wrapper.style.fontSize = (currentFontScale / 100) + 'em';
+        }
+        localStorage.setItem('diploma_font_scale_' + qualifId, currentFontScale);
+    }
+
+    function applyTransform() {
+        const wrapper = document.getElementById('diploma_content_wrapper');
+        if (wrapper) {
+            wrapper.style.transform = `translate(${currentOffsetX}mm, ${currentOffsetY}mm)`;
+        }
+    }
+
     function printWithoutBg() {
         document.body.classList.add('no-bg');
         window.print();
@@ -626,6 +803,35 @@ if (!function_exists('cleanFrenchText')) {
     
     window.onload = function () {
         adjustScale();
+        
+        // Load saved values from localStorage
+        const savedBg = localStorage.getItem('diploma_bg_qualif_' + qualifId);
+        if (savedBg) {
+            const select = document.getElementById('template_select');
+            if (select) {
+                select.value = savedBg;
+                changeTemplate(savedBg);
+            }
+        }
+        
+        const savedOffsetY = localStorage.getItem('diploma_offset_y_' + qualifId);
+        if (savedOffsetY !== null) {
+            document.getElementById('offset_y').value = savedOffsetY;
+            adjustYOffset(savedOffsetY);
+        }
+        
+        const savedOffsetX = localStorage.getItem('diploma_offset_x_' + qualifId);
+        if (savedOffsetX !== null) {
+            document.getElementById('offset_x').value = savedOffsetX;
+            adjustXOffset(savedOffsetX);
+        }
+        
+        const savedFontScale = localStorage.getItem('diploma_font_scale_' + qualifId);
+        if (savedFontScale !== null) {
+            document.getElementById('font_size_scale').value = savedFontScale;
+            adjustFontSize(savedFontScale);
+        }
+
         setTimeout(function () { 
             if (window.location.search.indexOf('noprint') === -1) {
                 window.print(); 

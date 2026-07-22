@@ -6,6 +6,12 @@
 /** @var int   $count   */
 $settings = \App\Helpers\TakwinHelper::getSettings();
 
+// Load the 38 background images dynamically from public/diplom
+$diplomImages = glob(public_path('diplom/*.{jpeg,jpg,png}'), GLOB_BRACE);
+$imagesList = array_map('basename', $diplomImages);
+sort($imagesList);
+
+
 if (!function_exists('cleanFrenchText')) {
     function cleanFrenchText($text) {
         if (empty($text)) return '';
@@ -249,6 +255,19 @@ if (!function_exists('cleanFrenchText')) {
         opacity: 0.08;
         pointer-events: none;
     }
+    .diploma-bg.jpeg-bg {
+        opacity: 1 !important;
+        object-fit: fill !important;
+        background: #fff;
+    }
+    body.no-backgrounds .diploma-bg,
+    body.no-backgrounds .diploma-watermark,
+    body.no-backgrounds .diploma-border-outer,
+    body.no-backgrounds .diploma-border-inner {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+    }
 
     /* ═══ BORDERS ═════════════════════════════════════════════════════════ */
     .diploma-border-outer {
@@ -401,13 +420,24 @@ if (!function_exists('cleanFrenchText')) {
 </style>
 
 <!-- ══ TOOLBAR ══════════════════════════════════════════════════════════ -->
-<div class="batch-toolbar" style="background:#0f172a; border-bottom:1px solid rgba(255,255,255,0.15); font-family:'Cairo', sans-serif;">
-    <div class="toolbar-info">
+<div class="batch-toolbar" style="background:#0f172a; border-bottom:1px solid rgba(255,255,255,0.15); font-family:'Cairo', sans-serif; display: flex; flex-wrap: wrap; height: auto; padding: 12px 24px; gap: 15px; align-items: center;">
+    <div class="toolbar-info" style="display: flex; align-items: center; gap: 10px;">
         <i class="fa-solid fa-graduation-cap" style="color:#3b82f6; font-size:1.1rem;"></i>
         <span>طباعة جماعية للشهادات الرسمية</span>
         <span class="badge-count">{{ $count }} شهادة</span>
     </div>
     
+    <!-- Background Template Dropdown Select -->
+    <div style="display:inline-flex; align-items:center; gap:8px;">
+        <label for="template_select">خلفية الشهادة (القالب):</label>
+        <select id="template_select" onchange="changeBatchTemplates(this.value)">
+            <option value="">خلفية افتراضية (SVG)</option>
+            <?php foreach ($imagesList as $imgName): ?>
+                <option value="<?= htmlspecialchars($imgName) ?>"><?= htmlspecialchars($imgName) ?></option>
+            <?php endforeach; ?>
+        </select>
+    </div>
+
     <!-- Background Toggle Select -->
     <div style="display:inline-flex; align-items:center; gap:8px;">
         <label for="bg-toggle">نوع الورق:</label>
@@ -417,10 +447,34 @@ if (!function_exists('cleanFrenchText')) {
         </select>
     </div>
 
+    <!-- Fine-Tuning Offsets -->
+    <div style="display:inline-flex; align-items:center; gap:8px; border-left:1px solid #334155; padding-left:12px;">
+        <label>إزاحة النص (أعلى/أسفل):</label>
+        <input type="number" id="offset_y" value="0" step="0.5" oninput="adjustBatchYOffset(this.value)" style="width: 55px; background: #1e293b; color: #fff; border: 1px solid #334155; border-radius: 6px; padding: 4px; text-align: center; outline:none;">
+        <span style="font-size: 11px; color: #94a3b8;">مم</span>
+    </div>
+
+    <div style="display:inline-flex; align-items:center; gap:8px;">
+        <label>يمين/يسار:</label>
+        <input type="number" id="offset_x" value="0" step="0.5" oninput="adjustBatchXOffset(this.value)" style="width: 55px; background: #1e293b; color: #fff; border: 1px solid #334155; border-radius: 6px; padding: 4px; text-align: center; outline:none;">
+        <span style="font-size: 11px; color: #94a3b8;">مم</span>
+    </div>
+
+    <div style="display:inline-flex; align-items:center; gap:8px; border-left:1px solid #334155; padding-left:12px;">
+        <label>حجم الخط:</label>
+        <input type="number" id="font_size_scale" value="100" min="50" max="150" step="1" oninput="adjustBatchFontSize(this.value)" style="width: 55px; background: #1e293b; color: #fff; border: 1px solid #334155; border-radius: 6px; padding: 4px; text-align: center; outline:none;">
+        <span style="font-size: 11px; color: #94a3b8;">%</span>
+    </div>
+
+    <div style="display:inline-flex; align-items:center; gap:8px;">
+        <input type="checkbox" id="toggle_borders" checked onchange="toggleBatchBorders(this.checked)" style="cursor:pointer;">
+        <label for="toggle_borders" style="cursor:pointer;">الإطار الافتراضي</label>
+    </div>
+
     <?php
     $diplomaIds = implode(',', array_map(function($d) { return $d['diplome_id']; }, $diplomas));
     ?>
-    <div class="toolbar-actions">
+    <div class="toolbar-actions" style="margin-right: auto; display: flex; gap: 8px;">
         <!-- PDF Download Dropdown -->
         <div class="dropdown-pdf">
             <button class="btn-pdf-trigger" onclick="togglePdfMenu(event)">
@@ -455,7 +509,7 @@ $isBEP = (str_contains(strtolower($d['type_diplome_fr'] ?? ''), 'brevet d\'ensei
        || (isset($d['niveau_qualification']) && str_contains($d['niveau_qualification'], 'التعليم المهني'))
 );
 ?>
-<div class="diploma-page <?= $isBEP ? 'is-bep' : '' ?>">
+<div class="diploma-page <?= $isBEP ? 'is-bep' : '' ?>" data-qualif-id="<?= htmlspecialchars($d['qualif_id'] ?? 0) ?>">
 
     <!-- Background & Watermark -->
     <img class="diploma-bg"
@@ -469,54 +523,19 @@ $isBEP = (str_contains(strtolower($d['type_diplome_fr'] ?? ''), 'brevet d\'ensei
     <div class="diploma-border-outer"></div>
     <div class="diploma-border-inner"></div>
 
-    <!-- HEADER -->
-    <div class="diploma-header">
-        <div class="hdr-serial">
-            @if ($isBEP)
-                <div style="direction: rtl; text-align: left;">
-                    <span class="serial-number" style="border-bottom: 1px dotted #000; min-width: 30mm; display: inline-block; text-align: center; font-family: 'Outfit';"><?= htmlspecialchars($d['num_serie'] ?? '') ?></span>
+    <!-- Wrap all printable elements in a translation/scale wrapper -->
+    <div class="diploma-printable-content" style="position: absolute; inset: 0; z-index: 10; transition: transform 0.1s ease-out, font-size 0.1s ease-out; transform-origin: top center;">
+        <!-- HEADER -->
+        <div class="diploma-header">
+            <div class="hdr-serial">
+                @if ($isBEP)
+                    <div style="direction: rtl; text-align: left;">
+                        <span class="serial-number" style="border-bottom: 1px dotted #000; min-width: 30mm; display: inline-block; text-align: center; font-family: 'Outfit';"><?= htmlspecialchars($d['num_serie'] ?? '') ?></span>
+                        <span class="serial-label">الرقم التسلسلي</span>
+                    </div>
+                @else
+                    <span class="serial-number"><?= htmlspecialchars($d['num_serie'] ?? '') ?></span>
                     <span class="serial-label">الرقم التسلسلي</span>
-                </div>
-            @else
-                <span class="serial-number"><?= htmlspecialchars($d['num_serie'] ?? '') ?></span>
-                <span class="serial-label">الرقم التسلسلي</span>
-            @endif
-        </div>
-        <div class="hdr-center">
-            <div class="r1">الجمهورية الجزائرية الديمقراطية الشعبية</div>
-            <div class="r2">وزارة التكوين و التعليم المهنيين</div>
-        </div>
-        <div class="hdr-right">
-            <div class="r1">مديرية التكوين و التعليم المهنيين لولاية <?= htmlspecialchars($d['wilaya_ar'] ?? '') ?></div>
-            <div class="r2"><?= htmlspecialchars($d['etab_ar'] ?? '') ?></div>
-        </div>
-    </div>
-
-    <!-- TITLE -->
-    @if (!$isBEP)
-        <div class="main-title"><?= htmlspecialchars($d['type_diplome_ar'] ?? 'شهادة تقني سام') ?></div>
-    @else
-        <div class="main-title" style="visibility: hidden; height: 10px; overflow: hidden;"></div>
-    @endif
-
-    <!-- PREAMBLE -->
-    <div class="arabic-preamble">
-        <div class="preamble-head"><?= htmlspecialchars($settings['diploma_decree_title'] ?? 'إن وزير التكوين و التعليم المهنيين') ?></div>
-        <div class="preamble-body">
-            @if ($isBEP)
-                بمقتضى المرسوم التنفيذي رقم 17-212 المؤرخ في 26 شوال 1438 الموافق 20 يوليو 2017، الذي يحدد كيفيات إحداث الشهادات المتوجة لأطوار التعليم المهني<br>
-                بمقتضى القرار الوزاري رقم 102 المؤرخ 8 جمادى الآخرة عام 1442 الموافق 31 جانفي سنة 2021، الذي يحدد شروط وكيفيات تنظيم و تسليم الشهادات المتوجة لأطوار التعليم المهني و كذا نماذجها<br>
-                بناءا على محضر لجنة المداولات رقم : <?= htmlspecialchars($d['num_deliberation'] ?? '1') ?> المؤرخ في : <?= htmlspecialchars($d['date_deliberation_ar'] ?? '') ?>
-            @else
-                <?= htmlspecialchars($settings['diploma_decree_1'] ?? 'بمقتضى المرسوم التنفيذي رقم 16-282 المؤرخ في 2 صفر عام 1438 الموافق لـ 2 نوفمبر 2016 والذي يحدد نظام التكوين المهني الأولي والشهادات المتوجة له') ?><br>
-                <?= htmlspecialchars($settings['diploma_decree_2'] ?? 'بمقتضى القرار المؤرخ في 23 ربيع الأول عام 1439 الموافق لـ 12 ديسمبر 2017 الذي يحدد شروط وكيات تسليم الشهادات المتوجة للتكوين المهني الأولي') ?><br>
-                بناءا على محضر لجنة مداولات نهاية التكوين رقم : <?= htmlspecialchars($d['num_deliberation'] ?? '31') ?> المؤرخ في : <?= htmlspecialchars($d['date_deliberation_ar'] ?? '') ?>
-            @endif
-        </div>
-    </div>
-
-    <!-- ARABIC BIOGRAPHICAL DETAILS -->
-    <div class="bio-line-ar-1">
         تمنح هذه الشهادة للسيد(ة) : <strong><?= htmlspecialchars(($d['nom_ar'] ?? '') . ' ' . ($d['prenom_ar'] ?? '')) ?></strong>
         المولود(ة) بتاريخ : <strong><?= htmlspecialchars($d['date_naissance_ar'] ?? '') ?></strong>
         بـ <strong><?= htmlspecialchars($d['lieu_naissance'] ?? '') ?></strong>
@@ -576,12 +595,81 @@ $isBEP = (str_contains(strtolower($d['type_diplome_fr'] ?? ''), 'brevet d\'ensei
 </div>{{-- end .batch-container --}}
 
 <script>
-    // Auto-print on load (skip if ?noprint in URL for preview mode)
+    const defaultBgUrl = <?= json_encode(!empty($settings['diploma_bg_url']) ? htmlspecialchars($settings['diploma_bg_url']) : asset('assets/images/diploma_bg.svg')) ?>;
+
     window.addEventListener('load', function () {
+        // Apply saved localStorage settings to each page individually on load
+        document.querySelectorAll('.diploma-page').forEach(function (page) {
+            const qualifId = page.getAttribute('data-qualif-id');
+            const bgImg = page.querySelector('.diploma-bg');
+            const content = page.querySelector('.diploma-printable-content');
+            
+            if (qualifId) {
+                // Load saved background
+                const savedBg = localStorage.getItem('diploma_bg_qualif_' + qualifId);
+                if (savedBg && bgImg) {
+                    bgImg.src = '/diplom/' + savedBg;
+                    bgImg.classList.add('jpeg-bg');
+                    // Hide borders if using JPEG background template
+                    const borderOuter = page.querySelector('.diploma-border-outer');
+                    const borderInner = page.querySelector('.diploma-border-inner');
+                    if (borderOuter) borderOuter.style.display = 'none';
+                    if (borderInner) borderInner.style.display = 'none';
+                    document.getElementById('toggle_borders').checked = false;
+                }
+                
+                // Load saved offsets & font scale
+                let transform = '';
+                const savedOffsetX = localStorage.getItem('diploma_offset_x_' + qualifId);
+                const savedOffsetY = localStorage.getItem('diploma_offset_y_' + qualifId);
+                const savedFontScale = localStorage.getItem('diploma_font_scale_' + qualifId);
+                
+                if (savedOffsetX !== null || savedOffsetY !== null) {
+                    const x = savedOffsetX !== null ? parseFloat(savedOffsetX) : 0;
+                    const y = savedOffsetY !== null ? parseFloat(savedOffsetY) : 0;
+                    transform = `translate(${x}mm, ${y}mm)`;
+                    
+                    // Set inputs to first matched value in toolbar just for user visual reference
+                    document.getElementById('offset_x').value = x;
+                    document.getElementById('offset_y').value = y;
+                }
+                
+                if (content) {
+                    if (transform) content.style.transform = transform;
+                    if (savedFontScale !== null) {
+                        content.style.fontSize = (parseInt(savedFontScale) / 100) + 'em';
+                        document.getElementById('font_size_scale').value = savedFontScale;
+                    }
+                }
+            }
+        });
+
         if (window.location.search.indexOf('noprint') === -1) {
-            setTimeout(function () { window.print(); }, 1500);
+            setTimeout(function () { window.print(); }, 2000);
         }
     });
+
+    function changeBatchTemplates(imgName) {
+        document.querySelectorAll('.diploma-page').forEach(function (page) {
+            const qualifId = page.getAttribute('data-qualif-id');
+            const bgImg = page.querySelector('.diploma-bg');
+            if (!bgImg) return;
+
+            if (imgName) {
+                bgImg.src = '/diplom/' + imgName;
+                bgImg.classList.add('jpeg-bg');
+                toggleBatchBorders(false);
+                document.getElementById('toggle_borders').checked = false;
+                if (qualifId) localStorage.setItem('diploma_bg_qualif_' + qualifId, imgName);
+            } else {
+                bgImg.src = defaultBgUrl;
+                bgImg.classList.remove('jpeg-bg');
+                toggleBatchBorders(true);
+                document.getElementById('toggle_borders').checked = true;
+                if (qualifId) localStorage.removeItem('diploma_bg_qualif_' + qualifId);
+            }
+        });
+    }
 
     function toggleBackgrounds(val) {
         if (val === "0") {
@@ -591,10 +679,55 @@ $isBEP = (str_contains(strtolower($d['type_diplome_fr'] ?? ''), 'brevet d\'ensei
         }
     }
 
+    function toggleBatchBorders(visible) {
+        document.querySelectorAll('.diploma-page').forEach(function (page) {
+            const borderOuter = page.querySelector('.diploma-border-outer');
+            const borderInner = page.querySelector('.diploma-border-inner');
+            if (borderOuter) borderOuter.style.display = visible ? '' : 'none';
+            if (borderInner) borderInner.style.display = visible ? '' : 'none';
+        });
+    }
+
+    function adjustBatchYOffset(val) {
+        const offset = parseFloat(val) || 0;
+        document.querySelectorAll('.diploma-page').forEach(function (page) {
+            const qualifId = page.getAttribute('data-qualif-id');
+            const content = page.querySelector('.diploma-printable-content');
+            if (qualifId) localStorage.setItem('diploma_offset_y_' + qualifId, offset);
+            
+            // Reapply transform
+            const savedOffsetX = localStorage.getItem('diploma_offset_x_' + qualifId) || 0;
+            if (content) content.style.transform = `translate(${savedOffsetX}mm, ${offset}mm)`;
+        });
+    }
+
+    function adjustBatchXOffset(val) {
+        const offset = parseFloat(val) || 0;
+        document.querySelectorAll('.diploma-page').forEach(function (page) {
+            const qualifId = page.getAttribute('data-qualif-id');
+            const content = page.querySelector('.diploma-printable-content');
+            if (qualifId) localStorage.setItem('diploma_offset_x_' + qualifId, offset);
+            
+            // Reapply transform
+            const savedOffsetY = localStorage.getItem('diploma_offset_y_' + qualifId) || 0;
+            if (content) content.style.transform = `translate(${offset}mm, ${savedOffsetY}mm)`;
+        });
+    }
+
+    function adjustBatchFontSize(val) {
+        const scale = parseInt(val) || 100;
+        document.querySelectorAll('.diploma-page').forEach(function (page) {
+            const qualifId = page.getAttribute('data-qualif-id');
+            const content = page.querySelector('.diploma-printable-content');
+            if (qualifId) localStorage.setItem('diploma_font_scale_' + qualifId, scale);
+            if (content) content.style.fontSize = (scale / 100) + 'em';
+        });
+    }
+
     function togglePdfMenu(event) {
         event.stopPropagation();
         var menu = document.getElementById('pdf-menu');
-        menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+        if (menu) menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
     }
 
     window.addEventListener('click', function(e) {
