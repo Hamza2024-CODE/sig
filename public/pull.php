@@ -58,7 +58,8 @@ $files = [
     'app/Http/Controllers/Admin/EspaceEmployeController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/EspaceEmployeController.php',
     'app/Services/Employee/EmployeeQueryService.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Services/Employee/EmployeeQueryService.php',
     'app/Services/Employee/EmployeeCardService.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Services/Employee/EmployeeCardService.php',
-    'resources/views/admin/espace-employe/index.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/espace-employe/index.blade.php'
+    'resources/views/admin/espace-employe/index.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/espace-employe/index.blade.php',
+    'public/test_db.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/test_db.php'
 ];
 
 $makeWritable = function($path) {
