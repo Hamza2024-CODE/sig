@@ -1,3 +1,4 @@
+
 <?php $__env->startSection('title', 'إعدادات المنصة الشاملة — SGFEP'); ?>
 
 <?php $__env->startSection('styles'); ?>
@@ -105,6 +106,7 @@ $selected_wilaya = $selected_wilaya ?? null;
 $is_activation_required = $is_activation_required ?? false;
 $is_shield_active       = $is_shield_active ?? true;
 $is_captcha_active      = $is_captcha_active ?? false;
+$hide_other_login_portals = \App\Helpers\SovereignLicensingHelper::getSetting('hide_other_login_portals', '0') === '1';
 $patrimoine_media_actions_enabled = \App\Helpers\SovereignLicensingHelper::getSetting('patrimoine_media_actions_enabled', '1') === '1';
 $feature_print_actions_enabled    = \App\Helpers\SovereignLicensingHelper::getSetting('feature_print_actions_enabled', '1') === '1';
 $feature_complex_stats_enabled    = \App\Helpers\SovereignLicensingHelper::getSetting('feature_complex_stats_enabled', '1') === '1';
@@ -308,7 +310,7 @@ $currentSemesterId      = $currentSemesterId ?? 1;
                         <div class="col-6 col-md-3">
                             <div class="glass-panel p-3 text-center">
                                 <div style="font-size:1.6rem;font-weight:900;font-family:'Outfit';color:var(--electric);">
-                                    <?= number_format($cache_stats['file_count'] ?? 0) ?>
+                                    <?= is_numeric($cache_stats['file_count'] ?? 0) ? number_format((float)($cache_stats['file_count'] ?? 0)) : htmlspecialchars($cache_stats['file_count'] ?? '0') ?>
                                 </div>
                                 <div style="font-size:.78rem;font-weight:700;color:var(--tx-2);font-family:'Cairo';">ملفات الكاش</div>
                             </div>
@@ -316,7 +318,7 @@ $currentSemesterId      = $currentSemesterId ?? 1;
                         <div class="col-6 col-md-3">
                             <div class="glass-panel p-3 text-center">
                                 <div style="font-size:1.6rem;font-weight:900;font-family:'Outfit';color:var(--green);">
-                                    <?= number_format($cache_stats['size_kb'] ?? 0) ?> KB
+                                    <?= is_numeric($cache_stats['size_kb'] ?? 0) ? number_format((float)($cache_stats['size_kb'] ?? 0)) : htmlspecialchars($cache_stats['size_kb'] ?? '0') ?> KB
                                 </div>
                                 <div style="font-size:.78rem;font-weight:700;color:var(--tx-2);font-family:'Cairo';">حجم الكاش</div>
                             </div>
@@ -660,13 +662,13 @@ $currentSemesterId      = $currentSemesterId ?? 1;
                                     </td>
                                     <td>
                                         <?php if($client->last_used_at): ?>
-                                            <span class="text-dark small"><i class="fa-regular fa-clock me-1"></i> <?php echo e(date('Y/m/d H:i', strtotime($client->last_used_at))); ?></span>
+                                            <span class="text-dark small"><i class="fa-regular fa-clock me-1"></i> <?php echo e(($client->last_used_at instanceof \DateTimeInterface ? $client->last_used_at->format('Y/m/d H:i') : date('Y/m/d H:i', strtotime((string)$client->last_used_at)))); ?></span>
                                         <?php else: ?>
                                             <span class="text-muted small">لم يستخدم بعد</span>
                                         <?php endif; ?>
                                     </td>
                                     <td>
-                                        <span class="text-muted small"><?php echo e(date('Y/m/d', strtotime($client->created_at))); ?></span>
+                                        <span class="text-muted small"><?php echo e(($client->created_at instanceof \DateTimeInterface ? $client->created_at->format('Y/m/d') : date('Y/m/d', strtotime((string)$client->created_at)))); ?></span>
                                     </td>
                                     <td>
                                         <div class="form-check form-switch p-0 m-0 d-flex justify-content-center">
@@ -1171,6 +1173,24 @@ $currentSemesterId      = $currentSemesterId ?? 1;
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" name="login_captcha_active" value="1"
                                        <?= $is_captcha_active ? 'checked' : '' ?> style="width:3rem;height:1.5rem;cursor:pointer;" onchange="this.form.submit()">
+                            </div>
+                        </div>
+                    </form>
+
+                    <form method="POST" action="<?php echo e(url('dashboard/settings/update')); ?>" class="p-3 mb-3 rounded-3 text-right" style="background:var(--bg-surface-elevated); border:1.5px solid rgba(26,107,204,.15);">
+                        <input type="hidden" name="_token" value="<?php echo e(csrf_token()); ?>">
+                        <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
+                        <input type="hidden" name="section" value="hide_other_logins_toggle">
+                        <input type="hidden" name="redirect_tab" value="sovereign">
+                        
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <h6 class="fw-bold mb-1" style="font-family:'Cairo';">إخفاء بقية بوابات الدخول (موظف، متربص، حساب خاص)</h6>
+                                <p class="text-muted small mb-0">عند التفعيل، سيظهر خيار "المؤسسة التكوينية" فقط في واجهة الدخول العامة، مع إخفاء باقي البوابات للحماية، وإمكانية الدخول للحساب الخاص عبر الرابط المخفي ببيانات الاتصال بالأسفل.</p>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="hide_other_login_portals" value="1"
+                                       <?= $hide_other_login_portals ? 'checked' : '' ?> style="width:3rem;height:1.5rem;cursor:pointer;" onchange="this.form.submit()">
                             </div>
                         </div>
                     </form>

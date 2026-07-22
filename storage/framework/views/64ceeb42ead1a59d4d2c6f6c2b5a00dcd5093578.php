@@ -15,6 +15,14 @@ $user      = session('user') ?? [];
 $roleCode  = strtolower($user['role_code'] ?? 'user');
 $isApprenticeshipDept = (int)($user['IDMode_formation'] ?? 0) === 10;
 $username = strtolower($user['username'] ?? '');
+$isDfmUser = ($roleCode === 'central' && $username === 'dfm');
+$isDrhUser = ($roleCode === 'central' && in_array($username, ['drh', 'drhinst', 'drhcentre', 'drhpb', 'drht']));
+$directionCode = strtoupper($user['direction_code'] ?? $user['username'] ?? '');
+$isDosfpUser = ($roleCode === 'central' && ($directionCode === 'DOSFP' || $username === 'dosfp'));
+$isDepUser = ($roleCode === 'central' && ($directionCode === 'DEP' || $username === 'dep'));
+$isDeohUser = ($roleCode === 'central' && ($directionCode === 'DEOH' || $username === 'deoh'));
+$isDecUser = ($roleCode === 'central' && ($directionCode === 'DEC' || $username === 'dec'));
+$isDfcriUser = ($roleCode === 'central' && ($directionCode === 'DFCRI' || $username === 'dfcri'));
 
 $dept = 'general';
 if ($isApprenticeshipDept || in_array($username, ['sdtpa', 'sdtpas'])) {
@@ -25,7 +33,7 @@ if ($isApprenticeshipDept || in_array($username, ['sdtpa', 'sdtpas'])) {
     $dept = 'diplomes';
 } elseif (in_array($username, ['sdtpp', 'sdtpps', 'sdtpc', 'sdtpcs'])) {
     $dept = 'pedagogie';
-} elseif (in_array($username, ['admfine', 'admfines', 'samf', 'samfs', 'sdafm', 'sdsafms', 'sdarh', 'sdarhs'])) {
+} elseif (in_array($username, ['admfine', 'admfines', 'samf', 'samfs', 'sdafm', 'sdsafms', 'sdarh', 'sdarhs', 'samrh', 'ssip'])) {
     $dept = 'administration';
 }
 // if ($roleCode === 'employee') { $roleCode = 'formateur'; }
@@ -80,6 +88,13 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
     <!-- CSRF Shield & AJAX Configuration -->
     <meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
     <script>
+        (function() {
+            let u = '<?php echo e(url("/")); ?>';
+            if (u.startsWith('http:') && window.location.protocol === 'https:') {
+                u = u.replace('http:', 'https:');
+            }
+            window.laravel_url = u;
+        })();
         (function() {
             const token = '<?php echo e(csrf_token()); ?>';
             
@@ -298,12 +313,31 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
     <!-- Sovereign Design System -->
     <link rel="stylesheet" href="<?php echo e(asset('assets/css/design-system.css?v=2.1')); ?>">
 
-    <!-- PWA -->
+    <!-- PWA + TWA Ready -->
     <link rel="manifest" href="<?php echo e(asset('manifest.json')); ?>">
+    <meta name="theme-color" content="#003870">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="منصة تسيير">
     <link rel="apple-touch-icon" href="<?php echo e(asset('assets/icons/icon-192x192.png')); ?>">
+    <link rel="apple-touch-icon" sizes="152x152" href="<?php echo e(asset('assets/icons/icon-192x192.png')); ?>">
+    <link rel="apple-touch-icon" sizes="180x180" href="<?php echo e(asset('assets/icons/icon-192x192.png')); ?>">
+    <link rel="apple-touch-startup-image" href="<?php echo e(asset('assets/icons/icon-512x512.png')); ?>">
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                    .then(function(reg) {
+                        console.log('[SGFEP] Service Worker registered. Scope:', reg.scope);
+                    })
+                    .catch(function(err) {
+                        console.warn('[SGFEP] Service Worker registration failed:', err);
+                    });
+            });
+        }
+    </script>
 
     <style>
         .dock-drawer {
@@ -811,14 +845,16 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
 
                     <!-- 1. الشؤون البيداغوجية والتعليم -->
                     <div class="sidebar-dropdown">
-                        <button type="button" class="sidebar-item <?php echo e(($isActive('/dashboard/offres') || $isActive('/dashboard/inscriptions') || $isActive('/dashboard/specialites') || $isActive('/dashboard/sessions') || $isActive('/dashboard/effectifs')) ? 'active' : ''); ?>" onclick="toggleSidebarDropdown(this)" title="التكوين والتعليم">
+                        <button type="button" class="sidebar-item <?php echo e(($isActive('/dashboard/offres') || $isActive('/dashboard/inscriptions') || $isActive('/dashboard/apprenants') || $isActive('/dashboard/sections') || $isActive('/dashboard/specialites') || $isActive('/dashboard/sessions') || $isActive('/dashboard/effectifs')) ? 'active' : ''); ?>" onclick="toggleSidebarDropdown(this)" title="التكوين والتعليم">
                             <i class="fa-solid fa-graduation-cap text-primary"></i>
                             <span>التكوين والتعليم</span>
                             <i class="fa-solid fa-chevron-down ms-auto dropdown-chevron" style="font-size: 0.7rem;"></i>
                         </button>
-                        <div class="sidebar-submenu <?php echo e(($isActive('/dashboard/offres') || $isActive('/dashboard/inscriptions') || $isActive('/dashboard/specialites') || $isActive('/dashboard/sessions') || $isActive('/dashboard/effectifs')) ? 'open' : ''); ?>">
+                        <div class="sidebar-submenu <?php echo e(($isActive('/dashboard/offres') || $isActive('/dashboard/inscriptions') || $isActive('/dashboard/apprenants') || $isActive('/dashboard/sections') || $isActive('/dashboard/specialites') || $isActive('/dashboard/sessions') || $isActive('/dashboard/effectifs')) ? 'open' : ''); ?>">
                             <a href="<?php echo e(url('dashboard/offres')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/offres', true)); ?>" title="العروض"><i class="fa-solid fa-briefcase text-primary"></i> <span>العروض</span></a>
                             <a href="<?php echo e(url('dashboard/inscriptions')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/inscriptions')); ?>" title="التسجيل والتوجيه"><i class="fa-solid fa-user-plus text-primary"></i> <span>التسجيل والتوجيه</span></a>
+                            <a href="<?php echo e(url('dashboard/apprenants')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/apprenants')); ?>" title="المتربصين"><i class="fa-solid fa-user-graduate text-primary"></i> <span>المتربصين</span></a>
+                            <a href="<?php echo e(url('dashboard/sections')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/sections')); ?>" title="الأقسام التكوينية"><i class="fa-solid fa-users-rectangle text-primary"></i> <span>الأقسام التكوينية</span></a>
                             <a href="<?php echo e(url('dashboard/specialites')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/specialites')); ?>" title="تنظيم الفروع"><i class="fa-solid fa-sitemap text-primary"></i> <span>تنظيم الفروع</span></a>
                             <a href="<?php echo e(url('dashboard/sessions')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/sessions')); ?>" title="تخطيط الدورات"><i class="fa-solid fa-calendar-alt text-primary"></i> <span>تخطيط الدورات</span></a>
                             <a href="<?php echo e(url('dashboard/effectifs')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/effectifs')); ?>" title="تسيير التعداد"><i class="fa-solid fa-users text-primary"></i> <span>تسيير التعداد</span></a>
@@ -881,77 +917,8 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
                 <span>لوحة التحكم</span>
             </a>
 
-            <!-- محرك سير العمل -->
-            <?php if(!in_array($roleCode, ['employee', 'formateur', 'dfep', 'central', 'etablissement', 'directeur']) && $dept === 'general'): ?>
-            <a href="<?php echo e(url('dashboard/workflow')); ?>" class="sidebar-item <?php echo e($isActive('/dashboard/workflow')); ?>" title="محرك سير العمل — طلبات الإجازات والترقيات">
-                <i class="fa-solid fa-diagram-project text-primary"></i>
-                <span>محرك سير العمل</span>
-            </a>
-            <?php endif; ?>
-
-            <!-- البريد الداخلي -->
-            <a href="<?php echo e(url('dashboard/messages')); ?>" class="sidebar-item <?php echo e($isActive('/dashboard/messages')); ?>" title="البريد الداخلي">
-                <i class="fa-solid fa-envelope text-warning"></i>
-                <span>البريد الداخلي</span>
-                <?php try { $unreadCount = \App\Models\EmployeeMessage::unreadCount(session('user.id', 0)); } catch(\Exception $e) { $unreadCount = 0; } ?>
-                <?php if($unreadCount > 0): ?>
-                <span style="background:#dc3545;color:#fff;border-radius:20px;padding:.1rem .45rem;font-size:.68rem;font-weight:800;margin-right:auto;font-family:'Outfit';"><?php echo e($unreadCount); ?></span>
-                <?php endif; ?>
-            </a>
-
-            <!-- منشئ التقارير -->
-            <?php if(!in_array($roleCode, ['employee', 'formateur', 'dfep', 'central', 'etablissement', 'directeur']) && $dept === 'general'): ?>
-            <a href="<?php echo e(url('dashboard/reports')); ?>" class="sidebar-item <?php echo e($isActive('/dashboard/reports')); ?>" title="منشئ التقارير الديناميكية">
-                <i class="fa-solid fa-chart-bar text-info"></i>
-                <span>التقارير</span>
-            </a>
-            <?php endif; ?>
-
-            <!-- Employee Space Link -->
-            <?php if(in_array($roleCode, ['admin', 'dfep', 'central', 'etablissement', 'directeur', 'high_admin', 'secretaire_general', 'ministre']) && $dept !== 'diplomes'): ?>
-                <a href="<?php echo e(url('dashboard/espace-employe')); ?>" class="sidebar-item <?php echo e($isActive('/dashboard/espace-employe')); ?>" title="فضاء الموظف">
-                    <i class="fa-solid fa-briefcase text-success"></i>
-                    <span>فضاء الموظف</span>
-                </a>
-            <?php endif; ?>
-
-            <!-- Etablissement Profile Link -->
-            <?php if(in_array($roleCode, ['admin', 'dfep', 'central', 'etablissement', 'directeur', 'high_admin', 'secretaire_general', 'ministre']) && $dept !== 'diplomes'): ?>
-                <a href="<?php echo e(request()->is('sig/*') ? url('sig/dashboard/etablissement') : url('dashboard/etablissement')); ?>" class="sidebar-item <?php echo e($isActive('/dashboard/etablissement')); ?>" title="ملف المؤسسة">
-                    <i class="fa-solid fa-hotel text-warning"></i>
-                    <span>ملف المؤسسة</span>
-                </a>
-            <?php endif; ?>
-
-            <!-- DSS (Decision Support System) Link -->
-            <?php if(in_array($roleCode, ['admin', 'dfep', 'central', 'etablissement', 'directeur', 'high_admin', 'secretaire_general', 'ministre', 'dir_finance', 'dir_edu']) && $dept !== 'diplomes'): ?>
-                <a href="<?php echo e(request()->is('sig/*') ? url('sig/dashboard/dss') : url('dashboard/dss')); ?>" class="sidebar-item <?php echo e($isActive('/dashboard/dss')); ?>" title="دعم القرار الاستراتيجي">
-                    <i class="fa-solid fa-brain text-info"></i>
-                    <span>دعم القرار الاستراتيجي</span>
-                </a>
-            <?php endif; ?>
-
-            <!-- Security Center Dashboard Link -->
-            <?php if($roleCode === 'admin'): ?>
-                <a href="<?php echo e(request()->is('sig/*') ? url('sig/admin/security') : url('admin/security')); ?>" class="sidebar-item <?php echo e($isActive('/admin/security')); ?>" title="مركز الأمان والرقابة">
-                    <i class="fa-solid fa-shield-halved text-danger"></i>
-                    <span>مركز الأمان والرقابة</span>
-                </a>
-                <a href="<?php echo e(request()->is('sig/*') ? url('sig/admin/security/mfa') : url('admin/security/mfa')); ?>" class="sidebar-item <?php echo e($isActive('/admin/security/mfa')); ?>" title="إدارة سياسات الـ MFA">
-                    <i class="fa-solid fa-user-shield text-danger"></i>
-                    <span>إدارة سياسات الـ MFA</span>
-                </a>
-                <a href="<?php echo e(request()->is('sig/*') ? url('sig/dashboard/sync-files') : url('dashboard/sync-files')); ?>" class="sidebar-item <?php echo e($isActive('/dashboard/sync-files')); ?>" title="مزامنة ملفات HFSQL">
-                    <i class="fa-solid fa-database text-success"></i>
-                    <span>مزامنة صور HFSQL</span>
-                </a>
-            <?php endif; ?>
-
-
-
-
             <!-- Category: Digital Cards (بطاقات التكوين المهني) -->
-            <?php if(in_array($roleCode, ['admin', 'dfep', 'central', 'etablissement', 'directeur']) && (int)(session('user.IDMode_formation') ?? 0) !== 10 && $dept !== 'diplomes'): ?>
+            <?php if(in_array($roleCode, ['admin', 'dfep', 'central', 'etablissement', 'directeur']) && (int)(session('user.IDMode_formation') ?? 0) !== 10 && $dept !== 'diplomes' && $dept !== 'administration' && !$isDfmUser && !$isDrhUser && !$isDepUser && !$isDeohUser && !$isDosfpUser && !$isDfcriUser): ?>
                 <div class="sidebar-dropdown">
                     <button type="button" class="sidebar-item <?php echo e($isActive('/dashboard/digital-cards') ? 'active' : ''); ?>" onclick="toggleSidebarDropdown(this)" title="بطاقات التكوين المهني">
                         <i class="fa-solid fa-id-card-clip text-primary"></i>
@@ -969,60 +936,106 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
                 </div>
             <?php endif; ?>
 
-            <!-- ══ Category: إعدادات المستخدم ══ -->
-            <?php if(in_array($roleCode, ['admin', 'dfep', 'central', 'etablissement', 'directeur', 'high_admin'])): ?>
-                <a href="<?php echo e(request()->is('sig/*') ? url('sig/dashboard/preferences') : url('dashboard/preferences')); ?>" class="sidebar-item <?php echo e($isActive('/dashboard/preferences')); ?>" title="إعدادات المظهر والتفضيلات">
-                    <i class="fa-solid fa-palette text-info"></i>
-                    <span>إعدادات المظهر والتفضيلات</span>
+            <!-- محرك سير العمل -->
+            <?php if(!in_array($roleCode, ['employee', 'formateur', 'dfep', 'central', 'etablissement', 'directeur']) && $dept === 'general'): ?>
+            <a href="<?php echo e(url('dashboard/workflow')); ?>" class="sidebar-item <?php echo e($isActive('/dashboard/workflow')); ?>" title="محرك سير العمل — طلبات الإجازات والترقيات">
+                <i class="fa-solid fa-diagram-project text-primary"></i>
+                <span>محرك سير العمل</span>
+            </a>
+            <?php endif; ?>
+
+            <!-- منشئ التقارير -->
+            <?php if(!in_array($roleCode, ['employee', 'formateur', 'dfep', 'central', 'etablissement', 'directeur']) && $dept === 'general'): ?>
+            <a href="<?php echo e(url('dashboard/reports')); ?>" class="sidebar-item <?php echo e($isActive('/dashboard/reports')); ?>" title="منشئ التقارير الديناميكية">
+                <i class="fa-solid fa-chart-bar text-info"></i>
+                <span>التقارير</span>
+            </a>
+            <?php endif; ?>
+
+            <!-- DSS (Decision Support System) Link -->
+            <?php if(in_array($roleCode, ['admin', 'central', 'high_admin', 'secretaire_general', 'ministre', 'dir_finance', 'dir_edu']) && $dept !== 'diplomes' && !$isDosfpUser && !$isDfcriUser): ?>
+                <a href="<?php echo e(request()->is('sig/*') ? url('sig/dashboard/dss') : url('dashboard/dss')); ?>" class="sidebar-item <?php echo e($isActive('/dashboard/dss')); ?>" title="دعم القرار الاستراتيجي">
+                    <i class="fa-solid fa-brain text-info"></i>
+                    <span>دعم القرار الاستراتيجي</span>
                 </a>
             <?php endif; ?>
 
-            <!-- User MFA Settings Link -->
-            <a href="<?php echo e(request()->is('sig/*') ? url('sig/security/mfa') : url('security/mfa')); ?>" class="sidebar-item <?php echo e($isActive('/security/mfa')); ?>" title="المصادقة الثنائية (MFA)">
-                <i class="fa-solid fa-key text-warning"></i>
-                <span>المصادقة الثنائية (MFA)</span>
-            </a>
-
+            <!-- Security Center Dashboard Link -->
+            <?php if($roleCode === 'admin'): ?>
+                <a href="<?php echo e(request()->is('sig/*') ? url('sig/dashboard/admin-stats') : url('dashboard/admin-stats')); ?>" class="sidebar-item <?php echo e($isActive('/dashboard/admin-stats')); ?>" title="لوحة الإحصائيات (الأدمن)">
+                    <i class="fa-solid fa-chart-simple text-primary"></i>
+                    <span>لوحة الإحصائيات (الأدمن)</span>
+                </a>
+                <a href="<?php echo e(request()->is('sig/*') ? url('sig/dashboard/security') : url('dashboard/security')); ?>" class="sidebar-item <?php echo e($isActive('/dashboard/security')); ?>" title="مركز الأمان والرقابة">
+                    <i class="fa-solid fa-shield-halved text-danger"></i>
+                    <span>مركز الأمان والرقابة</span>
+                </a>
+                <a href="<?php echo e(request()->is('sig/*') ? url('sig/dashboard/security/mfa') : url('dashboard/security/mfa')); ?>" class="sidebar-item <?php echo e($isActive('/dashboard/security/mfa')); ?>" title="إدارة سياسات الـ MFA">
+                    <i class="fa-solid fa-user-shield text-danger"></i>
+                    <span>إدارة سياسات الـ MFA</span>
+                </a>
+                <a href="<?php echo e(request()->is('sig/*') ? url('sig/dashboard/sync-files') : url('dashboard/sync-files')); ?>" class="sidebar-item <?php echo e($isActive('/dashboard/sync-files')); ?>" title="مزامنة ملفات HFSQL">
+                    <i class="fa-solid fa-database text-success"></i>
+                    <span>مزامنة صور HFSQL</span>
+                </a>
+            <?php endif; ?>
 
             <!-- ══ Section 2: الشؤون البيداغوجية والتعليم ══ -->
-            <?php if(in_array($dept, ['general', 'pedagogie', 'orientation', 'diplomes', 'apprentissage'])): ?>
+            <?php if(in_array($dept, ['general', 'pedagogie', 'orientation', 'diplomes', 'apprentissage']) && !$isDfmUser && !$isDrhUser): ?>
             <div class="sidebar-section-line"></div>
             <div class="sidebar-section-label"><span>الشؤون البيداغوجية والتعليم</span></div>
 
             <!-- Category: Training (التكوين والتعليم) -->
-            <?php if(($hasPerm('offres') || $hasPerm('inscriptions') || in_array($roleCode, ['dfep', 'admin', 'central', 'etablissement', 'directeur'])) && in_array($dept, ['general', 'pedagogie', 'orientation', 'apprentissage'])): ?>
+            <?php if(($hasPerm('offres') || $hasPerm('inscriptions') || in_array($roleCode, ['dfep', 'admin', 'central', 'etablissement', 'directeur', 'employee'])) && in_array($dept, ['general', 'pedagogie', 'orientation', 'apprentissage'])): ?>
                 <div class="sidebar-dropdown">
-                    <button type="button" class="sidebar-item <?php echo e(($isActive('/dashboard/offres') || $isActive('/dashboard/inscriptions') || $isActive('/dashboard/preinscrits') || $isActive('/dashboard/specialites') || $isActive('/dashboard/integration') || $isActive('/dashboard/sessions') || $isActive('/dashboard/schedule') || $isActive('/dashboard/effectifs') || $isActive('/dashboard/apprenants') || $isActive('/dashboard/sections')) ? 'active' : ''); ?>" onclick="toggleSidebarDropdown(this)" title="التكوين والتعليم">
+                    <button type="button" class="sidebar-item <?php echo e(($isActive('/dashboard/offres') || $isActive('/dashboard/pedagogical-activity-report') || $isActive('/dashboard/inscriptions') || $isActive('/dashboard/preinscrits') || $isActive('/dashboard/specialites') || $isActive('/dashboard/sessions') || $isActive('/dashboard/effectifs') || $isActive('/dashboard/apprenants') || $isActive('/dashboard/sections') || $isActive('/dashboard/reconduits') || $isActive('/dashboard/reconduits/transfers') || $isActive('/dashboard/diplomes/liste-2021-present') || $isActive('/dashboard/schedule')) ? 'active' : ''); ?>" onclick="toggleSidebarDropdown(this)" title="التكوين والتعليم">
                         <i class="fa-solid fa-graduation-cap"></i>
                         <span>التكوين والتعليم</span>
                         <i class="fa-solid fa-chevron-down ms-auto dropdown-chevron" style="font-size: 0.7rem;"></i>
                     </button>
-                    <div class="sidebar-submenu <?php echo e(($isActive('/dashboard/offres') || $isActive('/dashboard/inscriptions') || $isActive('/dashboard/preinscrits') || $isActive('/dashboard/specialites') || $isActive('/dashboard/integration') || $isActive('/dashboard/sessions') || $isActive('/dashboard/schedule') || $isActive('/dashboard/effectifs') || $isActive('/dashboard/apprenants') || $isActive('/dashboard/sections')) ? 'open' : ''); ?>">
-                        <?php if(in_array($dept, ['general', 'pedagogie', 'apprentissage'])): ?>
-                        <a href="<?php echo e(url('dashboard/offres')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/offres', true)); ?>" title="العروض"><i class="fa-solid fa-briefcase"></i> <span>العروض</span></a>
+                    <div class="sidebar-submenu <?php echo e(($isActive('/dashboard/offres') || $isActive('/dashboard/pedagogical-activity-report') || $isActive('/dashboard/inscriptions') || $isActive('/dashboard/preinscrits') || $isActive('/dashboard/specialites') || $isActive('/dashboard/sessions') || $isActive('/dashboard/effectifs') || $isActive('/dashboard/apprenants') || $isActive('/dashboard/sections') || $isActive('/dashboard/reconduits') || $isActive('/dashboard/reconduits/transfers') || $isActive('/dashboard/diplomes/liste-2021-present') || $isActive('/dashboard/schedule')) ? 'open' : ''); ?>">
+                        <?php if(!$isDeohUser && !$isDecUser && !$isDfcriUser): ?>
+                            <?php if(in_array($dept, ['general', 'pedagogie', 'apprentissage'])): ?>
+                                <a href="<?php echo e(url('dashboard/offres')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/offres', true)); ?>" title="العروض"><i class="fa-solid fa-briefcase"></i> <span>العروض</span></a>
+                                <?php if(in_array($roleCode, ['admin', 'dfep', 'central']) && $dept === 'general'): ?>
+                                    <a href="<?php echo e(url('dashboard/offres/validation')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/offres/validation')); ?>" title="المصادقة على العروض"><i class="fa-solid fa-stamp"></i> <span>المصادقة على العروض</span></a>
+                                <?php endif; ?>
+                                <a href="<?php echo e(url('dashboard/pedagogical-activity-report')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/pedagogical-activity-report')); ?>" title="حصيلة النشاطات البيداغوجية"><i class="fa-solid fa-chart-pie text-success"></i> <span>حصيلة النشاطات البيداغوجية</span></a>
+                            <?php endif; ?>
                         <?php endif; ?>
-                        <?php if(in_array($roleCode, ['admin', 'dfep', 'central']) && $dept === 'general'): ?>
-                            <a href="<?php echo e(url('dashboard/offres/validation')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/offres/validation')); ?>" title="المصادقة على العروض"><i class="fa-solid fa-stamp"></i> <span>المصادقة على العروض</span></a>
-                        <?php endif; ?>
-                        <?php if(in_array($dept, ['general', 'pedagogie', 'orientation'])): ?>
-                        <a href="<?php echo e(url('dashboard/preinscrits')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/preinscrits')); ?>" title="التسجيلات الأولية عبر الإنترنت"><i class="fa-solid fa-laptop-file text-warning"></i> <span>التسجيلات الأولية عبر الإنترنت</span></a>
-                        <a href="<?php echo e(url('dashboard/inscriptions')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/inscriptions')); ?>" title="التسجيل والتوجيه"><i class="fa-solid fa-user-plus"></i> <span>التسجيل والتوجيه</span></a>
-                        <?php endif; ?>
-                        <?php if(in_array($dept, ['general', 'pedagogie', 'apprentissage'])): ?>
-                        <a href="<?php echo e(url('dashboard/apprenants')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/apprenants')); ?>" title="المتربصين والطلاب"><i class="fa-solid fa-user-graduate"></i> <span>المتربصين والطلاب</span></a>
-                        <a href="<?php echo e(url('dashboard/sections')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/sections')); ?>" title="الأقسام التكوينية"><i class="fa-solid fa-users-rectangle"></i> <span>الأقسام التكوينية</span></a>
-                        <?php endif; ?>
-                        <?php if(in_array($dept, ['general', 'pedagogie', 'orientation'])): ?>
-                        <a href="<?php echo e(url('dashboard/specialites')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/specialites')); ?>" title="تنظيم الفروع"><i class="fa-solid fa-sitemap"></i> <span>تنظيم الفروع</span></a>
-                        <?php endif; ?>
-                        <?php if(in_array($dept, ['general', 'pedagogie']) && (int)(session('user.IDMode_formation') ?? 0) !== 10): ?>
-                        <a href="<?php echo e(url('dashboard/integration')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/integration')); ?>" title="الادماج"><i class="fa-solid fa-handshake"></i> <span>الادماج</span></a>
-                        <?php endif; ?>
-                        <?php if(in_array($dept, ['general', 'pedagogie', 'orientation'])): ?>
-                        <a href="<?php echo e(url('dashboard/sessions')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/sessions')); ?>" title="تخطيط الدورات"><i class="fa-solid fa-calendar-alt"></i> <span>تخطيط الدورات</span></a>
-                        <?php endif; ?>
-                        <?php if(in_array($dept, ['general', 'pedagogie'])): ?>
-                        <a href="<?php echo e(url('dashboard/effectifs')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/effectifs')); ?>" title="تسيير التعداد"><i class="fa-solid fa-users"></i> <span>تسيير التعداد</span></a>
+                        <?php if(!$isDosfpUser): ?>
+                            <?php if(!$isDecUser && !$isDfcriUser): ?>
+                                <?php if(in_array($dept, ['general', 'pedagogie', 'apprentissage'])): ?>
+                                    <?php if(!$isDeohUser): ?>
+                                        <a href="<?php echo e(url('dashboard/sections')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/sections')); ?>" title="الأقسام التكوينية (الفروع)"><i class="fa-solid fa-users-rectangle"></i> <span>الأقسام التكوينية (الفروع)</span></a>
+                                    <?php endif; ?>
+                                <?php endif; ?>
+                                <?php if(!$isDeohUser && in_array($dept, ['general', 'pedagogie', 'orientation'])): ?>
+                                    <a href="<?php echo e(url('dashboard/specialites')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/specialites')); ?>" title="تنظيم الفروع"><i class="fa-solid fa-sitemap"></i> <span>تنظيم الفروع</span></a>
+                                    <a href="<?php echo e(url('dashboard/preinscrits')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/preinscrits')); ?>" title="التسجيلات الأولية عبر الإنترنت"><i class="fa-solid fa-laptop-file text-warning"></i> <span>التسجيلات الأولية عبر الإنترنت</span></a>
+                                    <a href="<?php echo e(url('dashboard/candidates')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/candidates')); ?>" title="قبول الملفات ورفضها (كونديدا)"><i class="fa-solid fa-user-check text-success"></i> <span>قبول الملفات ورفضها</span></a>
+                                    <a href="<?php echo e(url('dashboard/inscriptions')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/inscriptions')); ?>" title="التوجيه للأقسام البيداغوجية"><i class="fa-solid fa-user-plus"></i> <span>التوجيه للأقسام</span></a>
+                                <?php endif; ?>
+                                <?php if(in_array($dept, ['general', 'pedagogie', 'apprentissage'])): ?>
+                                    <a href="<?php echo e(url('dashboard/apprenants')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/apprenants')); ?>" title="المتربصين الجدد"><i class="fa-solid fa-user-graduate"></i> <span>المتربصين الجدد</span></a>
+                                    <a href="<?php echo e(url('dashboard/reconduits')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/reconduits')); ?>" title="المتربصين المستمرين"><i class="fa-solid fa-users-viewfinder"></i> <span>المتربصين المستمرين</span></a>
+                                    <a href="<?php echo e(url('dashboard/reconduits/transfers')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/reconduits/transfers')); ?>" title="طلبات تحويل المتربصين بين المؤسسات"><i class="fa-solid fa-arrows-spin text-warning"></i> <span>تحويل المتربصين</span></a>
+                                <?php endif; ?>
+                                <?php if(in_array($dept, ['general', 'diplomes', 'pedagogie']) && in_array($roleCode, ['admin', 'dfep', 'central', 'high_admin', 'secretaire_general', 'ministre'])): ?>
+                                    <a href="<?php echo e(url('dashboard/diplomes/liste-2021-present')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/diplomes/liste-2021-present')); ?>" title="جميع المتربصين (من 2021)"><i class="fa-solid fa-user-graduate text-warning"></i> <span>جميع المتربصين (من 2021)</span></a>
+                                <?php endif; ?>
+                                <?php if(!$isDeohUser): ?>
+                                    <?php if(in_array($dept, ['general', 'pedagogie'])): ?>
+                                        <a href="<?php echo e(url('dashboard/effectifs')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/effectifs')); ?>" title="تسيير التعداد"><i class="fa-solid fa-users"></i> <span>تسيير التعداد</span></a>
+                                    <?php endif; ?>
+                                    <?php if(in_array($dept, ['general', 'pedagogie', 'apprentissage'])): ?>
+                                        <a href="<?php echo e(url('dashboard/schedule')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/schedule')); ?>" title="استعمال الزمن"><i class="fa-solid fa-calendar-days text-primary"></i> <span>استعمال الزمن</span></a>
+                                    <?php endif; ?>
+                                    <?php if(in_array($roleCode, ['admin', 'high_admin'])): ?>
+                                        <a href="<?php echo e(url('dashboard/sessions')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/sessions')); ?>" title="تخطيط الدورات"><i class="fa-solid fa-calendar-alt"></i> <span>تخطيط الدورات</span></a>
+                                    <?php endif; ?>
+                                <?php endif; ?>
+                            <?php endif; ?>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -1046,120 +1059,94 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
             <?php endif; ?>
 
             <!-- Category: Apprenticeship -->
-            <?php if(in_array($roleCode, ['admin','dfep','etablissement','directeur']) && in_array($dept, ['general', 'apprentissage'])): ?>
+            <?php if((in_array($roleCode, ['admin','dfep','etablissement','directeur']) || $isDecUser || $isDfcriUser) && in_array($dept, ['general', 'apprentissage'])): ?>
                 <div class="sidebar-dropdown">
-                    <button type="button" class="sidebar-item <?php echo e(($isActive('/dashboard/partenaires') || $isActive('/dashboard/maitres-apprentissage')) ? 'active' : ''); ?>" onclick="toggleSidebarDropdown(this)" title="التمهين والمؤسسات">
+                    <button type="button" class="sidebar-item <?php echo e(($isActive('/dashboard/partenaires') || $isActive('/dashboard/maitres-apprentissage') || $isActive('/dashboard/integration')) ? 'active' : ''); ?>" onclick="toggleSidebarDropdown(this)" title="التمهين والمؤسسات">
                         <i class="fa-solid fa-industry"></i>
                         <span>التمهين والمؤسسات</span>
                         <i class="fa-solid fa-chevron-down ms-auto dropdown-chevron" style="font-size: 0.7rem;"></i>
                     </button>
-                    <div class="sidebar-submenu <?php echo e(($isActive('/dashboard/partenaires') || $isActive('/dashboard/maitres-apprentissage')) ? 'open' : ''); ?>">
+                    <div class="sidebar-submenu <?php echo e(($isActive('/dashboard/partenaires') || $isActive('/dashboard/maitres-apprentissage') || $isActive('/dashboard/integration')) ? 'open' : ''); ?>">
                         <a href="<?php echo e(url('dashboard/partenaires')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/partenaires')); ?>" title="المؤسسات الاقتصادية"><i class="fa-solid fa-building"></i> <span>المؤسسات الاقتصادية</span></a>
                         <a href="<?php echo e(url('dashboard/maitres-apprentissage')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/maitres-apprentissage')); ?>" title="معلمو التمهين"><i class="fa-solid fa-person-chalkboard"></i> <span>معلمو التمهين</span></a>
+                        <?php if(in_array($dept, ['general', 'pedagogie', 'apprentissage']) && (int)(session('user.IDMode_formation') ?? 0) !== 10): ?>
+                            <a href="<?php echo e(url('dashboard/integration')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/integration')); ?>" title="الادماج"><i class="fa-solid fa-handshake"></i> <span>الادماج</span></a>
+                        <?php endif; ?>
                     </div>
                 </div>
             <?php endif; ?>
 
             <!-- Category: Evaluations & Exams -->
-            <?php if(($hasPerm('grades') || in_array($roleCode, ['admin','dfep','etablissement','directeur'])) && in_array($dept, ['general', 'pedagogie', 'diplomes', 'apprentissage'])): ?>
+            <?php if(($hasPerm('grades') || in_array($roleCode, ['admin','dfep','etablissement','directeur'])) && in_array($dept, ['general', 'pedagogie', 'diplomes', 'apprentissage']) && !$isDosfpUser && !$isDepUser): ?>
                 <div class="sidebar-dropdown">
-                    <button type="button" class="sidebar-item <?php echo e(($isActive('/resultats') || $isActive('/dashboard/formateurs') || $isActive('/dashboard/formateurs/age-distribution') || $isActive('/dashboard/evaluation-stagiaires') || $isActive('/dashboard/reconduits') || $isActive('/dashboard/reconduits/transfers') || $isActive('/dashboard/schedule') || $isActive('/dashboard/examens') || $isActive('/dashboard/gestion-evaluations') || $isActive('/dashboard/evaluation-finale') || $isActive('/dashboard/diplomes') || $isActive('/dashboard/grades/reconduits') || $isActive('/dashboard/grades')) ? 'active' : ''); ?>" onclick="toggleSidebarDropdown(this)" title="التقييمات والشهادات">
+                    <button type="button" class="sidebar-item <?php echo e(($isActive('/resultats') || $isActive('/dashboard/evaluation-stagiaires') || $isActive('/dashboard/examens') || $isActive('/dashboard/evaluation-finale') || $isActive('/dashboard/diplomes') || $isActive('/dashboard/diplomes/statistiques') || $isActive('/dashboard/grades/progress') || $isActive('/dashboard/grades') || $isActive('/dashboard/gestion-evaluations')) ? 'active' : ''); ?>" onclick="toggleSidebarDropdown(this)" title="التقييمات والشهادات">
                         <i class="fa-solid fa-list-check"></i>
                         <span>التقييمات والشهادات</span>
                         <i class="fa-solid fa-chevron-down ms-auto dropdown-chevron" style="font-size: 0.7rem;"></i>
                     </button>
-                    <div class="sidebar-submenu <?php echo e(($isActive('/resultats') || $isActive('/dashboard/formateurs') || $isActive('/dashboard/formateurs/age-distribution') || $isActive('/dashboard/evaluation-stagiaires') || $isActive('/dashboard/reconduits') || $isActive('/dashboard/reconduits/transfers') || $isActive('/dashboard/schedule') || $isActive('/dashboard/examens') || $isActive('/dashboard/gestion-evaluations') || $isActive('/dashboard/evaluation-finale') || $isActive('/dashboard/diplomes') || $isActive('/dashboard/grades/reconduits') || $isActive('/dashboard/grades')) ? 'open' : ''); ?>">
+                    <div class="sidebar-submenu <?php echo e(($isActive('/resultats') || $isActive('/dashboard/evaluation-stagiaires') || $isActive('/dashboard/examens') || $isActive('/dashboard/evaluation-finale') || $isActive('/dashboard/diplomes') || $isActive('/dashboard/diplomes/statistiques') || $isActive('/dashboard/grades/progress') || $isActive('/dashboard/grades') || $isActive('/dashboard/gestion-evaluations')) ? 'open' : ''); ?>">
                         <?php if(in_array($dept, ['general', 'pedagogie', 'apprentissage'])): ?>
                             <a href="<?php echo e(url('dashboard/grades')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/grades')); ?>" title="دفتر العلامات والمداولات"><i class="fa-solid fa-graduation-cap"></i> <span>دفتر العلامات والمداولات</span></a>
                             <?php if(in_array($roleCode, ['admin','dfep','etablissement','directeur'])): ?>
                                 <a href="<?php echo e(url('dashboard/grades/progress')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/grades/progress')); ?>" title="متابعة تقدم الرصد"><i class="fa-solid fa-chart-line"></i> <span>متابعة تقدم الرصد</span></a>
                             <?php endif; ?>
-                            <a href="<?php echo e(url('resultats')); ?>" class="sidebar-subitem" title="التقييم سداسي"><i class="fa-solid fa-star-half-stroke"></i> <span>التقييم سداسي</span></a>
-                            <a href="<?php echo e(url('dashboard/formateurs')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/formateurs')); ?>" title="التقييم - المكونين"><i class="fa-solid fa-user-tie"></i> <span>التقييم - المكونين</span></a>
-                            <a href="<?php echo e(url('dashboard/formateurs/age-distribution')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/formateurs/age-distribution')); ?>" title="إحصائيات الأساتذة والسن"><i class="fa-solid fa-chart-line"></i> <span>إحصائيات الأساتذة والسن</span></a>
-                            <a href="<?php echo e(url('dashboard/evaluation-stagiaires')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/evaluation-stagiaires')); ?>" title="التقييم - المتكونين"><i class="fa-solid fa-user-graduate"></i> <span>التقييم - المتكونين</span></a>
-                            <a href="<?php echo e(url('dashboard/reconduits')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/reconduits')); ?>" title="المتربصين المستمرين"><i class="fa-solid fa-users-viewfinder"></i> <span>المتربصين المستمرين</span></a>
-                            <a href="<?php echo e(url('dashboard/reconduits/transfers')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/reconduits/transfers')); ?>" title="طلبات تحويل المتربصين"><i class="fa-solid fa-arrows-spin text-warning"></i> <span>طلبات تحويل المتربصين</span></a>
-                            <a href="<?php echo e(url('dashboard/schedule')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/schedule')); ?>" title="استعمال الزمن"><i class="fa-solid fa-calendar-days text-primary"></i> <span>استعمال الزمن</span></a>
                             <a href="<?php echo e(url('dashboard/examens')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/examens')); ?>" title="الامتحانات التقييمية"><i class="fa-solid fa-file-signature"></i> <span>الامتحانات التقييمية</span></a>
-                            <a href="<?php echo e(url('dashboard/gestion-evaluations')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/gestion-evaluations')); ?>" title="تسيير التقييمات"><i class="fa-solid fa-list-check"></i> <span>تسيير التقييمات</span></a>
                             <a href="<?php echo e(url('dashboard/evaluation-finale')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/evaluation-finale')); ?>" title="التقييم نهائي"><i class="fa-solid fa-flag-checkered"></i> <span>التقييم نهائي</span></a>
+                            <?php if(in_array($roleCode, ['admin', 'dfep', 'central', 'high_admin'])): ?>
+                                <a href="<?php echo e(url('dashboard/evaluation-stagiaires')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/evaluation-stagiaires')); ?>" title="التقييم - المتكونين"><i class="fa-solid fa-user-graduate"></i> <span>التقييم - المتكونين</span></a>
+                            <?php endif; ?>
+                            <?php if(in_array($roleCode, ['admin', 'dfep', 'central', 'etablissement', 'directeur', 'high_admin', 'secretaire_general', 'ministre'])): ?>
+                                <a href="<?php echo e(url('dashboard/gestion-evaluations')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/gestion-evaluations')); ?>" title="لجان التقييم ومتابعة المكونين"><i class="fa-solid fa-file-invoice text-primary"></i> <span>لجان التقييم ومتابعة المكونين</span></a>
+                                <a href="<?php echo e(url('dashboard/gestion-evaluations/inspecteurs')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/gestion-evaluations/inspecteurs')); ?>" title="سجل المفتشين والزيارات"><i class="fa-solid fa-user-shield text-info"></i> <span>سجل المفتشين والزيارات</span></a>
+                                <a href="<?php echo e(url('dashboard/gestion-evaluations/jury')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/gestion-evaluations/jury')); ?>" title="لجان مناقشة المذكرات"><i class="fa-solid fa-users text-success"></i> <span>لجان مناقشة المذكرات</span></a>
+                            <?php endif; ?>
                         <?php endif; ?>
                         <?php if(in_array($dept, ['general', 'diplomes'])): ?>
-                            <a href="<?php echo e(url('dashboard/diplomes')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/diplomes')); ?>" title="الشهادات"><i class="fa-solid fa-award"></i> <span>الشهادات</span></a>
-                            <a href="<?php echo e(url('dashboard/diplomes/statistiques')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/diplomes/statistiques')); ?>" title="إحصائيات الخريجين"><i class="fa-solid fa-chart-pie"></i> <span>إحصائيات الخريجين</span></a>
+                            <a href="<?php echo e(url('dashboard/diplomes')); ?>" class="sidebar-subitem <?php echo e(($isActive('/dashboard/diplomes') && !$isActive('/dashboard/diplomes/liste-2021-present')) ? 'active' : ''); ?>" title="الشهادات"><i class="fa-solid fa-award"></i> <span>الشهادات</span></a>
+                            <?php if(in_array($roleCode, ['admin', 'dfep', 'central', 'high_admin', 'secretaire_general', 'ministre'])): ?>
+                                <a href="<?php echo e(url('dashboard/diplomes/statistiques')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/diplomes/statistiques')); ?>" title="إحصائيات الخريجين"><i class="fa-solid fa-chart-pie"></i> <span>إحصائيات الخريجين</span></a>
+                            <?php endif; ?>
                         <?php endif; ?>
-                    </div>
                 </div>
             <?php endif; ?>
-            <?php endif; ?>
 
-
-            <!-- ══ Section 3: التسيير المالي والإداري ══ -->
-            <?php if(in_array($dept, ['general', 'administration'])): ?>
-            <div class="sidebar-section-line"></div>
-            <div class="sidebar-section-label"><span>التسيير المالي والإداري</span></div>
-
-            <!-- ══ Category: التسيير المالي والإداري ══ -->
-            <?php if(in_array($roleCode, ['admin', 'dfep', 'central', 'etablissement', 'directeur', 'high_admin', 'secretaire_general', 'ministre'])): ?>
-                <div class="sidebar-dropdown">
-                    <button type="button" class="sidebar-item <?php echo e(($isActive('/dashboard/finances') || $isActive('/dashboard/patrimoine') || $isActive('/dashboard/rh-gestion') || $isActive('/dashboard/identities')) ? 'active' : ''); ?>" onclick="toggleSidebarDropdown(this)" title="التسيير المالي والإداري">
-                        <i class="fa-solid fa-coins text-warning"></i>
-                        <span>التسيير المالي والإداري</span>
-                        <i class="fa-solid fa-chevron-down ms-auto dropdown-chevron" style="font-size: 0.7rem;"></i>
-                    </button>
-                    <div class="sidebar-submenu <?php echo e(($isActive('/dashboard/finances') || $isActive('/dashboard/patrimoine') || $isActive('/dashboard/rh-gestion') || $isActive('/dashboard/identities')) ? 'open' : ''); ?>">
-                        <a href="<?php echo e(url('dashboard/finances')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/finances')); ?>" title="المناصب المالية والميزانية">
-                            <i class="fa-solid fa-money-bill-wave text-success"></i> <span>المناصب المالية والميزانية</span>
-                        </a>
-                        <a href="<?php echo e(url('dashboard/finances?tab=grants_dashboard')); ?>" class="sidebar-subitem <?php echo e(($isActive('/dashboard/finances') && request('tab')==='grants_dashboard') ? 'active' : ''); ?>" title="لوحة إحصائيات المنح">
-                            <i class="fa-solid fa-chart-pie text-warning"></i> <span>لوحة إحصائيات المنح</span>
-                        </a>
-                        <a href="<?php echo e(url('dashboard/finances?tab=employees_dashboard')); ?>" class="sidebar-subitem <?php echo e(($isActive('/dashboard/finances') && request('tab')==='employees_dashboard') ? 'active' : ''); ?>" title="لوحة إحصائيات الموظفين">
-                            <i class="fa-solid fa-users-gear text-warning"></i> <span>لوحة إحصائيات الموظفين</span>
-                        </a>
-                        <a href="<?php echo e(url('dashboard/finances?tab=programmes')); ?>" class="sidebar-subitem <?php echo e(($isActive('/dashboard/finances') && request('tab')==='programmes') ? 'active' : ''); ?>" title="البرامج والبرامج الفرعية">
-                            <i class="fa-solid fa-layer-group"></i> <span>البرامج والبرامج الفرعية</span>
-                        </a>
-                        <a href="<?php echo e(url('dashboard/finances?tab=fournisseurs')); ?>" class="sidebar-subitem <?php echo e(($isActive('/dashboard/finances') && request('tab')==='fournisseurs') ? 'active' : ''); ?>" title="تسيير الموردين">
-                            <i class="fa-solid fa-truck"></i> <span>تسيير الموردين</span>
-                        </a>
-                        <a href="<?php echo e(url('dashboard/patrimoine')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/patrimoine')); ?>" title="تسيير الوسائل والممتلكات">
-                            <i class="fa-solid fa-building text-info"></i> <span>تسيير الوسائل والممتلكات</span>
-                        </a>
-                        <a href="<?php echo e(url('dashboard/rh-gestion')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/rh-gestion')); ?>" title="الموارد البشرية والإدارية">
-                            <i class="fa-solid fa-users-gear text-primary"></i> <span>الموارد البشرية والإدارية</span>
-                        </a>
-                        <a href="<?php echo e(url('dashboard/identities')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/identities')); ?>" title="سجل التحقق من الهوية الوطنية">
-                            <i class="fa-solid fa-id-card text-danger"></i> <span>سجل التحقق من الهوية الوطنية</span>
-                        </a>
-                    </div>
+            <?php if(in_array($roleCode, ['admin', 'central', 'high_admin']) || (int)($user['IDNature_etsF'] ?? 0) === 7 || (int)($user['IDNature_etsF'] ?? 0) === 12 || strtoupper($user['direction_code'] ?? $user['username'] ?? '') === 'DEOH'): ?>
+            <!-- نمط التعليم المهني (حصرياً) -->
+            <div class="sidebar-dropdown">
+                <button type="button" class="sidebar-item <?php echo e((($isActive('/dashboard/grades') && request('type') === 'bep') || request('filter_qualif') == 11) ? 'active' : ''); ?>" onclick="toggleSidebarDropdown(this)" title="نمط التعليم المهني (حصرياً)">
+                    <i class="fa-solid fa-book-bookmark text-success"></i>
+                    <span>نمط التعليم المهني (حصرياً)</span>
+                    <i class="fa-solid fa-chevron-down ms-auto dropdown-chevron" style="font-size: 0.7rem;"></i>
+                </button>
+                <div class="sidebar-submenu <?php echo e((($isActive('/dashboard/grades') && request('type') === 'bep') || request('filter_qualif') == 11) ? 'open' : ''); ?>">
+                    <a href="<?php echo e(url('dashboard/grades?type=bep')); ?>" class="sidebar-subitem <?php echo e((request('type') === 'bep') ? 'active' : ''); ?>" title="مداولات التعليم المهني"><i class="fa-solid fa-graduation-cap text-success"></i> <span>مداولات التعليم المهني</span></a>
+                    <a href="<?php echo e(url('dashboard/diplomes?filter_qualif=11')); ?>" class="sidebar-subitem <?php echo e((request('filter_qualif') == 11) ? 'active' : ''); ?>" title="شهادات التعليم المهني"><i class="fa-solid fa-award text-success"></i> <span>شهادات التعليم المهني</span></a>
                 </div>
+            </div>
             <?php endif; ?>
 
             <!-- Category: Discipline & Physical Services -->
-            <?php if($hasPerm('discipline') || $hasPerm('repas') || $hasPerm('documents') || $roleCode === 'dfep'): ?>
+            <?php if(($hasPerm('discipline') || $hasPerm('repas') || $hasPerm('documents') || $roleCode === 'dfep') && !$isDfmUser && !$isDrhUser && !$isDepUser && !$isDeohUser): ?>
                 <div class="sidebar-dropdown">
-                    <button type="button" class="sidebar-item <?php echo e(($isActive('/dashboard/absences') || $isActive('/dashboard/discipline') || $isActive('/dashboard/repas') || $isActive('/dashboard/documents')) ? 'active' : ''); ?>" onclick="toggleSidebarDropdown(this)" title="تسيير التكوين والخدمات">
+                    <button type="button" class="sidebar-item <?php echo e(($isActive('/dashboard/absences') || $isActive('/dashboard/discipline') || $isActive('/dashboard/repas') || $isActive('/dashboard/documents') || $isActive('/dashboard/distribution-globale') || $isActive('/dashboard/distribution-detaillee') || $isActive('/dashboard/formation')) ? 'active' : ''); ?>" onclick="toggleSidebarDropdown(this)" title="تسيير التكوين والخدمات">
                         <i class="fa-solid fa-clipboard-user"></i>
                         <span>تسيير التكوين والخدمات</span>
                         <i class="fa-solid fa-chevron-down ms-auto dropdown-chevron" style="font-size: 0.7rem;"></i>
                     </button>
-                    <div class="sidebar-submenu <?php echo e(($isActive('/dashboard/absences') || $isActive('/dashboard/discipline') || $isActive('/dashboard/repas') || $isActive('/dashboard/documents')) ? 'open' : ''); ?>">
-                        <?php if($hasPerm('discipline') || $roleCode === 'dfep'): ?>
+                    <div class="sidebar-submenu <?php echo e(($isActive('/dashboard/absences') || $isActive('/dashboard/discipline') || $isActive('/dashboard/repas') || $isActive('/dashboard/documents') || $isActive('/dashboard/distribution-globale') || $isActive('/dashboard/distribution-detaillee') || $isActive('/dashboard/formation')) ? 'open' : ''); ?>">
+                        <?php if(($hasPerm('discipline') || $roleCode === 'dfep') && !$isDosfpUser && !$isDfcriUser): ?>
                             <a href="<?php echo e(url('dashboard/absences')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/absences')); ?>" title="المتابعة، الانضباط"><i class="fa-solid fa-user-check"></i> <span>المتابعة، الانضباط</span></a>
                         <?php endif; ?>
                         <?php if($hasPerm('inscriptions') || $roleCode === 'dfep'): ?>
                             <a href="<?php echo e(url('dashboard/distribution-globale')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/distribution-globale')); ?>" title="التوزيع العام"><i class="fa-solid fa-chart-pie"></i> <span>التوزيع العام</span></a>
-                            <a href="<?php echo e(url('dashboard/distribution-detaillee')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/distribution-detaillee')); ?>" title="التوزيع المفصل"><i class="fa-solid fa-chart-bar"></i> <span>التوزيع المفصل</span></a>
+                            <?php if(in_array($roleCode, ['admin', 'dfep', 'central', 'high_admin'])): ?>
+                                <a href="<?php echo e(url('dashboard/distribution-detaillee')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/distribution-detaillee')); ?>" title="التوزيع المفصل"><i class="fa-solid fa-chart-bar"></i> <span>التوزيع المفصل</span></a>
+                            <?php endif; ?>
                         <?php endif; ?>
                         <?php if($hasPerm('offres') || $roleCode === 'dfep'): ?>
                             <a href="<?php echo e(url('dashboard/formation')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/formation')); ?>" title="تسيير التكوين"><i class="fa-solid fa-chalkboard-user"></i> <span>تسيير التكوين</span></a>
                         <?php endif; ?>
-                        <?php if($hasPerm('repas') || $roleCode === 'dfep'): ?>
-                            <a href="<?php echo e(url('dashboard/repas')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/repas')); ?>" title="الخدمات المادية"><i class="fa-solid fa-utensils"></i> <span>الخدمات المادية</span></a>
-                        <?php endif; ?>
-                        <?php if($hasPerm('documents') || $roleCode === 'dfep'): ?>
+                        <?php if(($hasPerm('documents') || $roleCode === 'dfep') && !$isDosfpUser && !$isDfcriUser && $roleCode !== 'etablissement' && $roleCode !== 'directeur'): ?>
                             <a href="<?php echo e(url('dashboard/documents')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/documents')); ?>" title="الشهادات والمطبوعات"><i class="fa-solid fa-print"></i> <span>الشهادات والمطبوعات</span></a>
                         <?php endif; ?>
                     </div>
@@ -1167,7 +1154,7 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
             <?php endif; ?>
 
             <!-- Category: Instant Official Documents & Biometrics -->
-            <?php if($hasPerm('documents') || $roleCode === 'dfep' || in_array($roleCode, ['admin', 'central', 'etablissement', 'directeur'])): ?>
+            <?php if(($hasPerm('documents') || $roleCode === 'dfep' || in_array($roleCode, ['admin', 'central', 'etablissement', 'directeur'])) && !$isDfmUser && !$isDrhUser && !$isDepUser && !$isDeohUser && !$isDosfpUser && !$isDfcriUser): ?>
                 <div class="sidebar-dropdown">
                     <button type="button" class="sidebar-item <?php echo e(($isActive('/dashboard/documents') && !str_contains(request()->fullUrl(), 'tab=')) ? 'active' : ''); ?>" onclick="toggleSidebarDropdown(this)" title="الوثائق الرسمية الفورية">
                         <i class="fa-solid fa-file-shield text-warning"></i>
@@ -1178,8 +1165,8 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
                         <a href="<?php echo e(url('dashboard/documents')); ?>" class="sidebar-subitem <?php echo e(($isActive('/dashboard/documents', true) && !request('focus')) ? 'active' : ''); ?>" title="بوابة استخراج الوثائق">
                             <i class="fa-solid fa-print text-primary"></i> <span>بوابة استخراج الوثائق</span>
                         </a>
-                        <a href="<?php echo e(url('dashboard/documents?focus=isqat')); ?>" class="sidebar-subitem <?php echo e((request('focus') === 'isqat') ? 'active' : ''); ?>" title="قرار إسقاط بيداغوجي">
-                            <i class="fa-solid fa-user-slash text-danger"></i> <span>قرار إسقاط بيداغوجي</span>
+                        <a href="<?php echo e(url('dashboard/documents?focus=isqat')); ?>" class="sidebar-subitem <?php echo e((request('focus') === 'isqat') ? 'active' : ''); ?>" title="شهادة تكوين - مفصولين">
+                            <i class="fa-solid fa-user-slash text-danger"></i> <span>شهادة تكوين - مفصولين</span>
                         </a>
                         <a href="<?php echo e(url('dashboard/documents?focus=basma')); ?>" class="sidebar-subitem <?php echo e((request('focus') === 'basma') ? 'active' : ''); ?>" title="البصمة الرقمية الموحدة">
                             <i class="fa-solid fa-fingerprint text-info"></i> <span>البصمة الرقمية الموحدة</span>
@@ -1187,7 +1174,25 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
                     </div>
                 </div>
             <?php endif; ?>
-            <?php endif; ?>
+
+            <!-- Category: Employee (قسم الموظف) -->
+            <?php if(in_array($roleCode, ['admin', 'dfep', 'central', 'etablissement', 'directeur', 'high_admin', 'secretaire_general', 'ministre']) && !$isDfmUser && !$isDrhUser && !$isDosfpUser && !$isDepUser && !$isDeohUser && !$isDfcriUser): ?>
+                <div class="sidebar-dropdown">
+                    <button type="button" class="sidebar-item <?php echo e(($isActive('/dashboard/espace-employe') || $isActive('/dashboard/formateurs/age-distribution') || $isActive('/dashboard/formateurs') || $isActive('/dashboard/gestion-evaluations')) ? 'active' : ''); ?>" onclick="toggleSidebarDropdown(this)" title="قسم الموظف">
+                        <i class="fa-solid fa-users-gear text-success"></i>
+                        <span>قسم الموظف</span>
+                        <i class="fa-solid fa-chevron-down ms-auto dropdown-chevron" style="font-size: 0.7rem;"></i>
+                    </button>
+                    <div class="sidebar-submenu <?php echo e(($isActive('/dashboard/espace-employe') || $isActive('/dashboard/formateurs/age-distribution') || $isActive('/dashboard/formateurs') || $isActive('/dashboard/gestion-evaluations')) ? 'open' : ''); ?>">
+                        <a href="<?php echo e(url('dashboard/espace-employe')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/espace-employe')); ?>" title="فضاء الموظف">
+                            <i class="fa-solid fa-briefcase"></i> <span>فضاء الموظف</span>
+                        </a>
+                        <a href="<?php echo e(url('dashboard/formateurs/age-distribution')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/formateurs/age-distribution')); ?>" title="إحصائيات الأساتذة"><i class="fa-solid fa-chart-line"></i> <span>إحصائيات الأساتذة</span></a>
+                        <a href="<?php echo e(url('dashboard/formateurs')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/formateurs')); ?>" title="التقييم - المكونين (الأساتذة)"><i class="fa-solid fa-user-tie"></i> <span>التقييم - المكونين (الأساتذة)</span></a>
+                        <a href="<?php echo e(url('dashboard/gestion-evaluations')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/gestion-evaluations')); ?>" title="تسيير لجان التقييم"><i class="fa-solid fa-list-check"></i> <span>تسيير لجان التقييم</span></a>
+                    </div>
+                </div>
+            <?php endif; ?>            <?php endif; ?>
 
             <!-- Category: Directorate Tabs -->
             <?php if(strpos($roleCode, 'dir_') === 0 && isset($depNames[$roleCode])): ?>
@@ -1287,6 +1292,88 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
             <?php endif; ?>
             <?php endif; ?>
             <?php endif; ?>
+            <?php endif; ?>
+
+            <?php if($roleCode !== 'apprenant'): ?>
+<!-- ══ Section: الإدارة والخدمات العامة ══ -->
+            <div class="sidebar-section-line"></div>
+            <div class="sidebar-section-label"><span>الإدارة والخدمات العامة</span></div>
+
+            <!-- ══ Category: التسيير المالي والإداري ══ -->
+            <?php if(in_array($roleCode, ['admin', 'dfep', 'central', 'etablissement', 'directeur', 'high_admin', 'secretaire_general', 'ministre']) && !$isDosfpUser && !$isDepUser && !$isDeohUser): ?>
+                <div class="sidebar-dropdown">
+                    <button type="button" class="sidebar-item <?php echo e(($isActive('/dashboard/finances') || $isActive('/dashboard/patrimoine') || $isActive('/dashboard/rh-gestion') || $isActive('/dashboard/identities')) ? 'active' : ''); ?>" onclick="toggleSidebarDropdown(this)" title="التسيير المالي والإداري">
+                        <i class="fa-solid fa-coins text-warning"></i>
+                        <span>التسيير المالي والإداري</span>
+                        <i class="fa-solid fa-chevron-down ms-auto dropdown-chevron" style="font-size: 0.7rem;"></i>
+                    </button>
+                    <div class="sidebar-submenu <?php echo e(($isActive('/dashboard/finances') || $isActive('/dashboard/patrimoine') || $isActive('/dashboard/rh-gestion') || $isActive('/dashboard/identities')) ? 'open' : ''); ?>">
+                        <a href="<?php echo e(url('dashboard/finances')); ?>" class="sidebar-subitem <?php echo e(($isActive('/dashboard/finances') && !request('tab')) ? 'active' : ''); ?>" title="المناصب المالية والميزانية">
+                            <i class="fa-solid fa-money-bill-wave text-success"></i> <span>المناصب المالية والميزانية</span>
+                        </a>
+                        <?php if($isDfmUser): ?>
+                            <a href="<?php echo e(url('dashboard/documents')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/documents')); ?>" title="الوثائق الرسمية">
+                                <i class="fa-solid fa-file-shield text-warning"></i> <span>الوثائق الرسمية</span>
+                            </a>
+                        <?php endif; ?>
+                        <?php if(!$isDrhUser): ?>
+                            <a href="<?php echo e(url('dashboard/finances?tab=grants_dashboard')); ?>" class="sidebar-subitem <?php echo e(($isActive('/dashboard/finances') && request('tab')==='grants_dashboard') ? 'active' : ''); ?>" title="لوحة إحصائيات المنح">
+                                <i class="fa-solid fa-chart-pie text-warning"></i> <span>لوحة إحصائيات المنح</span>
+                            </a>
+                            <a href="<?php echo e(url('dashboard/finances?tab=employees_dashboard')); ?>" class="sidebar-subitem <?php echo e(($isActive('/dashboard/finances') && request('tab')==='employees_dashboard') ? 'active' : ''); ?>" title="لوحة إحصائيات الموظفين">
+                                <i class="fa-solid fa-users-gear text-warning"></i> <span>لوحة إحصائيات الموظفين</span>
+                            </a>
+                            <a href="<?php echo e(url('dashboard/finances?tab=programmes')); ?>" class="sidebar-subitem <?php echo e(($isActive('/dashboard/finances') && request('tab')==='programmes') ? 'active' : ''); ?>" title="البرامج والبرامج الفرعية">
+                                <i class="fa-solid fa-layer-group"></i> <span>البرامج والبرامج الفرعية</span>
+                            </a>
+                            <a href="<?php echo e(url('dashboard/finances?tab=fournisseurs')); ?>" class="sidebar-subitem <?php echo e(($isActive('/dashboard/finances') && request('tab')==='fournisseurs') ? 'active' : ''); ?>" title="تسيير الموردين">
+                                <i class="fa-solid fa-truck"></i> <span>تسيير الموردين</span>
+                            </a>
+                            <a href="<?php echo e(url('dashboard/patrimoine')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/patrimoine')); ?>" title="تسيير الوسائل والممتلكات">
+                                <i class="fa-solid fa-building text-info"></i> <span>تسيير الوسائل والممتلكات</span>
+                            </a>
+                            <a href="<?php echo e(url('dashboard/rh-gestion')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/rh-gestion')); ?>" title="الموارد البشرية والإدارية">
+                                <i class="fa-solid fa-users-gear text-primary"></i> <span>الموارد البشرية والإدارية</span>
+                            </a>
+                            <a href="<?php echo e(url('dashboard/identities')); ?>" class="sidebar-subitem <?php echo e($isActive('/dashboard/identities')); ?>" title="سجل التحقق من الهوية الوطنية">
+                                <i class="fa-solid fa-id-card text-danger"></i> <span>سجل التحقق من الهوية الوطنية</span>
+                            </a>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <!-- البريد الداخلي -->
+            <a href="<?php echo e(url('dashboard/messages')); ?>" class="sidebar-item <?php echo e($isActive('/dashboard/messages')); ?>" title="البريد الداخلي">
+                <i class="fa-solid fa-envelope text-warning"></i>
+                <span>البريد الداخلي</span>
+                <?php try { $unreadCount = \App\Models\EmployeeMessage::unreadCount(session('user.id', 0)); } catch(\Exception $e) { $unreadCount = 0; } ?>
+                <?php if($unreadCount > 0): ?>
+                <span style="background:#dc3545;color:#fff;border-radius:20px;padding:.1rem .45rem;font-size:.68rem;font-weight:800;margin-right:auto;font-family:'Outfit';"><?php echo e($unreadCount); ?></span>
+                <?php endif; ?>
+            </a>
+
+            <!-- ملف المؤسسة -->
+            <?php if(in_array($roleCode, ['admin', 'dfep', 'central', 'etablissement', 'directeur', 'high_admin', 'secretaire_general', 'ministre']) && $dept !== 'diplomes' && !$isDfmUser && !$isDrhUser && !$isDosfpUser && !$isDeohUser): ?>
+                <a href="<?php echo e(request()->is('sig/*') ? url('sig/dashboard/etablissement') : url('dashboard/etablissement')); ?>" class="sidebar-item <?php echo e($isActive('/dashboard/etablissement')); ?>" title="ملف المؤسسة">
+                    <i class="fa-solid fa-hotel text-warning"></i>
+                    <span>ملف المؤسسة</span>
+                </a>
+            <?php endif; ?>
+
+            <!-- إعدادات المظهر والتفضيلات -->
+            <?php if(in_array($roleCode, ['admin', 'dfep', 'central', 'etablissement', 'directeur', 'high_admin']) && !$isDfmUser && !$isDrhUser): ?>
+                <a href="<?php echo e(request()->is('sig/*') ? url('sig/dashboard/preferences') : url('dashboard/preferences')); ?>" class="sidebar-item <?php echo e($isActive('/dashboard/preferences')); ?>" title="إعدادات المظهر والتفضيلات">
+                    <i class="fa-solid fa-palette text-info"></i>
+                    <span>إعدادات المظهر والتفضيلات</span>
+                </a>
+            <?php endif; ?>
+
+            <!-- المصادقة الثنائية (MFA) -->
+            <a href="<?php echo e(request()->is('sig/*') ? url('sig/security/mfa') : url('security/mfa')); ?>" class="sidebar-item <?php echo e($isActive('/security/mfa')); ?>" title="المصادقة الثنائية (MFA)">
+                <i class="fa-solid fa-key text-warning"></i>
+                <span>المصادقة الثنائية (MFA)</span>
+            </a>
             <?php endif; ?>
         </nav>
 
@@ -1410,10 +1497,10 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
                         <!-- Wilaya Filter -->
                         <div class="col-12 col-md-3">
                             <label for="global-filter-wilaya" class="form-label fw-bold text-secondary mb-1.5" style="font-size: 0.82rem; font-family: 'Cairo';"><i class="fa-solid fa-map-location-dot text-primary me-1"></i> الولاية</label>
-                            <select name="filter_wilaya" id="global-filter-wilaya" class="form-select border-0 shadow-sm py-2.5 px-3 bg-light rounded-3 w-100" style="font-size: 0.85rem; font-family: 'Cairo'; font-weight: 600;" onchange="onGlobalWilayaChange()" <?php echo e(($role === 'dfep' || in_array($role, ['etablissement', 'directeur'])) ? 'disabled' : ''); ?>>
+                            <select name="filter_wilaya" id="global-filter-wilaya" class="form-select border-0 shadow-sm py-2.5 px-3 bg-light rounded-3 w-100" style="font-size: 0.85rem; font-family: 'Cairo'; font-weight: 600;" onchange="onGlobalWilayaChange()" <?php echo e((in_array($roleCode, ['dfep', 'etablissement', 'directeur'])) ? 'disabled' : ''); ?>>
                                 <option value="">كل الولايات / Toutes</option>
                                 <?php $__currentLoopData = $filter_wilayas; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $w): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <option value="<?php echo e($w['id']); ?>" <?php echo e((isset($_GET['filter_wilaya']) && $_GET['filter_wilaya'] == $w['id']) || ($role === 'dfep' && $dfepId == $w['id']) ? 'selected' : ''); ?>>
+                                    <option value="<?php echo e($w['id']); ?>" <?php echo e((isset($_GET['filter_wilaya']) && $_GET['filter_wilaya'] == $w['id']) || (in_array($roleCode, ['dfep', 'etablissement', 'directeur']) && $dfepId == $w['id']) ? 'selected' : ''); ?>>
                                         <?php echo e($w['nom_ar']); ?> (<?php echo e($w['code']); ?>)
                                     </option>
                                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
@@ -1461,46 +1548,71 @@ $hasPerm = fn($perm) => \App\Helpers\PermissionHelper::has($perm);
                 </div>
 
                 <script>
+                let allGlobalEtabOptions = [];
+
+                function initGlobalEtabCache() {
+                    const etabSelect = document.getElementById('global-filter-etablissement');
+                    if (etabSelect && allGlobalEtabOptions.length === 0) {
+                        allGlobalEtabOptions = Array.from(etabSelect.options).map(opt => ({
+                            value: opt.value,
+                            text: opt.textContent || opt.innerText,
+                            wilaya: opt.getAttribute('data-wilaya')
+                        }));
+                    }
+                }
+
                 function onGlobalWilayaChange() {
                     const wilayaVal = document.getElementById('global-filter-wilaya').value;
                     const etabSelect = document.getElementById('global-filter-etablissement');
                     if (!etabSelect) return;
                     
-                    etabSelect.value = "";
+                    initGlobalEtabCache();
                     
-                    Array.from(etabSelect.options).forEach(opt => {
-                        if (opt.value === "") {
-                            opt.style.display = "";
-                            return;
-                        }
-                        const optWilaya = opt.getAttribute('data-wilaya');
-                        if (!wilayaVal || optWilaya === wilayaVal) {
-                            opt.style.display = "";
-                        } else {
-                            opt.style.display = "none";
+                    const fragment = document.createDocumentFragment();
+                    allGlobalEtabOptions.forEach(opt => {
+                        if (opt.value === "" || !wilayaVal || opt.wilaya === wilayaVal) {
+                            const optionEl = document.createElement('option');
+                            optionEl.value = opt.value;
+                            optionEl.textContent = opt.text;
+                            if (opt.wilaya) {
+                                optionEl.setAttribute('data-wilaya', opt.wilaya);
+                            }
+                            fragment.appendChild(optionEl);
                         }
                     });
+                    
+                    etabSelect.innerHTML = "";
+                    etabSelect.appendChild(fragment);
+                    etabSelect.value = "";
                 }
+
                 document.addEventListener('DOMContentLoaded', () => {
                     const wilayaSelect = document.getElementById('global-filter-wilaya');
                     if (wilayaSelect) {
                         const wilayaVal = wilayaSelect.value;
                         const etabSelect = document.getElementById('global-filter-etablissement');
                         if (etabSelect && wilayaVal) {
+                            initGlobalEtabCache();
                             const currentVal = etabSelect.value;
-                            Array.from(etabSelect.options).forEach(opt => {
-                                if (opt.value === "") {
-                                    opt.style.display = "";
-                                    return;
-                                }
-                                const optWilaya = opt.getAttribute('data-wilaya');
-                                if (optWilaya == wilayaVal) {
-                                    opt.style.display = "";
-                                } else {
-                                    opt.style.display = "none";
+                            
+                            const fragment = document.createDocumentFragment();
+                            allGlobalEtabOptions.forEach(opt => {
+                                if (opt.value === "" || opt.wilaya == wilayaVal) {
+                                    const optionEl = document.createElement('option');
+                                    optionEl.value = opt.value;
+                                    optionEl.textContent = opt.text;
+                                    if (opt.wilaya) {
+                                        optionEl.setAttribute('data-wilaya', opt.wilaya);
+                                    }
+                                    if (opt.value === currentVal) {
+                                        optionEl.selected = true;
+                                    }
+                                    fragment.appendChild(optionEl);
                                 }
                             });
-                            etabSelect.value = currentVal;
+                            
+                            etabSelect.innerHTML = "";
+                            etabSelect.appendChild(fragment);
                         }
                     }
                 });
@@ -1792,7 +1904,7 @@ function fetchNotifications() {
                     const iconColor = n.type === 'success' ? '#0EA66E' : (n.type === 'warning' ? '#F0A500' : '#d9534f');
                     const iconClass = n.type === 'success' ? 'fa-circle-check' : (n.type === 'warning' ? 'fa-triangle-exclamation' : 'fa-circle-exclamation');
                     list.innerHTML += `
-                        <a href="${n.link || '#'}" class="text-decoration-none" onclick="markNotifRead(${n.id})">
+                        <a href="${n.url ? (basePrefix + n.url) : '#'}" class="text-decoration-none" onclick="markNotifRead(${n.id})">
                             <div class="d-flex gap-2 p-2 rounded-3 mb-1" style="${unread ? 'background:rgba(26,107,204,.05);' : ''}">
                                 <i class="fa-solid ${iconClass} mt-1" style="color:${iconColor}; font-size:.85rem;"></i>
                                 <div class="flex-grow-1 text-end" style="direction: rtl;">
@@ -1921,7 +2033,12 @@ if ('serviceWorker' in navigator) {
     });
 
     // 1. Focus & Page Visibility Monitors (Android/iOS safe)
-    window.addEventListener('blur', showShield);
+    window.addEventListener('blur', function() {
+        if (document.activeElement && document.activeElement.tagName === 'IFRAME') {
+            return;
+        }
+        showShield();
+    });
     window.addEventListener('focus', function() {
         setTimeout(hideShield, 1500);
     });
@@ -1986,10 +2103,283 @@ if ('serviceWorker' in navigator) {
             showShield();
             setTimeout(hideShield, 1500);
         }
+    // 6. Global Modal Relocator to prevent backdrop stacking bugs on dynamic pages
+    document.addEventListener('show.bs.modal', function(event) {
+        const modal = event.target;
+        if (modal && modal.parentNode !== document.body) {
+            document.body.appendChild(modal);
+        }
     });
 })();
 </script>
 <?php endif; ?>
+<!-- Intro.js Tour Engine -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intro.js/7.2.0/introjs.min.css">
+<style>
+    .floating-help-btn {
+        position: fixed;
+        bottom: 30px;
+        left: 30px;
+        background-color: var(--color-gov-purple-dark, #4a154b);
+        color: white !important;
+        border: none;
+        border-radius: 50%;
+        width: 52px;
+        height: 52px;
+        font-size: 20px;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(74, 21, 75, 0.35);
+        z-index: 9999;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+    .floating-help-btn:hover {
+        transform: scale(1.1) rotate(15deg);
+        background-color: #3b103c;
+    }
+    .introjs-tooltip {
+        background-color: #ffffff;
+        color: #1e3a5f;
+        font-family: 'Cairo', sans-serif;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        border: 1px solid rgba(0,0,0,0.05);
+        padding: 15px;
+    }
+    .introjs-tooltiptitle {
+        font-weight: bold;
+        color: #1e3a5f;
+        font-size: 1.1rem;
+    }
+    .introjs-button {
+        border-radius: 20px !important;
+        font-family: 'Cairo', sans-serif !important;
+        font-size: 0.85rem !important;
+        font-weight: bold !important;
+        padding: 6px 15px !important;
+        transition: all 0.2s ease !important;
+    }
+    .introjs-donebutton, .introjs-nextbutton {
+        background-color: var(--color-gov-purple-dark, #4a154b) !important;
+        color: #ffffff !important;
+        border: 1px solid var(--color-gov-purple-dark, #4a154b) !important;
+        text-shadow: none !important;
+    }
+    .introjs-donebutton:hover, .introjs-nextbutton:hover {
+        background-color: #3b103c !important;
+    }
+    .introjs-prevbutton {
+        background-color: #f1f5f9 !important;
+        color: #64748b !important;
+        border: 1px solid #e2e8f0 !important;
+        text-shadow: none !important;
+    }
+    .introjs-prevbutton:hover {
+        background-color: #e2e8f0 !important;
+    }
+    .introjs-bullets ul li a.active {
+        background: var(--color-gov-purple-dark, #4a154b) !important;
+    }
+</style>
+
+<!-- Universal Guide Floating Button -->
+<button id="global-tour-btn" class="floating-help-btn" title="دليل الصفحة">
+    <i class="fas fa-compass"></i>
+</button>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/intro.js/7.2.0/intro.min.js"></script>
+<script src="<?php echo e(asset('assets/js/universal-tours.js')); ?>"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        let currentPath = window.location.pathname;
+        if (currentPath.startsWith('/sig')) {
+            currentPath = currentPath.substring(4);
+        }
+        currentPath = '/' + currentPath.replace(/^\/+|\/+$/g, '');
+
+        if (typeof UniversalTours !== 'undefined' && UniversalTours[currentPath]) {
+            const steps = UniversalTours[currentPath];
+            const tourKey = 'tour_seen_' + currentPath.replace(/\//g, '_');
+
+            const globalTourBtn = document.getElementById('global-tour-btn');
+            if (globalTourBtn) {
+                globalTourBtn.style.display = 'flex';
+                globalTourBtn.addEventListener('click', function() {
+                    runUniversalTour(steps);
+                });
+            }
+
+            if (!localStorage.getItem(tourKey)) {
+                setTimeout(function() {
+                    runUniversalTour(steps, tourKey);
+                }, 1800);
+            }
+        }
+    });
+
+    function runUniversalTour(steps, saveKey = null) {
+        introJs().setOptions({
+            steps: steps,
+            nextLabel: 'التالي <i class="fas fa-chevron-left ms-1"></i>',
+            prevLabel: '<i class="fas fa-chevron-right me-1"></i> السابق',
+            doneLabel: 'إتمام الجولة <i class="fas fa-check-circle ms-1"></i>',
+            exitOnOverlayClick: false,
+            showProgress: true,
+            language: 'ar'
+        }).oncomplete(function() {
+            if (saveKey) localStorage.setItem(saveKey, 'true');
+        }).onexit(function() {
+            if (saveKey) localStorage.setItem(saveKey, 'true');
+        }).start();
+    }
+</script>
+
+<script>
+(function() {
+    const replacements = [
+        { search: /(?<!\p{L})المتربصين وال[ط]لاب(?!\p{L})/gu, replace: 'المتربصين' },
+        { search: /(?<!\p{L})إحصائيات المتربصين وال[ط]لاب(?!\p{L})/gu, replace: 'إحصائيات المتربصين' },
+        { search: /(?<!\p{L})تقرير المتربصين وال[ط]لاب(?!\p{L})/gu, replace: 'تقرير المتربصين' },
+        { search: /(?<!\p{L})ال[ط]لاب(?!\p{L})/gu, replace: 'المتربصين' },
+        { search: /(?<!\p{L})ال[ط]لبة(?!\p{L})/gu, replace: 'المتربصين' },
+        { search: /(?<!\p{L})[ط]لاب(?!\p{L})/gu, replace: 'متربصين' },
+        { search: /(?<!\p{L})[ط]البي التكوين(?!\p{L})/gu, replace: 'متربصي التكوين' },
+        { search: /(?<!\p{L})[ط]البي(?!\p{L})/gu, replace: 'متربصي' },
+        { search: /(?<!\p{L})[ط]البين(?!\p{L})/gu, replace: 'متربصين' },
+        { search: /(?<!\p{L})[ط]البان(?!\p{L})/gu, replace: 'متربصان' },
+        { search: /(?<!\p{L})[ط]البون(?!\p{L})/gu, replace: 'متربصون' },
+        { search: /(?<!\p{L})[ط]الباً(?!\p{L})/gu, replace: 'متربصاً' },
+        { search: /(?<!\p{L})ال[ط]البات(?!\p{L})/gu, replace: 'المتربصات' },
+        { search: /(?<!\p{L})[ط]البة(?!\p{L})/gu, replace: 'متربصة' },
+        { search: /(?<!\p{L})[ط]الب(?!\p{L})/gu, replace: 'متربص' }
+    ];
+
+    function replaceAttributes(node) {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+            const placeholder = node.getAttribute('placeholder');
+            if (placeholder) {
+                let text = placeholder;
+                let changed = false;
+                replacements.forEach(r => {
+                    r.search.lastIndex = 0;
+                    if (r.search.test(text)) {
+                        text = text.replace(r.search, r.replace);
+                        changed = true;
+                    }
+                });
+                if (changed) {
+                    node.setAttribute('placeholder', text);
+                }
+            }
+
+            const title = node.getAttribute('title');
+            if (title) {
+                let text = title;
+                let changed = false;
+                replacements.forEach(r => {
+                    r.search.lastIndex = 0;
+                    if (r.search.test(text)) {
+                        text = text.replace(r.search, r.replace);
+                        changed = true;
+                    }
+                });
+                if (changed) {
+                    node.setAttribute('title', text);
+                }
+            }
+        }
+    }
+
+    function replaceTextInNode(node) {
+        replaceAttributes(node);
+
+        if (node.nodeType === Node.TEXT_NODE) {
+            let text = node.nodeValue;
+            let changed = false;
+            
+            const parent = node.parentNode;
+            if (parent && (parent.tagName === 'SCRIPT' || parent.tagName === 'STYLE' || parent.tagName === 'TEXTAREA')) {
+                return;
+            }
+
+            replacements.forEach(r => {
+                r.search.lastIndex = 0;
+                if (r.search.test(text)) {
+                    text = text.replace(r.search, r.replace);
+                    changed = true;
+                }
+            });
+
+            if (changed) {
+                node.nodeValue = text;
+            }
+        } else {
+            for (let child of node.childNodes) {
+                replaceTextInNode(child);
+            }
+        }
+    }
+
+    function replaceTitle() {
+        let titleText = document.title;
+        let titleChanged = false;
+        replacements.forEach(r => {
+            r.search.lastIndex = 0;
+            if (r.search.test(titleText)) {
+                titleText = titleText.replace(r.search, r.replace);
+                titleChanged = true;
+            }
+        });
+        if (titleChanged) {
+            document.title = titleText;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        replaceTextInNode(document.body);
+        replaceTitle();
+
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach(mutation => {
+                mutation.addedNodes.forEach(node => {
+                    replaceTextInNode(node);
+                });
+            });
+        });
+
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+    });
+
+    // Concurrent session real-time background check
+    (function() {
+        const checkUrl = window.location.pathname.includes('/sig') ? '<?php echo e(url("/sig/session/check-active")); ?>' : '<?php echo e(url("/session/check-active")); ?>';
+        setInterval(() => {
+            fetch(checkUrl, {
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(res => {
+                if (res.status === 401 || res.redirected) {
+                    window.location.reload();
+                    return;
+                }
+                return res.json();
+            })
+            .then(data => {
+                if (data && data.active === false) {
+                    window.location.reload();
+                }
+            })
+            .catch(() => {});
+        }, 10000); // Check every 10 seconds
+    })();
+})();
+</script>
+
 <?php echo $__env->yieldContent('scripts'); ?>
 </body>
 </html>

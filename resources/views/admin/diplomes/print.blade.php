@@ -7,7 +7,7 @@ $d = $d ?? [];
 $settings = \App\Helpers\TakwinHelper::getSettings();
 
 // Load the 38 background images dynamically from public/diplom
-$diplomImages = glob(public_path('diplom/*.{jpeg,jpg,png}'), GLOB_BRACE);
+$diplomImages = glob(str_replace('\\', '/', public_path('diplom/*.{jpeg,jpg,png}')), GLOB_BRACE);
 $imagesList = array_map('basename', $diplomImages);
 sort($imagesList);
 

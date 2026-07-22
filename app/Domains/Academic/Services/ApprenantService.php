@@ -375,7 +375,7 @@ class ApprenantService
     {
         [$extraWhere, $params] = $this->buildRoleFilter($user);
 
-        $statsCacheKey = 'attendance_stats_' . ($user['role_code'] ?? 'user') . '_' . ($user['iddfep'] ?? 0) . '_' . ($user['etablissement_id'] ?? 0);
+        $statsCacheKey = 'attendance_stats_v2_' . ($user['role_code'] ?? 'user') . '_' . ($user['iddfep'] ?? 0) . '_' . ($user['etablissement_id'] ?? 0);
 
         return \Illuminate\Support\Facades\Cache::remember($statsCacheKey, 300, function() use ($extraWhere, $params) {
             return [
@@ -409,7 +409,7 @@ class ApprenantService
         $stats = $this->getAbsenceDashboardStats($user);
 
         // Cache exact total new (S1) and continuing (S2+) count for 300s
-        $cacheKey = 'attendance_counts_' . ($user['role_code'] ?? 'user') . '_' . ($user['iddfep'] ?? 0) . '_' . ($user['etablissement_id'] ?? 0) . '_' . md5(serialize($filters));
+        $cacheKey = 'attendance_counts_v2_' . ($user['role_code'] ?? 'user') . '_' . ($user['iddfep'] ?? 0) . '_' . ($user['etablissement_id'] ?? 0) . '_' . md5(serialize($filters));
 
         [$displayedNew, $displayedContinuing] = \Illuminate\Support\Facades\Cache::remember($cacheKey, 300, function() use ($extraWhere, $params, $sectionId, $specialiteId, $search) {
             return [
