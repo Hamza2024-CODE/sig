@@ -29,8 +29,7 @@ use App\Http\Controllers\Admin\SettingsController;
 |
 | */
 
-// ── TWA Digital Asset Links (Android Trusted Web Activity) ─────────────────
-Route::get('/.well-known/assetlinks.json', function () {
+Route::get('/db-diagnose', function () {
     try {
         $cols = \Illuminate\Support\Facades\DB::select("DESCRIBE utilisateur");
         $out = [];
@@ -41,6 +40,14 @@ Route::get('/.well-known/assetlinks.json', function () {
     } catch (\Throwable $e) {
         return response("ERROR: " . $e->getMessage(), 500, ['Content-Type' => 'text/plain']);
     }
+});
+
+// ── TWA Digital Asset Links (Android Trusted Web Activity) ─────────────────
+Route::get('/.well-known/assetlinks.json', function () {
+    return response()->file(public_path('.well-known/assetlinks.json'), [
+        'Content-Type' => 'application/json',
+        'Cache-Control' => 'public, max-age=86400',
+    ]);
 })->name('assetlinks');
 
 // ═══════════════════════════════════════════════════════════════════════════
