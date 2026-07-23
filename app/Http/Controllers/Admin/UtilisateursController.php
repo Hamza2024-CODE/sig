@@ -1020,35 +1020,38 @@ class UtilisateursController extends Controller
         $selectedWilayaId = (int)$request->input('wilaya_id', 0);
         $searchQuery = trim($request->input('search', ''));
 
-        // Query active establishments ONLY when a Wilaya is selected, searched, or CSV export is triggered
+        // Default to the first Wilaya in the list if none is selected
+        if ($selectedWilayaId === 0 && empty($searchQuery) && !empty($wilayas)) {
+            $selectedWilayaId = (int)$wilayas[0]->IDWilayaa;
+        }
+
+        // Query active establishments
         $etabs = [];
         $isExport = ($request->has('export') && $request->input('export') === 'csv');
 
-        if ($selectedWilayaId > 0 || !empty($searchQuery) || $isExport) {
-            $queryStr = "
-                SELECT e.IDetablissement, e.Nom as etab_nom, e.nomUser, e.MotDePass, e.Code as etab_code,
-                       w.Nom as wilaya_nom, nets.Nom as nature_nom, nets.IDNature as nature_id
-                FROM etablissement e
-                INNER JOIN wilaya w ON e.IDDFEP = w.IDWilayaa
-                LEFT JOIN nature_etsf nets ON e.IDNature_etsF = nets.IDNature_etsF
-                WHERE 1=1
-            ";
+        $queryStr = "
+            SELECT e.IDetablissement, e.Nom as etab_nom, e.nomUser, e.MotDePass, e.Code as etab_code,
+                   w.Nom as wilaya_nom, nets.Nom as nature_nom, nets.IDNature as nature_id
+            FROM etablissement e
+            INNER JOIN wilaya w ON e.IDDFEP = w.IDWilayaa
+            LEFT JOIN nature_etsf nets ON e.IDNature_etsF = nets.IDNature_etsF
+            WHERE 1=1
+        ";
 
-            $params = [];
-            if ($selectedWilayaId > 0) {
-                $queryStr .= " AND e.IDDFEP = :wilaya_id";
-                $params['wilaya_id'] = $selectedWilayaId;
-            }
-            if (!empty($searchQuery)) {
-                $queryStr .= " AND (e.Nom LIKE :search1 OR e.nomUser LIKE :search2 OR e.Code LIKE :search3)";
-                $params['search1'] = "%{$searchQuery}%";
-                $params['search2'] = "%{$searchQuery}%";
-                $params['search3'] = "%{$searchQuery}%";
-            }
-
-            $queryStr .= " ORDER BY w.Nom, e.Nom";
-            $etabs = DB::select($queryStr, $params);
+        $params = [];
+        if ($selectedWilayaId > 0) {
+            $queryStr .= " AND e.IDDFEP = :wilaya_id";
+            $params['wilaya_id'] = $selectedWilayaId;
         }
+        if (!empty($searchQuery)) {
+            $queryStr .= " AND (e.Nom LIKE :search1 OR e.nomUser LIKE :search2 OR e.Code LIKE :search3)";
+            $params['search1'] = "%{$searchQuery}%";
+            $params['search2'] = "%{$searchQuery}%";
+            $params['search3'] = "%{$searchQuery}%";
+        }
+
+        $queryStr .= " ORDER BY w.Nom, e.Nom";
+        $etabs = DB::select($queryStr, $params);
 
         // Fetch all user secret codes grouped by IDNature
         $userRows = DB::select("SELECT NomUser, Nom, MotPass, IDNature FROM utilisateur WHERE IDNature IS NOT NULL");
