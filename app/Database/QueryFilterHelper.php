@@ -16,47 +16,25 @@ class QueryFilterHelper
             return $sql;
         }
 
-        // Find etablissement and its alias
-        $pattern = '/\b`?etablissement`?\b(?:\s+(?:as\s+)?`?([a-zA-Z0-9_]+)`?)?/i';
-        if (!preg_match_all($pattern, $sql, $matches, PREG_SET_ORDER)) {
-            return $sql;
-        }
-
-        // Exclude common SQL keywords from being matched as alias
+        // Find from/join etablissement and wrap it in a subquery
+        $pattern = '/\b(FROM|JOIN)\s+`?etablissement`?(?:\s+(?:as\s+)?`?([a-zA-Z0-9_]+)`?)?/i';
+        
         $keywords = ['order', 'group', 'limit', 'where', 'join', 'left', 'right', 'inner', 'on', 'using', 'union', 'select', 'from', 'as'];
-        $alias = 'etablissement';
-        foreach ($matches as $match) {
-            if (!empty($match[1])) {
-                $candidate = strtolower($match[1]);
-                if (!in_array($candidate, $keywords)) {
-                    $alias = $match[1];
-                    break;
-                }
-            }
-        }
 
-        $filter = "`{$alias}`.activee = 0";
-
-        // Check if there is already a WHERE clause in the query
-        if (preg_match('/\bWHERE\b/i', $sql)) {
-            // Inject right after the first WHERE keyword
-            $sql = preg_replace('/\b(WHERE)\b/i', '$1 ' . $filter . ' AND', $sql, 1);
-        } else {
-            // No WHERE clause. Inject before ORDER BY, GROUP BY, LIMIT, UNION, or at the end.
-            $injectKeywords = ['/ORDER\s+BY/i', '/GROUP\s+BY/i', '/LIMIT/i', '/UNION/i'];
-            $injected = false;
-            foreach ($injectKeywords as $kwPattern) {
-                if (preg_match($kwPattern, $sql)) {
-                    $sql = preg_replace($kwPattern, 'WHERE ' . $filter . ' $0', $sql, 1);
-                    $injected = true;
-                    break;
-                }
+        return preg_replace_callback($pattern, function($matches) use ($keywords) {
+            $clause = $matches[1]; // FROM or JOIN
+            $alias = !empty($matches[2]) ? $matches[2] : '';
+            
+            if (!empty($alias) && in_array(strtolower($alias), $keywords)) {
+                // The matched "alias" is actually a SQL keyword (e.g. FROM etablissement ORDER BY ...)
+                return $clause . " (SELECT * FROM etablissement WHERE activee = 0) etablissement " . $alias;
             }
-            if (!$injected) {
-                $sql .= ' WHERE ' . $filter;
+            
+            if (!empty($alias)) {
+                return $clause . " (SELECT * FROM etablissement WHERE activee = 0) " . $alias;
+            } else {
+                return $clause . " (SELECT * FROM etablissement WHERE activee = 0) etablissement";
             }
-        }
-
-        return $sql;
+        }, $sql);
     }
 }
