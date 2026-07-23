@@ -51,12 +51,34 @@ $makeWritable = function($path) {
     }
 };
 
+$downloadUrl = function($url) {
+    $content = @file_get_contents($url);
+    if ($content !== false) {
+        return $content;
+    }
+    if (function_exists('curl_init')) {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 15);
+        $res = curl_exec($ch);
+        curl_close($ch);
+        if ($res !== false) {
+            return $res;
+        }
+    }
+    return false;
+};
+
 foreach ($files as $localPath => $remoteUrl) {
     $fullPath = __DIR__ . '/../' . $localPath;
     $makeWritable($fullPath);
     
     try {
-        $content = @file_get_contents($remoteUrl . '?ts=' . microtime(true));
+        $content = $downloadUrl($remoteUrl . '?ts=' . microtime(true));
         if ($content !== false) {
             $written = @file_put_contents($fullPath, $content);
             if ($written === false) {
