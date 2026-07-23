@@ -232,7 +232,6 @@
                 </div>
 
                 <!-- iOS-Style Segmented Tab Controls -->
-                @if($hideOtherLogins)
                 <div class="ios-segmented-control mb-4" style="grid-template-columns: repeat(2, 1fr);">
                     <div class="ios-slider-pill"></div>
                     <button type="button" class="ios-tab-trigger active" id="btn-etablissement" onclick="switchLoginType('etablissement')">
@@ -242,23 +241,6 @@
                         حساب خاص
                     </button>
                 </div>
-                @else
-                <div class="ios-segmented-control mb-4" style="grid-template-columns: repeat(4, 1fr);">
-                    <div class="ios-slider-pill"></div>
-                    <button type="button" class="ios-tab-trigger active" id="btn-employee" onclick="switchLoginType('employee')">
-                        موظف / أستاذ
-                    </button>
-                    <button type="button" class="ios-tab-trigger" id="btn-etablissement" onclick="switchLoginType('etablissement')">
-                        مؤسسة تكوينية
-                    </button>
-                    <button type="button" class="ios-tab-trigger" id="btn-apprenant" onclick="switchLoginType('apprenant')">
-                        متربص
-                    </button>
-                    <button type="button" class="ios-tab-trigger" id="btn-special" onclick="switchLoginType('special')">
-                        حساب خاص
-                    </button>
-                </div>
-                @endif
 
                 <!-- Alerts -->
                 <?php if (isset($error) || session()->has('flash_error') || session()->has('error')): ?>
@@ -277,7 +259,7 @@
                 <form action="/login" method="POST" id="login-form">
                     @csrf
                     <input type="hidden" name="csrf_token" value="<?= csrf_token() ?? '' ?>">
-                    <input type="hidden" name="login_type" id="login_type" value="{{ $hideOtherLogins ? 'etablissement' : 'employee' }}">
+                    <input type="hidden" name="login_type" id="login_type" value="etablissement">
                     <input type="hidden" name="employee_password" id="employee_password_hidden">
 
                     <!-- Primary Username / NIN Field -->
@@ -369,7 +351,7 @@
     function switchLoginType(type) {
         document.querySelectorAll('.ios-tab-trigger').forEach(btn => btn.classList.remove('active'));
         
-        const tabs     = {!! json_encode($hideOtherLogins ? ['etablissement', 'special'] : ['employee', 'etablissement', 'apprenant', 'special']) !!};
+        const tabs     = ['etablissement', 'special'];
         let index      = tabs.indexOf(type);
         if (index === -1) {
             type = tabs[0];
@@ -465,7 +447,7 @@
         
         // Setup initial position of tabs
         const urlParams = new URLSearchParams(window.location.search);
-        const loginType = urlParams.get('type') || '{{ $hideOtherLogins ? "etablissement" : "employee" }}';
+        const loginType = urlParams.get('type') || 'etablissement';
         switchLoginType(loginType);
 
     });

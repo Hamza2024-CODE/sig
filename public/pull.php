@@ -70,7 +70,8 @@ $files = [
     'app/Http/Controllers/Admin/ReportController.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/app/Http/Controllers/Admin/ReportController.php',
     'resources/views/admin/reports/index.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/reports/index.blade.php',
     'resources/views/admin/users/index.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/users/index.blade.php',
-    'resources/views/admin/espace-employe/index.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/espace-employe/index.blade.php'
+    'resources/views/admin/espace-employe/index.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/admin/espace-employe/index.blade.php',
+    'resources/views/auth/login.blade.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/resources/views/auth/login.blade.php'
 ];
 
 $makeWritable = function($path) {
