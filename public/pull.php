@@ -1,5 +1,5 @@
 <?php
-// SIG Auto-Update Deployment Script - Clean Build 2026-07-20
+// SIG Auto-Update Deployment Script - Clean Build 2026-07-23
 require __DIR__ . '/../vendor/autoload.php';
 ini_set('user_agent', 'PHP');
 $app = require_once __DIR__ . '/../bootstrap/app.php';
