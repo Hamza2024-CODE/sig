@@ -29,8 +29,8 @@ try {
 echo "<h1>Auto-Updating All Modified Files...</h1>";
 
 $files = [
-    'public/pull.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/9202c0e90956cca4314c46fbe2c537d1323beab9/public/pull.php',
-    'public/check_ansim_offers.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/9202c0e90956cca4314c46fbe2c537d1323beab9/public/check_ansim_offers.php'
+    'public/pull.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/ff6f243cc60bda13003236b420f792c0dfe24727/public/pull.php',
+    'public/check_ansim_offers.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/ff6f243cc60bda13003236b420f792c0dfe24727/public/check_ansim_offers.php'
 ];
 
 $makeWritable = function($path) {
