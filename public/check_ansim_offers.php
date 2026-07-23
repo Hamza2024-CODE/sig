@@ -18,12 +18,15 @@ if (!$etab) {
 echo "Etablissement: {$etab->Nom} (ID: {$etab->IDetablissement})\n";
 
 // Let's count how many offers exist for this establishment in total, and their sessions
-$totalOffers = DB::table('offre')->where('IDEts_Form', $etabId)->count();
-echo "Total offers in 'offre' table: {$totalOffers}\n";
+$totalOffers = DB::table('offre')->where('IDEts_Form', $etabId)->orWhere('IDEts_FormM', $etabId)->count();
+echo "Total offers in 'offre' table (IDEts_Form or IDEts_FormM = 1317): {$totalOffers}\n";
 
 $sessionsWithOffers = DB::table('offre as o')
     ->join('session as s', 'o.IDSession', '=', 's.IDSession')
-    ->where('o.IDEts_Form', $etabId)
+    ->where(function($q) use ($etabId) {
+        $q->where('o.IDEts_Form', $etabId)
+          ->orWhere('o.IDEts_FormM', $etabId);
+    })
     ->select('s.IDSession', 's.Nom', 's.Encour', DB::raw('count(*) as cnt'), DB::raw('sum(o.NbrInscr) as sum_inscr'))
     ->groupBy('s.IDSession', 's.Nom', 's.Encour')
     ->get();
@@ -36,7 +39,10 @@ foreach ($sessionsWithOffers as $so) {
 // Let's list some details of the offers
 $offers = DB::table('offre as o')
     ->join('session as s', 'o.IDSession', '=', 's.IDSession')
-    ->where('o.IDEts_Form', $etabId)
+    ->where(function($q) use ($etabId) {
+        $q->where('o.IDEts_Form', $etabId)
+          ->orWhere('o.IDEts_FormM', $etabId);
+    })
     ->select('o.IDOffre', 'o.NbrInscr', 'o.Valide', 'o.ValidDfp', 'o.ValideCentral', 's.Nom as session_name', 's.Encour')
     ->orderBy('s.DateD', 'DESC')
     ->get();

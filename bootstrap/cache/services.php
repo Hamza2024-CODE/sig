@@ -27,8 +27,9 @@
     23 => 'Sentry\\Laravel\\Tracing\\ServiceProvider',
     24 => 'App\\Providers\\AppServiceProvider',
     25 => 'App\\Providers\\RouteServiceProvider',
-    26 => 'Sentry\\Laravel\\ServiceProvider',
-    27 => 'L5Swagger\\L5SwaggerServiceProvider',
+    26 => 'App\\Providers\\SecurityServiceProvider',
+    27 => 'Sentry\\Laravel\\ServiceProvider',
+    28 => 'L5Swagger\\L5SwaggerServiceProvider',
   ),
   'eager' => 
   array (
@@ -49,8 +50,9 @@
     14 => 'Sentry\\Laravel\\Tracing\\ServiceProvider',
     15 => 'App\\Providers\\AppServiceProvider',
     16 => 'App\\Providers\\RouteServiceProvider',
-    17 => 'Sentry\\Laravel\\ServiceProvider',
-    18 => 'L5Swagger\\L5SwaggerServiceProvider',
+    17 => 'App\\Providers\\SecurityServiceProvider',
+    18 => 'Sentry\\Laravel\\ServiceProvider',
+    19 => 'L5Swagger\\L5SwaggerServiceProvider',
   ),
   'deferred' => 
   array (
