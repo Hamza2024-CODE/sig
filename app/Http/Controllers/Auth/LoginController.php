@@ -120,7 +120,7 @@ class LoginController extends Controller
         $credentials = $request->validate([
             'username' => 'required|string',
             'password' => 'required|string',
-            'login_type' => 'required|string',
+            'login_type' => 'required|string|in:etablissement,special',
         ]);
 
         $username = trim($credentials['username']);
