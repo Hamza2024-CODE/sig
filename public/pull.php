@@ -103,73 +103,12 @@ foreach ($files as $localPath => $remoteUrl) {
     }
 }
 
-echo "<h2>Clearing Laravel Cache and Views...</h2>";
-
-$clearDir = function($dir) {
-    if (!is_dir($dir)) return;
-    try {
-        $files = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($dir, RecursiveDirectoryIterator::SKIP_DOTS),
-            RecursiveIteratorIterator::CHILD_FIRST
-        );
-        foreach ($files as $fileinfo) {
-            $todo = $fileinfo->getRealPath();
-            if ($fileinfo->isDir()) {
-                @rmdir($todo);
-            } else {
-                @unlink($todo);
-            }
-        }
-    } catch (\Throwable $ex) {}
-};
-
-// 1. Clear view cache via filesystem
-$clearDir(__DIR__ . '/../storage/framework/views');
-echo "✓ View Cache Cleared<br>";
-
-// 2. Clear application cache via filesystem
-$clearDir(__DIR__ . '/../storage/framework/cache/data');
-echo "✓ Application Cache Cleared<br>";
-
-try {
-    \Illuminate\Support\Facades\Cache::flush();
-    echo "✓ Laravel Cache::flush() executed successfully!<br>";
-} catch (\Throwable $ex) {
-    echo "✗ Direct Cache::flush() failed: " . $ex->getMessage() . "<br>";
-}
-
-// 3. Clear bootstrap cache
-$bootstrapCacheDir = __DIR__ . '/../bootstrap/cache';
-if (is_dir($bootstrapCacheDir)) {
-    foreach (glob($bootstrapCacheDir . '/*.php') as $f) {
-        @unlink($f);
-    }
-    echo "✓ Bootstrap Cache files Cleared<br>";
-}
-
-// 4. Try Artisan commands
-try {
-    @Artisan::call('view:clear');
-    @Artisan::call('cache:clear');
-    @Artisan::call('route:clear');
-    echo "✓ Optional Artisan Cache Commands invoked<br>";
-} catch (\Throwable $e) {}
-
+echo "<h2>Clearing OPcache...</h2>";
 if (function_exists('opcache_reset')) {
     @opcache_reset();
     echo "✓ OPCache Cleared!<br>";
 }
-
-echo "<h2>Running View Compilation Diagnostics...</h2>";
-try {
-    $html = view('dashboard.departments.exam')->render();
-    echo "✓ SUCCESS: Exam view compiled and rendered fine!<br>";
-} catch (\Throwable $e) {
-    echo "<span style='color:red;font-weight:bold;'>[DIAGNOSTICS EXCEPTION]: " . get_class($e) . "</span><br>";
-    echo "<span style='color:red;'>MESSAGE: " . $e->getMessage() . "</span><br>";
-}
-
-echo "<br><h3 style='color:green;'>All updates completed successfully!</h3>";
+echo "<h3 style='color:green;'>All updates completed successfully!</h3>";
 
 echo "<h2>Latest Server Log Entries (laravel.log):</h2>";
 $logFile = __DIR__ . '/../storage/logs/laravel.log';
