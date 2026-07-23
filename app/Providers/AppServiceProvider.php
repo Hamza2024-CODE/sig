@@ -12,7 +12,9 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        //
+        \Illuminate\Database\Connection::resolverFor('mysql', function ($connection, $database, $prefix, $config) {
+            return new \App\Database\CustomMySqlConnection($connection, $database, $prefix, $config);
+        });
     }
 
     public function boot(): void
