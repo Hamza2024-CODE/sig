@@ -21,21 +21,20 @@ echo "DeIDetablissementRatache: " . ($etab->DeIDetablissementRatache ?? 'null') 
 echo "DeIDetablissementRatacheInsfp: " . ($etab->DeIDetablissementRatacheInsfp ?? 'null') . "\n";
 
 try {
-    // Let's search the section table for IDEts_Form = 1317 or IDEts_FormM = 1317
-    $sections = DB::table('section as sec')
-        ->join('offre as o', 'sec.IDOffre', '=', 'o.IDOffre')
+    // Let's count how many offers exist for this establishment in total, and their sessions
+    $offers = DB::table('offre as o')
         ->join('session as s', 'o.IDSession', '=', 's.IDSession')
-        ->where('sec.IDEts_Form', $etabId)
-        ->orWhere('sec.IDEts_FormM', $etabId)
-        ->select('sec.IDSection', 'sec.Nom as sec_name', 'sec.IDEts_Form', 'sec.IDEts_FormM', 'o.IDOffre', 's.Nom as session_name')
+        ->where('o.IDEts_Form', $etabId)
+        ->orWhere('o.IDEts_FormM', $etabId)
+        ->select('o.IDOffre', 'o.IDEts_Form', 'o.IDEts_FormM', 's.Nom as session_name')
         ->get();
 
-    echo "\nSections matching etab 1317 in 'section' table: " . count($sections) . "\n";
-    foreach ($sections as $sec) {
-        echo " - SecID: {$sec->IDSection} | Name: {$sec->sec_name} | IDEts_Form: {$sec->IDEts_Form} | IDEts_FormM: {$sec->IDEts_FormM} | OffreID: {$sec->IDOffre} | Session: {$sec->session_name}\n";
+    echo "\nOffers matching etab 1317 in 'offre' table: " . count($offers) . "\n";
+    foreach ($offers as $off) {
+        echo " - OffreID: {$off->IDOffre} | IDEts_Form: {$off->IDEts_Form} | IDEts_FormM: {$off->IDEts_FormM} | Session: {$off->session_name}\n";
     }
 } catch (\Throwable $e) {
-    echo "\nERROR in section query: " . $e->getMessage() . "\n";
+    echo "\nERROR in offers query: " . $e->getMessage() . "\n";
 }
 
 
