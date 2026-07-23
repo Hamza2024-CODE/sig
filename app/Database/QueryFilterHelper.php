@@ -11,8 +11,11 @@ class QueryFilterHelper
             return $sql;
         }
 
-        // Don't modify if it already checks activee status
+        // Don't modify if it already checks activee or IDEtablissement_Enservice status
         if (preg_match('/activee\s*=\s*/i', $sql) || preg_match('/activee\s+is\s+/i', $sql) || preg_match('/activee\s*<>\s*/i', $sql)) {
+            return $sql;
+        }
+        if (preg_match('/IDEtablissement_Enservice/i', $sql)) {
             return $sql;
         }
 
@@ -25,15 +28,17 @@ class QueryFilterHelper
             $clause = $matches[1]; // FROM or JOIN
             $alias = !empty($matches[2]) ? $matches[2] : '';
             
+            $subquery = "(SELECT * FROM etablissement WHERE activee = 0 AND IDEtablissement_Enservice = 1)";
+            
             if (!empty($alias) && in_array(strtolower($alias), $keywords)) {
                 // The matched "alias" is actually a SQL keyword (e.g. FROM etablissement ORDER BY ...)
-                return $clause . " (SELECT * FROM etablissement WHERE activee = 0) etablissement " . $alias;
+                return $clause . " " . $subquery . " etablissement " . $alias;
             }
             
             if (!empty($alias)) {
-                return $clause . " (SELECT * FROM etablissement WHERE activee = 0) " . $alias;
+                return $clause . " " . $subquery . " " . $alias;
             } else {
-                return $clause . " (SELECT * FROM etablissement WHERE activee = 0) etablissement";
+                return $clause . " " . $subquery . " etablissement";
             }
         }, $sql);
     }
