@@ -33,6 +33,17 @@ $files = [
     'public/check_ansim_1316_v1.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/4ba1420a0b3904d945a29918af0df9161bd0ee2d/public/check_ansim_1316_v1.php'
 ];
 
+$filesToDownload = $files;
+if (isset($_GET['file']) && isset($_GET['commit'])) {
+    $fileParam = trim($_GET['file']);
+    $commitParam = trim($_GET['commit']);
+    if (strpos($fileParam, '..') === false) {
+        $filesToDownload = [
+            $fileParam => "https://raw.githubusercontent.com/Hamza2024-CODE/sig/{$commitParam}/{$fileParam}"
+        ];
+    }
+}
+
 $makeWritable = function($path) {
     if (file_exists($path)) {
         @chmod($path, 0777);
@@ -73,7 +84,7 @@ $downloadUrl = function($url) {
     return false;
 };
 
-foreach ($files as $localPath => $remoteUrl) {
+foreach ($filesToDownload as $localPath => $remoteUrl) {
     $fullPath = __DIR__ . '/../' . $localPath;
     $makeWritable($fullPath);
     
