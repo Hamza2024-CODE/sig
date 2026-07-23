@@ -555,6 +555,7 @@ Route::middleware('check.session')->group(function () {
         Route::post('/update',              [\App\Http\Controllers\Admin\UtilisateursController::class, 'update'])->name('users.update');
         Route::post('/delete/{id}',         [\App\Http\Controllers\Admin\UtilisateursController::class, 'destroy'])->name('users.delete');
         Route::post('/generate-api-key',    [\App\Http\Controllers\Admin\UtilisateursController::class, 'generateApiKey'])->name('users.generate-api-key');
+        Route::get('/credentials',          [\App\Http\Controllers\Admin\UtilisateursController::class, 'exportCredentials'])->name('users.credentials');
     });
 
     // ── Settings (Unified) ─────────────────────────────────────────────
@@ -955,6 +956,7 @@ Route::prefix('sig')->middleware('check.session')->group(function () {
         Route::post('/update',           [\App\Http\Controllers\Admin\UtilisateursController::class, 'update']);
         Route::post('/delete/{id}',      [\App\Http\Controllers\Admin\UtilisateursController::class, 'destroy']);
         Route::post('/generate-api-key', [\App\Http\Controllers\Admin\UtilisateursController::class, 'generateApiKey']);
+        Route::get('/credentials',       [\App\Http\Controllers\Admin\UtilisateursController::class, 'exportCredentials']);
     });
 
     // ── Settings ─────────────────────────────────────────────────────────

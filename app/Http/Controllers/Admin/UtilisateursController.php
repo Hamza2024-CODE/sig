@@ -990,4 +990,114 @@ class UtilisateursController extends Controller
         }
         return str_shuffle($pass);
     }
+
+    /**
+     * Export credentials for establishments and users.
+     */
+    public function exportCredentials(Request $request)
+    {
+        $user = session('user');
+        if (!$user) {
+            return redirect()->route('login');
+        }
+
+        $role_code = strtolower($user['role_code'] ?? '');
+        if ($role_code !== 'admin') {
+            session(['flash_error' => 'غير مصرح لك بالولوج إلى هذه الصفحة.']);
+            return redirect()->route('dashboard');
+        }
+
+        // Fetch all active wilayas
+        $wilayas = DB::select("SELECT IDWilayaa, Nom FROM wilaya ORDER BY Nom");
+
+        // Selected Wilaya filter
+        $selectedWilayaId = (int)$request->input('wilaya_id', 0);
+        $searchQuery = trim($request->input('search', ''));
+
+        // Query active establishments (closed/inactive are filtered out by our connection interceptor)
+        $queryStr = "
+            SELECT e.IDetablissement, e.Nom as etab_nom, e.nomUser, e.MotDePass, e.Code as etab_code,
+                   w.Nom as wilaya_nom, nets.Nom as nature_nom, nets.IDNature as nature_id
+            FROM etablissement e
+            INNER JOIN wilaya w ON e.IDDFEP = w.IDWilayaa
+            LEFT JOIN nature_etsf nets ON e.IDNature_etsF = nets.IDNature_etsF
+            WHERE 1=1
+        ";
+
+        $params = [];
+        if ($selectedWilayaId > 0) {
+            $queryStr .= " AND e.IDDFEP = :wilaya_id";
+            $params['wilaya_id'] = $selectedWilayaId;
+        }
+        if (!empty($searchQuery)) {
+            $queryStr .= " AND (e.Nom LIKE :search1 OR e.nomUser LIKE :search2 OR e.Code LIKE :search3)";
+            $params['search1'] = "%{$searchQuery}%";
+            $params['search2'] = "%{$searchQuery}%";
+            $params['search3'] = "%{$searchQuery}%";
+        }
+
+        $queryStr .= " ORDER BY w.Nom, e.Nom";
+
+        $etabs = DB::select($queryStr, $params);
+
+        // Fetch all user secret codes grouped by IDNature
+        $userRows = DB::select("SELECT NomUser, Nom, MotPass, IDNature FROM utilisateur WHERE IDNature IS NOT NULL");
+        $natureUsers = [];
+        foreach ($userRows as $u) {
+            $passShow = str_starts_with($u->MotPass, '$2y$') ? '[مُشفر / Bcrypt Hash]' : $u->MotPass;
+            $natureUsers[$u->IDNature][] = [
+                'username' => $u->NomUser,
+                'name' => $u->Nom,
+                'secret_code' => $passShow
+            ];
+        }
+
+        // If CSV export is requested:
+        if ($request->has('export') && $request->input('export') === 'csv') {
+            $filename = "credentials_wilaya_" . ($selectedWilayaId ?: 'all') . "_" . date('Ymd_His') . ".csv";
+            
+            header('Content-Type: text/csv; charset=utf-8');
+            header('Content-Disposition: attachment; filename="' . $filename . '"');
+            
+            echo "\xEF\xBB\xBF"; // UTF-8 BOM
+            
+            $output = fopen('php://output', 'w');
+            
+            fputcsv($output, [
+                'الولاية',
+                'رمز المؤسسة',
+                'اسم المؤسسة',
+                'اسم المستخدم',
+                'كلمة المرور',
+                'الحسابات الفرعية المتاحة ورموزها السرية'
+            ]);
+            
+            foreach ($etabs as $e) {
+                $subAccounts = [];
+                $assocUsers = $natureUsers[$e->nature_id] ?? [];
+                foreach ($assocUsers as $au) {
+                    $subAccounts[] = $au['name'] . " (" . $au['username'] . "): " . $au['secret_code'];
+                }
+                
+                fputcsv($output, [
+                    $e->wilaya_nom,
+                    $e->etab_code,
+                    $e->etab_nom,
+                    $e->nomUser,
+                    $e->MotDePass,
+                    implode(" | ", $subAccounts)
+                ]);
+            }
+            fclose($output);
+            exit;
+        }
+
+        return view('admin.users.credentials', [
+            'etabs' => $etabs,
+            'wilayas' => $wilayas,
+            'selectedWilayaId' => $selectedWilayaId,
+            'searchQuery' => $searchQuery,
+            'natureUsers' => $natureUsers
+        ]);
+    }
 }
