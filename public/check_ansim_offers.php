@@ -15,39 +15,45 @@ if (!$etab) {
     exit;
 }
 
-echo "Etablissement: {$etab->Nom} (ID: {$etab->IDetablissement})\n";
+// Let's print related fields of the establishment
+echo "PublPrive: {$etab->PublPrive}\n";
+echo "DeIDetablissementRatache: " . ($etab->DeIDetablissementRatache ?? 'null') . "\n";
+echo "DeIDetablissementRatacheInsfp: " . ($etab->DeIDetablissementRatacheInsfp ?? 'null') . "\n";
 
-// Let's count how many offers exist for this establishment in total, and their sessions
-$totalOffers = DB::table('offre')->where('IDEts_Form', $etabId)->orWhere('IDEts_FormM', $etabId)->count();
-echo "Total offers in 'offre' table (IDEts_Form or IDEts_FormM = 1317): {$totalOffers}\n";
-
-$sessionsWithOffers = DB::table('offre as o')
-    ->join('session as s', 'o.IDSession', '=', 's.IDSession')
-    ->where(function($q) use ($etabId) {
-        $q->where('o.IDEts_Form', $etabId)
-          ->orWhere('o.IDEts_FormM', $etabId);
-    })
-    ->select('s.IDSession', 's.Nom', 's.Encour', DB::raw('count(*) as cnt'), DB::raw('sum(o.NbrInscr) as sum_inscr'))
-    ->groupBy('s.IDSession', 's.Nom', 's.Encour')
+// Let's find other etabs containing Ansim or أنسيم
+$etabsLike = DB::table('etablissement')
+    ->where('Nom', 'LIKE', '%أنسيم%')
+    ->orWhere('Nom', 'LIKE', '%Ansim%')
+    ->select('IDetablissement', 'Nom', 'IDDFEP', 'PublPrive')
     ->get();
-
-echo "Sessions with offers:\n";
-foreach ($sessionsWithOffers as $so) {
-    echo " - Session: {$so->Nom} (ID: {$so->IDSession}, Encour: {$so->Encour}) | Count: {$so->cnt} | Sum NbrInscr: {$so->sum_inscr}\n";
+echo "\nEtablissements like 'Ansim':\n";
+foreach ($etabsLike as $el) {
+    echo " - ID: {$el->IDetablissement} | Nom: {$el->Nom} | IDDFEP: {$el->IDDFEP} | PublPrive: {$el->PublPrive}\n";
 }
 
-// Let's list some details of the offers
-$offers = DB::table('offre as o')
-    ->join('session as s', 'o.IDSession', '=', 's.IDSession')
-    ->where(function($q) use ($etabId) {
-        $q->where('o.IDEts_Form', $etabId)
-          ->orWhere('o.IDEts_FormM', $etabId);
-    })
-    ->select('o.IDOffre', 'o.NbrInscr', 'o.Valide', 'o.ValidDfp', 'o.ValideCentral', 's.Nom as session_name', 's.Encour')
-    ->orderBy('s.DateD', 'DESC')
-    ->get();
+// Let's search if there are offers in session Sept 2025, Sept 2024, etc. for the attached public schools
+$attachedIds = [];
+if (!empty($etab->DeIDetablissementRatache)) $attachedIds[] = (int)$etab->DeIDetablissementRatache;
+if (!empty($etab->DeIDetablissementRatacheInsfp)) $attachedIds[] = (int)$etab->DeIDetablissementRatacheInsfp;
 
-echo "\nDetails of all offers:\n";
-foreach ($offers as $o) {
-    echo " - IDOffre: {$o->IDOffre} | Session: {$o->session_name} | NbrInscr: {$o->NbrInscr} | Valide: {$o->Valide} | ValidDfp: {$o->ValidDfp} | ValideCentral: {$o->ValideCentral}\n";
+if (!empty($attachedIds)) {
+    echo "\nAttached public school IDs: " . implode(', ', $attachedIds) . "\n";
+    $attachedEtabs = DB::table('etablissement')->whereIn('IDetablissement', $attachedIds)->select('IDetablissement', 'Nom')->get();
+    foreach ($attachedEtabs as $ae) {
+        echo " - ID: {$ae->IDetablissement} | Nom: {$ae->Nom}\n";
+    }
+
+    // Find offers of these public schools that might be related to 1317 (perhaps through a branch, section, or description)
+    // Or let's see how many offers these public schools have in Sept 2025, Sept 2024
+    $attachedOffers = DB::table('offre as o')
+        ->join('session as s', 'o.IDSession', '=', 's.IDSession')
+        ->whereIn('o.IDEts_Form', $attachedIds)
+        ->select('s.Nom as session_name', DB::raw('count(*) as count'))
+        ->groupBy('s.Nom')
+        ->get();
+    echo "\nOffers of attached public schools by session:\n";
+    foreach ($attachedOffers as $ao) {
+        echo " - Session: {$ao->session_name} | Count: {$ao->count}\n";
+    }
 }
+
