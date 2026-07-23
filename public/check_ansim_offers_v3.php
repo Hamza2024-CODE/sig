@@ -21,20 +21,36 @@ echo "DeIDetablissementRatache: " . ($etab->DeIDetablissementRatache ?? 'null') 
 echo "DeIDetablissementRatacheInsfp: " . ($etab->DeIDetablissementRatacheInsfp ?? 'null') . "\n";
 
 try {
-    // Let's count how many offers exist for this establishment in total, and their sessions
-    $offers = DB::table('offre as o')
+    // Let's count how many trainees exist for this establishment in total, and their sessions/sections
+    $trainees = DB::table('apprenant as a')
+        ->join('section as sec', 'a.IDSection', '=', 'sec.IDSection')
+        ->join('offre as o', 'sec.IDOffre', '=', 'o.IDOffre')
         ->join('session as s', 'o.IDSession', '=', 's.IDSession')
-        ->where('o.IDEts_Form', $etabId)
-        ->orWhere('o.IDEts_FormM', $etabId)
-        ->select('o.IDOffre', 'o.IDEts_Form', 'o.IDEts_FormM', 's.Nom as session_name')
+        ->where('a.IDEts_Form', $etabId)
+        ->orWhere('sec.IDEts_Form', $etabId)
+        ->orWhere('sec.IDEts_FormM', $etabId)
+        ->select('s.Nom as session_name', DB::raw('count(*) as count'))
+        ->groupBy('s.Nom')
         ->get();
 
-    echo "\nOffers matching etab 1317 in 'offre' table: " . count($offers) . "\n";
-    foreach ($offers as $off) {
-        echo " - OffreID: {$off->IDOffre} | IDEts_Form: {$off->IDEts_Form} | IDEts_FormM: {$off->IDEts_FormM} | Session: {$off->session_name}\n";
+    echo "\nTrainees matching etab 1317 by session:\n";
+    foreach ($trainees as $t) {
+        echo " - Session: {$t->session_name} | Count: {$t->count}\n";
+    }
+
+    // Let's see some random trainee records to check their IDEts_Form, and their section's IDEts_Form
+    $sampleTrainees = DB::table('apprenant as a')
+        ->join('section as sec', 'a.IDSection', '=', 'sec.IDSection')
+        ->where('a.IDEts_Form', $etabId)
+        ->select('a.IDApprenant', 'a.Nom', 'a.Prenom', 'a.IDEts_Form as trainee_etab', 'sec.IDSection', 'sec.Nom as sec_name', 'sec.IDEts_Form as sec_etab', 'sec.IDEts_FormM as sec_etab_m')
+        ->limit(5)
+        ->get();
+    echo "\nSample trainees matching etab 1317:\n";
+    foreach ($sampleTrainees as $st) {
+        echo " - Trainee: {$st->Nom} {$st->Prenom} (ID: {$st->IDApprenant}) | TraineeEtab: {$st->trainee_etab} | SecID: {$st->IDSection} | SecName: {$st->sec_name} | SecEtab: {$st->sec_etab} | SecEtabM: {$st->sec_etab_m}\n";
     }
 } catch (\Throwable $e) {
-    echo "\nERROR in offers query: " . $e->getMessage() . "\n";
+    echo "\nERROR in trainees query: " . $e->getMessage() . "\n";
 }
 
 
