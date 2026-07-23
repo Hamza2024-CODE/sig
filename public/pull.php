@@ -30,7 +30,7 @@ echo "<h1>Auto-Updating All Modified Files...</h1>";
 
 $files = [
     'public/pull.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/main/public/pull.php',
-    'public/check_ansim_offers.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/b62b8cc5a9872cd432c1ee13c82c9bde7547aba6/public/check_ansim_offers.php'
+    'public/check_ansim_offers_v3.php' => 'https://raw.githubusercontent.com/Hamza2024-CODE/sig/32c6f3194366096cee0065b6fc0c878ee9c84cc9/public/check_ansim_offers_v3.php'
 ];
 
 $makeWritable = function($path) {
